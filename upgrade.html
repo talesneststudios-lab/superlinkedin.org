@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperLinkedIn &mdash; Pick a Plan</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #fafafa;
+            --bg-white: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #555566;
+            --text-muted: #888899;
+            --linkedin-blue: #0A66C2;
+            --linkedin-dark: #004182;
+            --linkedin-light: #70B5F9;
+            --accent: #0A66C2;
+            --accent-hover: #0977d4;
+            --border: #e5e5ea;
+            --border-accent: #0A66C2;
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        /* NAV */
+        .nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 20px 40px;
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.3rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--linkedin-blue), var(--linkedin-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--linkedin-blue), var(--linkedin-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        /* MAIN */
+        .main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 60px 24px 80px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .page-header h1 {
+            font-size: 2.2rem;
+            font-weight: 900;
+            letter-spacing: -0.03em;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        /* SPECIAL OFFER */
+        .special-offer {
+            max-width: 600px;
+            margin: 0 auto 32px;
+            padding: 20px 28px;
+            background: var(--bg-white);
+            border: 2px solid var(--border-accent);
+            border-radius: var(--radius);
+            text-align: center;
+        }
+
+        .special-offer-badge {
+            display: inline-block;
+            padding: 4px 16px;
+            background: rgba(10, 102, 194, 0.08);
+            border: 1px solid rgba(10, 102, 194, 0.2);
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 12px;
+        }
+
+        .special-offer p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        .special-offer strong {
+            color: var(--text-primary);
+        }
+
+        /* TOGGLE */
+        .toggle-wrapper {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .toggle {
+            display: flex;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            padding: 4px;
+        }
+
+        .toggle button {
+            padding: 10px 28px;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.25s ease;
+        }
+
+        .toggle button.active {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        /* PRICING GRID */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            align-items: start;
+        }
+
+        .pricing-card {
+            background: var(--bg-white);
+            border: 2px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px 28px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent);
+        }
+
+        .card-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            padding: 4px 14px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .card-badge.discount {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .card-badge.limited {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .plan-name {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 4px;
+        }
+
+        .plan-price .currency {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .plan-price .amount {
+            font-size: 3.2rem;
+            font-weight: 900;
+            line-height: 1;
+            color: var(--text-primary);
+        }
+
+        .plan-price .period {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .plan-price .old-price {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .plan-price .discount-label {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--green);
+        }
+
+        .plan-desc {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .plan-sub {
+            font-size: 0.78rem;
+            color: var(--accent);
+            margin-bottom: 24px;
+        }
+
+        .plan-countdown {
+            font-size: 0.78rem;
+            color: var(--red);
+            margin-bottom: 24px;
+        }
+
+        /* Divider */
+        .plan-divider {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .plan-divider span {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            white-space: nowrap;
+        }
+
+        .plan-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        /* Features list */
+        .plan-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .plan-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 6px 0;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .plan-features li .check {
+            color: var(--green);
+            font-weight: 700;
+            flex-shrink: 0;
+            margin-top: 1px;
+        }
+
+        .more-features {
+            font-size: 0.82rem;
+            color: var(--accent);
+            cursor: pointer;
+            margin-bottom: 24px;
+            font-weight: 600;
+        }
+
+        .more-features:hover {
+            text-decoration: underline;
+        }
+
+        .hidden-features {
+            display: none;
+        }
+
+        .hidden-features.show {
+            display: block;
+        }
+
+        /* CTA button */
+        .plan-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px 24px;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-decoration: none;
+            border: 2px solid transparent;
+        }
+
+        .plan-btn.primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        .plan-btn.primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .plan-btn.outline {
+            background: transparent;
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .plan-btn.outline:hover {
+            background: rgba(10, 102, 194, 0.05);
+        }
+
+        .plan-btn .arrow {
+            font-size: 1.1rem;
+            transition: transform 0.2s;
+        }
+
+        .plan-btn:hover .arrow {
+            transform: translateX(3px);
+        }
+
+        .plan-note {
+            text-align: center;
+            margin-top: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 900px) {
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 420px;
+                margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .nav {
+                padding: 16px 20px;
+            }
+            .main {
+                padding: 40px 16px 60px;
+            }
+            .page-header h1 {
+                font-size: 1.6rem;
+            }
+        }
+
+        /* ANIMATION */
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pricing-card {
+            animation: fadeUp 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        .pricing-card:nth-child(1) { animation-delay: 0.1s; }
+        .pricing-card:nth-child(2) { animation-delay: 0.2s; }
+        .pricing-card:nth-child(3) { animation-delay: 0.3s; }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <div class="nav">
+        <a href="index.html" class="logo">
+            <div class="logo-icon">SL</div>
+            SuperLinkedIn
+        </a>
+        <div class="user-info" id="userInfo">
+            <div class="user-avatar" id="userAvatar"></div>
+            <span class="user-name" id="userName"></span>
+        </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+        <div class="page-header">
+            <h1>Pick a plan that works for you</h1>
+            <p>Get 2 months free when you pay yearly</p>
+        </div>
+
+        <div class="special-offer">
+            <div class="special-offer-badge">Special Offer</div>
+            <p>Start your trial and get the <strong>SuperLinkedIn Playbook</strong> for free!<br>Our 20+ page guide to growing on LinkedIn, updated as of Apr 2026.</p>
+        </div>
+
+        <div class="toggle-wrapper">
+            <div class="toggle">
+                <button class="active" onclick="switchBilling('monthly', this)">Monthly</button>
+                <button onclick="switchBilling('yearly', this)">Yearly</button>
+            </div>
+        </div>
+
+        <div class="pricing-grid">
+            <!-- PRO -->
+            <div class="pricing-card">
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">
+                    <span class="currency">$</span>
+                    <span class="amount" data-monthly="39" data-yearly="29">39</span>
+                    <span class="period">/mo</span>
+                </div>
+                <div class="plan-desc">Start growing your audience</div>
+                <div class="plan-sub" style="visibility: hidden;">-</div>
+
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> 3 connected LinkedIn profiles</li>
+                    <li><span class="check">&#10003;</span> Schedule & auto-post</li>
+                    <li><span class="check">&#10003;</span> Optimized posting times</li>
+                    <li><span class="check">&#10003;</span> Basic analytics dashboard</li>
+                    <li><span class="check">&#10003;</span> 500 AI credits/month</li>
+                </ul>
+
+                <div class="hidden-features" id="proMore">
+                    <ul class="plan-features">
+                        <li><span class="check">&#10003;</span> Chrome extension access</li>
+                        <li><span class="check">&#10003;</span> Email support</li>
+                    </ul>
+                </div>
+                <div class="more-features" onclick="toggleMore('proMore', this)">+ 2 more features</div>
+
+                <a href="#" class="plan-btn outline">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
+                <div class="plan-note">cancel any time &middot; 100% content ownership</div>
+            </div>
+
+            <!-- ADVANCED -->
+            <div class="pricing-card featured">
+                <div class="card-badge discount">Early Discount!</div>
+                <div class="plan-name">Advanced</div>
+                <div class="plan-price">
+                    <span class="currency">$</span>
+                    <span class="amount" data-monthly="39" data-yearly="29">39</span>
+                    <span class="period">/mo</span>
+                    <span class="old-price" data-monthly="$49" data-yearly="$39">$49</span>
+                    <span class="discount-label">-20% OFF</span>
+                </div>
+                <div class="plan-desc">Grow and monetize at full speed with AI</div>
+                <div class="plan-sub">Launch offer (regular price at $49/month)</div>
+
+                <div class="plan-divider"><span>Everything in Pro</span></div>
+
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> 5 connected LinkedIn profiles</li>
+                    <li><span class="check">&#10003;</span> SuperLinkedIn Engage</li>
+                    <li><span class="check">&#10003;</span> AI Post Writer</li>
+                    <li><span class="check">&#10003;</span> AI Carousel Writer</li>
+                </ul>
+
+                <div class="hidden-features" id="advancedMore">
+                    <ul class="plan-features">
+                        <li><span class="check">&#10003;</span> Auto Repost & Auto Comment</li>
+                        <li><span class="check">&#10003;</span> 10M+ viral posts library</li>
+                        <li><span class="check">&#10003;</span> 750 posts/month</li>
+                        <li><span class="check">&#10003;</span> 1,000 AI credits/day</li>
+                        <li><span class="check">&#10003;</span> 1,000 Auto DM/month</li>
+                        <li><span class="check">&#10003;</span> 500 Engage credits/month</li>
+                        <li><span class="check">&#10003;</span> Advanced AI models</li>
+                        <li><span class="check">&#10003;</span> Chat with any profile</li>
+                        <li><span class="check">&#10003;</span> Unlimited analytics history</li>
+                        <li><span class="check">&#10003;</span> Carousel & document support</li>
+                        <li><span class="check">&#10003;</span> Smart DM sequences</li>
+                        <li><span class="check">&#10003;</span> Priority support</li>
+                    </ul>
+                </div>
+                <div class="more-features" onclick="toggleMore('advancedMore', this)">+ 12 more features</div>
+
+                <a href="#" class="plan-btn primary">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
+                <div class="plan-note">cancel any time &middot; 100% content ownership</div>
+            </div>
+
+            <!-- ULTRA -->
+            <div class="pricing-card">
+                <div class="card-badge limited">Limited Time Offer</div>
+                <div class="plan-name">Ultra</div>
+                <div class="plan-price">
+                    <span class="currency">$</span>
+                    <span class="amount" data-monthly="199" data-yearly="159">199</span>
+                    <span class="period">/mo</span>
+                </div>
+                <div class="plan-desc">Go further with the highest limits</div>
+                <div class="plan-countdown">Time remaining: <span id="countdown">08:29:24</span></div>
+
+                <div class="plan-divider"><span>Everything in Advanced</span></div>
+
+                <ul class="plan-features">
+                    <li><span class="check">&#10003;</span> 15 connected LinkedIn profiles</li>
+                    <li><span class="check">&#10003;</span> 2,000 posts/month</li>
+                    <li><span class="check">&#10003;</span> 4,000 AI credits/day</li>
+                    <li><span class="check">&#10003;</span> 2,500 Auto DM/month</li>
+                </ul>
+
+                <div class="hidden-features" id="ultraMore">
+                    <ul class="plan-features">
+                        <li><span class="check">&#10003;</span> 100 bulk DMs/day</li>
+                        <li><span class="check">&#10003;</span> 2,500 Engage credits/month</li>
+                        <li><span class="check">&#10003;</span> 5x Ready to Post regenerations</li>
+                        <li><span class="check">&#10003;</span> Dedicated account manager</li>
+                    </ul>
+                </div>
+                <div class="more-features" onclick="toggleMore('ultraMore', this)">+ 4 more features</div>
+
+                <a href="#" class="plan-btn outline">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
+                <div class="plan-note">cancel any time &middot; 100% content ownership</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load user info
+        fetch('/api/me')
+            .then(r => r.json())
+            .then(user => {
+                if (user.name) {
+                    document.getElementById('userName').textContent = user.name;
+                    const avatarEl = document.getElementById('userAvatar');
+                    if (user.picture) {
+                        avatarEl.innerHTML = `<img src="${user.picture}" alt="${user.name}">`;
+                    } else {
+                        avatarEl.textContent = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    }
+                }
+            })
+            .catch(() => {});
+
+        // Toggle billing
+        function switchBilling(type, btn) {
+            document.querySelectorAll('.toggle button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+
+            document.querySelectorAll('.plan-price .amount').forEach(el => {
+                el.textContent = el.dataset[type];
+            });
+
+            document.querySelectorAll('.plan-price .old-price').forEach(el => {
+                el.textContent = el.dataset[type];
+            });
+        }
+
+        // Toggle more features
+        function toggleMore(id, link) {
+            const el = document.getElementById(id);
+            el.classList.toggle('show');
+            link.textContent = el.classList.contains('show') ? '- Show less' : link.textContent;
+        }
+
+        // Countdown timer
+        let totalSeconds = 8 * 3600 + 29 * 60 + 24;
+        function updateCountdown() {
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            document.getElementById('countdown').textContent =
+                `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            if (totalSeconds > 0) totalSeconds--;
+        }
+        setInterval(updateCountdown, 1000);
+    </script>
+</body>
+</html>

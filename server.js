@@ -119,7 +119,7 @@ app.get('/auth/linkedin/callback', async (req, res) => {
 
         console.log(`User signed in: ${profile.name} (${profile.email})`);
 
-        res.redirect('/auth/success.html');
+        res.redirect('/upgrade');
 
     } catch (err) {
         console.error('OAuth callback error:', err);
