@@ -7,6 +7,8 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.set('trust proxy', 1);
+
 const LINKEDIN = {
     clientId: process.env.LINKEDIN_CLIENT_ID,
     clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
@@ -19,12 +21,13 @@ const LINKEDIN = {
 
 app.use(session({
     secret: process.env.SESSION_SECRET || 'fallback-secret',
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60 * 1000,
     },
 }));
 
