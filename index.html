@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperLinkedIn | LinkedIn Growth Tool for Scheduling, Analytics & AI Content</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --linkedin-blue: #0A66C2;
+            --linkedin-dark: #004182;
+            --linkedin-light: #70B5F9;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #111118;
+            --bg-card: #16161f;
+            --bg-card-hover: #1c1c28;
+            --text-primary: #f0f0f5;
+            --text-secondary: #9999aa;
+            --text-muted: #666677;
+            --accent: #0A66C2;
+            --accent-glow: rgba(10, 102, 194, 0.3);
+            --accent-light: #70B5F9;
+            --gradient-start: #0A66C2;
+            --gradient-end: #70B5F9;
+            --border: rgba(255, 255, 255, 0.06);
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* ===== NAV ===== */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 16px 0;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.8);
+            border-bottom: 1px solid var(--border);
+        }
+
+        nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.35rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-primary);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--linkedin-blue);
+            color: #ffffff;
+            box-shadow: 0 4px 24px var(--accent-glow);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #0977d4;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* ===== HERO ===== */
+        .hero {
+            padding: 180px 0 120px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 20px;
+            background: rgba(10, 102, 194, 0.1);
+            border: 1px solid rgba(10, 102, 194, 0.25);
+            border-radius: 50px;
+            color: var(--accent-light);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 32px;
+        }
+
+        .hero-badge .dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-light);
+            border-radius: 50%;
+            animation: pulse-dot 2s ease infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .hero h1 {
+            font-size: clamp(2.8rem, 6vw, 4.5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -0.03em;
+        }
+
+        .hero h1 .gradient-text {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.7;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 48px;
+            justify-content: center;
+            margin-top: 80px;
+            flex-wrap: wrap;
+        }
+
+        .hero-stat {
+            text-align: center;
+        }
+
+        .hero-stat .number {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-stat .label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            margin-top: 4px;
+        }
+
+        /* ===== SECTION STYLES ===== */
+        .section {
+            padding: 120px 0;
+            position: relative;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent-light);
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            line-height: 1.7;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 72px;
+        }
+
+        .section-header .section-subtitle {
+            margin: 0 auto;
+        }
+
+        /* ===== FEATURE CARDS ===== */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px 32px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(10, 102, 194, 0.2);
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
+        }
+
+        .feature-icon {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, rgba(10, 102, 194, 0.15), rgba(112, 181, 249, 0.08));
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            font-size: 1.5rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.65;
+        }
+
+        .feature-list {
+            list-style: none;
+            margin-top: 20px;
+        }
+
+        .feature-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .feature-list li .check {
+            color: var(--accent-light);
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        /* ===== SPLIT FEATURE ROWS ===== */
+        .feature-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 64px;
+            align-items: center;
+            padding: 80px 0;
+        }
+
+        .feature-row:nth-child(even) .feature-row-content {
+            order: 2;
+        }
+
+        .feature-row-content h3 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .feature-row-content p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            line-height: 1.7;
+            margin-bottom: 24px;
+        }
+
+        .feature-row-visual {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            min-height: 320px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-row-visual::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(10, 102, 194, 0.05), rgba(112, 181, 249, 0.03));
+            pointer-events: none;
+        }
+
+        /* Mock UI inside visual cards */
+        .mock-dashboard {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .mock-bar {
+            height: 12px;
+            border-radius: 6px;
+            background: rgba(10, 102, 194, 0.15);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mock-bar .fill {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        .mock-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .mock-metric .label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .mock-metric .value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+
+        .mock-post {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .mock-post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .mock-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            flex-shrink: 0;
+        }
+
+        .mock-name-line {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .mock-name {
+            width: 100px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+
+        .mock-time {
+            width: 60px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+        }
+
+        .mock-text-line {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .mock-text-line.short {
+            width: 70%;
+        }
+
+        .mock-text-line.shorter {
+            width: 45%;
+        }
+
+        /* ===== TESTIMONIALS ===== */
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 24px;
+        }
+
+        .testimonial-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .testimonial-card:hover {
+            border-color: rgba(10, 102, 194, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .testimonial-text {
+            font-size: 1rem;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .testimonial-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .testimonial-info .name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .testimonial-info .role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* ===== USE CASES ===== */
+        .use-cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .use-case-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 32px 28px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .use-case-card:hover {
+            border-color: rgba(10, 102, 194, 0.2);
+            transform: translateY(-4px);
+        }
+
+        .use-case-icon {
+            font-size: 2.2rem;
+            margin-bottom: 16px;
+        }
+
+        .use-case-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .use-case-card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* ===== PRICING ===== */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 40px 32px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .pricing-card.featured {
+            border-color: var(--accent);
+            box-shadow: 0 0 60px var(--accent-glow);
+        }
+
+        .pricing-card.featured::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            color: #fff;
+            padding: 4px 20px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pricing-tier {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--accent-light);
+            margin-bottom: 8px;
+        }
+
+        .pricing-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .pricing-price {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+            margin-bottom: 8px;
+        }
+
+        .pricing-price .currency {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-muted);
+        }
+
+        .pricing-price .amount {
+            font-size: 3.2rem;
+            font-weight: 900;
+            line-height: 1;
+        }
+
+        .pricing-price .period {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .pricing-price .old-price {
+            text-decoration: line-through;
+            color: var(--text-muted);
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-right: 4px;
+        }
+
+        .pricing-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin-bottom: 32px;
+        }
+
+        .pricing-features li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .pricing-features li .check {
+            color: var(--accent-light);
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .pricing-card .btn {
+            width: 100%;
+            justify-content: center;
+        }
+
+        /* ===== CTA ===== */
+        .cta-section {
+            padding: 120px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 500px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .cta-section h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .cta-section p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* ===== FOOTER ===== */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 64px 0 40px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-brand p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 16px;
+            line-height: 1.6;
+        }
+
+        .footer-col h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 12px;
+        }
+
+        .footer-col ul a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .footer-col ul a:hover {
+            color: var(--text-primary);
+        }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border);
+            padding-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-bottom p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* ===== MARQUEE ===== */
+        .social-proof {
+            padding: 60px 0;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .marquee-track {
+            display: flex;
+            gap: 48px;
+            animation: marquee 30s linear infinite;
+        }
+
+        .marquee-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            white-space: nowrap;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .marquee-item .star {
+            color: #fbbf24;
+        }
+
+        @keyframes marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 140px 0 80px;
+            }
+
+            .hero-stats {
+                gap: 24px;
+            }
+
+            .feature-row {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+
+            .feature-row:nth-child(even) .feature-row-content {
+                order: 0;
+            }
+
+            .features-grid,
+            .testimonials-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+                max-width: 420px;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 32px;
+            }
+
+            .use-cases-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .use-cases-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ===== ANIMATIONS ===== */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== LINKEDIN ICON ===== */
+        .li-icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+        }
+
+        .divider {
+            width: 100%;
+            height: 1px;
+            background: var(--border);
+        }
+    </style>
+</head>
+<body>
+    <!-- NAV -->
+    <nav>
+        <div class="container">
+            <a href="#" class="logo">
+                <div class="logo-icon">SL</div>
+                SuperLinkedIn
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#discover">Discover</a></li>
+                <li><a href="#engage">Engage</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="chrome-extension.html">Chrome Extension</a></li>
+                <li><a href="login.html" class="btn btn-primary" style="padding: 10px 24px; font-size: 0.85rem;">Get Started For Free</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-badge">
+                <span class="dot"></span>
+                LinkedIn Growth Platform
+            </div>
+            <h1>Grow and monetize your<br><span class="gradient-text">LinkedIn audience</span>, faster</h1>
+            <p>Create, schedule posts, and engage strategically. Everything you need to grow on LinkedIn, in one platform.</p>
+            <div class="hero-buttons">
+                <a href="login.html" class="btn btn-primary">Get Started for Free</a>
+                <a href="#features" class="btn btn-secondary">See How It Works</a>
+            </div>
+            <div class="hero-stats">
+                <div class="hero-stat">
+                    <div class="number">12,000+</div>
+                    <div class="label">creators</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="number">600K+</div>
+                    <div class="label">posts scheduled</div>
+                </div>
+                <div class="hero-stat">
+                    <div class="number">8B+</div>
+                    <div class="label">impressions generated</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SOCIAL PROOF MARQUEE -->
+    <div class="social-proof">
+        <div class="marquee-track">
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Best LinkedIn tool I've ever used"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Went from 2K to 50K followers in 3 months"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "My engagement tripled overnight"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "The AI writes exactly like me"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "ROI paid for itself in week one"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Must-have for any B2B marketer"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Scheduling is flawless"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Best LinkedIn tool I've ever used"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Went from 2K to 50K followers in 3 months"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "My engagement tripled overnight"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "The AI writes exactly like me"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "ROI paid for itself in week one"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Must-have for any B2B marketer"</span>
+            <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Scheduling is flawless"</span>
+        </div>
+    </div>
+
+    <!-- FEATURES OVERVIEW -->
+    <section class="section" id="features">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Your Growth Dashboard</span>
+                <h2 class="section-title">Everything you need to<br>dominate LinkedIn</h2>
+                <p class="section-subtitle">Access live performance insights, audience intelligence, and engagement signals on any profile or post &mdash; all from one dashboard.</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                    </div>
+                    <h3>Deep Analytics</h3>
+                    <p>Track impressions, profile views, follower growth, and engagement rates across all your posts. Understand what drives results.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> Real-time performance dashboard</li>
+                        <li><span class="check">&#10003;</span> Post-level engagement breakdown</li>
+                        <li><span class="check">&#10003;</span> Follower growth tracking</li>
+                    </ul>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <h3>AI Post Writer</h3>
+                    <p>Generate scroll-stopping LinkedIn posts in your voice. Our AI learns your style and crafts content that resonates with your audience.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> Voice-matched writing</li>
+                        <li><span class="check">&#10003;</span> Hook optimization</li>
+                        <li><span class="check">&#10003;</span> Carousel & document posts</li>
+                    </ul>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <h3>Smart Scheduler</h3>
+                    <p>Publish when your audience is most active. Our algorithm analyzes your network's behavior patterns for optimal timing.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> Audience activity mapping</li>
+                        <li><span class="check">&#10003;</span> Time zone optimization</li>
+                        <li><span class="check">&#10003;</span> Queue management</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- DISCOVER SECTION -->
+    <section class="section" id="discover" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Discover</span>
+                <h2 class="section-title">Discover What's Already<br>Going Viral on LinkedIn</h2>
+                <p class="section-subtitle">SuperLinkedIn analyzes millions of posts to surface proven formats in your niche so you always know what to post.</p>
+            </div>
+
+            <div class="feature-row fade-in">
+                <div class="feature-row-content">
+                    <h3>Daily Viral Inspiration</h3>
+                    <p>Start every day with proven ideas. SuperLinkedIn surfaces high-performing LinkedIn posts in your niche daily so you're never guessing what to create next.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> <strong>Niche-Specific Curation</strong> &mdash; Only viral posts relevant to your industry</li>
+                        <li><span class="check">&#10003;</span> <strong>Performance-Backed</strong> &mdash; Ideas validated by real engagement data</li>
+                        <li><span class="check">&#10003;</span> <strong>Daily Momentum</strong> &mdash; Open the app knowing exactly what to post</li>
+                    </ul>
+                </div>
+                <div class="feature-row-visual">
+                    <div class="mock-dashboard">
+                        <div class="mock-post">
+                            <div class="mock-post-header">
+                                <div class="mock-avatar"></div>
+                                <div class="mock-name-line">
+                                    <div class="mock-name"></div>
+                                    <div class="mock-time"></div>
+                                </div>
+                            </div>
+                            <div class="mock-text-line"></div>
+                            <div class="mock-text-line short"></div>
+                            <div class="mock-text-line shorter"></div>
+                            <div style="display:flex; gap: 16px; margin-top: 16px;">
+                                <div class="mock-metric" style="flex:1">
+                                    <span class="label">Likes</span>
+                                    <span class="value">4.2K</span>
+                                </div>
+                                <div class="mock-metric" style="flex:1">
+                                    <span class="label">Comments</span>
+                                    <span class="value">312</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mock-post">
+                            <div class="mock-post-header">
+                                <div class="mock-avatar" style="background: linear-gradient(135deg, #004182, #0A66C2);"></div>
+                                <div class="mock-name-line">
+                                    <div class="mock-name" style="width: 120px;"></div>
+                                    <div class="mock-time"></div>
+                                </div>
+                            </div>
+                            <div class="mock-text-line"></div>
+                            <div class="mock-text-line short"></div>
+                            <div style="display:flex; gap: 16px; margin-top: 16px;">
+                                <div class="mock-metric" style="flex:1">
+                                    <span class="label">Likes</span>
+                                    <span class="value">8.7K</span>
+                                </div>
+                                <div class="mock-metric" style="flex:1">
+                                    <span class="label">Reposts</span>
+                                    <span class="value">541</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-row fade-in">
+                <div class="feature-row-content">
+                    <h3>Ready-To-Post Content</h3>
+                    <p>A wall of content ideas already written in your voice. SuperLinkedIn generates a stream of posts tailored to you, combining your writing style with what's trending across LinkedIn today.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> <strong>Trend-Driven</strong> &mdash; Posts generated from real conversations trending now</li>
+                        <li><span class="check">&#10003;</span> <strong>Voice-Matched</strong> &mdash; Every post sounds like you, not generic AI</li>
+                        <li><span class="check">&#10003;</span> <strong>Instant Queue</strong> &mdash; Scroll, refine if needed, and post</li>
+                    </ul>
+                </div>
+                <div class="feature-row-visual">
+                    <div class="mock-dashboard">
+                        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                            <div style="width: 10px; height: 10px; background: #22c55e; border-radius: 50%;"></div>
+                            <span style="font-size: 0.8rem; color: var(--text-muted);">3 posts ready &middot; Tailored to your voice</span>
+                        </div>
+                        <div class="mock-post" style="border-left: 3px solid var(--accent);">
+                            <div class="mock-text-line"></div>
+                            <div class="mock-text-line short"></div>
+                            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                <span style="padding: 4px 12px; background: rgba(10, 102, 194, 0.15); border-radius: 20px; font-size: 0.75rem; color: var(--accent-light);">Leadership</span>
+                                <span style="padding: 4px 12px; background: rgba(10, 102, 194, 0.15); border-radius: 20px; font-size: 0.75rem; color: var(--accent-light);">Trending</span>
+                            </div>
+                        </div>
+                        <div class="mock-post" style="border-left: 3px solid var(--accent-light);">
+                            <div class="mock-text-line"></div>
+                            <div class="mock-text-line shorter"></div>
+                            <div style="display: flex; gap: 8px; margin-top: 12px;">
+                                <span style="padding: 4px 12px; background: rgba(10, 102, 194, 0.15); border-radius: 20px; font-size: 0.75rem; color: var(--accent-light);">Tech</span>
+                                <span style="padding: 4px 12px; background: rgba(10, 102, 194, 0.15); border-radius: 20px; font-size: 0.75rem; color: var(--accent-light);">Hot Topic</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-row fade-in">
+                <div class="feature-row-content">
+                    <h3>Trend-Based Inspiration</h3>
+                    <p>Stay ahead of what's rising. Spot emerging conversations, formats, and angles before they peak on LinkedIn.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> <strong>Real-Time Signals</strong> &mdash; See what's accelerating now, not yesterday</li>
+                        <li><span class="check">&#10003;</span> <strong>Format Awareness</strong> &mdash; Identify structures gaining traction</li>
+                        <li><span class="check">&#10003;</span> <strong>Early-Mover Advantage</strong> &mdash; Create before saturation hits</li>
+                    </ul>
+                </div>
+                <div class="feature-row-visual">
+                    <div class="mock-dashboard">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Trending Topics &mdash; Last 24h</div>
+                        <div class="mock-metric">
+                            <span class="label">AI in Hiring</span>
+                            <span class="value" style="color: #22c55e;">&#9650; 340%</span>
+                        </div>
+                        <div class="mock-metric">
+                            <span class="label">Remote Work Culture</span>
+                            <span class="value" style="color: #22c55e;">&#9650; 180%</span>
+                        </div>
+                        <div class="mock-metric">
+                            <span class="label">Personal Branding</span>
+                            <span class="value" style="color: #22c55e;">&#9650; 95%</span>
+                        </div>
+                        <div class="mock-metric">
+                            <span class="label">B2B SaaS Growth</span>
+                            <span class="value" style="color: #fbbf24;">&#9650; 64%</span>
+                        </div>
+                        <div class="mock-bar" style="margin-top: 12px;">
+                            <div class="fill" style="width: 82%;"></div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--text-muted);">
+                            <span>Low</span>
+                            <span>Trend momentum</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CREATE & SCHEDULE -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Create & Schedule</span>
+                <h2 class="section-title">Create and Schedule in<br>Minutes, Not Hours</h2>
+                <p class="section-subtitle">AI writes posts in your voice, optimizes them for engagement, and schedules them for when your audience is most active.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </div>
+                    <h3>Rewrite with AI</h3>
+                    <p>Refine faster, sound sharper. SuperLinkedIn remixes your posts instantly without losing your tone.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> Tone-matched variations</li>
+                        <li><span class="check">&#10003;</span> Instant hook optimization</li>
+                        <li><span class="check">&#10003;</span> Less editing, more publishing</li>
+                    </ul>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    </div>
+                    <h3>Smart Scheduler</h3>
+                    <p>Post when reach is highest, every time. SuperLinkedIn analyzes your audience behavior and publishes when it matters most.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> Audience activity mapping</li>
+                        <li><span class="check">&#10003;</span> Automatic timing decisions</li>
+                        <li><span class="check">&#10003;</span> Consistency without burnout</li>
+                    </ul>
+                </div>
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 0 0 4.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 0 1-15.357-2m15.357 2H15"/></svg>
+                    </div>
+                    <h3>Automations</h3>
+                    <p>Your growth engine runs while you sleep. Set it once and let SuperLinkedIn handle engagement follow-ups and reposts.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> Auto-comment follow-ups</li>
+                        <li><span class="check">&#10003;</span> Auto-repost best performers</li>
+                        <li><span class="check">&#10003;</span> Smart DM sequences</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ENGAGE & GROW -->
+    <section class="section" id="engage" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Engage & Grow</span>
+                <h2 class="section-title">Engage Smarter.<br>Grow Faster.</h2>
+                <p class="section-subtitle">Find the right conversations, build real relationships, and track what's actually driving your LinkedIn growth.</p>
+            </div>
+
+            <div class="feature-row fade-in">
+                <div class="feature-row-content">
+                    <h3>Engagement Growth Engine</h3>
+                    <p>Turn interaction into predictable growth. SuperLinkedIn shows you the highest-value posts and conversations to engage with for maximum visibility in your industry.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> <strong>Strategic Feed</strong> &mdash; Posts worth commenting on right now</li>
+                        <li><span class="check">&#10003;</span> <strong>Visibility-Boosting</strong> &mdash; Craft replies designed for reach</li>
+                        <li><span class="check">&#10003;</span> <strong>Engagement-to-Follower</strong> &mdash; Measure growth from interaction</li>
+                    </ul>
+                </div>
+                <div class="feature-row-visual">
+                    <div class="mock-dashboard">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px;">Engagement Opportunities</div>
+                        <div class="mock-post" style="border-left: 3px solid #22c55e;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="mock-avatar" style="width: 28px; height: 28px;"></div>
+                                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Sarah Chen &middot; VP Engineering</span>
+                                </div>
+                                <span style="padding: 2px 10px; background: rgba(34, 197, 94, 0.15); border-radius: 20px; font-size: 0.7rem; color: #22c55e;">High Value</span>
+                            </div>
+                            <div class="mock-text-line"></div>
+                            <div class="mock-text-line short"></div>
+                        </div>
+                        <div class="mock-post" style="border-left: 3px solid var(--accent);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <div class="mock-avatar" style="width: 28px; height: 28px; background: linear-gradient(135deg, #004182, #70B5F9);"></div>
+                                    <span style="font-size: 0.8rem; color: var(--text-secondary);">Mark R. &middot; CEO at ScaleUp</span>
+                                </div>
+                                <span style="padding: 2px 10px; background: rgba(10, 102, 194, 0.15); border-radius: 20px; font-size: 0.7rem; color: var(--accent-light);">Trending</span>
+                            </div>
+                            <div class="mock-text-line"></div>
+                            <div class="mock-text-line shorter"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feature-row fade-in">
+                <div class="feature-row-content">
+                    <h3>Deep Growth Intelligence</h3>
+                    <p>Know exactly what's working and why. SuperLinkedIn goes beyond surface metrics to reveal the patterns driving your LinkedIn growth.</p>
+                    <ul class="feature-list">
+                        <li><span class="check">&#10003;</span> <strong>Performance Breakdown</strong> &mdash; See why posts succeed or fail</li>
+                        <li><span class="check">&#10003;</span> <strong>Audience Insights</strong> &mdash; Understand what triggers engagement</li>
+                        <li><span class="check">&#10003;</span> <strong>Double-Down Signals</strong> &mdash; Identify winning themes and scale</li>
+                    </ul>
+                </div>
+                <div class="feature-row-visual">
+                    <div class="mock-dashboard">
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Growth Intelligence &mdash; Last 30 days</div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                            <div class="mock-metric">
+                                <span class="label">Impressions</span>
+                                <span class="value">2.4M</span>
+                            </div>
+                            <div class="mock-metric">
+                                <span class="label">Profile Views</span>
+                                <span class="value">18.2K</span>
+                            </div>
+                            <div class="mock-metric">
+                                <span class="label">New Followers</span>
+                                <span class="value">+3,847</span>
+                            </div>
+                            <div class="mock-metric">
+                                <span class="label">Engagement</span>
+                                <span class="value">6.8%</span>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px;">Top performing content type</div>
+                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); width: 80px;">Carousels</span>
+                            <div class="mock-bar" style="flex: 1;"><div class="fill" style="width: 92%;"></div></div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 6px;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); width: 80px;">Text Posts</span>
+                            <div class="mock-bar" style="flex: 1;"><div class="fill" style="width: 74%;"></div></div>
+                        </div>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span style="font-size: 0.8rem; color: var(--text-secondary); width: 80px;">Videos</span>
+                            <div class="mock-bar" style="flex: 1;"><div class="fill" style="width: 58%;"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Testimonials</span>
+                <h2 class="section-title">Loved by LinkedIn creators</h2>
+                <p class="section-subtitle">Hear from professionals who transformed their LinkedIn presence with SuperLinkedIn.</p>
+            </div>
+            <div class="testimonials-grid">
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-text">"I almost didn't try SuperLinkedIn. But in 3 weeks: 1.2M impressions, 4,200 new followers, and 3 inbound leads worth $50K+. I spend less time on LinkedIn than ever."</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">JR</div>
+                        <div class="testimonial-info">
+                            <div class="name">James Rivera</div>
+                            <div class="role">B2B SaaS Founder &middot; 45K followers</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-text">"I used to stare at LinkedIn wondering what to post. SuperLinkedIn changed everything. Within 30 minutes I had 2 weeks of content queued up and it all sounds like me."</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">AT</div>
+                        <div class="testimonial-info">
+                            <div class="name">Anika Thakur</div>
+                            <div class="role">Marketing Director &middot; 28K followers</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-text">"Switched from three different tools to SuperLinkedIn. It's the only platform that actually helped me build a real audience. 800K impressions on a single carousel."</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">DK</div>
+                        <div class="testimonial-info">
+                            <div class="name">Daniel Kim</div>
+                            <div class="role">Tech Lead &middot; 62K followers</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-text">"Profile visits went from 200/week to 12,000/week. Connection requests 10x'd. And I got 2 speaking invitations from posts SuperLinkedIn helped me create."</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">SP</div>
+                        <div class="testimonial-info">
+                            <div class="name">Sarah Patel</div>
+                            <div class="role">Leadership Coach &middot; 91K followers</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-text">"The engagement engine is a game-changer. It tells me exactly which posts to comment on for maximum visibility. My follower growth went from 50/week to 400/week."</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">MH</div>
+                        <div class="testimonial-info">
+                            <div class="name">Marco Hernandez</div>
+                            <div class="role">Sales Consultant &middot; 35K followers</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="testimonial-card fade-in">
+                    <div class="testimonial-text">"As a recruiter, LinkedIn is everything. SuperLinkedIn helped me build thought leadership that brings candidates to me. Best $39 I spend each month."</div>
+                    <div class="testimonial-author">
+                        <div class="testimonial-avatar">LW</div>
+                        <div class="testimonial-info">
+                            <div class="name">Lisa Wong</div>
+                            <div class="role">Senior Recruiter &middot; 18K followers</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- BUILT FOR -->
+    <section class="section" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Built For You</span>
+                <h2 class="section-title">Built for Serious Professionals</h2>
+                <p class="section-subtitle">Whether you're building a personal brand, generating leads, or establishing thought leadership, SuperLinkedIn adapts to your goals.</p>
+            </div>
+            <div class="use-cases-grid">
+                <div class="use-case-card fade-in">
+                    <div class="use-case-icon">&#128640;</div>
+                    <h3>Founders & CEOs</h3>
+                    <p>Build distribution alongside product with a repeatable LinkedIn growth engine.</p>
+                </div>
+                <div class="use-case-card fade-in">
+                    <div class="use-case-icon">&#128188;</div>
+                    <h3>B2B Sales</h3>
+                    <p>Generate warm inbound leads by becoming a trusted voice in your industry.</p>
+                </div>
+                <div class="use-case-card fade-in">
+                    <div class="use-case-icon">&#127908;</div>
+                    <h3>Coaches & Speakers</h3>
+                    <p>Build authority and attract clients with consistent, high-impact content.</p>
+                </div>
+                <div class="use-case-card fade-in">
+                    <div class="use-case-icon">&#128187;</div>
+                    <h3>Tech Professionals</h3>
+                    <p>Share insights, build in public, and grow your professional network.</p>
+                </div>
+                <div class="use-case-card fade-in">
+                    <div class="use-case-icon">&#128218;</div>
+                    <h3>Recruiters & HR</h3>
+                    <p>Attract top talent through thought leadership and employer branding.</p>
+                </div>
+                <div class="use-case-card fade-in">
+                    <div class="use-case-icon">&#128200;</div>
+                    <h3>Marketers</h3>
+                    <p>Drive organic reach and brand awareness without ad spend.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <section class="section" id="pricing">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Pricing</span>
+                <h2 class="section-title">One Platform.<br>Complete Growth Infrastructure.</h2>
+                <p class="section-subtitle">Simple pricing for the full SuperLinkedIn Growth OS. No stacked tools. No hidden add-ons.</p>
+            </div>
+            <div class="pricing-grid">
+                <div class="pricing-card fade-in">
+                    <div class="pricing-tier">Pro</div>
+                    <div class="pricing-name">Start growing your audience</div>
+                    <div class="pricing-price">
+                        <span class="currency">$</span>
+                        <span class="amount">39</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <div class="pricing-desc">Everything you need to get started</div>
+                    <ul class="pricing-features">
+                        <li><span class="check">&#10003;</span> 3 connected LinkedIn profiles</li>
+                        <li><span class="check">&#10003;</span> Schedule & auto-post</li>
+                        <li><span class="check">&#10003;</span> Optimized posting times</li>
+                        <li><span class="check">&#10003;</span> Basic analytics dashboard</li>
+                        <li><span class="check">&#10003;</span> 500 AI credits/month</li>
+                        <li><span class="check">&#10003;</span> Chrome extension access</li>
+                        <li><span class="check">&#10003;</span> Email support</li>
+                    </ul>
+                    <a href="login.html" class="btn btn-secondary">Get Started</a>
+                </div>
+                <div class="pricing-card featured fade-in">
+                    <div class="pricing-tier">Advanced</div>
+                    <div class="pricing-name">Grow and monetize at full speed</div>
+                    <div class="pricing-price">
+                        <span class="old-price">$59</span>
+                        <span class="currency">$</span>
+                        <span class="amount">49</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <div class="pricing-desc">Lock in forever &middot; Limited time offer</div>
+                    <ul class="pricing-features">
+                        <li><span class="check">&#10003;</span> Everything in Pro, plus:</li>
+                        <li><span class="check">&#10003;</span> 5 connected LinkedIn profiles</li>
+                        <li><span class="check">&#10003;</span> AI Post & Carousel Writer</li>
+                        <li><span class="check">&#10003;</span> SuperLinkedIn Engage engine</li>
+                        <li><span class="check">&#10003;</span> Auto-repost & auto-comment</li>
+                        <li><span class="check">&#10003;</span> 10M+ viral posts library</li>
+                        <li><span class="check">&#10003;</span> 2,000 AI credits/day</li>
+                        <li><span class="check">&#10003;</span> Advanced analytics & insights</li>
+                        <li><span class="check">&#10003;</span> Carousel & document support</li>
+                        <li><span class="check">&#10003;</span> Priority support</li>
+                    </ul>
+                    <a href="login.html" class="btn btn-primary">Get Started</a>
+                </div>
+                <div class="pricing-card fade-in">
+                    <div class="pricing-tier">Ultra</div>
+                    <div class="pricing-name">Highest limits for power users</div>
+                    <div class="pricing-price">
+                        <span class="currency">$</span>
+                        <span class="amount">199</span>
+                        <span class="period">/month</span>
+                    </div>
+                    <div class="pricing-desc">For teams and agencies</div>
+                    <ul class="pricing-features">
+                        <li><span class="check">&#10003;</span> Everything in Advanced, plus:</li>
+                        <li><span class="check">&#10003;</span> 15 connected LinkedIn profiles</li>
+                        <li><span class="check">&#10003;</span> 5,000 posts/month</li>
+                        <li><span class="check">&#10003;</span> 5,000 AI credits/day</li>
+                        <li><span class="check">&#10003;</span> Team collaboration tools</li>
+                        <li><span class="check">&#10003;</span> White-label reporting</li>
+                        <li><span class="check">&#10003;</span> API access</li>
+                        <li><span class="check">&#10003;</span> Dedicated account manager</li>
+                    </ul>
+                    <a href="login.html" class="btn btn-secondary">Contact Sales</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="container fade-in">
+            <h2>Ready to grow on <span class="gradient-text">LinkedIn</span>?</h2>
+            <p>Join 12,000+ professionals who are posting smarter, engaging better, and growing faster with SuperLinkedIn.</p>
+            <a href="login.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 16px 40px;">Get Started for Free</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="#" class="logo">
+                        <div class="logo-icon">SL</div>
+                        SuperLinkedIn
+                    </a>
+                    <p>The all-in-one LinkedIn growth platform for creators, founders, and professionals who are serious about building their audience.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="chrome-extension.html">Chrome Extension</a></li>
+                        <li><a href="#">API</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Testimonials</a></li>
+                        <li><a href="#">LinkedIn Analytics</a></li>
+                        <li><a href="#">Affiliate Program</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                        <li><a href="privacy.html#cookies">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 SuperLinkedIn. All rights reserved.</p>
+                <p>Not affiliated with LinkedIn Corporation.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+
+        let lastScroll = 0;
+        const nav = document.querySelector('nav');
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            if (currentScroll > lastScroll && currentScroll > 100) {
+                nav.style.transform = 'translateY(-100%)';
+            } else {
+                nav.style.transform = 'translateY(0)';
+            }
+            lastScroll = currentScroll;
+        });
+        nav.style.transition = 'transform 0.3s ease';
+    </script>
+</body>
+</html>

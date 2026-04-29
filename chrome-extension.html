@@ -1,0 +1,1268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperLinkedIn Chrome Extension | LinkedIn Analytics & Insights in Your Feed</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --linkedin-blue: #0A66C2;
+            --linkedin-dark: #004182;
+            --linkedin-light: #70B5F9;
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #111118;
+            --bg-card: #16161f;
+            --bg-card-hover: #1c1c28;
+            --text-primary: #f0f0f5;
+            --text-secondary: #9999aa;
+            --text-muted: #666677;
+            --accent: #0A66C2;
+            --accent-glow: rgba(10, 102, 194, 0.3);
+            --accent-light: #70B5F9;
+            --gradient-start: #0A66C2;
+            --gradient-end: #70B5F9;
+            --border: rgba(255, 255, 255, 0.06);
+            --radius: 16px;
+            --radius-sm: 10px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* NAV */
+        nav {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 100;
+            padding: 16px 0;
+            backdrop-filter: blur(20px);
+            background: rgba(10, 10, 15, 0.8);
+            border-bottom: 1px solid var(--border);
+            transition: transform 0.3s ease;
+        }
+
+        nav .container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 800;
+            font-size: 1.35rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1.1rem;
+            color: #fff;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--linkedin-blue);
+            color: #ffffff;
+            box-shadow: 0 4px 24px var(--accent-glow);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #0977d4;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--accent-glow);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* HERO */
+        .hero {
+            padding: 180px 0 100px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: -100px; left: 50%;
+            transform: translateX(-50%);
+            width: 800px; height: 800px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .hero h1 {
+            font-size: clamp(2.6rem, 5.5vw, 4rem);
+            font-weight: 900;
+            line-height: 1.12;
+            margin-bottom: 24px;
+            letter-spacing: -0.03em;
+        }
+
+        .hero p {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 580px;
+            margin: 0 auto 36px;
+            line-height: 1.7;
+        }
+
+        .hero-badges {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 18px;
+            background: rgba(10, 102, 194, 0.1);
+            border: 1px solid rgba(10, 102, 194, 0.2);
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent-light);
+        }
+
+        .badge .stars {
+            color: #fbbf24;
+            letter-spacing: 1px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .chrome-icon {
+            width: 20px; height: 20px;
+        }
+
+        /* VIDEO / DEMO SECTION */
+        .demo-section {
+            padding: 80px 0 100px;
+            text-align: center;
+        }
+
+        .demo-section h2 {
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+
+        .demo-section > .container > p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 620px;
+            margin: 0 auto 48px;
+            line-height: 1.7;
+        }
+
+        .demo-visual {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .demo-browser-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .demo-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+        }
+
+        .demo-dot.red { background: #ff5f57; }
+        .demo-dot.yellow { background: #ffbd2e; }
+        .demo-dot.green { background: #28c840; }
+
+        .demo-url-bar {
+            flex: 1;
+            margin-left: 12px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border-radius: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .demo-content {
+            padding: 32px;
+            display: flex;
+            gap: 24px;
+            min-height: 400px;
+        }
+
+        .demo-feed {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .demo-post {
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .demo-post-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .demo-avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            flex-shrink: 0;
+        }
+
+        .demo-name-block {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .demo-name {
+            width: 110px; height: 10px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 4px;
+        }
+
+        .demo-headline {
+            width: 160px; height: 8px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 4px;
+        }
+
+        .demo-text {
+            width: 100%; height: 10px;
+            background: rgba(255, 255, 255, 0.07);
+            border-radius: 4px;
+            margin-bottom: 8px;
+        }
+
+        .demo-text.short { width: 70%; }
+        .demo-text.shorter { width: 45%; }
+
+        .demo-sidebar {
+            width: 260px;
+            background: rgba(10, 102, 194, 0.06);
+            border: 1px solid rgba(10, 102, 194, 0.15);
+            border-radius: var(--radius-sm);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .demo-sidebar-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent-light);
+            margin-bottom: 4px;
+        }
+
+        .demo-stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+
+        .demo-stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .demo-stat-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-light);
+        }
+
+        .demo-mini-bar {
+            height: 8px;
+            background: rgba(10, 102, 194, 0.15);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .demo-mini-bar .fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+        }
+
+        /* SECRET SECTION */
+        .secret-section {
+            padding: 100px 0;
+            background: var(--bg-secondary);
+        }
+
+        .secret-section .container {
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .secret-section h2 {
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+            font-weight: 800;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .secret-section p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 640px;
+            margin: 0 auto;
+        }
+
+        /* FEATURES GRID */
+        .features-section {
+            padding: 120px 0;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            color: var(--accent-light);
+            margin-bottom: 16px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 72px;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            line-height: 1.15;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.7;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 36px 32px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .feature-card:hover {
+            border-color: rgba(10, 102, 194, 0.2);
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+        }
+
+        .feature-card:hover::before { opacity: 1; }
+
+        .feature-card.wide {
+            grid-column: span 2;
+        }
+
+        .feature-icon {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, rgba(10, 102, 194, 0.15), rgba(112, 181, 249, 0.08));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            color: var(--text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.65;
+        }
+
+        /* Visual inside feature card */
+        .feature-visual {
+            margin-top: 20px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+
+        .mini-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            font-size: 0.8rem;
+        }
+
+        .mini-metric .label { color: var(--text-muted); }
+        .mini-metric .value { color: var(--accent-light); font-weight: 700; }
+
+        /* TESTIMONIALS MARQUEE */
+        .testimonials-section {
+            padding: 100px 0;
+            background: var(--bg-secondary);
+            overflow: hidden;
+        }
+
+        .testimonials-section .section-header {
+            margin-bottom: 48px;
+        }
+
+        .marquee-wrapper {
+            position: relative;
+        }
+
+        .marquee-wrapper::before,
+        .marquee-wrapper::after {
+            content: '';
+            position: absolute;
+            top: 0; bottom: 0;
+            width: 120px;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .marquee-wrapper::before {
+            left: 0;
+            background: linear-gradient(90deg, var(--bg-secondary), transparent);
+        }
+
+        .marquee-wrapper::after {
+            right: 0;
+            background: linear-gradient(270deg, var(--bg-secondary), transparent);
+        }
+
+        .marquee-track {
+            display: flex;
+            gap: 20px;
+            animation: scroll-marquee 40s linear infinite;
+        }
+
+        .marquee-track:nth-child(2) {
+            margin-top: 20px;
+            animation-direction: reverse;
+            animation-duration: 35s;
+        }
+
+        @keyframes scroll-marquee {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .review-card {
+            flex-shrink: 0;
+            width: 320px;
+            padding: 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border-color 0.3s;
+        }
+
+        .review-card:hover {
+            border-color: rgba(10, 102, 194, 0.2);
+        }
+
+        .review-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+
+        .review-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #fff;
+            flex-shrink: 0;
+        }
+
+        .review-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .review-text {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        /* CTA */
+        .cta-section {
+            padding: 120px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .cta-section::before {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 700px; height: 500px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        .cta-section h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 20px;
+        }
+
+        .cta-section p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 40px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* FOOTER */
+        footer {
+            border-top: 1px solid var(--border);
+            padding: 64px 0 40px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+
+        .footer-brand p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 16px;
+            line-height: 1.6;
+        }
+
+        .footer-col h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .footer-col ul { list-style: none; }
+
+        .footer-col ul li { margin-bottom: 12px; }
+
+        .footer-col ul a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s;
+        }
+
+        .footer-col ul a:hover { color: var(--text-primary); }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border);
+            padding-top: 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .footer-bottom p {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* ANIMATIONS */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+
+            .hero { padding: 140px 0 80px; }
+
+            .features-grid { grid-template-columns: 1fr; }
+
+            .feature-card.wide { grid-column: span 1; }
+
+            .demo-content { flex-direction: column; }
+
+            .demo-sidebar { width: 100%; }
+
+            .footer-grid { grid-template-columns: 1fr 1fr; gap: 32px; }
+
+            .review-card { width: 280px; }
+        }
+
+        @media (max-width: 480px) {
+            .footer-grid { grid-template-columns: 1fr; }
+            .hero-badges { flex-direction: column; gap: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- NAV -->
+    <nav>
+        <div class="container">
+            <a href="index.html" class="logo">
+                <div class="logo-icon">SL</div>
+                SuperLinkedIn
+            </a>
+            <ul class="nav-links">
+                <li><a href="index.html#features">Features</a></li>
+                <li><a href="index.html#discover">Discover</a></li>
+                <li><a href="index.html#engage">Engage</a></li>
+                <li><a href="index.html#pricing">Pricing</a></li>
+                <li><a href="chrome-extension.html">Chrome Extension</a></li>
+                <li><a href="login.html" class="btn btn-primary" style="padding: 10px 24px; font-size: 0.85rem;">Get Started For Free</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- HERO -->
+    <section class="hero">
+        <div class="container">
+            <h1>Grow faster on LinkedIn<br>with <span class="gradient-text">hidden insights</span></h1>
+            <p>Understand your audience, refine your content, and accelerate your LinkedIn growth &mdash; all without leaving your feed.</p>
+
+            <div class="hero-badges">
+                <div class="badge">
+                    <span class="stars">&#9733;&#9733;&#9733;&#9733;&#9733;</span>
+                    Featured on Chrome Web Store
+                </div>
+                <div class="badge">
+                    Loved by 12,000+ creators
+                </div>
+            </div>
+
+            <div class="hero-buttons">
+                <a href="#" class="btn btn-primary">
+                    <svg class="chrome-icon" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+                    </svg>
+                    Add to Chrome &mdash; It's Free
+                </a>
+                <a href="#demo" class="btn btn-secondary">See It In Action</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- DEMO SECTION -->
+    <section class="demo-section" id="demo">
+        <div class="container">
+            <h2 class="fade-in">Watch SuperLinkedIn In Action</h2>
+            <p class="fade-in">Take SuperLinkedIn with you as you browse. Access live performance insights, audience intelligence, and engagement signals on any profile or post without leaving your LinkedIn feed.</p>
+
+            <div class="demo-visual fade-in">
+                <div class="demo-browser-bar">
+                    <div class="demo-dot red"></div>
+                    <div class="demo-dot yellow"></div>
+                    <div class="demo-dot green"></div>
+                    <div class="demo-url-bar">linkedin.com/feed</div>
+                </div>
+                <div class="demo-content">
+                    <div class="demo-feed">
+                        <div class="demo-post">
+                            <div class="demo-post-header">
+                                <div class="demo-avatar"></div>
+                                <div class="demo-name-block">
+                                    <div class="demo-name"></div>
+                                    <div class="demo-headline"></div>
+                                </div>
+                            </div>
+                            <div class="demo-text"></div>
+                            <div class="demo-text short"></div>
+                            <div class="demo-text shorter"></div>
+                            <div style="display: flex; gap: 16px; margin-top: 14px;">
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">&#128077; 1,247</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">&#128172; 89 comments</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">&#128260; 34 reposts</span>
+                            </div>
+                        </div>
+                        <div class="demo-post">
+                            <div class="demo-post-header">
+                                <div class="demo-avatar" style="background: linear-gradient(135deg, #004182, #70B5F9);"></div>
+                                <div class="demo-name-block">
+                                    <div class="demo-name" style="width: 130px;"></div>
+                                    <div class="demo-headline" style="width: 180px;"></div>
+                                </div>
+                            </div>
+                            <div class="demo-text"></div>
+                            <div class="demo-text short"></div>
+                            <div style="display: flex; gap: 16px; margin-top: 14px;">
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">&#128077; 3,891</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">&#128172; 214 comments</span>
+                                <span style="font-size: 0.75rem; color: var(--text-muted);">&#128260; 112 reposts</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="demo-sidebar">
+                        <div class="demo-sidebar-title">SuperLinkedIn Insights</div>
+                        <div class="demo-stat-row">
+                            <span class="demo-stat-label">Impressions</span>
+                            <span class="demo-stat-value">48.2K</span>
+                        </div>
+                        <div class="demo-stat-row">
+                            <span class="demo-stat-label">Engagement</span>
+                            <span class="demo-stat-value">6.4%</span>
+                        </div>
+                        <div class="demo-stat-row">
+                            <span class="demo-stat-label">Follower Growth</span>
+                            <span class="demo-stat-value" style="color: #22c55e;">+247</span>
+                        </div>
+                        <div class="demo-stat-row">
+                            <span class="demo-stat-label">Best Post Time</span>
+                            <span class="demo-stat-value">8:30 AM</span>
+                        </div>
+                        <div style="margin-top: 4px;">
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 6px;">Weekly Activity</div>
+                            <div style="display: flex; gap: 4px; align-items: flex-end; height: 40px;">
+                                <div style="flex:1; background: linear-gradient(to top, var(--accent), var(--accent-light)); border-radius: 3px 3px 0 0; height: 60%;"></div>
+                                <div style="flex:1; background: linear-gradient(to top, var(--accent), var(--accent-light)); border-radius: 3px 3px 0 0; height: 85%;"></div>
+                                <div style="flex:1; background: linear-gradient(to top, var(--accent), var(--accent-light)); border-radius: 3px 3px 0 0; height: 100%;"></div>
+                                <div style="flex:1; background: linear-gradient(to top, var(--accent), var(--accent-light)); border-radius: 3px 3px 0 0; height: 70%;"></div>
+                                <div style="flex:1; background: linear-gradient(to top, var(--accent), var(--accent-light)); border-radius: 3px 3px 0 0; height: 45%;"></div>
+                                <div style="flex:1; background: rgba(10, 102, 194, 0.2); border-radius: 3px 3px 0 0; height: 25%;"></div>
+                                <div style="flex:1; background: rgba(10, 102, 194, 0.2); border-radius: 3px 3px 0 0; height: 15%;"></div>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.6rem; color: var(--text-muted); margin-top: 4px;">
+                                <span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECRET SECTION -->
+    <section class="secret-section">
+        <div class="container fade-in">
+            <h2>The secret to success on <span class="gradient-text">LinkedIn</span></h2>
+            <p>Stop spending endless hours making sense of LinkedIn data. SuperLinkedIn equips you with crystal clear insights that save time and help you grow. Focus on what truly matters &mdash; creating meaningful interactions and growing your professional presence.</p>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Features</span>
+                <h2 class="section-title">The Super Experience<br>At A Glance</h2>
+                <p class="section-subtitle">Whether you're a casual poster or a LinkedIn thought leader, our features help you get the most out of your LinkedIn experience.</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <h3>Start Every Day With Proven Ideas</h3>
+                    <p>SuperLinkedIn surfaces high-performing posts in your niche daily so you're never guessing what to create next. Get inspired by what's already working.</p>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                    </div>
+                    <h3>Track Your Profile's Growth & Performance</h3>
+                    <p>Gain deep insights into your profile's growth. Track impressions over time, categorize posts by type, and visualize how your followers grow and change.</p>
+                    <div class="feature-visual">
+                        <div class="mini-metric">
+                            <span class="label">Impressions (30d)</span>
+                            <span class="value">2.4M</span>
+                        </div>
+                        <div class="mini-metric">
+                            <span class="label">Followers gained</span>
+                            <span class="value">+3,847</span>
+                        </div>
+                        <div class="mini-metric">
+                            <span class="label">Engagement rate</span>
+                            <span class="value">6.8%</span>
+                        </div>
+                        <div class="demo-mini-bar" style="margin-top: 8px;">
+                            <div class="fill" style="width: 78%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                    </div>
+                    <h3>View a Summary of Your LinkedIn Activity</h3>
+                    <p>Get a quick overview of your profile's activity. See your posts, articles, and comments alongside key performance indicators to understand your impact at a glance.</p>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/></svg>
+                    </div>
+                    <h3>Personalized Activity Feed & Custom Search</h3>
+                    <p>Curate a personalized view of activities from the people and lists you care about most. Use handy shortcuts and customizable search settings to find exactly what you need.</p>
+                </div>
+
+                <div class="feature-card fade-in">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3>Analyze Any Profile's Top Posts and Stats</h3>
+                    <p>Easily view the best posts and key statistics of any profile you visit. Gain insights into any LinkedIn user's performance, engagement patterns, and content strategy.</p>
+                </div>
+
+                <div class="feature-card wide fade-in">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    </div>
+                    <h3>Detect AI-Generated Comments</h3>
+                    <p>With SuperLinkedIn's AI Shield, see the likelihood that a comment was generated by AI, scored with precision and clarity. Quickly filter out inauthentic responses and keep your conversations clean, relevant, and human. Build genuine engagement with real people.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- TESTIMONIALS -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Testimonials</span>
+                <h2 class="section-title">Trusted by the Creators You Follow</h2>
+                <p class="section-subtitle">We've helped over 12,000 professionals grow their LinkedIn presence.</p>
+            </div>
+        </div>
+
+        <div class="marquee-wrapper">
+            <div class="marquee-track">
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">CK</div>
+                        <div class="review-name">Chris Kowalski</div>
+                    </div>
+                    <div class="review-text">Wow. These insights are unbelievably useful. I don't know how I managed LinkedIn without them. The analytics overlay is amazing!</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">PN</div>
+                        <div class="review-name">Priya Nair</div>
+                    </div>
+                    <div class="review-text">When I decided to take LinkedIn seriously, this extension helped me so much. A must-have for anyone who wants to grow their professional brand!</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">JR</div>
+                        <div class="review-name">Jorge Ramos</div>
+                    </div>
+                    <div class="review-text">Great extension for LinkedIn! Super useful analytics tool, nice and easy to use. My engagement went up 3x in the first month.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">LT</div>
+                        <div class="review-name">Lisa Thompson</div>
+                    </div>
+                    <div class="review-text">Never knew you could get this level of insights for free. The AI shield feature alone is worth installing the extension.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">AI</div>
+                        <div class="review-name">Alex Ivanov</div>
+                    </div>
+                    <div class="review-text">SuperLinkedIn is a must-have for any active LinkedIn user. It's my most favorite chrome extension now. The profile analytics are incredible.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">UD</div>
+                        <div class="review-name">Uwe Dreissig</div>
+                    </div>
+                    <div class="review-text">Great find! The trending topics feature helped me jump on conversations early and get massive visibility.</div>
+                </div>
+                <!-- Duplicates for seamless loop -->
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">CK</div>
+                        <div class="review-name">Chris Kowalski</div>
+                    </div>
+                    <div class="review-text">Wow. These insights are unbelievably useful. I don't know how I managed LinkedIn without them. The analytics overlay is amazing!</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">PN</div>
+                        <div class="review-name">Priya Nair</div>
+                    </div>
+                    <div class="review-text">When I decided to take LinkedIn seriously, this extension helped me so much. A must-have for anyone who wants to grow their professional brand!</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">JR</div>
+                        <div class="review-name">Jorge Ramos</div>
+                    </div>
+                    <div class="review-text">Great extension for LinkedIn! Super useful analytics tool, nice and easy to use. My engagement went up 3x in the first month.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">LT</div>
+                        <div class="review-name">Lisa Thompson</div>
+                    </div>
+                    <div class="review-text">Never knew you could get this level of insights for free. The AI shield feature alone is worth installing the extension.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">AI</div>
+                        <div class="review-name">Alex Ivanov</div>
+                    </div>
+                    <div class="review-text">SuperLinkedIn is a must-have for any active LinkedIn user. It's my most favorite chrome extension now. The profile analytics are incredible.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">UD</div>
+                        <div class="review-name">Uwe Dreissig</div>
+                    </div>
+                    <div class="review-text">Great find! The trending topics feature helped me jump on conversations early and get massive visibility.</div>
+                </div>
+            </div>
+
+            <div class="marquee-track">
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">KV</div>
+                        <div class="review-name">Kay van Veen</div>
+                    </div>
+                    <div class="review-text">SuperLinkedIn is amazing, even when you don't want to automate and genuinely want to engage. It shows you exactly where to focus.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">KS</div>
+                        <div class="review-name">Kevin Schmidt</div>
+                    </div>
+                    <div class="review-text">Wasn't expecting SuperLinkedIn to actually boost my content game this much. First week blew my mind. Already seeing more inbound leads.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">KA</div>
+                        <div class="review-name">Kamil Abadi</div>
+                    </div>
+                    <div class="review-text">Using SuperLinkedIn and it's a total game changer. Suddenly I enjoy posting on LinkedIn and planning days ahead.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">DV</div>
+                        <div class="review-name">Dmitrii Volosov</div>
+                    </div>
+                    <div class="review-text">I'm using SuperLinkedIn to optimize my commenting strategy. My profile views went from 200/week to 5,000/week. Incredible tool.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">AT</div>
+                        <div class="review-name">Atharva Thakur</div>
+                    </div>
+                    <div class="review-text">100% worth it. Pretty impressed by how clean the extension is and makes my life easier. The free plan is generous too.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">MH</div>
+                        <div class="review-name">Mansur Hassan</div>
+                    </div>
+                    <div class="review-text">Love the app and Chrome extension. Super useful, super interesting and SuperLinkedIn!! Best investment for my LinkedIn growth.</div>
+                </div>
+                <!-- Duplicates for seamless loop -->
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">KV</div>
+                        <div class="review-name">Kay van Veen</div>
+                    </div>
+                    <div class="review-text">SuperLinkedIn is amazing, even when you don't want to automate and genuinely want to engage. It shows you exactly where to focus.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">KS</div>
+                        <div class="review-name">Kevin Schmidt</div>
+                    </div>
+                    <div class="review-text">Wasn't expecting SuperLinkedIn to actually boost my content game this much. First week blew my mind. Already seeing more inbound leads.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">KA</div>
+                        <div class="review-name">Kamil Abadi</div>
+                    </div>
+                    <div class="review-text">Using SuperLinkedIn and it's a total game changer. Suddenly I enjoy posting on LinkedIn and planning days ahead.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">DV</div>
+                        <div class="review-name">Dmitrii Volosov</div>
+                    </div>
+                    <div class="review-text">I'm using SuperLinkedIn to optimize my commenting strategy. My profile views went from 200/week to 5,000/week. Incredible tool.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">AT</div>
+                        <div class="review-name">Atharva Thakur</div>
+                    </div>
+                    <div class="review-text">100% worth it. Pretty impressed by how clean the extension is and makes my life easier. The free plan is generous too.</div>
+                </div>
+                <div class="review-card">
+                    <div class="review-author">
+                        <div class="review-avatar">MH</div>
+                        <div class="review-name">Mansur Hassan</div>
+                    </div>
+                    <div class="review-text">Love the app and Chrome extension. Super useful, super interesting and SuperLinkedIn!! Best investment for my LinkedIn growth.</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="container fade-in">
+            <h2>Ready to grow on <span class="gradient-text">LinkedIn</span>?</h2>
+            <p>Join 12,000+ professionals who are posting smarter, engaging better, and growing faster with SuperLinkedIn.</p>
+            <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap;">
+                <a href="#" class="btn btn-primary" style="font-size: 1.05rem; padding: 16px 36px;">
+                    <svg class="chrome-icon" viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+                    </svg>
+                    Add to Chrome &mdash; Free
+                </a>
+                <a href="login.html" class="btn btn-secondary" style="font-size: 1.05rem; padding: 16px 36px;">Get Started</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="container">
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <a href="index.html" class="logo">
+                        <div class="logo-icon">SL</div>
+                        SuperLinkedIn
+                    </a>
+                    <p>The all-in-one LinkedIn growth platform for creators, founders, and professionals who are serious about building their audience.</p>
+                </div>
+                <div class="footer-col">
+                    <h4>Product</h4>
+                    <ul>
+                        <li><a href="index.html#features">Features</a></li>
+                        <li><a href="index.html#pricing">Pricing</a></li>
+                        <li><a href="chrome-extension.html">Chrome Extension</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Resources</h4>
+                    <ul>
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Affiliate Program</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="terms.html">Terms of Service</a></li>
+                        <li><a href="privacy.html">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2026 SuperLinkedIn. All rights reserved.</p>
+                <p>Not affiliated with LinkedIn Corporation.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) entry.target.classList.add('visible');
+            });
+        }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+
+        let lastScroll = 0;
+        const navEl = document.querySelector('nav');
+        window.addEventListener('scroll', () => {
+            const currentScroll = window.pageYOffset;
+            navEl.style.transform = (currentScroll > lastScroll && currentScroll > 100) ? 'translateY(-100%)' : 'translateY(0)';
+            lastScroll = currentScroll;
+        });
+    </script>
+</body>
+</html>
