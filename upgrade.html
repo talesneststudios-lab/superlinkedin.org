@@ -521,7 +521,7 @@
                 </div>
                 <div class="more-features" onclick="toggleMore('proMore', this)">+ 2 more features</div>
 
-                <a href="#" class="plan-btn outline">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
+                <a href="#" class="plan-btn outline" onclick="startCheckout('pro'); return false;">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
                 <div class="plan-note">cancel any time &middot; 100% content ownership</div>
             </div>
 
@@ -566,7 +566,7 @@
                 </div>
                 <div class="more-features" onclick="toggleMore('advancedMore', this)">+ 12 more features</div>
 
-                <a href="#" class="plan-btn primary">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
+                <a href="#" class="plan-btn primary" onclick="startCheckout('advanced'); return false;">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
                 <div class="plan-note">cancel any time &middot; 100% content ownership</div>
             </div>
 
@@ -601,13 +601,36 @@
                 </div>
                 <div class="more-features" onclick="toggleMore('ultraMore', this)">+ 4 more features</div>
 
-                <a href="#" class="plan-btn outline">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
+                <a href="#" class="plan-btn outline" onclick="startCheckout('ultra'); return false;">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
                 <div class="plan-note">cancel any time &middot; 100% content ownership</div>
             </div>
         </div>
     </div>
 
     <script>
+        let currentBilling = 'monthly';
+
+        async function startCheckout(plan) {
+            const planKey = plan + '_' + currentBilling;
+            try {
+                const res = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan: planKey }),
+                });
+
+                const data = await res.json();
+
+                if (data.url) {
+                    window.location.href = data.url;
+                } else {
+                    alert(data.error || 'Something went wrong. Please try again.');
+                }
+            } catch (err) {
+                alert('Could not connect to payment server. Please try again.');
+            }
+        }
+
         // Load user info
         fetch('/api/me')
             .then(r => r.json())
@@ -626,6 +649,7 @@
 
         // Toggle billing
         function switchBilling(type, btn) {
+            currentBilling = type;
             document.querySelectorAll('.toggle button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
 

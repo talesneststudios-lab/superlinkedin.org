@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperLinkedIn &mdash; Welcome!</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #fafafa;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card {
+            text-align: center;
+            background: #fff;
+            border-radius: 24px;
+            padding: 60px 48px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+            max-width: 500px;
+        }
+
+        .check-circle {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 28px;
+            animation: pop 0.5s ease;
+        }
+
+        .check-circle svg {
+            width: 40px; height: 40px;
+            stroke: #fff;
+            stroke-width: 3;
+            fill: none;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            margin-bottom: 12px;
+            letter-spacing: -0.02em;
+        }
+
+        p {
+            color: #555;
+            font-size: 1rem;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 36px;
+            background: #0A66C2;
+            color: #fff;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 1rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+
+        .btn:hover {
+            background: #0977d4;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <div class="check-circle">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <h1>You're all set!</h1>
+        <p>Your 3-day free trial has started. Explore SuperLinkedIn and start growing your LinkedIn presence today.</p>
+        <a href="/" class="btn">Go to Dashboard &rarr;</a>
+    </div>
+</body>
+</html>

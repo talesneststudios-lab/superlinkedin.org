@@ -3,6 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
+const Stripe = require('stripe');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -124,6 +125,64 @@ app.get('/auth/linkedin/callback', async (req, res) => {
     } catch (err) {
         console.error('OAuth callback error:', err);
         res.redirect('/auth/error.html?message=' + encodeURIComponent('An unexpected error occurred'));
+    }
+});
+
+// ---------- STRIPE CHECKOUT ----------
+
+const stripe = process.env.STRIPE_SECRET_KEY
+    ? new Stripe(process.env.STRIPE_SECRET_KEY)
+    : null;
+
+const PLANS = {
+    pro_monthly:      { price: process.env.STRIPE_PRICE_PRO_MONTHLY,      name: 'SuperLinkedIn Pro',      trial: 3 },
+    pro_yearly:       { price: process.env.STRIPE_PRICE_PRO_YEARLY,       name: 'SuperLinkedIn Pro',      trial: 3 },
+    advanced_monthly: { price: process.env.STRIPE_PRICE_ADVANCED_MONTHLY, name: 'SuperLinkedIn Advanced', trial: 3 },
+    advanced_yearly:  { price: process.env.STRIPE_PRICE_ADVANCED_YEARLY,  name: 'SuperLinkedIn Advanced', trial: 3 },
+    ultra_monthly:    { price: process.env.STRIPE_PRICE_ULTRA_MONTHLY,    name: 'SuperLinkedIn Ultra',    trial: 3 },
+    ultra_yearly:     { price: process.env.STRIPE_PRICE_ULTRA_YEARLY,     name: 'SuperLinkedIn Ultra',    trial: 3 },
+};
+
+app.post('/api/checkout', async (req, res) => {
+    if (!stripe) {
+        return res.status(500).json({ error: 'Stripe is not configured' });
+    }
+
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { plan } = req.body;
+    const planConfig = PLANS[plan];
+
+    if (!planConfig || !planConfig.price) {
+        return res.status(400).json({ error: 'Invalid plan selected' });
+    }
+
+    try {
+        const session = await stripe.checkout.sessions.create({
+            mode: 'subscription',
+            payment_method_types: ['card'],
+            line_items: [{
+                price: planConfig.price,
+                quantity: 1,
+            }],
+            subscription_data: {
+                trial_period_days: planConfig.trial,
+            },
+            customer_email: req.session.user.email,
+            metadata: {
+                linkedinId: req.session.user.linkedinId,
+                plan: plan,
+            },
+            success_url: `${process.env.BASE_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${process.env.BASE_URL}/upgrade`,
+        });
+
+        res.json({ url: session.url });
+    } catch (err) {
+        console.error('Stripe checkout error:', err);
+        res.status(500).json({ error: 'Failed to create checkout session' });
     }
 });
 
