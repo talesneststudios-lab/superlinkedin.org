@@ -217,6 +217,43 @@ app.post('/api/onboarding/creators', (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/onboarding/resolve-linkedin', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL is required' });
+
+    let profileUrl = url.trim();
+    if (!profileUrl.startsWith('http')) profileUrl = 'https://' + profileUrl;
+
+    try {
+        const response = await fetch(profileUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (compatible; SuperLinkedIn/1.0)' },
+            redirect: 'follow',
+            signal: AbortSignal.timeout(8000),
+        });
+        const html = await response.text();
+
+        const ogTitle = html.match(/<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["']/i)
+            || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*property=["']og:title["']/i);
+        const titleTag = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+
+        let name = '';
+        if (ogTitle) {
+            name = ogTitle[1].replace(/\s*[-|].*$/, '').replace(/\s*\(.*\)/, '').trim();
+        } else if (titleTag) {
+            name = titleTag[1].replace(/\s*[-|].*$/, '').replace(/\s*\(.*\)/, '').trim();
+        }
+
+        res.json({ name });
+    } catch (err) {
+        console.error('LinkedIn resolve failed:', err.message);
+        res.json({ name: '' });
+    }
+});
+
 app.post('/api/onboarding/products', (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });

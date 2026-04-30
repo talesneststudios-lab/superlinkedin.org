@@ -1194,7 +1194,7 @@
                 <div class="search-row">
                     <div class="search-input-wrap">
                         <span class="search-icon">&#128269;</span>
-                        <input type="text" id="creatorSearch" class="search-input" placeholder="Search LinkedIn username..." oninput="onCreatorSearch(this.value)">
+                        <input type="text" id="creatorSearch" class="search-input" placeholder="Search by name or paste a LinkedIn profile URL..." oninput="onCreatorSearch(this.value)" onkeydown="if(event.key==='Enter')searchCreator()">
                     </div>
                     <button class="search-btn" onclick="searchCreator()">Search</button>
                 </div>
@@ -1405,16 +1405,64 @@
         ];
 
         const SEARCHABLE_CREATORS = [
+            // Tech Leaders
             { name: "Bill Gates", handle: "@billgates", initials: "BG" },
             { name: "Satya Nadella", handle: "@satyanadella", initials: "SN" },
-            { name: "Reid Hoffman", handle: "@reidhoffman", initials: "RH" },
-            { name: "Sheryl Sandberg", handle: "@sherylsandberg", initials: "SS" },
             { name: "Tim Cook", handle: "@timcook", initials: "TC" },
+            { name: "Sundar Pichai", handle: "@sundarpichai", initials: "SP" },
+            { name: "Jensen Huang", handle: "@jensenhuang", initials: "JH" },
+            { name: "Sam Altman", handle: "@samaltman", initials: "SA" },
+            { name: "Elon Musk", handle: "@elonmusk", initials: "EM" },
+            { name: "Jeff Bezos", handle: "@jeffbezos", initials: "JB" },
+            { name: "Mark Zuckerberg", handle: "@markzuckerberg", initials: "MZ" },
+            { name: "Reed Hastings", handle: "@reedhastings", initials: "RH" },
+            // LinkedIn / Business
+            { name: "Reid Hoffman", handle: "@reidhoffman", initials: "RH" },
             { name: "Jeff Weiner", handle: "@jeffweiner", initials: "JW" },
             { name: "Ryan Roslansky", handle: "@ryanroslansky", initials: "RR" },
-            { name: "Brene Brown", handle: "@brenebrown", initials: "BB" },
-            { name: "Daniel Kahneman", handle: "@danielkahneman", initials: "DK" },
+            { name: "Sheryl Sandberg", handle: "@sherylsandberg", initials: "SS" },
+            { name: "Indra Nooyi", handle: "@indranooyi", initials: "IN" },
+            { name: "Mary Barra", handle: "@marybarra", initials: "MB" },
+            { name: "Jamie Dimon", handle: "@jamiedimon", initials: "JD" },
+            { name: "Bob Iger", handle: "@bobiger", initials: "BI" },
+            // Marketing & Growth
             { name: "Seth Godin", handle: "@sethgodin", initials: "SG" },
+            { name: "Neil Patel", handle: "@neilpatel", initials: "NP" },
+            { name: "Ann Handley", handle: "@annhandley", initials: "AH" },
+            { name: "Rand Fishkin", handle: "@randfishkin", initials: "RF" },
+            { name: "Jay Baer", handle: "@jaybaer", initials: "JB" },
+            { name: "Mari Smith", handle: "@marismith", initials: "MS" },
+            // Leadership & Motivation
+            { name: "Brene Brown", handle: "@brenebrown", initials: "BB" },
+            { name: "Tony Robbins", handle: "@tonyrobbins", initials: "TR" },
+            { name: "Daniel Pink", handle: "@danielpink", initials: "DP" },
+            { name: "James Clear", handle: "@jamesclear", initials: "JC" },
+            { name: "Ryan Holiday", handle: "@ryanholiday", initials: "RH" },
+            { name: "Tim Ferriss", handle: "@timferriss", initials: "TF" },
+            // Entrepreneurship
+            { name: "Mark Cuban", handle: "@markcuban", initials: "MC" },
+            { name: "Sara Blakely", handle: "@sarablakely", initials: "SB" },
+            { name: "Naval Ravikant", handle: "@navalravikant", initials: "NR" },
+            { name: "Patrick Bet-David", handle: "@patrickbetdavid", initials: "PB" },
+            { name: "Alex Hormozi", handle: "@alexhormozi", initials: "AH" },
+            { name: "Chris Voss", handle: "@chrisvoss", initials: "CV" },
+            // HR & People
+            { name: "Liz Ryan", handle: "@lizryan", initials: "LR" },
+            { name: "Josh Bersin", handle: "@joshbersin", initials: "JB" },
+            { name: "Brigette Hyacinth", handle: "@brigettehyacinth", initials: "BH" },
+            // Finance & Investing
+            { name: "Ray Dalio", handle: "@raydalio", initials: "RD" },
+            { name: "Chamath Palihapitiya", handle: "@chaikimat", initials: "CP" },
+            { name: "Cathie Wood", handle: "@cathiewood", initials: "CW" },
+            // AI & Innovation
+            { name: "Andrew Ng", handle: "@andrewng", initials: "AN" },
+            { name: "Fei-Fei Li", handle: "@feifeili", initials: "FL" },
+            { name: "Demis Hassabis", handle: "@demishassabis", initials: "DH" },
+            // Media & Thought Leaders
+            { name: "Oprah Winfrey", handle: "@oprahwinfrey", initials: "OW" },
+            { name: "Arianna Huffington", handle: "@ariannahuffington", initials: "AH" },
+            { name: "Malcolm Gladwell", handle: "@malcolmgladwell", initials: "MG" },
+            { name: "Daniel Kahneman", handle: "@danielkahneman", initials: "DK" },
             ...SUGGESTED_CREATORS,
         ];
 
@@ -1530,25 +1578,24 @@
             }
         }
 
-        function onCreatorSearch(val) {
+        function isLinkedInUrl(val) {
+            return /linkedin\.com\/in\//i.test(val);
+        }
+
+        function extractSlug(url) {
+            const match = url.match(/linkedin\.com\/in\/([a-zA-Z0-9_-]+)/i);
+            return match ? match[1] : '';
+        }
+
+        function renderSearchResults(results) {
             const container = document.getElementById('searchResults');
-            if (val.length < 3) {
+            if (results.length === 0) {
                 container.style.display = 'none';
                 return;
             }
-            const q = val.toLowerCase();
-            const matches = SEARCHABLE_CREATORS.filter(c =>
-                c.name.toLowerCase().includes(q) || c.handle.toLowerCase().includes(q)
-            ).slice(0, 5);
-
-            if (matches.length === 0) {
-                container.style.display = 'none';
-                return;
-            }
-
             container.style.display = 'block';
-            container.innerHTML = matches.map(c => `
-                <div class="search-result-item" onclick="selectCreator('${c.name}', '${c.handle}', '${c.initials}'); document.getElementById('searchResults').style.display='none'; document.getElementById('creatorSearch').value='';">
+            container.innerHTML = results.map(c => `
+                <div class="search-result-item" onclick="selectCreator('${c.name.replace(/'/g, "\\'")}', '${c.handle.replace(/'/g, "\\'")}', '${c.initials}'); document.getElementById('searchResults').style.display='none'; document.getElementById('creatorSearch').value='';">
                     <div class="chip-avatar" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--linkedin-blue),var(--linkedin-light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.7rem;">${c.initials}</div>
                     <div>
                         <div style="font-weight:700;font-size:0.82rem;">${c.name}</div>
@@ -1558,9 +1605,57 @@
             `).join('');
         }
 
-        function searchCreator() {
-            const val = document.getElementById('creatorSearch').value;
-            onCreatorSearch(val);
+        function onCreatorSearch(val) {
+            const container = document.getElementById('searchResults');
+            if (val.length < 3) {
+                container.style.display = 'none';
+                return;
+            }
+
+            if (isLinkedInUrl(val)) {
+                container.style.display = 'block';
+                container.innerHTML = '<div style="padding:12px;font-size:0.82rem;color:var(--text-muted);">Press Search or Enter to resolve LinkedIn profile...</div>';
+                return;
+            }
+
+            const q = val.toLowerCase();
+            const matches = SEARCHABLE_CREATORS.filter(c =>
+                c.name.toLowerCase().includes(q) || c.handle.toLowerCase().includes(q)
+            ).slice(0, 5);
+
+            renderSearchResults(matches);
+        }
+
+        async function searchCreator() {
+            const val = document.getElementById('creatorSearch').value.trim();
+            if (!val) return;
+
+            if (isLinkedInUrl(val)) {
+                const container = document.getElementById('searchResults');
+                container.style.display = 'block';
+                container.innerHTML = '<div style="padding:12px;font-size:0.82rem;color:var(--text-muted);">Resolving LinkedIn profile...</div>';
+
+                const slug = extractSlug(val);
+                try {
+                    const res = await fetch('/api/onboarding/resolve-linkedin', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: val }),
+                    });
+                    const data = await res.json();
+
+                    const name = data.name || slug;
+                    const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                    const handle = '@' + slug;
+
+                    renderSearchResults([{ name, handle, initials }]);
+                } catch {
+                    const initials = slug.slice(0, 2).toUpperCase();
+                    renderSearchResults([{ name: slug, handle: '@' + slug, initials }]);
+                }
+            } else {
+                onCreatorSearch(val);
+            }
         }
 
         function saveCreators() {
