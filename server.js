@@ -276,20 +276,38 @@ app.post('/api/onboarding/analyze-url', async (req, res) => {
 
     try {
         const response = await fetch(url, {
-            headers: { 'User-Agent': 'SuperLinkedIn Bot/1.0' },
-            signal: AbortSignal.timeout(8000),
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml',
+                'Accept-Language': 'en-US,en;q=0.9',
+            },
+            redirect: 'follow',
+            signal: AbortSignal.timeout(10000),
         });
         const html = await response.text();
 
-        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
-        const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)
-            || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i)
-            || html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+        function extractMeta(html, nameOrProp) {
+            const patterns = [
+                new RegExp(`<meta[^>]*(?:name|property)\\s*=\\s*["']${nameOrProp}["'][^>]*content\\s*=\\s*["']([^"']+)["']`, 'i'),
+                new RegExp(`<meta[^>]*content\\s*=\\s*["']([^"']+)["'][^>]*(?:name|property)\\s*=\\s*["']${nameOrProp}["']`, 'i'),
+            ];
+            for (const p of patterns) {
+                const m = html.match(p);
+                if (m) return m[1].trim();
+            }
+            return '';
+        }
 
-        res.json({
-            name: titleMatch ? titleMatch[1].trim() : '',
-            description: descMatch ? descMatch[1].trim() : '',
-        });
+        const ogTitle = extractMeta(html, 'og:title');
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const name = ogTitle || (titleMatch ? titleMatch[1].trim() : '');
+
+        const ogDesc = extractMeta(html, 'og:description');
+        const metaDesc = extractMeta(html, 'description');
+        const twitterDesc = extractMeta(html, 'twitter:description');
+        const description = ogDesc || metaDesc || twitterDesc || '';
+
+        res.json({ name, description });
     } catch (err) {
         console.error('URL analysis failed:', err.message);
         res.json({ name: '', description: '' });
