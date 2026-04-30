@@ -97,6 +97,8 @@ app.use(session({
     },
 }));
 
+const cors = require('cors');
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname), {
     index: 'index.html',
@@ -612,6 +614,178 @@ app.post('/api/queue', async (req, res) => {
     });
 
     res.json({ queue: req.session.user.queue });
+});
+
+// ---------- EXTENSION & ANALYTICS ----------
+
+// Generate a simple auth token for the extension
+app.post('/api/extension/auth', async (req, res) => {
+    const { email, linkedinId } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    // Find user by email in DynamoDB (scan is fine for small user counts)
+    let user = null;
+    if (linkedinId) {
+        user = await dbGetUser(linkedinId);
+    }
+
+    if (!user) {
+        // Try to find by looking up session user
+        if (req.session.user && req.session.user.email === email) {
+            user = req.session.user;
+        }
+    }
+
+    if (!user) {
+        return res.status(404).json({ error: 'No account found. Please sign in to SuperLinkedIn first.' });
+    }
+
+    // Generate a token (hash of linkedinId + a secret)
+    const secret = process.env.SESSION_SECRET || 'fallback';
+    const token = crypto.createHmac('sha256', secret)
+        .update(user.linkedinId)
+        .digest('hex');
+
+    // Store the token mapping
+    await dbUpdateFields(user.linkedinId, { extensionToken: token });
+
+    // Cache token -> linkedinId for fast lookups
+    if (!global._tokenCache) global._tokenCache = {};
+    global._tokenCache[token] = user.linkedinId;
+
+    res.json({ token, name: user.name });
+});
+
+// Middleware to authenticate extension requests via Bearer token
+async function authExtension(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing authorization token' });
+    }
+
+    const token = authHeader.slice(7);
+    const secret = process.env.SESSION_SECRET || 'fallback';
+
+    // Find user whose extensionToken matches
+    // Since we generate token = HMAC(linkedinId), we can check session user first
+    if (req.session.user) {
+        const expectedToken = crypto.createHmac('sha256', secret)
+            .update(req.session.user.linkedinId)
+            .digest('hex');
+        if (expectedToken === token) {
+            req.extUser = req.session.user;
+            return next();
+        }
+    }
+
+    // Fallback: check all known linkedinIds from the token
+    // For efficiency, store a token->linkedinId mapping in a simple in-memory cache
+    if (!global._tokenCache) global._tokenCache = {};
+
+    if (global._tokenCache[token]) {
+        const user = await dbGetUser(global._tokenCache[token]);
+        if (user) {
+            req.extUser = user;
+            return next();
+        }
+    }
+
+    return res.status(401).json({ error: 'Invalid or expired token' });
+}
+
+// Receive scraped analytics data from extension
+app.post('/api/analytics/sync', authExtension, async (req, res) => {
+    const { followers, posts } = req.body;
+    const linkedinId = req.extUser.linkedinId;
+
+    const updates = {};
+    const now = new Date().toISOString();
+    const today = now.split('T')[0];
+
+    if (followers !== null && followers !== undefined) {
+        updates.analyticsFollowers = followers;
+
+        // Append to followers history
+        const user = await dbGetUser(linkedinId);
+        const history = (user && user.analyticsFollowersHistory) || [];
+        const lastEntry = history[history.length - 1];
+        if (!lastEntry || lastEntry.date !== today) {
+            history.push({ date: today, count: followers });
+            if (history.length > 365) history.splice(0, history.length - 365);
+        } else {
+            lastEntry.count = followers;
+        }
+        updates.analyticsFollowersHistory = history;
+    }
+
+    if (posts && posts.length > 0) {
+        const user = await dbGetUser(linkedinId);
+        const existing = (user && user.analyticsPostMetrics) || [];
+
+        posts.forEach(p => {
+            const idx = existing.findIndex(e => e.text === p.text);
+            if (idx >= 0) {
+                existing[idx] = { ...existing[idx], ...p };
+            } else {
+                existing.push(p);
+            }
+        });
+
+        if (existing.length > 200) existing.splice(0, existing.length - 200);
+        updates.analyticsPostMetrics = existing;
+    }
+
+    updates.analyticsLastSync = now;
+
+    // Aggregate engagement stats
+    if (updates.analyticsPostMetrics || posts) {
+        const user = await dbGetUser(linkedinId);
+        const allPosts = updates.analyticsPostMetrics || (user && user.analyticsPostMetrics) || [];
+        let totalLikes = 0, totalComments = 0, totalReposts = 0, totalImpressions = 0;
+        allPosts.forEach(p => {
+            totalLikes += p.likes || 0;
+            totalComments += p.comments || 0;
+            totalReposts += p.reposts || 0;
+            totalImpressions += p.impressions || 0;
+        });
+        updates.analyticsEngagement = {
+            likes: totalLikes,
+            comments: totalComments,
+            reposts: totalReposts,
+            impressions: totalImpressions,
+            totalPosts: allPosts.length,
+        };
+    }
+
+    await dbUpdateFields(linkedinId, updates);
+
+    // Cache the token for future lookups
+    const secret = process.env.SESSION_SECRET || 'fallback';
+    const token = crypto.createHmac('sha256', secret).update(linkedinId).digest('hex');
+    if (!global._tokenCache) global._tokenCache = {};
+    global._tokenCache[token] = linkedinId;
+
+    res.json({ ok: true, syncedAt: now });
+});
+
+// Get analytics data for the dashboard
+app.get('/api/analytics', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) {
+        return res.json({});
+    }
+
+    res.json({
+        followers: user.analyticsFollowers || 0,
+        followersHistory: user.analyticsFollowersHistory || [],
+        postMetrics: user.analyticsPostMetrics || [],
+        engagement: user.analyticsEngagement || {},
+        lastSync: user.analyticsLastSync || null,
+    });
 });
 
 // ---------- API ROUTES ----------

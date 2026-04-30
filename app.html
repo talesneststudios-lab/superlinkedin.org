@@ -544,9 +544,30 @@
         .queue-empty p { font-size: 0.9rem; margin-bottom: 8px; }
 
         /* ANALYTICS PAGE */
+        .analytics-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .analytics-header h2 { font-size: 1.5rem; font-weight: 900; }
+
+        .analytics-period-btn {
+            padding: 7px 16px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-white);
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
+            grid-template-columns: repeat(2, 1fr);
             gap: 16px;
             margin-bottom: 24px;
         }
@@ -558,76 +579,308 @@
             padding: 20px;
         }
 
-        .stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
-        .stat-value { font-size: 1.8rem; font-weight: 900; }
-        .stat-change { font-size: 0.75rem; font-weight: 600; margin-top: 4px; }
-        .stat-change.up { color: var(--green); }
-        .stat-change.down { color: var(--red); }
+        .stat-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+        .stat-value { font-size: 2rem; font-weight: 900; }
+        .stat-mini-chart { height: 32px; margin-top: 8px; display: flex; align-items: flex-end; }
+        .stat-mini-chart .mini-line { width: 100%; height: 2px; background: var(--accent); border-radius: 2px; opacity: 0.4; }
 
-        .chart-placeholder {
+        /* Streak Heatmap */
+        .streak-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .streak-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.92rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .streak-title .streak-icon { font-size: 1.1rem; }
+
+        .heatmap-container { overflow-x: auto; }
+
+        .heatmap-grid {
+            display: grid;
+            grid-template-rows: repeat(7, 1fr);
+            grid-auto-flow: column;
+            gap: 3px;
+        }
+
+        .heatmap-cell {
+            width: 14px; height: 14px;
+            border-radius: 3px;
             background: var(--bg);
-            border-radius: 10px;
-            height: 250px;
+        }
+
+        .heatmap-cell.l1 { background: #c6dbef; }
+        .heatmap-cell.l2 { background: #6baed6; }
+        .heatmap-cell.l3 { background: #2171b5; }
+        .heatmap-cell.l4 { background: #08519c; }
+
+        .heatmap-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+
+        .heatmap-day-labels {
+            display: grid;
+            grid-template-rows: repeat(7, 1fr);
+            gap: 3px;
+            margin-right: 6px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        .heatmap-day-labels span { height: 14px; display: flex; align-items: center; }
+
+        .heatmap-legend {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: 8px;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+
+        .heatmap-legend .legend-cell {
+            width: 12px; height: 12px;
+            border-radius: 2px;
+        }
+
+        /* Engagement Section */
+        .engagement-tabs {
+            display: flex;
+            gap: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .engagement-tab {
+            padding: 10px 0;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .engagement-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+
+        .engagement-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .engagement-stat-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+        }
+
+        .engagement-stat-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
+        .engagement-stat-value { font-size: 1.6rem; font-weight: 900; margin-bottom: 2px; }
+        .engagement-stat-pct { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+
+        /* Follower Gain Chart */
+        .follower-chart-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .follower-chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .follower-chart-header h3 { font-size: 0.92rem; font-weight: 700; }
+
+        .follower-chart-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .follower-chart-actions button {
+            width: 28px; height: 28px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-white);
+            cursor: pointer;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .chart-area {
+            position: relative;
+            height: 160px;
+            border-bottom: 1px solid var(--border);
+            border-left: 1px solid var(--border);
+        }
+
+        .chart-y-labels {
+            position: absolute;
+            left: -4px;
+            top: 0;
+            bottom: 0;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            transform: translateX(-100%);
+            padding-right: 8px;
         }
 
-        .chart-bars {
+        .chart-gridlines {
+            position: absolute;
+            left: 0; right: 0; top: 0; bottom: 0;
+        }
+
+        .chart-gridline {
+            border-bottom: 1px dashed #eee;
+            position: absolute;
+            left: 0; right: 0;
+        }
+
+        .chart-line-svg {
+            position: absolute;
+            left: 0; right: 0; top: 0; bottom: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .chart-x-labels {
             display: flex;
-            align-items: flex-end;
-            gap: 6px;
-            height: 120px;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            padding-left: 24px;
         }
 
-        .chart-bar {
-            width: 24px;
-            background: var(--accent);
-            border-radius: 4px 4px 0 0;
-            opacity: 0.6;
+        /* Top Posts Section */
+        .top-posts-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
         }
 
-        .top-posts-list { list-style: none; }
-
-        .top-post-item {
+        .top-posts-header {
             display: flex;
             align-items: center;
             gap: 12px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
         }
 
-        .top-post-item:last-child { border-bottom: none; }
+        .top-posts-header h3 { font-size: 0.92rem; font-weight: 700; }
 
-        .top-post-rank {
+        .top-posts-filter {
+            padding: 5px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-white);
+            font-family: inherit;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .top-posts-empty {
+            text-align: center;
+            padding: 32px 16px;
+            color: var(--orange);
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .post-type-tabs {
+            display: flex;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .post-type-tab {
+            padding: 8px 0;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+        }
+
+        .post-type-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+
+        .post-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .post-pagination button {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-white);
+            font-family: inherit;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+
+        .post-view-btns {
+            display: flex;
+            gap: 4px;
+        }
+
+        .post-view-btn {
             width: 28px; height: 28px;
-            border-radius: 50%;
-            background: var(--accent-light);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            background: var(--bg-white);
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--text-muted);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 800;
-            font-size: 0.78rem;
-            color: var(--accent);
-            flex-shrink: 0;
-        }
-
-        .top-post-text {
-            flex: 1;
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .top-post-metric {
-            font-size: 0.78rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            flex-shrink: 0;
         }
 
         /* CREATE PAGE */
@@ -1049,8 +1302,8 @@
 
         @media (max-width: 1024px) {
             .home-grid { grid-template-columns: 1fr; }
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .tutorial-grid { grid-template-columns: 1fr 1fr; }
+            .engagement-stats { grid-template-columns: repeat(2, 1fr); }
             .compose-panel { width: 100%; max-width: 400px; box-shadow: -4px 0 24px rgba(0,0,0,0.12); }
             .main.panel-open { margin-right: 0; }
         }
@@ -1063,6 +1316,7 @@
             .main { margin-left: 60px; }
             .main-content { padding: 20px 16px; }
             .stats-grid { grid-template-columns: 1fr; }
+            .engagement-stats { grid-template-columns: 1fr; }
         }
     </style>
 </head>
@@ -1245,58 +1499,176 @@
 
             <!-- ANALYTICS PAGE -->
             <div class="page" id="page-analytics">
+
+                <!-- Top Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Followers</div>
-                        <div class="stat-value">0</div>
-                        <div class="stat-change up">Connect LinkedIn to track</div>
+                        <div class="stat-value" id="aFollowers">0</div>
+                        <div class="stat-mini-chart"><div class="mini-line"></div></div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Post Impressions</div>
-                        <div class="stat-value">0</div>
-                        <div class="stat-change">Last 30 days</div>
+                        <div class="stat-label">Posts</div>
+                        <div class="stat-value" id="aPosts">0</div>
+                        <div class="stat-mini-chart"><div class="mini-line"></div></div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Engagement Rate</div>
-                        <div class="stat-value">0%</div>
-                        <div class="stat-change">Avg across posts</div>
+                        <div class="stat-label">Impressions</div>
+                        <div class="stat-value" id="aImpressions">0</div>
+                        <div class="stat-mini-chart"><div class="mini-line"></div></div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Posts Published</div>
-                        <div class="stat-value" id="analyticsPostCount">0</div>
-                        <div class="stat-change">Total</div>
+                        <div class="stat-label">Engagements</div>
+                        <div class="stat-value" id="aEngagements">0</div>
+                        <div class="stat-mini-chart"><div class="mini-line"></div></div>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-title">&#128200; Growth Over Time</div>
-                    <div class="chart-placeholder">
-                        <div class="chart-bars">
-                            <div class="chart-bar" style="height:30px;"></div>
-                            <div class="chart-bar" style="height:50px;"></div>
-                            <div class="chart-bar" style="height:40px;"></div>
-                            <div class="chart-bar" style="height:70px;"></div>
-                            <div class="chart-bar" style="height:55px;"></div>
-                            <div class="chart-bar" style="height:80px;"></div>
-                            <div class="chart-bar" style="height:65px;"></div>
-                            <div class="chart-bar" style="height:90px;"></div>
-                            <div class="chart-bar" style="height:75px;"></div>
-                            <div class="chart-bar" style="height:100px;"></div>
-                            <div class="chart-bar" style="height:85px;"></div>
-                            <div class="chart-bar" style="height:110px;"></div>
+                <!-- Activity Streak Heatmap -->
+                <div class="streak-card">
+                    <div class="streak-title">
+                        <span class="streak-icon" style="color:var(--orange);">&#128293;</span>
+                        <span id="streakText">0-day streak, oh c'mon</span>
+                    </div>
+                    <div style="display:flex;">
+                        <div class="heatmap-day-labels">
+                            <span>Sun</span><span></span><span>Tue</span><span></span><span>Thu</span><span></span><span>Sat</span>
                         </div>
-                        <p style="font-size:0.82rem;color:var(--text-muted);">Start posting to see your growth analytics</p>
+                        <div class="heatmap-container" style="flex:1;">
+                            <div class="heatmap-grid" id="heatmapGrid"></div>
+                            <div class="heatmap-labels" id="heatmapLabels"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-legend">
+                        <div class="legend-cell" style="background:var(--bg);"></div>
+                        <div class="legend-cell" style="background:#ef4444;"></div> <span style="margin:0 2px;">0</span>
+                        <div class="legend-cell" style="background:var(--orange);"></div> <span style="margin:0 2px;">0</span>
+                        <div class="legend-cell" style="background:var(--green);"></div> <span style="margin:0 2px;">0</span>
                     </div>
                 </div>
 
-                <div class="card">
-                    <div class="card-title">&#127942; Top Performing Posts</div>
-                    <div id="topPostsList">
-                        <div class="queue-empty" style="padding:24px;">
-                            <p>No posts yet. Start creating to see performance data.</p>
+                <!-- Engagements / Activity time / Impression tabs -->
+                <div class="engagement-tabs">
+                    <button class="engagement-tab active" onclick="switchEngagementTab('engagements', this)">Engagements</button>
+                    <button class="engagement-tab" onclick="switchEngagementTab('activity', this)">Activity time / impression</button>
+                </div>
+
+                <div id="engagementsPanel">
+                    <div class="engagement-stats">
+                        <div class="engagement-stat-card">
+                            <div class="engagement-stat-label">Likes</div>
+                            <div class="engagement-stat-value" id="aLikes">0</div>
+                            <div class="engagement-stat-pct">0%</div>
+                        </div>
+                        <div class="engagement-stat-card">
+                            <div class="engagement-stat-label">Reposts</div>
+                            <div class="engagement-stat-value" id="aReposts">0</div>
+                            <div class="engagement-stat-pct">0%</div>
+                        </div>
+                        <div class="engagement-stat-card">
+                            <div class="engagement-stat-label">Replies</div>
+                            <div class="engagement-stat-value" id="aReplies">0</div>
+                            <div class="engagement-stat-pct">0%</div>
+                        </div>
+                        <div class="engagement-stat-card">
+                            <div class="engagement-stat-label">Bookmarks</div>
+                            <div class="engagement-stat-value" id="aBookmarks">0</div>
+                            <div class="engagement-stat-pct">0%</div>
                         </div>
                     </div>
                 </div>
+
+                <div id="activityPanel" style="display:none;">
+                    <div class="engagement-stats">
+                        <div class="engagement-stat-card">
+                            <div class="engagement-stat-label">Best day</div>
+                            <div class="engagement-stat-value" style="font-size:1.1rem;">--</div>
+                            <div class="engagement-stat-pct">No data yet</div>
+                        </div>
+                        <div class="engagement-stat-card">
+                            <div class="engagement-stat-label">Best time</div>
+                            <div class="engagement-stat-value" style="font-size:1.1rem;">--</div>
+                            <div class="engagement-stat-pct">No data yet</div>
+                        </div>
+                        <div class="engagement-stat-card">
+                            <div class="engagement-stat-label">Avg impressions</div>
+                            <div class="engagement-stat-value">0</div>
+                            <div class="engagement-stat-pct">per post</div>
+                        </div>
+                        <div class="engagement-stat-card">
+                            <div class="engagement-stat-label">Avg engagement</div>
+                            <div class="engagement-stat-value">0%</div>
+                            <div class="engagement-stat-pct">per post</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Follower Gain Chart -->
+                <div class="follower-chart-card">
+                    <div class="follower-chart-header">
+                        <h3>Follower Gain <span style="font-size:0.7rem;font-weight:500;color:var(--text-muted);margin-left:4px;">&#9660;</span></h3>
+                        <div class="follower-chart-actions">
+                            <button title="Download">&#128230;</button>
+                            <button title="Fullscreen">&#9974;</button>
+                        </div>
+                    </div>
+                    <div style="display:flex;">
+                        <div style="position:relative;width:24px;">
+                            <div class="chart-y-labels" style="position:relative;transform:none;padding-right:0;width:24px;">
+                                <span>1</span><span>0.5</span><span>0</span>
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <div class="chart-area" id="followerChartArea">
+                                <div class="chart-gridlines">
+                                    <div class="chart-gridline" style="top:0;"></div>
+                                    <div class="chart-gridline" style="top:50%;"></div>
+                                </div>
+                                <svg class="chart-line-svg" id="followerSvg" preserveAspectRatio="none">
+                                    <polyline id="followerLine" fill="none" stroke="#0A66C2" stroke-width="2" points=""/>
+                                </svg>
+                            </div>
+                            <div class="chart-x-labels" id="followerXLabels"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Posts that generated the most -->
+                <div class="top-posts-card">
+                    <div class="top-posts-header">
+                        <h3>Posts that generated the most</h3>
+                        <select class="top-posts-filter">
+                            <option>Followers</option>
+                            <option>Impressions</option>
+                            <option>Engagement</option>
+                        </select>
+                    </div>
+                    <div class="top-posts-empty" id="topPostsEmpty">
+                        No posts found in this time period
+                    </div>
+                    <div id="topPostsList" style="display:none;"></div>
+
+                    <div class="post-type-tabs">
+                        <button class="post-type-tab active">Posts</button>
+                        <button class="post-type-tab">Replies</button>
+                        <button class="post-type-tab">Reposts</button>
+                        <button class="post-type-tab">Best posts</button>
+                        <button class="post-type-tab">Most engaged</button>
+                    </div>
+
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div class="post-view-btns">
+                            <button class="post-view-btn" title="Grid">&#9638;</button>
+                            <button class="post-view-btn" title="List">&#9776;</button>
+                        </div>
+                        <div class="post-pagination">
+                            <button>&lt; Prev</button>
+                            <span>1/1</span>
+                            <button>Next &gt;</button>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- CREATE PAGE -->
@@ -1505,6 +1877,8 @@
 
             const titles = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer' };
             document.getElementById('pageTitle').textContent = titles[page] || page;
+
+            if (page === 'analytics') renderAnalytics();
         }
 
         // Modal
@@ -1612,7 +1986,8 @@
                 </div>
             `).join('');
 
-            document.getElementById('analyticsPostCount').textContent = queue.filter(q => q.status === 'posted').length;
+            const postsEl = document.getElementById('aPosts');
+            if (postsEl) postsEl.textContent = queue.length;
         }
 
         function filterQueue(status, btn) {
@@ -1710,21 +2085,145 @@
             alert('Post added to your queue!');
         }
 
-        // Top posts for analytics
-        function renderTopPosts() {
-            const container = document.getElementById('topPostsList');
-            const posted = queue.filter(q => q.status === 'posted');
-            if (posted.length === 0) {
-                container.innerHTML = '<div class="queue-empty" style="padding:24px;"><p>No posts yet. Start creating to see performance data.</p></div>';
+        // Analytics
+        function buildHeatmap() {
+            const grid = document.getElementById('heatmapGrid');
+            const labels = document.getElementById('heatmapLabels');
+            const today = new Date();
+            const weeks = 35;
+            const cells = weeks * 7;
+
+            let html = '';
+            for (let i = 0; i < cells; i++) {
+                html += '<div class="heatmap-cell"></div>';
+            }
+            grid.innerHTML = html;
+
+            const months = [];
+            for (let w = 0; w < weeks; w++) {
+                const d = new Date(today);
+                d.setDate(d.getDate() - (cells - 1 - w * 7));
+                const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                if (w === 0 || d.getDate() <= 7) {
+                    months.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                }
+            }
+            const spread = ['', '', '', '', '', '', ''];
+            for (let i = 0; i < months.length && i < 8; i++) {
+                spread[Math.floor(i * 7 / months.length)] = months[i];
+            }
+            labels.innerHTML = months.filter((_, i) => i % 4 === 0).map(m => `<span>${m}</span>`).join('');
+        }
+
+        function switchEngagementTab(tab, btn) {
+            document.querySelectorAll('.engagement-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('engagementsPanel').style.display = tab === 'engagements' ? 'block' : 'none';
+            document.getElementById('activityPanel').style.display = tab === 'activity' ? 'block' : 'none';
+        }
+
+        function buildFollowerChart(history) {
+            const labels = document.getElementById('followerXLabels');
+            const svg = document.getElementById('followerSvg');
+            const line = document.getElementById('followerLine');
+
+            if (!history || history.length === 0) {
+                const today = new Date();
+                const pts = [];
+                for (let i = 30; i >= 0; i -= 5) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - i);
+                    pts.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                }
+                labels.innerHTML = pts.map(p => `<span>${p}</span>`).join('');
+                const w = svg.clientWidth || 500;
+                const h = svg.clientHeight || 160;
+                const flatPts = [];
+                for (let i = 0; i < 7; i++) flatPts.push(`${(i / 6) * w},${h - 2}`);
+                line.setAttribute('points', flatPts.join(' '));
                 return;
             }
-            container.innerHTML = '<ul class="top-posts-list">' + posted.slice(0, 5).map((p, i) => `
-                <li class="top-post-item">
-                    <div class="top-post-rank">${i + 1}</div>
-                    <div class="top-post-text">${p.text}</div>
-                    <div class="top-post-metric">${Math.floor(Math.random() * 500)} views</div>
-                </li>
-            `).join('') + '</ul>';
+
+            const recent = history.slice(-30);
+            labels.innerHTML = recent.filter((_, i) => i % Math.max(1, Math.floor(recent.length / 6)) === 0)
+                .map(h => `<span>${h.date.slice(5)}</span>`).join('');
+
+            const w = svg.clientWidth || 500;
+            const h = svg.clientHeight || 160;
+            const counts = recent.map(r => r.count);
+            const maxC = Math.max(...counts, 1);
+            const minC = Math.min(...counts, 0);
+            const range = maxC - minC || 1;
+
+            const chartPts = counts.map((c, i) => {
+                const x = (i / Math.max(counts.length - 1, 1)) * w;
+                const y = h - ((c - minC) / range) * (h - 10) - 5;
+                return `${x},${y}`;
+            });
+            line.setAttribute('points', chartPts.join(' '));
+
+            const yLabels = document.querySelector('.chart-y-labels');
+            if (yLabels) {
+                yLabels.innerHTML = `<span>${maxC}</span><span>${Math.round((maxC + minC) / 2)}</span><span>${minC}</span>`;
+            }
+        }
+
+        async function renderAnalytics() {
+            buildHeatmap();
+
+            let data = {};
+            try {
+                const res = await fetch('/api/analytics');
+                if (res.ok) data = await res.json();
+            } catch {}
+
+            const followers = data.followers || 0;
+            const engagement = data.engagement || {};
+            const postMetrics = data.postMetrics || [];
+            const totalPosts = postMetrics.length || queue.length;
+            const totalImpressions = engagement.impressions || 0;
+            const totalEngagements = (engagement.likes || 0) + (engagement.comments || 0) + (engagement.reposts || 0);
+
+            document.getElementById('aFollowers').textContent = followers.toLocaleString();
+            document.getElementById('aPosts').textContent = totalPosts.toLocaleString();
+            document.getElementById('aImpressions').textContent = totalImpressions.toLocaleString();
+            document.getElementById('aEngagements').textContent = totalEngagements.toLocaleString();
+
+            document.getElementById('aLikes').textContent = (engagement.likes || 0).toLocaleString();
+            document.getElementById('aReposts').textContent = (engagement.reposts || 0).toLocaleString();
+            document.getElementById('aReplies').textContent = (engagement.comments || 0).toLocaleString();
+            document.getElementById('aBookmarks').textContent = '0';
+
+            if (totalEngagements > 0 && totalImpressions > 0) {
+                const pct = (val) => ((val / totalImpressions) * 100).toFixed(1) + '%';
+                document.querySelectorAll('.engagement-stat-pct')[0].textContent = pct(engagement.likes || 0);
+                document.querySelectorAll('.engagement-stat-pct')[1].textContent = pct(engagement.reposts || 0);
+                document.querySelectorAll('.engagement-stat-pct')[2].textContent = pct(engagement.comments || 0);
+            }
+
+            buildFollowerChart(data.followersHistory || []);
+
+            if (postMetrics.length > 0) {
+                const sorted = [...postMetrics].sort((a, b) => (b.impressions || 0) - (a.impressions || 0));
+                document.getElementById('topPostsEmpty').style.display = 'none';
+                document.getElementById('topPostsList').style.display = 'block';
+                document.getElementById('topPostsList').innerHTML = sorted.slice(0, 5).map(p =>
+                    `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                        <div style="font-size:0.85rem;color:var(--text-secondary);flex:1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-right:12px;">${p.text}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${(p.impressions || 0).toLocaleString()} views &middot; ${(p.likes || 0)} likes</div>
+                    </div>`
+                ).join('');
+            } else if (queue.length > 0) {
+                document.getElementById('topPostsEmpty').style.display = 'none';
+                document.getElementById('topPostsList').style.display = 'block';
+                document.getElementById('topPostsList').innerHTML = queue.slice(0, 5).map(q =>
+                    `<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--text-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${q.text}</div>`
+                ).join('');
+            }
+
+            if (data.lastSync) {
+                document.getElementById('streakText').textContent = 'Last sync: ' + new Date(data.lastSync).toLocaleString();
+            }
         }
 
         // Compose panel
@@ -1891,7 +2390,6 @@
         async function init() {
             await loadUser();
             await loadQueue();
-            renderTopPosts();
             setTimeout(openModal, 800);
         }
 

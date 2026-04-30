@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperLinkedIn</title>
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <div class="popup">
+        <div class="header">
+            <div class="logo">SL</div>
+            <span class="brand">SuperLinkedIn</span>
+        </div>
+
+        <!-- Logged out state -->
+        <div id="loginView">
+            <p class="subtitle">Connect your account to sync LinkedIn analytics.</p>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="emailInput" placeholder="you@example.com">
+            </div>
+            <div class="form-group">
+                <label>LinkedIn ID <span class="hint">(from your profile URL)</span></label>
+                <input type="text" id="linkedinIdInput" placeholder="e.g. paris-papachristodoulou">
+            </div>
+            <button id="loginBtn" class="btn-primary">Connect Account</button>
+            <p id="loginError" class="error"></p>
+        </div>
+
+        <!-- Logged in state -->
+        <div id="statusView" style="display:none;">
+            <div class="status-card">
+                <div class="status-icon connected"></div>
+                <div>
+                    <div class="status-label">Connected as</div>
+                    <div class="status-name" id="userName">--</div>
+                </div>
+            </div>
+
+            <div class="sync-info">
+                <div class="sync-row">
+                    <span>Last sync</span>
+                    <span id="lastSyncTime" class="sync-value">Never</span>
+                </div>
+                <div class="sync-row">
+                    <span>Status</span>
+                    <span id="syncStatus" class="sync-value status-ok">Active</span>
+                </div>
+            </div>
+
+            <button id="syncBtn" class="btn-primary">Sync Now</button>
+            <p id="syncMessage" class="success"></p>
+
+            <div class="footer-links">
+                <a href="https://rwz9r5zqtw.us-east-1.awsapprunner.com/app" target="_blank">Open Dashboard</a>
+                <button id="logoutBtn" class="btn-link">Disconnect</button>
+            </div>
+        </div>
+    </div>
+    <script src="popup.js"></script>
+</body>
+</html>
