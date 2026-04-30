@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperLinkedIn &mdash; Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --bg-white: #ffffff;
+            --sidebar-bg: #1a1a2e;
+            --sidebar-text: #b0b0c0;
+            --sidebar-active: #ffffff;
+            --sidebar-hover: rgba(255,255,255,0.06);
+            --sidebar-section: #6b6b80;
+            --text-primary: #1a1a2e;
+            --text-secondary: #555566;
+            --text-muted: #888899;
+            --accent: #0A66C2;
+            --accent-hover: #0977d4;
+            --accent-light: rgba(10,102,194,0.08);
+            --border: #e5e5ea;
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --radius: 12px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 240px;
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            padding: 20px 20px 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+
+        .sidebar-logo .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 0.75rem;
+            color: #fff;
+        }
+
+        .sidebar-logo span {
+            font-weight: 800;
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .sidebar-create-btn {
+            margin: 16px 16px 8px;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-align: center;
+            transition: background 0.2s;
+        }
+
+        .sidebar-create-btn:hover { background: var(--accent-hover); }
+
+        .sidebar-nav {
+            padding: 8px 0;
+            flex: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 20px;
+            color: var(--sidebar-text);
+            font-size: 0.85rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-decoration: none;
+        }
+
+        .nav-item:hover {
+            background: var(--sidebar-hover);
+            color: var(--sidebar-active);
+        }
+
+        .nav-item.active {
+            color: var(--sidebar-active);
+            background: var(--sidebar-hover);
+            font-weight: 600;
+        }
+
+        .nav-item .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .nav-section {
+            padding: 16px 20px 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--sidebar-section);
+        }
+
+        .nav-sub-item {
+            padding-left: 48px;
+            font-size: 0.82rem;
+        }
+
+        .sidebar-bottom {
+            border-top: 1px solid rgba(255,255,255,0.06);
+            padding: 12px 16px;
+        }
+
+        .sidebar-credits {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.04);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-credits .credits-icon { font-size: 1rem; }
+        .sidebar-credits span { font-size: 0.78rem; color: var(--sidebar-text); }
+
+        .sidebar-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 4px;
+        }
+
+        .sidebar-user-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.7rem;
+            overflow: hidden;
+        }
+
+        .sidebar-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .sidebar-user-info { flex: 1; min-width: 0; }
+        .sidebar-user-name { font-size: 0.78rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .sidebar-user-handle { font-size: 0.68rem; color: var(--sidebar-text); }
+
+        .sidebar-links {
+            padding: 8px 0 0;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 6px 4px;
+            font-size: 0.75rem;
+            color: var(--sidebar-text);
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .sidebar-link:hover { color: var(--sidebar-active); }
+
+        /* MAIN */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            min-height: 100vh;
+        }
+
+        .main-header {
+            padding: 20px 32px;
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .main-header h1 {
+            font-size: 1.3rem;
+            font-weight: 800;
+        }
+
+        .main-content {
+            padding: 28px 32px;
+        }
+
+        /* PAGE CONTAINERS */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* CARDS */
+        .card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.hidden { display: none; }
+
+        .modal {
+            background: var(--bg-white);
+            border-radius: 16px;
+            max-width: 560px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            padding: 32px;
+            position: relative;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px; right: 16px;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .modal-logo {
+            text-align: center;
+            margin-bottom: 12px;
+        }
+
+        .modal-logo .logo-circle {
+            width: 48px; height: 48px;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 900;
+            font-size: 0.9rem;
+        }
+
+        .modal h2 {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .modal .modal-sub {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 24px;
+        }
+
+        .ai-post-card {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+
+        .ai-post-author {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .ai-post-author-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.7rem;
+            overflow: hidden;
+        }
+
+        .ai-post-author-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .ai-post-author-name { font-weight: 700; font-size: 0.85rem; }
+        .ai-post-author-handle { font-size: 0.75rem; color: var(--text-muted); }
+
+        .ai-post-body {
+            font-size: 0.88rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            white-space: pre-line;
+        }
+
+        .ai-post-add-btn {
+            padding: 8px 18px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .ai-post-add-btn:hover { background: var(--accent-hover); }
+        .ai-post-add-btn.added { background: var(--green); cursor: default; }
+
+        .modal-scroll-hint {
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 8px;
+        }
+
+        /* HOME PAGE */
+        .home-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .home-grid .card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .tip-list { list-style: none; }
+        .tip-list li {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 8px 0;
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+        }
+
+        .tip-list li .tip-icon {
+            flex-shrink: 0;
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+        }
+
+        .tutorial-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .tutorial-card {
+            padding: 16px;
+            background: var(--bg);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .tutorial-card:hover { background: #eee; }
+
+        .tutorial-card .tut-icon {
+            font-size: 1.4rem;
+            margin-bottom: 8px;
+        }
+
+        .tutorial-card h4 {
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .tutorial-card p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* QUEUE PAGE */
+        .queue-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 20px;
+            background: var(--bg);
+            border-radius: 10px;
+            padding: 4px;
+            width: fit-content;
+        }
+
+        .queue-tab {
+            padding: 8px 20px;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .queue-tab.active {
+            background: var(--bg-white);
+            color: var(--text-primary);
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .queue-item:last-child { border-bottom: none; }
+
+        .queue-item-status {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .queue-item-status.scheduled { background: var(--orange); }
+        .queue-item-status.draft { background: var(--border); }
+        .queue-item-status.posted { background: var(--green); }
+
+        .queue-item-content { flex: 1; min-width: 0; }
+
+        .queue-item-text {
+            font-size: 0.88rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .queue-item-meta {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .queue-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .queue-action-btn {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-white);
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.75rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+
+        .queue-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .queue-action-btn.delete:hover { border-color: var(--red); color: var(--red); }
+
+        .queue-empty {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-muted);
+        }
+
+        .queue-empty .empty-icon { font-size: 2.4rem; margin-bottom: 12px; opacity: 0.4; }
+        .queue-empty p { font-size: 0.9rem; margin-bottom: 8px; }
+
+        /* ANALYTICS PAGE */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .stat-label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; margin-bottom: 6px; }
+        .stat-value { font-size: 1.8rem; font-weight: 900; }
+        .stat-change { font-size: 0.75rem; font-weight: 600; margin-top: 4px; }
+        .stat-change.up { color: var(--green); }
+        .stat-change.down { color: var(--red); }
+
+        .chart-placeholder {
+            background: var(--bg);
+            border-radius: 10px;
+            height: 250px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 6px;
+            height: 120px;
+        }
+
+        .chart-bar {
+            width: 24px;
+            background: var(--accent);
+            border-radius: 4px 4px 0 0;
+            opacity: 0.6;
+        }
+
+        .top-posts-list { list-style: none; }
+
+        .top-post-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .top-post-item:last-child { border-bottom: none; }
+
+        .top-post-rank {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: var(--accent-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 0.78rem;
+            color: var(--accent);
+            flex-shrink: 0;
+        }
+
+        .top-post-text {
+            flex: 1;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .top-post-metric {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            flex-shrink: 0;
+        }
+
+        /* CREATE PAGE */
+        .create-wrapper {
+            max-width: 680px;
+        }
+
+        .create-textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-family: inherit;
+            font-size: 0.92rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .create-textarea:focus { border-color: var(--accent); }
+
+        .create-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 12px;
+            gap: 12px;
+        }
+
+        .create-toolbar-left {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .tone-select {
+            padding: 8px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            background: var(--bg-white);
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .create-btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .create-btn-ai {
+            background: linear-gradient(135deg, #7c3aed, var(--accent));
+            color: #fff;
+        }
+
+        .create-btn-ai:hover { opacity: 0.9; }
+
+        .create-btn-queue {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        .create-btn-queue:hover { background: var(--accent-hover); }
+
+        .create-preview {
+            margin-top: 24px;
+        }
+
+        .create-preview-card {
+            background: var(--bg);
+            border-radius: var(--radius);
+            padding: 20px;
+        }
+
+        .create-preview-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .create-char-count {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .generating-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 12px 0;
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .spinner {
+            width: 18px; height: 18px;
+            border: 2px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 1024px) {
+            .home-grid { grid-template-columns: 1fr; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .tutorial-grid { grid-template-columns: 1fr 1fr; }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar { width: 60px; }
+            .sidebar-logo span, .sidebar-create-btn, .nav-item span,
+            .nav-section, .sidebar-bottom, .nav-sub-item { display: none; }
+            .nav-item { justify-content: center; padding: 12px; }
+            .main { margin-left: 60px; }
+            .main-content { padding: 20px 16px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">SL</div>
+            <span>SuperLinkedIn</span>
+        </div>
+
+        <button class="sidebar-create-btn" onclick="showPage('create')">+ Create a post</button>
+
+        <nav class="sidebar-nav">
+            <a class="nav-item active" data-page="home" onclick="showPage('home')">
+                <span class="nav-icon">&#127968;</span> <span>Home</span>
+            </a>
+            <a class="nav-item" data-page="queue" onclick="showPage('queue')">
+                <span class="nav-icon">&#128197;</span> <span>Queue</span>
+            </a>
+            <a class="nav-item" data-page="analytics" onclick="showPage('analytics')">
+                <span class="nav-icon">&#128200;</span> <span>Analytics</span>
+            </a>
+            <a class="nav-item" onclick="#">
+                <span class="nav-icon">&#128218;</span> <span>Context</span>
+            </a>
+
+            <div class="nav-section">Create</div>
+            <a class="nav-item nav-sub-item" onclick="showPage('create')">
+                <span class="nav-icon">&#9997;</span> <span>Ready to Post</span>
+            </a>
+            <a class="nav-item nav-sub-item" onclick="#">
+                <span class="nav-icon">&#128161;</span> <span>Inspiration</span>
+            </a>
+            <a class="nav-item nav-sub-item" data-page="create" onclick="showPage('create')">
+                <span class="nav-icon">&#129302;</span> <span>AI Writer</span>
+            </a>
+
+            <div class="nav-section">Engage</div>
+            <a class="nav-item nav-sub-item" onclick="#">
+                <span class="nav-icon">&#128269;</span> <span>Discover</span>
+            </a>
+            <a class="nav-item nav-sub-item" onclick="#">
+                <span class="nav-icon">&#128172;</span> <span>Mentions</span>
+            </a>
+            <a class="nav-item nav-sub-item" onclick="#">
+                <span class="nav-icon">&#128203;</span> <span>Lists</span>
+            </a>
+            <a class="nav-item nav-sub-item" onclick="#">
+                <span class="nav-icon">&#128172;</span> <span>Replies</span>
+            </a>
+
+            <div class="nav-section">&nbsp;</div>
+            <a class="nav-item" onclick="#">
+                <span class="nav-icon">&#128101;</span> <span>CRM</span>
+            </a>
+            <a class="nav-item" onclick="#">
+                <span class="nav-icon">&#9993;</span> <span>DMs</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-credits">
+                <span class="credits-icon">&#9889;</span>
+                <span><strong id="creditsCount">500</strong> credits</span>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar" id="sidebarAvatar"></div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name" id="sidebarName">Loading...</div>
+                    <div class="sidebar-user-handle" id="sidebarHandle">@user</div>
+                </div>
+            </div>
+            <div class="sidebar-links">
+                <a class="sidebar-link">&#128218; Learn / Help</a>
+                <a class="sidebar-link">&#127873; Earn 40% Referral</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN -->
+    <div class="main">
+        <div class="main-header">
+            <h1 id="pageTitle">Home</h1>
+            <div id="headerRight"></div>
+        </div>
+
+        <div class="main-content">
+
+            <!-- HOME PAGE -->
+            <div class="page active" id="page-home">
+                <div class="home-grid">
+                    <div class="card">
+                        <div class="card-title">&#128075; Your first post</div>
+                        <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;">Complete these steps to publish your first LinkedIn post:</p>
+                        <ul class="tip-list">
+                            <li>
+                                <div class="tip-icon">1</div>
+                                <div><strong>Write or generate</strong> - Use the AI Writer to create a post that matches your style</div>
+                            </li>
+                            <li>
+                                <div class="tip-icon">2</div>
+                                <div><strong>Add to queue</strong> - Schedule it for optimal posting time</div>
+                            </li>
+                            <li>
+                                <div class="tip-icon">3</div>
+                                <div><strong>Engage</strong> - Respond to comments and grow your network</div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">&#128640; Ready to post</div>
+                        <div id="homeQueuePreview">
+                            <div class="queue-empty" style="padding:24px 8px;">
+                                <div class="empty-icon">&#128203;</div>
+                                <p>No posts in queue yet</p>
+                                <p style="font-size:0.8rem;">Generate posts with AI or write your own</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card full-width">
+                        <div class="card-title">&#128218; Learn how to grow on LinkedIn</div>
+                        <div class="tutorial-grid">
+                            <div class="tutorial-card">
+                                <div class="tut-icon">&#9997;</div>
+                                <h4>Write better posts</h4>
+                                <p>Hook readers in the first line</p>
+                            </div>
+                            <div class="tutorial-card">
+                                <div class="tut-icon">&#128200;</div>
+                                <h4>Optimize your timing</h4>
+                                <p>Post when your audience is active</p>
+                            </div>
+                            <div class="tutorial-card">
+                                <div class="tut-icon">&#129302;</div>
+                                <h4>Use AI to your advantage</h4>
+                                <p>Generate content that matches your voice</p>
+                            </div>
+                            <div class="tutorial-card">
+                                <div class="tut-icon">&#128101;</div>
+                                <h4>Build your network</h4>
+                                <p>Engage with creators in your niche</p>
+                            </div>
+                            <div class="tutorial-card">
+                                <div class="tut-icon">&#128176;</div>
+                                <h4>Monetize your audience</h4>
+                                <p>Turn followers into clients</p>
+                            </div>
+                            <div class="tutorial-card">
+                                <div class="tut-icon">&#128736;</div>
+                                <h4>Use the Chrome Extension</h4>
+                                <p>AI tools right inside LinkedIn</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- QUEUE PAGE -->
+            <div class="page" id="page-queue">
+                <div class="queue-tabs">
+                    <button class="queue-tab active" onclick="filterQueue('all', this)">All</button>
+                    <button class="queue-tab" onclick="filterQueue('scheduled', this)">Scheduled</button>
+                    <button class="queue-tab" onclick="filterQueue('draft', this)">Drafts</button>
+                    <button class="queue-tab" onclick="filterQueue('posted', this)">Posted</button>
+                </div>
+                <div class="card" style="padding:0;">
+                    <div id="queueList">
+                        <div class="queue-empty">
+                            <div class="empty-icon">&#128197;</div>
+                            <p>Your queue is empty</p>
+                            <p style="font-size:0.82rem;">Create a post or generate one with AI to get started</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ANALYTICS PAGE -->
+            <div class="page" id="page-analytics">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Followers</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-change up">Connect LinkedIn to track</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Post Impressions</div>
+                        <div class="stat-value">0</div>
+                        <div class="stat-change">Last 30 days</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Engagement Rate</div>
+                        <div class="stat-value">0%</div>
+                        <div class="stat-change">Avg across posts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Posts Published</div>
+                        <div class="stat-value" id="analyticsPostCount">0</div>
+                        <div class="stat-change">Total</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">&#128200; Growth Over Time</div>
+                    <div class="chart-placeholder">
+                        <div class="chart-bars">
+                            <div class="chart-bar" style="height:30px;"></div>
+                            <div class="chart-bar" style="height:50px;"></div>
+                            <div class="chart-bar" style="height:40px;"></div>
+                            <div class="chart-bar" style="height:70px;"></div>
+                            <div class="chart-bar" style="height:55px;"></div>
+                            <div class="chart-bar" style="height:80px;"></div>
+                            <div class="chart-bar" style="height:65px;"></div>
+                            <div class="chart-bar" style="height:90px;"></div>
+                            <div class="chart-bar" style="height:75px;"></div>
+                            <div class="chart-bar" style="height:100px;"></div>
+                            <div class="chart-bar" style="height:85px;"></div>
+                            <div class="chart-bar" style="height:110px;"></div>
+                        </div>
+                        <p style="font-size:0.82rem;color:var(--text-muted);">Start posting to see your growth analytics</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">&#127942; Top Performing Posts</div>
+                    <div id="topPostsList">
+                        <div class="queue-empty" style="padding:24px;">
+                            <p>No posts yet. Start creating to see performance data.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CREATE PAGE -->
+            <div class="page" id="page-create">
+                <div class="create-wrapper">
+                    <div class="card">
+                        <div class="card-title">&#129302; AI Writer</div>
+                        <textarea class="create-textarea" id="createTextarea" placeholder="Write your LinkedIn post here, or click 'Generate with AI' to create one automatically based on your writing style..." oninput="updateCharCount()"></textarea>
+                        <div class="create-toolbar">
+                            <div class="create-toolbar-left">
+                                <select class="tone-select" id="toneSelect">
+                                    <option value="auto">Auto (match my style)</option>
+                                    <option value="professional">Professional</option>
+                                    <option value="casual">Casual & Friendly</option>
+                                    <option value="motivational">Motivational</option>
+                                    <option value="storytelling">Storytelling</option>
+                                    <option value="educational">Educational</option>
+                                    <option value="contrarian">Contrarian / Hot Take</option>
+                                    <option value="humorous">Humorous</option>
+                                </select>
+                                <span class="create-char-count" id="createCharCount">0 characters</span>
+                            </div>
+                            <div style="display:flex;gap:8px;">
+                                <button class="create-btn create-btn-ai" onclick="generateWithAI()">&#129302; Generate with AI</button>
+                                <button class="create-btn create-btn-queue" onclick="addToQueueFromCreate()">Add to Queue</button>
+                            </div>
+                        </div>
+                        <div id="generatingIndicator" style="display:none;" class="generating-indicator">
+                            <div class="spinner"></div>
+                            Generating your personalized post...
+                        </div>
+                    </div>
+
+                    <div class="create-preview" id="createPreview" style="display:none;">
+                        <div class="create-preview-label">Preview</div>
+                        <div class="create-preview-card">
+                            <div class="ai-post-author">
+                                <div class="ai-post-author-avatar" id="previewAvatar"></div>
+                                <div>
+                                    <div class="ai-post-author-name" id="previewName"></div>
+                                    <div class="ai-post-author-handle">LinkedIn</div>
+                                </div>
+                            </div>
+                            <div class="ai-post-body" id="previewBody"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI POSTS MODAL -->
+    <div class="modal-overlay hidden" id="aiModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+            <div class="modal-logo">
+                <div class="logo-circle">SL</div>
+            </div>
+            <h2 id="modalTitle">We wrote these for you!</h2>
+            <p class="modal-sub">Pick one to add to your queue</p>
+            <div id="modalPosts">
+                <div class="generating-indicator" style="justify-content:center;padding:32px 0;">
+                    <div class="spinner"></div>
+                    Generating personalized posts...
+                </div>
+            </div>
+            <p class="modal-scroll-hint" id="modalScrollHint">Scroll for more</p>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let queue = [];
+
+        // Load user info
+        async function loadUser() {
+            try {
+                const res = await fetch('/api/me');
+                currentUser = await res.json();
+                if (currentUser.name) {
+                    document.getElementById('sidebarName').textContent = currentUser.name;
+                    document.getElementById('sidebarHandle').textContent = '@' + currentUser.name.toLowerCase().replace(/\s+/g, '');
+                    const avatarEl = document.getElementById('sidebarAvatar');
+                    if (currentUser.picture) {
+                        avatarEl.innerHTML = `<img src="${currentUser.picture}" alt="${currentUser.name}">`;
+                    } else {
+                        avatarEl.textContent = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+                    }
+                    document.getElementById('modalTitle').textContent = `We wrote these for you, ${currentUser.name.split(' ')[0]}!`;
+                }
+            } catch {}
+        }
+
+        // Load queue
+        async function loadQueue() {
+            try {
+                const res = await fetch('/api/queue');
+                const data = await res.json();
+                queue = data.queue || [];
+                renderQueue();
+                renderHomeQueuePreview();
+            } catch {}
+        }
+
+        // Page navigation
+        function showPage(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+            if (navItem) navItem.classList.add('active');
+
+            const titles = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer' };
+            document.getElementById('pageTitle').textContent = titles[page] || page;
+        }
+
+        // Modal
+        function openModal() {
+            document.getElementById('aiModal').classList.remove('hidden');
+            generateModalPosts();
+        }
+
+        function closeModal() {
+            document.getElementById('aiModal').classList.add('hidden');
+        }
+
+        async function generateModalPosts() {
+            const container = document.getElementById('modalPosts');
+            container.innerHTML = '<div class="generating-indicator" style="justify-content:center;padding:32px 0;"><div class="spinner"></div>Generating personalized posts...</div>';
+
+            try {
+                const res = await fetch('/api/ai/generate-posts', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.posts && data.posts.length > 0) {
+                    container.innerHTML = data.posts.map((post, i) => `
+                        <div class="ai-post-card">
+                            <div class="ai-post-author">
+                                <div class="ai-post-author-avatar">${currentUser && currentUser.picture ? `<img src="${currentUser.picture}">` : (currentUser ? currentUser.name.split(' ').map(n=>n[0]).join('') : 'SL')}</div>
+                                <div>
+                                    <div class="ai-post-author-name">${currentUser ? currentUser.name : 'You'}</div>
+                                    <div class="ai-post-author-handle">@${currentUser ? currentUser.name.toLowerCase().replace(/\\s+/g,'') : 'user'}</div>
+                                </div>
+                            </div>
+                            <div class="ai-post-body">${post}</div>
+                            <button class="ai-post-add-btn" id="modalAddBtn${i}" onclick="addModalPostToQueue(${i}, this)">Add to queue</button>
+                        </div>
+                    `).join('');
+                    window._modalPosts = data.posts;
+                } else {
+                    container.innerHTML = '<p style="text-align:center;padding:24px;color:var(--text-muted);">Could not generate posts. Please configure your OpenAI API key.</p>';
+                }
+            } catch {
+                container.innerHTML = '<p style="text-align:center;padding:24px;color:var(--text-muted);">AI generation is not available yet. Add your OpenAI API key to get started.</p>';
+            }
+        }
+
+        async function addModalPostToQueue(index, btn) {
+            if (btn.classList.contains('added')) return;
+            const text = window._modalPosts[index];
+            await addToQueue(text);
+            btn.textContent = 'Added!';
+            btn.classList.add('added');
+        }
+
+        // Queue management
+        async function addToQueue(text, status) {
+            status = status || 'scheduled';
+            try {
+                const res = await fetch('/api/queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'add', text, status }),
+                });
+                const data = await res.json();
+                queue = data.queue || [];
+                renderQueue();
+                renderHomeQueuePreview();
+            } catch {}
+        }
+
+        async function removeFromQueue(index) {
+            try {
+                const res = await fetch('/api/queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'remove', index }),
+                });
+                const data = await res.json();
+                queue = data.queue || [];
+                renderQueue();
+                renderHomeQueuePreview();
+            } catch {}
+        }
+
+        function renderQueue(filter) {
+            const list = document.getElementById('queueList');
+            let items = queue;
+            if (filter && filter !== 'all') {
+                items = queue.filter(q => q.status === filter);
+            }
+
+            if (items.length === 0) {
+                list.innerHTML = '<div class="queue-empty"><div class="empty-icon">&#128197;</div><p>No posts here yet</p></div>';
+                return;
+            }
+
+            list.innerHTML = items.map((q, i) => `
+                <div class="queue-item">
+                    <div class="queue-item-status ${q.status}"></div>
+                    <div class="queue-item-content">
+                        <div class="queue-item-text">${q.text}</div>
+                        <div class="queue-item-meta">${q.status.charAt(0).toUpperCase() + q.status.slice(1)} &middot; ${q.date || 'Just now'}</div>
+                    </div>
+                    <div class="queue-item-actions">
+                        <button class="queue-action-btn" onclick="editQueueItem(${i})">Edit</button>
+                        <button class="queue-action-btn delete" onclick="removeFromQueue(${i})">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('analyticsPostCount').textContent = queue.filter(q => q.status === 'posted').length;
+        }
+
+        function filterQueue(status, btn) {
+            document.querySelectorAll('.queue-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            renderQueue(status);
+        }
+
+        function editQueueItem(index) {
+            const item = queue[index];
+            if (!item) return;
+            document.getElementById('createTextarea').value = item.text;
+            showPage('create');
+            updateCharCount();
+            updatePreview();
+        }
+
+        function renderHomeQueuePreview() {
+            const container = document.getElementById('homeQueuePreview');
+            const scheduled = queue.filter(q => q.status === 'scheduled').slice(0, 3);
+
+            if (scheduled.length === 0) {
+                container.innerHTML = '<div class="queue-empty" style="padding:24px 8px;"><div class="empty-icon">&#128203;</div><p>No posts in queue yet</p><p style="font-size:0.8rem;">Generate posts with AI or write your own</p></div>';
+                return;
+            }
+
+            container.innerHTML = scheduled.map((q, i) => `
+                <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--text-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${q.text}</div>
+            `).join('') + `<p style="margin-top:8px;"><a style="font-size:0.82rem;color:var(--accent);font-weight:600;cursor:pointer;" onclick="showPage('queue')">View all &rarr;</a></p>`;
+        }
+
+        // Create / AI Writer
+        function updateCharCount() {
+            const text = document.getElementById('createTextarea').value;
+            document.getElementById('createCharCount').textContent = text.length + ' characters';
+            updatePreview();
+        }
+
+        function updatePreview() {
+            const text = document.getElementById('createTextarea').value.trim();
+            const preview = document.getElementById('createPreview');
+
+            if (text) {
+                preview.style.display = 'block';
+                document.getElementById('previewBody').textContent = text;
+                if (currentUser) {
+                    document.getElementById('previewName').textContent = currentUser.name;
+                    const pa = document.getElementById('previewAvatar');
+                    if (currentUser.picture) {
+                        pa.innerHTML = `<img src="${currentUser.picture}">`;
+                    } else {
+                        pa.textContent = currentUser.name.split(' ').map(n => n[0]).join('');
+                    }
+                }
+            } else {
+                preview.style.display = 'none';
+            }
+        }
+
+        async function generateWithAI() {
+            const tone = document.getElementById('toneSelect').value;
+            const indicator = document.getElementById('generatingIndicator');
+            indicator.style.display = 'flex';
+
+            try {
+                const res = await fetch('/api/ai/write', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tone }),
+                });
+                const data = await res.json();
+
+                if (data.post) {
+                    document.getElementById('createTextarea').value = data.post;
+                    updateCharCount();
+                } else {
+                    alert(data.error || 'Could not generate post. Please add your OpenAI API key.');
+                }
+            } catch {
+                alert('AI generation is not available. Please configure your OpenAI API key.');
+            }
+
+            indicator.style.display = 'none';
+        }
+
+        async function addToQueueFromCreate() {
+            const text = document.getElementById('createTextarea').value.trim();
+            if (!text) {
+                alert('Write or generate a post first!');
+                return;
+            }
+            await addToQueue(text, 'scheduled');
+            document.getElementById('createTextarea').value = '';
+            updateCharCount();
+            alert('Post added to your queue!');
+        }
+
+        // Top posts for analytics
+        function renderTopPosts() {
+            const container = document.getElementById('topPostsList');
+            const posted = queue.filter(q => q.status === 'posted');
+            if (posted.length === 0) {
+                container.innerHTML = '<div class="queue-empty" style="padding:24px;"><p>No posts yet. Start creating to see performance data.</p></div>';
+                return;
+            }
+            container.innerHTML = '<ul class="top-posts-list">' + posted.slice(0, 5).map((p, i) => `
+                <li class="top-post-item">
+                    <div class="top-post-rank">${i + 1}</div>
+                    <div class="top-post-text">${p.text}</div>
+                    <div class="top-post-metric">${Math.floor(Math.random() * 500)} views</div>
+                </li>
+            `).join('') + '</ul>';
+        }
+
+        // Init
+        async function init() {
+            await loadUser();
+            await loadQueue();
+            renderTopPosts();
+            setTimeout(openModal, 800);
+        }
+
+        init();
+    </script>
+</body>
+</html>

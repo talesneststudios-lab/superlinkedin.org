@@ -38,6 +38,11 @@ app.use(express.static(path.join(__dirname), {
     extensions: ['html'],
 }));
 
+// Serve dashboard
+app.get('/app', (req, res) => {
+    res.sendFile(path.join(__dirname, 'app.html'));
+});
+
 // ---------- AUTH ROUTES ----------
 
 // Step 1: Redirect user to LinkedIn authorization page
@@ -334,6 +339,155 @@ app.get('/api/onboarding/writing-dna', (req, res) => {
         writingDNA: req.session.user.writingDNA || [],
         writingProfile: req.session.user.writingProfile || {},
     });
+});
+
+// ---------- AI & QUEUE ----------
+
+app.post('/api/ai/generate-posts', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
+        return res.json({ posts: [] });
+    }
+
+    const user = req.session.user;
+    const writingProfile = user.writingProfile || {};
+    const topTags = Object.entries(writingProfile).sort((a, b) => b[1] - a[1]).map(e => e[0]).slice(0, 5);
+    const aboutYou = user.aboutYou || '';
+    const creators = (user.favoriteCreators || []).map(c => c.name).join(', ');
+
+    const systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts for a user. Each post should be engaging, authentic, and ready to publish. Return ONLY a JSON array of 3 strings, each being a complete post.`;
+
+    const userPrompt = `Generate 3 LinkedIn posts for me.
+About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
+My preferred writing styles: ${topTags.join(', ') || 'motivational, professional, storytelling'}
+Creators I admire: ${creators || 'thought leaders in my industry'}
+Make each post different in format (one list-based, one story, one insight/opinion). Keep posts between 100-300 words. Do NOT include hashtags.`;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt },
+                ],
+                temperature: 0.8,
+                max_tokens: 2000,
+            }),
+        });
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || '';
+
+        let posts = [];
+        try {
+            const jsonMatch = content.match(/\[[\s\S]*\]/);
+            if (jsonMatch) posts = JSON.parse(jsonMatch[0]);
+        } catch {
+            posts = content.split('\n\n').filter(p => p.trim().length > 50).slice(0, 3);
+        }
+
+        res.json({ posts });
+    } catch (err) {
+        console.error('AI generation error:', err);
+        res.json({ posts: [] });
+    }
+});
+
+app.post('/api/ai/write', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
+        return res.json({ error: 'OpenAI API key not configured' });
+    }
+
+    const { tone } = req.body;
+    const user = req.session.user;
+    const writingProfile = user.writingProfile || {};
+    const topTags = Object.entries(writingProfile).sort((a, b) => b[1] - a[1]).map(e => e[0]).slice(0, 5);
+    const aboutYou = user.aboutYou || '';
+
+    const toneDesc = {
+        auto: topTags.join(', ') || 'professional and authentic',
+        professional: 'professional, polished, industry-focused',
+        casual: 'casual, friendly, conversational',
+        motivational: 'motivational, inspiring, uplifting',
+        storytelling: 'narrative storytelling, personal experience',
+        educational: 'educational, informative, teaching',
+        contrarian: 'contrarian, bold opinions, hot takes',
+        humorous: 'humorous, witty, lighthearted',
+    };
+
+    const userPrompt = `Write a single LinkedIn post for me.
+About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
+Tone: ${toneDesc[tone] || toneDesc.auto}
+Requirements: 100-300 words, engaging opening line, no hashtags, ready to publish. Return ONLY the post text.`;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: 'You are a LinkedIn content writer. Write a single LinkedIn post. Return ONLY the post text, nothing else.' },
+                    { role: 'user', content: userPrompt },
+                ],
+                temperature: 0.8,
+                max_tokens: 1000,
+            }),
+        });
+
+        const data = await response.json();
+        const post = data.choices?.[0]?.message?.content?.trim() || '';
+        res.json({ post });
+    } catch (err) {
+        console.error('AI write error:', err);
+        res.json({ error: 'Failed to generate post' });
+    }
+});
+
+app.get('/api/queue', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    res.json({ queue: req.session.user.queue || [] });
+});
+
+app.post('/api/queue', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    if (!req.session.user.queue) req.session.user.queue = [];
+    const { action, text, status, index } = req.body;
+
+    if (action === 'add' && text) {
+        req.session.user.queue.push({
+            text,
+            status: status || 'draft',
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+        });
+    } else if (action === 'remove' && typeof index === 'number') {
+        req.session.user.queue.splice(index, 1);
+    }
+
+    res.json({ queue: req.session.user.queue });
 });
 
 // ---------- API ROUTES ----------
