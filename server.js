@@ -4,9 +4,74 @@ const session = require('express-session');
 const crypto = require('crypto');
 const path = require('path');
 const Stripe = require('stripe');
+const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
+const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// ---------- DYNAMODB ----------
+
+const DYNAMO_TABLE = process.env.DYNAMODB_TABLE || 'superlinkedin-users';
+
+const ddbClient = new DynamoDBClient({ region: process.env.AWS_REGION || 'us-east-1' });
+const ddb = DynamoDBDocumentClient.from(ddbClient);
+
+async function dbGetUser(linkedinId) {
+    try {
+        const result = await ddb.send(new GetCommand({
+            TableName: DYNAMO_TABLE,
+            Key: { linkedinId },
+        }));
+        return result.Item || null;
+    } catch (err) {
+        console.error('DynamoDB getUser error:', err.message);
+        return null;
+    }
+}
+
+async function dbSaveUser(userData) {
+    try {
+        await ddb.send(new PutCommand({
+            TableName: DYNAMO_TABLE,
+            Item: { ...userData, updatedAt: new Date().toISOString() },
+        }));
+    } catch (err) {
+        console.error('DynamoDB saveUser error:', err.message);
+    }
+}
+
+async function dbUpdateFields(linkedinId, fields) {
+    const keys = Object.keys(fields);
+    if (keys.length === 0) return;
+
+    const exprParts = [];
+    const exprNames = {};
+    const exprValues = { ':updatedAt': new Date().toISOString() };
+
+    keys.forEach((key, i) => {
+        const nameToken = `#f${i}`;
+        const valToken = `:v${i}`;
+        exprParts.push(`${nameToken} = ${valToken}`);
+        exprNames[nameToken] = key;
+        exprValues[valToken] = fields[key];
+    });
+
+    exprParts.push('#upd = :updatedAt');
+    exprNames['#upd'] = 'updatedAt';
+
+    try {
+        await ddb.send(new UpdateCommand({
+            TableName: DYNAMO_TABLE,
+            Key: { linkedinId },
+            UpdateExpression: 'SET ' + exprParts.join(', '),
+            ExpressionAttributeNames: exprNames,
+            ExpressionAttributeValues: exprValues,
+        }));
+    } catch (err) {
+        console.error('DynamoDB updateFields error:', err.message);
+    }
+}
 
 app.set('trust proxy', 1);
 
@@ -112,8 +177,13 @@ app.get('/auth/linkedin/callback', async (req, res) => {
 
         const profile = await profileResponse.json();
 
-        // Step 5: Store user info in session
+        // Step 5: Look up existing user in DynamoDB, merge with session
+        const dbUser = await dbGetUser(profile.sub) || {};
+        const existingSession = req.session.user || {};
+
         req.session.user = {
+            ...dbUser,
+            ...existingSession,
             linkedinId: profile.sub,
             name: profile.name,
             email: profile.email,
@@ -121,11 +191,33 @@ app.get('/auth/linkedin/callback', async (req, res) => {
             accessToken: accessToken,
         };
 
+        // Upsert basic profile to DynamoDB
+        if (!dbUser.linkedinId) {
+            await dbSaveUser({
+                linkedinId: profile.sub,
+                name: profile.name,
+                email: profile.email,
+                picture: profile.picture,
+                paid: false,
+                createdAt: new Date().toISOString(),
+            });
+        } else {
+            await dbUpdateFields(profile.sub, {
+                name: profile.name,
+                email: profile.email,
+                picture: profile.picture,
+            });
+        }
+
         delete req.session.oauthState;
 
-        console.log(`User signed in: ${profile.name} (${profile.email})`);
+        console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!req.session.user.paid}`);
 
-        res.redirect('/upgrade');
+        if (req.session.user.paid) {
+            res.redirect('/app');
+        } else {
+            res.redirect('/upgrade');
+        }
 
     } catch (err) {
         console.error('OAuth callback error:', err);
@@ -191,9 +283,20 @@ app.post('/api/checkout', async (req, res) => {
     }
 });
 
+app.post('/api/checkout/confirm', async (req, res) => {
+    if (req.session.user) {
+        req.session.user.paid = true;
+        await dbUpdateFields(req.session.user.linkedinId, {
+            paid: true,
+            paidAt: new Date().toISOString(),
+        });
+    }
+    res.json({ ok: true });
+});
+
 // ---------- ONBOARDING ----------
 
-app.post('/api/onboarding/writing-dna', (req, res) => {
+app.post('/api/onboarding/writing-dna', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
@@ -206,17 +309,26 @@ app.post('/api/onboarding/writing-dna', (req, res) => {
     allTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
     req.session.user.writingProfile = tagCounts;
 
+    await dbUpdateFields(req.session.user.linkedinId, {
+        writingDNA: req.session.user.writingDNA,
+        writingProfile: tagCounts,
+    });
+
     console.log(`Writing DNA saved for ${req.session.user.name}:`, tagCounts);
     res.json({ success: true, profile: tagCounts });
 });
 
-app.post('/api/onboarding/creators', (req, res) => {
+app.post('/api/onboarding/creators', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
     const { creators } = req.body;
     req.session.user.favoriteCreators = creators || [];
+
+    await dbUpdateFields(req.session.user.linkedinId, {
+        favoriteCreators: creators || [],
+    });
 
     console.log(`Favorite creators saved for ${req.session.user.name}:`, creators);
     res.json({ success: true });
@@ -259,13 +371,17 @@ app.post('/api/onboarding/resolve-linkedin', async (req, res) => {
     }
 });
 
-app.post('/api/onboarding/products', (req, res) => {
+app.post('/api/onboarding/products', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
     const { products } = req.body;
     req.session.user.products = products || [];
+
+    await dbUpdateFields(req.session.user.linkedinId, {
+        products: products || [],
+    });
 
     console.log(`Products saved for ${req.session.user.name}:`, products.map(p => p.url));
     res.json({ success: true });
@@ -319,13 +435,17 @@ app.post('/api/onboarding/analyze-url', async (req, res) => {
     }
 });
 
-app.post('/api/onboarding/profile', (req, res) => {
+app.post('/api/onboarding/profile', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
     const { aboutYou } = req.body;
     req.session.user.aboutYou = aboutYou || '';
+
+    await dbUpdateFields(req.session.user.linkedinId, {
+        aboutYou: aboutYou || '',
+    });
 
     console.log(`Profile saved for ${req.session.user.name}: "${aboutYou}"`);
     res.json({ success: true });
@@ -469,7 +589,7 @@ app.get('/api/queue', (req, res) => {
     res.json({ queue: req.session.user.queue || [] });
 });
 
-app.post('/api/queue', (req, res) => {
+app.post('/api/queue', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
@@ -486,6 +606,10 @@ app.post('/api/queue', (req, res) => {
     } else if (action === 'remove' && typeof index === 'number') {
         req.session.user.queue.splice(index, 1);
     }
+
+    await dbUpdateFields(req.session.user.linkedinId, {
+        queue: req.session.user.queue,
+    });
 
     res.json({ queue: req.session.user.queue });
 });

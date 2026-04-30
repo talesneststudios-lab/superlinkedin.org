@@ -744,16 +744,315 @@
             animation: spin 0.8s linear infinite;
         }
 
+        /* COMPOSE PANEL */
+        .compose-panel {
+            width: 380px;
+            background: var(--bg-white);
+            border-left: 1px solid var(--border);
+            position: fixed;
+            top: 0;
+            right: -400px;
+            bottom: 0;
+            z-index: 90;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s ease;
+        }
+
+        .compose-panel.open { right: 0; }
+
+        .main.panel-open { margin-right: 380px; }
+
+        .compose-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .compose-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .compose-header-actions button {
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 14px;
+            cursor: pointer;
+            transition: opacity 0.15s;
+        }
+
+        .compose-header-actions button:hover { opacity: 0.85; }
+
+        .compose-btn-draft {
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border) !important;
+        }
+
+        .compose-btn-schedule {
+            background: var(--orange);
+            color: #fff;
+        }
+
+        .compose-btn-publish {
+            background: var(--green);
+            color: #fff;
+        }
+
+        .compose-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 4px;
+            margin-right: 4px;
+        }
+
+        .compose-close-btn:hover { color: var(--text-primary); }
+
+        .compose-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .compose-tab {
+            flex: 1;
+            padding: 10px 0;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .compose-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+
+        .compose-tab:hover { color: var(--text-primary); }
+
+        .compose-body {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .compose-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 16px 0;
+        }
+
+        .compose-user-avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.75rem;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+
+        .compose-user-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+        .compose-user-name { font-weight: 700; font-size: 0.88rem; }
+        .compose-user-handle { font-size: 0.75rem; color: var(--text-muted); }
+
+        .compose-textarea {
+            width: 100%;
+            flex: 1;
+            min-height: 200px;
+            padding: 12px 16px;
+            border: none;
+            font-family: inherit;
+            font-size: 0.92rem;
+            color: var(--text-primary);
+            line-height: 1.65;
+            resize: none;
+            outline: none;
+            background: transparent;
+        }
+
+        .compose-textarea::placeholder { color: var(--text-muted); }
+
+        .compose-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .compose-tool-btn {
+            width: 34px; height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text-muted);
+            transition: all 0.15s;
+        }
+
+        .compose-tool-btn:hover {
+            background: var(--bg);
+            color: var(--text-primary);
+        }
+
+        .compose-tool-btn.ai-btn {
+            background: linear-gradient(135deg, #7c3aed, var(--accent));
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 800;
+            width: auto;
+            padding: 0 10px;
+            gap: 4px;
+        }
+
+        .compose-tool-btn.ai-btn:hover { opacity: 0.88; }
+
+        .compose-footer {
+            padding: 12px 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .compose-schedule-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .compose-schedule-row .sched-icon { font-size: 0.9rem; }
+
+        .compose-advanced-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0 0;
+            border-top: 1px solid var(--border);
+            cursor: pointer;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .compose-advanced-toggle .arrow { transition: transform 0.2s; }
+        .compose-advanced-toggle.open .arrow { transform: rotate(180deg); }
+
+        .compose-advanced-body {
+            display: none;
+            padding: 12px 0 0;
+        }
+
+        .compose-advanced-body.show { display: block; }
+
+        .compose-tone-select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            color: var(--text-primary);
+            background: var(--bg-white);
+            outline: none;
+            margin-bottom: 8px;
+        }
+
+        .compose-generating {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            font-size: 0.82rem;
+            color: var(--accent);
+            font-weight: 600;
+            background: var(--accent-light);
+        }
+
+        .compose-generating.hidden { display: none; }
+
+        .compose-drafts-empty {
+            padding: 48px 16px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .compose-draft-item {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .compose-draft-item:hover { background: var(--bg); }
+
+        .compose-draft-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+
+        .compose-draft-meta {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .compose-char-count {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            padding: 0 16px 4px;
+            text-align: right;
+        }
+
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(16px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @media (max-width: 1200px) {
+            .compose-panel { width: 340px; }
+            .main.panel-open { margin-right: 340px; }
+        }
+
         @media (max-width: 1024px) {
             .home-grid { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(2, 1fr); }
             .tutorial-grid { grid-template-columns: 1fr 1fr; }
+            .compose-panel { width: 100%; max-width: 400px; box-shadow: -4px 0 24px rgba(0,0,0,0.12); }
+            .main.panel-open { margin-right: 0; }
         }
 
         @media (max-width: 768px) {
@@ -776,7 +1075,7 @@
             <span>SuperLinkedIn</span>
         </div>
 
-        <button class="sidebar-create-btn" onclick="showPage('create')">+ Create a post</button>
+        <button class="sidebar-create-btn" onclick="toggleCompose()">+ Create a post</button>
 
         <nav class="sidebar-nav">
             <a class="nav-item active" data-page="home" onclick="showPage('home')">
@@ -1048,6 +1347,99 @@
             </div>
         </div>
     </div>
+
+    <!-- COMPOSE PANEL -->
+    <aside class="compose-panel" id="composePanel">
+        <div class="compose-header">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <button class="compose-close-btn" onclick="toggleCompose()" title="Close">&times;</button>
+            </div>
+            <div class="compose-header-actions">
+                <button class="compose-btn-draft" onclick="saveDraft()">+ New draft</button>
+                <button class="compose-btn-schedule" onclick="scheduleFromCompose()">Schedule</button>
+                <button class="compose-btn-publish" onclick="publishFromCompose()">Publish</button>
+            </div>
+        </div>
+
+        <div class="compose-tabs">
+            <button class="compose-tab active" data-ctab="compose" onclick="switchComposeTab('compose', this)">Compose</button>
+            <button class="compose-tab" data-ctab="drafts" onclick="switchComposeTab('drafts', this)">Drafts</button>
+            <button class="compose-tab" data-ctab="scheduled" onclick="switchComposeTab('scheduled', this)">Scheduled</button>
+            <button class="compose-tab" data-ctab="sent" onclick="switchComposeTab('sent', this)">Sent</button>
+        </div>
+
+        <!-- Compose Tab -->
+        <div class="compose-body" id="composeTabCompose">
+            <div class="compose-user">
+                <div class="compose-user-avatar" id="composeAvatar"></div>
+                <div>
+                    <div class="compose-user-name" id="composeName">You</div>
+                    <div class="compose-user-handle" id="composeHandle">@user</div>
+                </div>
+            </div>
+            <textarea class="compose-textarea" id="composeTextarea" placeholder="What's happening?" oninput="updateComposeCharCount()"></textarea>
+            <div class="compose-char-count" id="composeCharCount">0 characters</div>
+            <div class="compose-generating hidden" id="composeGenerating">
+                <div class="spinner"></div>
+                Generating with AI...
+            </div>
+            <div class="compose-toolbar">
+                <button class="compose-tool-btn" title="Emoji">&#128522;</button>
+                <button class="compose-tool-btn" title="Image">&#128247;</button>
+                <button class="compose-tool-btn" title="Bold"><b>B</b></button>
+                <button class="compose-tool-btn" title="Italic"><i>I</i></button>
+                <button class="compose-tool-btn" title="Link">&#128279;</button>
+                <button class="compose-tool-btn" title="Bookmark">&#9734;</button>
+                <div style="flex:1;"></div>
+                <button class="compose-tool-btn ai-btn" onclick="generateInCompose()" title="Generate with AI">&#129302; AI</button>
+            </div>
+        </div>
+
+        <!-- Drafts Tab -->
+        <div class="compose-body" id="composeTabDrafts" style="display:none;">
+            <div id="composeDraftsList" class="compose-drafts-empty">
+                No drafts yet. Write something and save it as a draft.
+            </div>
+        </div>
+
+        <!-- Scheduled Tab -->
+        <div class="compose-body" id="composeTabScheduled" style="display:none;">
+            <div id="composeScheduledList" class="compose-drafts-empty">
+                No scheduled posts. Schedule a post to see it here.
+            </div>
+        </div>
+
+        <!-- Sent Tab -->
+        <div class="compose-body" id="composeTabSent" style="display:none;">
+            <div id="composeSentList" class="compose-drafts-empty">
+                No sent posts yet.
+            </div>
+        </div>
+
+        <div class="compose-footer">
+            <div class="compose-schedule-row">
+                <span class="sched-icon">&#128197;</span>
+                <span id="composeScheduleTime">Schedule at 01:00 PM</span>
+            </div>
+            <div class="compose-advanced-toggle" onclick="toggleAdvanced(this)">
+                Advanced settings
+                <span class="arrow">&#9660;</span>
+            </div>
+            <div class="compose-advanced-body" id="composeAdvanced">
+                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">AI Tone / Style</label>
+                <select class="compose-tone-select" id="composeToneSelect">
+                    <option value="auto">Auto (match my style)</option>
+                    <option value="professional">Professional</option>
+                    <option value="casual">Casual & Friendly</option>
+                    <option value="motivational">Motivational</option>
+                    <option value="storytelling">Storytelling</option>
+                    <option value="educational">Educational</option>
+                    <option value="contrarian">Contrarian / Hot Take</option>
+                    <option value="humorous">Humorous</option>
+                </select>
+            </div>
+        </div>
+    </aside>
 
     <!-- AI POSTS MODAL -->
     <div class="modal-overlay hidden" id="aiModal">
@@ -1333,6 +1725,166 @@
                     <div class="top-post-metric">${Math.floor(Math.random() * 500)} views</div>
                 </li>
             `).join('') + '</ul>';
+        }
+
+        // Compose panel
+        function toggleCompose() {
+            const panel = document.getElementById('composePanel');
+            const main = document.querySelector('.main');
+            const isOpen = panel.classList.contains('open');
+
+            if (isOpen) {
+                panel.classList.remove('open');
+                main.classList.remove('panel-open');
+            } else {
+                panel.classList.add('open');
+                main.classList.add('panel-open');
+                updateComposeUser();
+                switchComposeTab('compose', document.querySelector('.compose-tab[data-ctab="compose"]'));
+                renderComposeDrafts();
+                renderComposeScheduled();
+                renderComposeSent();
+
+                const now = new Date();
+                now.setHours(now.getHours() + 1, 0, 0, 0);
+                document.getElementById('composeScheduleTime').textContent =
+                    'Schedule at ' + now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' - ' +
+                    now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' [' + now.toLocaleDateString('en-US', { weekday: 'short' }) + ']';
+            }
+        }
+
+        function updateComposeUser() {
+            if (!currentUser) return;
+            document.getElementById('composeName').textContent = currentUser.name;
+            document.getElementById('composeHandle').textContent = '@' + currentUser.name.toLowerCase().replace(/\s+/g, '');
+            const av = document.getElementById('composeAvatar');
+            if (currentUser.picture) {
+                av.innerHTML = `<img src="${currentUser.picture}" alt="${currentUser.name}">`;
+            } else {
+                av.textContent = currentUser.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            }
+        }
+
+        function switchComposeTab(tab, btn) {
+            document.querySelectorAll('.compose-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('composeTabCompose').style.display = tab === 'compose' ? 'flex' : 'none';
+            document.getElementById('composeTabDrafts').style.display = tab === 'drafts' ? 'flex' : 'none';
+            document.getElementById('composeTabScheduled').style.display = tab === 'scheduled' ? 'flex' : 'none';
+            document.getElementById('composeTabSent').style.display = tab === 'sent' ? 'flex' : 'none';
+        }
+
+        function updateComposeCharCount() {
+            const text = document.getElementById('composeTextarea').value;
+            document.getElementById('composeCharCount').textContent = text.length + ' characters';
+        }
+
+        function toggleAdvanced(el) {
+            el.classList.toggle('open');
+            document.getElementById('composeAdvanced').classList.toggle('show');
+        }
+
+        async function generateInCompose() {
+            const tone = document.getElementById('composeToneSelect').value;
+            const indicator = document.getElementById('composeGenerating');
+            indicator.classList.remove('hidden');
+
+            try {
+                const res = await fetch('/api/ai/write', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tone }),
+                });
+                const data = await res.json();
+                if (data.post) {
+                    document.getElementById('composeTextarea').value = data.post;
+                    updateComposeCharCount();
+                } else {
+                    alert(data.error || 'Could not generate. Add your OpenAI API key.');
+                }
+            } catch {
+                alert('AI generation not available. Configure your OpenAI API key.');
+            }
+
+            indicator.classList.add('hidden');
+        }
+
+        async function publishFromCompose() {
+            const text = document.getElementById('composeTextarea').value.trim();
+            if (!text) { alert('Write or generate a post first!'); return; }
+            await addToQueue(text, 'posted');
+            document.getElementById('composeTextarea').value = '';
+            updateComposeCharCount();
+            renderComposeSent();
+        }
+
+        async function scheduleFromCompose() {
+            const text = document.getElementById('composeTextarea').value.trim();
+            if (!text) { alert('Write or generate a post first!'); return; }
+            await addToQueue(text, 'scheduled');
+            document.getElementById('composeTextarea').value = '';
+            updateComposeCharCount();
+            renderComposeScheduled();
+        }
+
+        async function saveDraft() {
+            const text = document.getElementById('composeTextarea').value.trim();
+            if (!text) { alert('Write something first!'); return; }
+            await addToQueue(text, 'draft');
+            document.getElementById('composeTextarea').value = '';
+            updateComposeCharCount();
+            renderComposeDrafts();
+            switchComposeTab('drafts', document.querySelector('.compose-tab[data-ctab="drafts"]'));
+        }
+
+        function renderComposeDrafts() {
+            const el = document.getElementById('composeDraftsList');
+            const drafts = queue.filter(q => q.status === 'draft');
+            if (drafts.length === 0) {
+                el.innerHTML = '<div class="compose-drafts-empty">No drafts yet. Write something and save it as a draft.</div>';
+                return;
+            }
+            el.innerHTML = drafts.map((d, i) => {
+                const realIndex = queue.indexOf(d);
+                return `<div class="compose-draft-item" onclick="loadDraft(${realIndex})">
+                    <div class="compose-draft-text">${d.text}</div>
+                    <div class="compose-draft-meta">${d.date || 'Just now'}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderComposeScheduled() {
+            const el = document.getElementById('composeScheduledList');
+            const items = queue.filter(q => q.status === 'scheduled');
+            if (items.length === 0) {
+                el.innerHTML = '<div class="compose-drafts-empty">No scheduled posts. Schedule a post to see it here.</div>';
+                return;
+            }
+            el.innerHTML = items.map(d => `<div class="compose-draft-item">
+                <div class="compose-draft-text">${d.text}</div>
+                <div class="compose-draft-meta">Scheduled &middot; ${d.date || 'Just now'}</div>
+            </div>`).join('');
+        }
+
+        function renderComposeSent() {
+            const el = document.getElementById('composeSentList');
+            const items = queue.filter(q => q.status === 'posted');
+            if (items.length === 0) {
+                el.innerHTML = '<div class="compose-drafts-empty">No sent posts yet.</div>';
+                return;
+            }
+            el.innerHTML = items.map(d => `<div class="compose-draft-item">
+                <div class="compose-draft-text">${d.text}</div>
+                <div class="compose-draft-meta">Posted &middot; ${d.date || 'Just now'}</div>
+            </div>`).join('');
+        }
+
+        function loadDraft(index) {
+            const item = queue[index];
+            if (!item) return;
+            document.getElementById('composeTextarea').value = item.text;
+            updateComposeCharCount();
+            switchComposeTab('compose', document.querySelector('.compose-tab[data-ctab="compose"]'));
         }
 
         // Init
