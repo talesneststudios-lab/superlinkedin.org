@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperLinkedIn &mdash; Onboarding</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #fafafa;
+            --bg-white: #ffffff;
+            --text-primary: #1a1a2e;
+            --text-secondary: #555566;
+            --text-muted: #888899;
+            --linkedin-blue: #0A66C2;
+            --linkedin-light: #70B5F9;
+            --accent: #0A66C2;
+            --border: #e5e5ea;
+            --green: #22c55e;
+            --red: #ef4444;
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .top-bar {
+            width: 100%;
+            padding: 20px 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-white);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .steps {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            position: relative;
+        }
+
+        .step .dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        .step.active .dot {
+            background: var(--accent);
+        }
+
+        .step.completed .dot {
+            background: var(--green);
+        }
+
+        .step.active {
+            color: var(--text-primary);
+        }
+
+        .step-line {
+            width: 40px;
+            height: 2px;
+            background: var(--border);
+            flex-shrink: 0;
+        }
+
+        .step-line.completed {
+            background: var(--green);
+        }
+
+        .container {
+            max-width: 580px;
+            width: 100%;
+            padding: 48px 24px 100px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .step-icon {
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: rgba(10, 102, 194, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 16px;
+        }
+
+        .container h1 {
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            margin-bottom: 8px;
+        }
+
+        .container .subtitle {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            margin-bottom: 36px;
+        }
+
+        /* WRITING DNA - Post Cards */
+        .post-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 24px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .post-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .post-author-avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--linkedin-blue), var(--linkedin-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.9rem;
+        }
+
+        .post-author-name {
+            font-weight: 700;
+            font-size: 0.95rem;
+        }
+
+        .post-author-handle {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .post-body {
+            font-size: 0.9rem;
+            line-height: 1.65;
+            color: var(--text-secondary);
+            max-height: 180px;
+            overflow-y: auto;
+            margin-bottom: 8px;
+        }
+
+        .post-body p {
+            margin-bottom: 10px;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+        }
+
+        .action-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-family: inherit;
+            transition: transform 0.2s;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .action-btn .icon-circle {
+            width: 50px; height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .action-btn.pass .icon-circle {
+            border: 2px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .action-btn.like .icon-circle {
+            border: 2px solid var(--red);
+            color: var(--red);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .action-btn span {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .action-btn.pass span { color: var(--text-muted); }
+        .action-btn.like span { color: var(--red); }
+
+        .progress-bar-wrapper {
+            width: 100%;
+            max-width: 480px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .progress-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 4px;
+            background: var(--border);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--accent);
+            border-radius: 4px;
+            transition: width 0.4s ease;
+        }
+
+        .progress-hint {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+
+        /* PROFILE STEP */
+        .form-group {
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            background: var(--bg-white);
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--accent);
+        }
+
+        .form-group textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        /* CREATORS STEP */
+        .creator-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            width: 100%;
+            max-width: 480px;
+            margin-bottom: 24px;
+        }
+
+        .creator-card {
+            background: var(--bg-white);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .creator-card:hover {
+            border-color: var(--linkedin-light);
+        }
+
+        .creator-card.selected {
+            border-color: var(--accent);
+            background: rgba(10, 102, 194, 0.03);
+        }
+
+        .creator-avatar {
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--linkedin-blue), var(--linkedin-light));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.85rem;
+            flex-shrink: 0;
+        }
+
+        .creator-name {
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+
+        .creator-title {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* DONE STEP */
+        .done-icon {
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--green), #16a34a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            animation: pop 0.5s ease;
+        }
+
+        .done-icon svg {
+            width: 40px; height: 40px;
+            stroke: #fff;
+            stroke-width: 3;
+            fill: none;
+        }
+
+        /* BUTTONS */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 14px 40px;
+            background: var(--accent);
+            color: #fff;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.95rem;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background 0.2s;
+            text-decoration: none;
+            margin-top: 8px;
+        }
+
+        .btn-primary:hover {
+            background: #0977d4;
+        }
+
+        .btn-skip {
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            margin-top: 12px;
+            font-weight: 600;
+        }
+
+        .btn-skip:hover {
+            color: var(--text-secondary);
+        }
+
+        .step-content {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            width: 100%;
+        }
+
+        .step-content.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.15); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 480px) {
+            .top-bar { padding: 16px 12px; }
+            .step { font-size: 0.72rem; padding: 6px 8px; }
+            .step-line { width: 20px; }
+            .creator-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="steps">
+            <div class="step active" data-step="0">
+                <span class="dot"></span> Writing DNA
+            </div>
+            <div class="step-line" data-line="0"></div>
+            <div class="step" data-step="1">
+                <span class="dot"></span> Profile
+            </div>
+            <div class="step-line" data-line="1"></div>
+            <div class="step" data-step="2">
+                <span class="dot"></span> Creators
+            </div>
+            <div class="step-line" data-line="2"></div>
+            <div class="step" data-step="3">
+                <span class="dot"></span> Extension
+            </div>
+            <div class="step-line" data-line="3"></div>
+            <div class="step" data-step="4">
+                <span class="dot"></span> Products
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+
+        <!-- STEP 1: Writing DNA -->
+        <div class="step-content active" id="step-0">
+            <div class="step-icon">&#9997;&#65039;</div>
+            <h1>Let's learn your writing style</h1>
+            <p class="subtitle">Like the posts you wish you wrote</p>
+
+            <div class="post-card" id="postCard">
+                <div class="post-author">
+                    <div class="post-author-avatar" id="postAvatar">SL</div>
+                    <div>
+                        <div class="post-author-name" id="postAuthor">SuperLinkedIn</div>
+                        <div class="post-author-handle" id="postHandle">@superlinkedin</div>
+                    </div>
+                </div>
+                <div class="post-body" id="postBody"></div>
+            </div>
+
+            <div class="actions">
+                <button class="action-btn pass" onclick="nextPost()">
+                    <div class="icon-circle">&times;</div>
+                    <span>Pass</span>
+                </button>
+                <button class="action-btn like" onclick="likePost()">
+                    <div class="icon-circle">&hearts;</div>
+                    <span>Like</span>
+                </button>
+            </div>
+
+            <div class="progress-bar-wrapper">
+                <span class="progress-text" id="progressText">1 of 11</span>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 9%"></div>
+                </div>
+                <span class="progress-hint">Let's find your post style!</span>
+            </div>
+        </div>
+
+        <!-- STEP 2: Profile -->
+        <div class="step-content" id="step-1">
+            <div class="step-icon">&#128100;</div>
+            <h1>Complete your profile</h1>
+            <p class="subtitle">Help us personalize your experience</p>
+
+            <div class="form-group">
+                <label>What industry are you in?</label>
+                <select id="industry">
+                    <option value="">Select your industry</option>
+                    <option>Technology</option>
+                    <option>Marketing</option>
+                    <option>Finance</option>
+                    <option>Consulting</option>
+                    <option>Healthcare</option>
+                    <option>Education</option>
+                    <option>Real Estate</option>
+                    <option>E-commerce</option>
+                    <option>SaaS</option>
+                    <option>Other</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>What's your LinkedIn goal?</label>
+                <select id="goal">
+                    <option value="">Select your main goal</option>
+                    <option>Grow my audience</option>
+                    <option>Generate leads</option>
+                    <option>Build personal brand</option>
+                    <option>Find a job</option>
+                    <option>Recruit talent</option>
+                    <option>Share thought leadership</option>
+                    <option>Promote my business</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Describe yourself in a sentence</label>
+                <textarea id="bio" placeholder="e.g. Marketing leader helping B2B startups grow through content"></textarea>
+            </div>
+
+            <button class="btn-primary" onclick="goToStep(2)">Continue &rarr;</button>
+            <button class="btn-skip" onclick="goToStep(2)">Skip for now</button>
+        </div>
+
+        <!-- STEP 3: Creators -->
+        <div class="step-content" id="step-2">
+            <div class="step-icon">&#128101;</div>
+            <h1>Follow top creators</h1>
+            <p class="subtitle">Select creators whose content inspires you</p>
+
+            <div class="creator-grid" id="creatorGrid"></div>
+
+            <button class="btn-primary" onclick="goToStep(3)">Continue &rarr;</button>
+            <button class="btn-skip" onclick="goToStep(3)">Skip for now</button>
+        </div>
+
+        <!-- STEP 4: Extension -->
+        <div class="step-content" id="step-3">
+            <div class="step-icon">&#128268;</div>
+            <h1>Install the Chrome Extension</h1>
+            <p class="subtitle">Get AI-powered tools right inside LinkedIn</p>
+
+            <div class="post-card" style="text-align: left;">
+                <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
+                    The SuperLinkedIn Chrome Extension lets you:
+                </p>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: var(--text-secondary);">
+                        <span style="color: var(--green); font-weight: 700;">&#10003;</span> Write posts with AI directly on LinkedIn
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: var(--text-secondary);">
+                        <span style="color: var(--green); font-weight: 700;">&#10003;</span> Auto-engage with your network
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: var(--text-secondary);">
+                        <span style="color: var(--green); font-weight: 700;">&#10003;</span> Schedule posts from your feed
+                    </li>
+                    <li style="display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: var(--text-secondary);">
+                        <span style="color: var(--green); font-weight: 700;">&#10003;</span> Analyze any profile instantly
+                    </li>
+                </ul>
+            </div>
+
+            <button class="btn-primary" onclick="goToStep(4)" style="background: #e5e5ea; color: var(--text-secondary);">
+                Coming Soon &mdash; Continue &rarr;
+            </button>
+            <button class="btn-skip" onclick="goToStep(4)">Skip for now</button>
+        </div>
+
+        <!-- STEP 5: Done -->
+        <div class="step-content" id="step-4">
+            <div class="done-icon">
+                <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <h1>You're all set!</h1>
+            <p class="subtitle">Your SuperLinkedIn workspace is ready. Start creating content that grows your LinkedIn presence.</p>
+
+            <a href="/" class="btn-primary">Go to Dashboard &rarr;</a>
+        </div>
+    </div>
+
+    <script>
+        const POSTS = [
+            { author: "Sarah Chen", handle: "@sarahchen", initials: "SC", body: "<p>Starting a business can be painful.</p><p>You feel lost 97% of the time \u2013 the ups and downs are gut-wrenching.</p><p>I wish I had a cheat sheet of principles for my first startup.</p><p>So I wrote one.</p><p>Here are 40+ learnings about entrepreneurship that took me 10 years to figure out:</p>" },
+            { author: "Alex Rivera", handle: "@alexrivera", initials: "AR", body: "<p>I went from 0 to 50K LinkedIn followers in 8 months.</p><p>No ads. No viral hacks. No bought followers.</p><p>Just consistent, value-driven content.</p><p>Here's the exact framework I used \u2193</p>" },
+            { author: "Maya Patel", handle: "@mayapatel", initials: "MP", body: "<p>Hot take: Most LinkedIn content is boring because people write what they think sounds smart.</p><p>The best posts come from writing what you actually believe, even if it's unpopular.</p><p>Authenticity > Authority every single time.</p>" },
+            { author: "James Park", handle: "@jamespark", initials: "JP", body: "<p>I interviewed 200+ top performers in tech.</p><p>The #1 skill they all shared? It wasn't coding. It wasn't leadership.</p><p>It was storytelling.</p><p>People who tell better stories get promoted faster, close more deals, and build bigger networks.</p>" },
+            { author: "Lisa Wang", handle: "@lisawang", initials: "LW", body: "<p>I spent $50K on LinkedIn ads last year. Here's what I learned:</p><p>1. Organic content outperformed paid 3:1<br>2. Comments drive more leads than clicks<br>3. Personal profiles beat company pages<br>4. Consistency beats creativity</p><p>Save your money. Write better posts.</p>" },
+            { author: "David Kim", handle: "@davidkim", initials: "DK", body: "<p>The best career advice I ever got:</p><p>\"Your network is your net worth\" is wrong.</p><p>Your REPUTATION is your net worth. Your network just amplifies it.</p><p>Focus on being known for something specific. The network follows.</p>" },
+            { author: "Emma Brooks", handle: "@emmabrooks", initials: "EB", body: "<p>I doubled my consulting rate by doing one thing:</p><p>I started posting on LinkedIn every day for 90 days straight.</p><p>Not because of followers. Because potential clients could see my thinking before the sales call.</p><p>Content is the new cold email.</p>" },
+            { author: "Ryan Foster", handle: "@ryanfoster", initials: "RF", body: "<p>Unpopular opinion: You don't need a personal brand.</p><p>You need a personal REPUTATION.</p><p>Brands are manufactured. Reputations are earned.</p><p>Show your work. Share your failures. Help others publicly.</p><p>That's all you need.</p>" },
+            { author: "Nina Sharma", handle: "@ninasharma", initials: "NS", body: "<p>I analyzed the top 100 LinkedIn posts from last month.</p><p>The pattern? Every single one told a story.</p><p>Not tips. Not lists. Stories.</p><p>People don't remember advice. They remember how you made them feel.</p>" },
+            { author: "Chris Morgan", handle: "@chrismorgan", initials: "CM", body: "<p>3 years ago I was laid off. Today I run a 7-figure business.</p><p>LinkedIn was the bridge.</p><p>I posted my journey \u2013 the ugly parts too. People connected with the honesty.</p><p>Your lowest moment can be your biggest content asset.</p>" },
+            { author: "Priya Gupta", handle: "@priyagupta", initials: "PG", body: "<p>The LinkedIn algorithm isn't broken. Your content strategy is.</p><p>Stop chasing engagement. Start solving problems.</p><p>Every post should answer one question your ideal client is asking right now.</p><p>Do that consistently and the algorithm will reward you.</p>" },
+        ];
+
+        const CREATORS = [
+            { name: "Sarah Chen", title: "Tech Entrepreneur & Investor", initials: "SC" },
+            { name: "Alex Rivera", title: "Growth Marketing Expert", initials: "AR" },
+            { name: "Maya Patel", title: "Brand Strategist", initials: "MP" },
+            { name: "James Park", title: "Leadership Coach", initials: "JP" },
+            { name: "Lisa Wang", title: "B2B Marketing Leader", initials: "LW" },
+            { name: "David Kim", title: "Career Advisor & Speaker", initials: "DK" },
+            { name: "Emma Brooks", title: "Consulting & Sales", initials: "EB" },
+            { name: "Ryan Foster", title: "Content Strategy", initials: "RF" },
+        ];
+
+        let currentPost = 0;
+        let likedPosts = [];
+
+        function renderPost() {
+            const post = POSTS[currentPost];
+            document.getElementById('postAvatar').textContent = post.initials;
+            document.getElementById('postAuthor').textContent = post.author;
+            document.getElementById('postHandle').textContent = post.handle;
+            document.getElementById('postBody').innerHTML = post.body;
+            document.getElementById('progressText').textContent = `${currentPost + 1} of ${POSTS.length}`;
+            document.getElementById('progressFill').style.width = `${((currentPost + 1) / POSTS.length) * 100}%`;
+
+            const card = document.getElementById('postCard');
+            card.style.animation = 'none';
+            card.offsetHeight;
+            card.style.animation = 'fadeIn 0.4s ease';
+        }
+
+        function nextPost() {
+            currentPost++;
+            if (currentPost >= POSTS.length) {
+                goToStep(1);
+            } else {
+                renderPost();
+            }
+        }
+
+        function likePost() {
+            likedPosts.push(POSTS[currentPost]);
+            nextPost();
+        }
+
+        function goToStep(stepIndex) {
+            document.querySelectorAll('.step-content').forEach(el => el.classList.remove('active'));
+            document.getElementById('step-' + stepIndex).classList.add('active');
+
+            document.querySelectorAll('.step').forEach((el, i) => {
+                el.classList.remove('active', 'completed');
+                if (i < stepIndex) el.classList.add('completed');
+                if (i === stepIndex) el.classList.add('active');
+            });
+
+            document.querySelectorAll('.step-line').forEach((el, i) => {
+                el.classList.remove('completed');
+                if (i < stepIndex) el.classList.add('completed');
+            });
+        }
+
+        function renderCreators() {
+            const grid = document.getElementById('creatorGrid');
+            grid.innerHTML = CREATORS.map((c, i) => `
+                <div class="creator-card" onclick="this.classList.toggle('selected')" data-idx="${i}">
+                    <div class="creator-avatar">${c.initials}</div>
+                    <div>
+                        <div class="creator-name">${c.name}</div>
+                        <div class="creator-title">${c.title}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        renderPost();
+        renderCreators();
+    </script>
+</body>
+</html>
