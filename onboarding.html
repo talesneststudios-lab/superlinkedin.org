@@ -801,6 +801,214 @@
             opacity: 0.7;
         }
 
+        /* PRODUCTS STEP */
+        .products-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            margin-bottom: 16px;
+            text-align: left;
+        }
+
+        .products-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .products-count {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .products-add-link {
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--accent);
+            cursor: pointer;
+        }
+
+        .products-add-link:hover {
+            text-decoration: underline;
+        }
+
+        .product-add-form {
+            margin-bottom: 16px;
+        }
+
+        .product-url-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            outline: none;
+            margin-bottom: 10px;
+            transition: border 0.2s;
+        }
+
+        .product-url-input:focus {
+            border-color: var(--accent);
+        }
+
+        .product-add-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .product-add-btn {
+            padding: 8px 20px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.82rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .product-add-btn:hover {
+            background: #0977d4;
+        }
+
+        .product-cancel-btn {
+            background: none;
+            border: none;
+            font-family: inherit;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .products-empty {
+            text-align: center;
+            padding: 32px 16px;
+            color: var(--text-muted);
+        }
+
+        .products-empty .empty-icon {
+            font-size: 2.4rem;
+            margin-bottom: 8px;
+            opacity: 0.4;
+        }
+
+        .products-empty p {
+            font-size: 0.88rem;
+            margin-bottom: 6px;
+        }
+
+        .products-empty .empty-link {
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .products-empty .empty-link:hover {
+            text-decoration: underline;
+        }
+
+        .product-item {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .product-item-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .product-item-url {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+
+        .product-item-url .link-icon {
+            font-size: 0.9rem;
+        }
+
+        .product-delete-btn {
+            background: none;
+            border: none;
+            font-size: 1rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .product-delete-btn:hover {
+            color: var(--red);
+        }
+
+        .product-item-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+        }
+
+        .product-item-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            max-height: 60px;
+            overflow-y: auto;
+        }
+
+        .product-item-loading {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .products-continue-btn {
+            width: 100%;
+            padding: 14px;
+            margin-top: 12px;
+            background: #e5e5ea;
+            color: var(--text-muted);
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.95rem;
+            cursor: not-allowed;
+            transition: all 0.2s;
+        }
+
+        .products-continue-btn.active {
+            background: var(--accent);
+            color: #fff;
+            cursor: pointer;
+        }
+
+        .products-continue-btn.active:hover {
+            background: #0977d4;
+        }
+
         /* DONE STEP */
         .done-icon {
             width: 80px; height: 80px;
@@ -1072,8 +1280,48 @@
             </div>
         </div>
 
-        <!-- STEP 5: Done -->
+        <!-- STEP 5: Products -->
         <div class="step-content" id="step-4">
+            <div class="step-icon">&#128230;</div>
+            <h1>Your Products</h1>
+            <p class="subtitle">Add links to products you want to promote (up to 5)</p>
+
+            <div class="products-card">
+                <div class="products-header">
+                    <span class="products-count">Product Links (<span id="productCount">0</span>/5)</span>
+                    <button class="products-add-link" id="addProductBtn" onclick="showAddProduct()">+ Add Product</button>
+                </div>
+
+                <div class="product-add-form" id="productAddForm" style="display:none;">
+                    <input type="text" id="productUrlInput" class="product-url-input" placeholder="example.com" onkeydown="if(event.key==='Enter')addProduct()">
+                    <div class="product-add-actions">
+                        <button class="product-add-btn" onclick="addProduct()">Add</button>
+                        <button class="product-cancel-btn" onclick="hideAddProduct()">Cancel</button>
+                    </div>
+                </div>
+
+                <div id="productList"></div>
+
+                <div class="products-empty" id="productsEmpty">
+                    <div class="empty-icon">&#128230;</div>
+                    <p>No products added yet</p>
+                    <a href="#" onclick="showAddProduct(); return false;" class="empty-link">Add your first product</a>
+                </div>
+
+                <button class="products-continue-btn" id="productsContinueBtn" disabled onclick="saveProducts(); finishOnboarding()">Continue</button>
+            </div>
+
+            <p class="about-you-tip">We automatically analyze your product pages to help create relevant content for your posts.</p>
+
+            <div class="creators-nav">
+                <button class="btn-back" onclick="goToStep(3)">&larr; Back</button>
+                <button class="btn-skip" onclick="saveProducts(); finishOnboarding()">Skip this step</button>
+                <button class="btn-primary" onclick="saveProducts(); finishOnboarding()">Complete &rarr;</button>
+            </div>
+        </div>
+
+        <!-- STEP 6: Done -->
+        <div class="step-content" id="step-5">
             <div class="done-icon">
                 <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
@@ -1343,6 +1591,117 @@
                     body: JSON.stringify({ aboutYou: aboutText }),
                 }).catch(() => {});
             }
+        }
+
+        // Products
+        let products = [];
+
+        function showAddProduct() {
+            if (products.length >= 5) return;
+            document.getElementById('productAddForm').style.display = 'block';
+            document.getElementById('productUrlInput').focus();
+        }
+
+        function hideAddProduct() {
+            document.getElementById('productAddForm').style.display = 'none';
+            document.getElementById('productUrlInput').value = '';
+        }
+
+        async function addProduct() {
+            let url = document.getElementById('productUrlInput').value.trim();
+            if (!url) return;
+            if (!url.startsWith('http')) url = 'https://' + url;
+            if (products.find(p => p.url === url)) return;
+
+            const product = { url, name: '', description: '', loading: true };
+            products.push(product);
+            hideAddProduct();
+            renderProducts();
+
+            try {
+                const res = await fetch('/api/onboarding/analyze-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                });
+                const data = await res.json();
+                const idx = products.findIndex(p => p.url === url);
+                if (idx !== -1) {
+                    products[idx].name = data.name || extractDomain(url);
+                    products[idx].description = data.description || '';
+                    products[idx].loading = false;
+                }
+            } catch {
+                const idx = products.findIndex(p => p.url === url);
+                if (idx !== -1) {
+                    products[idx].name = extractDomain(url);
+                    products[idx].description = 'Could not analyze this page';
+                    products[idx].loading = false;
+                }
+            }
+            renderProducts();
+        }
+
+        function extractDomain(url) {
+            try {
+                return new URL(url).hostname.replace('www.', '');
+            } catch { return url; }
+        }
+
+        function removeProduct(idx) {
+            products.splice(idx, 1);
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const list = document.getElementById('productList');
+            const empty = document.getElementById('productsEmpty');
+            const countEl = document.getElementById('productCount');
+            const continueBtn = document.getElementById('productsContinueBtn');
+            const addBtn = document.getElementById('addProductBtn');
+
+            countEl.textContent = products.length;
+            empty.style.display = products.length === 0 ? 'block' : 'none';
+            addBtn.style.display = products.length >= 5 ? 'none' : '';
+
+            if (products.length > 0) {
+                continueBtn.disabled = false;
+                continueBtn.classList.add('active');
+            } else {
+                continueBtn.disabled = true;
+                continueBtn.classList.remove('active');
+            }
+
+            list.innerHTML = products.map((p, i) => `
+                <div class="product-item">
+                    <div class="product-item-header">
+                        <div class="product-item-url">
+                            <span class="link-icon">&#128279;</span>
+                            ${p.url}
+                        </div>
+                        <button class="product-delete-btn" onclick="removeProduct(${i})">&#128465;</button>
+                    </div>
+                    ${p.loading
+                        ? '<div class="product-item-loading">Analyzing page...</div>'
+                        : `<div class="product-item-name">${p.name}</div>
+                           <div class="product-item-desc">${p.description}</div>`
+                    }
+                </div>
+            `).join('');
+        }
+
+        function saveProducts() {
+            if (products.length > 0) {
+                fetch('/api/onboarding/products', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ products }),
+                }).catch(() => {});
+            }
+        }
+
+        function finishOnboarding() {
+            goToStep(5);
         }
 
         renderPost();

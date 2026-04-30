@@ -217,6 +217,48 @@ app.post('/api/onboarding/creators', (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/onboarding/products', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { products } = req.body;
+    req.session.user.products = products || [];
+
+    console.log(`Products saved for ${req.session.user.name}:`, products.map(p => p.url));
+    res.json({ success: true });
+});
+
+app.post('/api/onboarding/analyze-url', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'URL is required' });
+
+    try {
+        const response = await fetch(url, {
+            headers: { 'User-Agent': 'SuperLinkedIn Bot/1.0' },
+            signal: AbortSignal.timeout(8000),
+        });
+        const html = await response.text();
+
+        const titleMatch = html.match(/<title[^>]*>([^<]+)<\/title>/i);
+        const descMatch = html.match(/<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["']/i)
+            || html.match(/<meta[^>]*content=["']([^"']+)["'][^>]*name=["']description["']/i)
+            || html.match(/<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["']/i);
+
+        res.json({
+            name: titleMatch ? titleMatch[1].trim() : '',
+            description: descMatch ? descMatch[1].trim() : '',
+        });
+    } catch (err) {
+        console.error('URL analysis failed:', err.message);
+        res.json({ name: '', description: '' });
+    }
+});
+
 app.post('/api/onboarding/profile', (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
