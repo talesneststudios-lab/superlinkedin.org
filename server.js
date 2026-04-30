@@ -213,10 +213,12 @@ app.get('/auth/linkedin/callback', async (req, res) => {
 
         delete req.session.oauthState;
 
-        console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!req.session.user.paid}`);
+        console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!req.session.user.paid} | onboarded=${!!req.session.user.onboardingComplete}`);
 
-        if (req.session.user.paid) {
+        if (req.session.user.paid && req.session.user.onboardingComplete) {
             res.redirect('/app');
+        } else if (req.session.user.paid) {
+            res.redirect('/onboarding');
         } else {
             res.redirect('/upgrade');
         }
@@ -461,6 +463,19 @@ app.get('/api/onboarding/writing-dna', (req, res) => {
         writingDNA: req.session.user.writingDNA || [],
         writingProfile: req.session.user.writingProfile || {},
     });
+});
+
+app.post('/api/onboarding/complete', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    req.session.user.onboardingComplete = true;
+    await dbUpdateFields(req.session.user.linkedinId, {
+        onboardingComplete: true,
+        onboardingCompletedAt: new Date().toISOString(),
+    });
+    console.log(`Onboarding completed for ${req.session.user.name}`);
+    res.json({ success: true });
 });
 
 // ---------- CONTEXT SETTINGS ----------

@@ -168,120 +168,96 @@
         .sidebar-credits .credits-icon { font-size: 1rem; }
         .sidebar-credits span { font-size: 0.78rem; color: var(--sidebar-text); }
 
-        /* Credits hover dashboard */
+        /* Credits hover popup — dark theme, appears above */
         .credits-popup {
             display: none;
             position: absolute;
-            left: calc(100% + 12px);
-            bottom: 0;
-            width: 320px;
-            background: #fff;
-            border-radius: 14px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+            left: 8px;
+            right: 8px;
+            bottom: calc(100% + 10px);
+            background: #1e1e2e;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
             z-index: 300;
-            padding: 20px;
-            color: var(--text-primary);
+            padding: 16px;
+            color: #fff;
         }
         .sidebar-credits:hover .credits-popup { display: block; }
 
-        .credits-popup::before {
+        .credits-popup::after {
             content: '';
             position: absolute;
-            left: -6px;
-            bottom: 16px;
+            left: 24px;
+            bottom: -6px;
             width: 12px;
             height: 12px;
-            background: #fff;
+            background: #1e1e2e;
+            border-right: 1px solid rgba(255,255,255,0.08);
+            border-bottom: 1px solid rgba(255,255,255,0.08);
             transform: rotate(45deg);
-            box-shadow: -2px 2px 4px rgba(0,0,0,0.06);
         }
 
-        .credits-popup-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 16px;
-        }
         .credits-popup-title {
-            font-size: 0.95rem;
-            font-weight: 800;
-            color: var(--text-primary);
-        }
-        .credits-popup-total {
-            font-size: 0.85rem;
+            font-size: 0.82rem;
             font-weight: 700;
-            color: var(--accent);
-            background: rgba(10,102,194,0.08);
-            padding: 4px 12px;
-            border-radius: 20px;
+            color: rgba(255,255,255,0.6);
+            margin-bottom: 12px;
         }
 
-        .credits-popup-bar {
-            width: 100%;
-            height: 8px;
-            background: #eee;
-            border-radius: 4px;
-            margin-bottom: 18px;
-            overflow: hidden;
+        .credits-popup-section {
+            margin-bottom: 14px;
         }
-        .credits-popup-bar-fill {
-            height: 100%;
-            border-radius: 4px;
-            background: linear-gradient(90deg, #0A66C2, #70B5F9);
-            transition: width 0.4s ease;
+        .credits-popup-section-title {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
         }
 
-        .credits-popup-rows { margin-bottom: 14px; }
         .credits-popup-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 7px 0;
-            font-size: 0.8rem;
-            border-bottom: 1px solid #f2f2f2;
+            padding: 3px 0;
+            font-size: 0.78rem;
         }
-        .credits-popup-row:last-child { border-bottom: none; }
         .credits-popup-row-label {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: var(--text-secondary);
+            color: rgba(255,255,255,0.6);
         }
-        .credits-popup-row-label .row-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.72rem;
-            flex-shrink: 0;
-        }
-        .row-icon.blue { background: rgba(10,102,194,0.1); color: #0A66C2; }
-        .row-icon.green { background: rgba(34,197,94,0.1); color: #22c55e; }
-        .row-icon.purple { background: rgba(168,85,247,0.1); color: #a855f7; }
-        .row-icon.orange { background: rgba(249,115,22,0.1); color: #f97316; }
         .credits-popup-row-value {
             font-weight: 700;
-            color: var(--text-primary);
+            color: #fff;
         }
 
-        .credits-popup-footer {
-            text-align: center;
-            padding-top: 6px;
+        .credits-popup-note {
+            font-size: 0.7rem;
+            color: #f97316;
+            line-height: 1.4;
+            margin-bottom: 10px;
+            padding-top: 4px;
+            border-top: 1px solid rgba(255,255,255,0.06);
         }
+
         .credits-popup-upgrade {
-            display: inline-block;
-            padding: 8px 24px;
-            background: var(--accent);
+            display: block;
+            width: 100%;
+            padding: 9px;
+            background: rgba(255,255,255,0.08);
             color: #fff;
+            border: 1px solid rgba(255,255,255,0.12);
             border-radius: 8px;
-            font-size: 0.8rem;
+            font-family: inherit;
+            font-size: 0.78rem;
             font-weight: 700;
+            text-align: center;
             text-decoration: none;
+            cursor: pointer;
             transition: background 0.2s;
         }
-        .credits-popup-upgrade:hover { background: #0977d4; }
+        .credits-popup-upgrade:hover { background: rgba(255,255,255,0.14); }
 
         .sidebar-user {
             display: flex;
@@ -2433,46 +2409,61 @@
                 <span><strong id="creditsCount">500</strong> credits</span>
 
                 <div class="credits-popup">
-                    <div class="credits-popup-header">
-                        <span class="credits-popup-title">Credits Dashboard</span>
-                        <span class="credits-popup-total">&#9889; <span id="popupCreditsTotal">500</span> left</span>
-                    </div>
-                    <div class="credits-popup-bar">
-                        <div class="credits-popup-bar-fill" id="creditsBarFill" style="width:100%"></div>
-                    </div>
-                    <div class="credits-popup-rows">
+                    <div class="credits-popup-title">Credits for AI-powered features</div>
+
+                    <div class="credits-popup-section">
                         <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">
-                                <span class="row-icon blue">&#9998;</span>
-                                AI Writer
-                            </span>
-                            <span class="credits-popup-row-value" id="creditsAIWriter">0 used</span>
+                            <span class="credits-popup-row-label">Daily limit:</span>
+                            <span class="credits-popup-row-value" id="popupDailyLimit">200</span>
                         </div>
                         <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">
-                                <span class="row-icon green">&#128172;</span>
-                                AI Posts
-                            </span>
-                            <span class="credits-popup-row-value" id="creditsAIPosts">0 used</span>
+                            <span class="credits-popup-row-label">Used today:</span>
+                            <span class="credits-popup-row-value" id="popupUsedToday">0</span>
                         </div>
                         <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">
-                                <span class="row-icon purple">&#128202;</span>
-                                Analytics Syncs
-                            </span>
-                            <span class="credits-popup-row-value" id="creditsAnalytics">0 used</span>
+                            <span class="credits-popup-row-label">Available:</span>
+                            <span class="credits-popup-row-value" id="popupCreditsTotal">200</span>
                         </div>
                         <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">
-                                <span class="row-icon orange">&#128640;</span>
-                                Posts Published
-                            </span>
-                            <span class="credits-popup-row-value" id="creditsPublished">0 used</span>
+                            <span class="credits-popup-row-label">Resets in:</span>
+                            <span class="credits-popup-row-value">24h</span>
                         </div>
                     </div>
-                    <div class="credits-popup-footer">
-                        <a class="credits-popup-upgrade" href="/upgrade">Get more credits</a>
+
+                    <div class="credits-popup-section">
+                        <div class="credits-popup-section-title">Engage Quota</div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">Used:</span>
+                            <span class="credits-popup-row-value" id="creditsAIPosts">0 / 75</span>
+                        </div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">Remaining:</span>
+                            <span class="credits-popup-row-value" id="creditsAnalytics">75</span>
+                        </div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">Resets:</span>
+                            <span class="credits-popup-row-value">30d</span>
+                        </div>
                     </div>
+
+                    <div class="credits-popup-section">
+                        <div class="credits-popup-section-title">Post Quota</div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">Used:</span>
+                            <span class="credits-popup-row-value" id="creditsPublished">0 / 50</span>
+                        </div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">Remaining:</span>
+                            <span class="credits-popup-row-value" id="creditsAIWriter">50</span>
+                        </div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">Resets:</span>
+                            <span class="credits-popup-row-value">30d</span>
+                        </div>
+                    </div>
+
+                    <div class="credits-popup-note">Trial limits are reduced. Your limits will increase when you subscribe.</div>
+                    <a class="credits-popup-upgrade" href="/upgrade">Skip Trial &amp; Upgrade</a>
                 </div>
             </div>
             <div class="sidebar-user">
@@ -3161,23 +3152,28 @@
         }
 
         let creditsUsed = { aiWriter: 0, aiPosts: 0, analytics: 0, published: 0 };
-        const TOTAL_CREDITS = 500;
+        const DAILY_LIMIT = 200;
+        const ENGAGE_QUOTA = 75;
+        const POST_QUOTA = 50;
 
         function updateCreditsPopup() {
             const published = queue.filter(q => q.status === 'posted').length;
             creditsUsed.published = published;
 
-            const used = creditsUsed.aiWriter + creditsUsed.aiPosts + creditsUsed.analytics + creditsUsed.published;
-            const remaining = Math.max(0, TOTAL_CREDITS - used);
-            const pct = (remaining / TOTAL_CREDITS) * 100;
+            const usedToday = creditsUsed.aiWriter + creditsUsed.aiPosts + creditsUsed.analytics + creditsUsed.published;
+            const available = Math.max(0, DAILY_LIMIT - usedToday);
+            const engageUsed = creditsUsed.aiPosts + creditsUsed.analytics;
+            const engageRemaining = Math.max(0, ENGAGE_QUOTA - engageUsed);
+            const postRemaining = Math.max(0, POST_QUOTA - creditsUsed.published);
 
-            document.getElementById('creditsCount').textContent = remaining;
-            document.getElementById('popupCreditsTotal').textContent = remaining;
-            document.getElementById('creditsBarFill').style.width = pct + '%';
-            document.getElementById('creditsAIWriter').textContent = creditsUsed.aiWriter + ' used';
-            document.getElementById('creditsAIPosts').textContent = creditsUsed.aiPosts + ' used';
-            document.getElementById('creditsAnalytics').textContent = creditsUsed.analytics + ' used';
-            document.getElementById('creditsPublished').textContent = creditsUsed.published + ' used';
+            document.getElementById('creditsCount').textContent = available;
+            document.getElementById('popupDailyLimit').textContent = DAILY_LIMIT;
+            document.getElementById('popupUsedToday').textContent = usedToday;
+            document.getElementById('popupCreditsTotal').textContent = available;
+            document.getElementById('creditsAIPosts').textContent = engageUsed + ' / ' + ENGAGE_QUOTA;
+            document.getElementById('creditsAnalytics').textContent = engageRemaining;
+            document.getElementById('creditsPublished').textContent = creditsUsed.published + ' / ' + POST_QUOTA;
+            document.getElementById('creditsAIWriter').textContent = postRemaining;
         }
 
         function trackCredit(type) {

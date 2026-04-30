@@ -97,6 +97,14 @@
         <p>Your 3-day free trial has started. Let's set up your workspace so SuperLinkedIn can work its magic.</p>
         <a href="/onboarding" class="btn">Start Setup &rarr;</a>
     </div>
-    <script>fetch('/api/checkout/confirm', { method: 'POST' });</script>
+    <script>
+        fetch('/api/checkout/confirm', { method: 'POST' }).then(() => {
+            return fetch('/api/me');
+        }).then(r => r.json()).then(user => {
+            if (user.onboardingComplete) {
+                window.location.href = '/app';
+            }
+        }).catch(() => {});
+    </script>
 </body>
 </html>
