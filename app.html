@@ -50,7 +50,7 @@
             left: 0;
             bottom: 0;
             z-index: 100;
-            overflow-y: auto;
+            overflow: visible;
         }
 
         .sidebar-logo {
@@ -99,6 +99,7 @@
         .sidebar-nav {
             padding: 8px 0;
             flex: 1;
+            overflow-y: auto;
         }
 
         .nav-item {
@@ -638,6 +639,78 @@
             color: var(--text-secondary);
             cursor: pointer;
         }
+
+        /* NOTIFICATION MODAL */
+        .notify-modal {
+            max-width: 380px;
+            padding: 32px 32px 24px;
+            text-align: center;
+        }
+        .notify-icon {
+            width: 52px; height: 52px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 14px;
+            background: rgba(34,197,94,0.1);
+            color: #22c55e;
+        }
+        .notify-icon.error {
+            background: rgba(239,68,68,0.1);
+            color: #ef4444;
+        }
+        .notify-icon.warning {
+            background: rgba(249,115,22,0.1);
+            color: #f97316;
+        }
+        .notify-icon.info {
+            background: rgba(10,102,194,0.1);
+            color: #0A66C2;
+        }
+        .notify-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+        .notify-message {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        .notify-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .notify-btn-primary {
+            padding: 10px 32px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .notify-btn-primary:hover { background: #0977d4; }
+        .notify-btn-secondary {
+            padding: 10px 24px;
+            background: #fff;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .notify-btn-secondary:hover { background: var(--bg); }
 
         /* CONGRATS MODAL */
         .congrats-modal {
@@ -3030,10 +3103,23 @@
             <p class="congrats-sub">Keep this going. You're doing the right thing.</p>
             <p class="congrats-platform">Published on <svg style="width:18px;height:18px;vertical-align:middle;margin-left:2px;" viewBox="0 0 24 24"><path fill="#0A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></p>
             <div class="congrats-actions">
-                <a class="congrats-btn-view" href="https://www.linkedin.com/feed/" target="_blank">View post &#8599;</a>
+                <a class="congrats-btn-view" id="congratsViewLink" href="https://www.linkedin.com/feed/" target="_blank">View post &#8599;</a>
                 <button class="congrats-btn-copy" onclick="copyPostLink()">&#128203; Copy link</button>
             </div>
             <a class="congrats-profile-link" href="https://www.linkedin.com/in/me/" target="_blank">&#8599; View your profile on <svg style="width:14px;height:14px;vertical-align:middle;" viewBox="0 0 24 24"><path fill="#0A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION MODAL -->
+    <div class="modal-overlay hidden" id="notifyModal" onclick="if(event.target===this)closeNotify()">
+        <div class="modal notify-modal">
+            <button class="modal-close" onclick="closeNotify()">&times;</button>
+            <div class="notify-icon" id="notifyIcon">&#10003;</div>
+            <h2 class="notify-title" id="notifyTitle">Done!</h2>
+            <p class="notify-message" id="notifyMessage"></p>
+            <div class="notify-actions" id="notifyActions">
+                <button class="notify-btn-primary" id="notifyOkBtn" onclick="closeNotify()">OK</button>
+            </div>
         </div>
     </div>
 
@@ -3446,10 +3532,10 @@
                     document.getElementById('createTextarea').value = data.post;
                     updateCharCount();
                 } else {
-                    alert(data.error || 'Could not generate post. Please add your OpenAI API key.');
+                    showNotify('Generation Failed', data.error || 'Could not generate post. Please add your OpenAI API key.', 'error');
                 }
             } catch {
-                alert('AI generation is not available. Please configure your OpenAI API key.');
+                showNotify('AI Unavailable', 'AI generation is not available. Please configure your OpenAI API key.', 'error');
             }
 
             indicator.style.display = 'none';
@@ -3458,13 +3544,13 @@
         async function addToQueueFromCreate() {
             const text = document.getElementById('createTextarea').value.trim();
             if (!text) {
-                alert('Write or generate a post first!');
+                showNotify('Empty Post', 'Write or generate a post first!', 'warning');
                 return;
             }
             await addToQueue(text, 'scheduled');
             document.getElementById('createTextarea').value = '';
             updateCharCount();
-            alert('Post added to your queue!');
+            showNotify('Added to Queue', 'Your post has been scheduled successfully.', 'success');
         }
 
         // Analytics
@@ -3682,10 +3768,10 @@
                     document.getElementById('composeTextarea').value = data.post;
                     updateComposeCharCount();
                 } else {
-                    alert(data.error || 'Could not generate. Add your OpenAI API key.');
+                    showNotify('Generation Failed', data.error || 'Could not generate. Add your OpenAI API key.', 'error');
                 }
             } catch {
-                alert('AI generation not available. Configure your OpenAI API key.');
+                showNotify('AI Unavailable', 'AI generation not available. Configure your OpenAI API key.', 'error');
             }
 
             indicator.classList.add('hidden');
@@ -3693,7 +3779,7 @@
 
         function publishFromCompose() {
             const text = document.getElementById('composeTextarea').value.trim();
-            if (!text) { alert('Write or generate a post first!'); return; }
+            if (!text) { showNotify('Empty Post', 'Write or generate a post first!', 'warning'); return; }
             openPublishModal();
         }
 
@@ -3713,23 +3799,94 @@
             document.getElementById('publishModal').classList.add('hidden');
         }
 
+        // Custom notification system
+        let _notifyResolve = null;
+
+        function showNotify(title, message, type, options) {
+            const modal = document.getElementById('notifyModal');
+            const icon = document.getElementById('notifyIcon');
+            const icons = { success: '&#10003;', error: '&#10007;', warning: '&#9888;', info: '&#8505;' };
+            icon.innerHTML = icons[type] || icons.success;
+            icon.className = 'notify-icon ' + (type || '');
+            document.getElementById('notifyTitle').textContent = title;
+            document.getElementById('notifyMessage').textContent = message;
+
+            const actions = document.getElementById('notifyActions');
+            if (options && options.confirm) {
+                actions.innerHTML = `<button class="notify-btn-secondary" onclick="resolveNotify(false)">Cancel</button>
+                    <button class="notify-btn-primary" onclick="resolveNotify(true)">${options.confirmText || 'Yes'}</button>`;
+            } else {
+                actions.innerHTML = '<button class="notify-btn-primary" onclick="closeNotify()">OK</button>';
+            }
+
+            modal.classList.remove('hidden');
+
+            return new Promise(resolve => { _notifyResolve = resolve; });
+        }
+
+        function closeNotify() {
+            document.getElementById('notifyModal').classList.add('hidden');
+            if (_notifyResolve) { _notifyResolve(false); _notifyResolve = null; }
+        }
+
+        function resolveNotify(val) {
+            document.getElementById('notifyModal').classList.add('hidden');
+            if (_notifyResolve) { _notifyResolve(val); _notifyResolve = null; }
+        }
+
+        let lastPublishedUrl = '';
+
         async function confirmPublish() {
             const text = document.getElementById('composeTextarea').value.trim();
             if (!text) return;
             const isFirstPost = queue.filter(q => q.status === 'posted').length === 0;
+            const audience = document.getElementById('publishAudience').value;
             closePublishModal();
-            await addToQueue(text, 'posted');
-            document.getElementById('composeTextarea').value = '';
-            updateComposeCharCount();
-            renderComposeSent();
-            updateCreditsPopup();
 
-            if (isFirstPost) {
-                showCongratsModal();
+            try {
+                const res = await fetch('/api/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, audience }),
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    lastPublishedUrl = data.postUrl || 'https://www.linkedin.com/feed/';
+                    await addToQueue(text, 'posted');
+                    document.getElementById('composeTextarea').value = '';
+                    updateComposeCharCount();
+                    renderComposeSent();
+                    updateCreditsPopup();
+                    showCongratsModal(isFirstPost);
+                } else {
+                    const errorMsg = data.error || 'Failed to publish to LinkedIn.';
+                    const saveDraft = await showNotify('Publish Failed', errorMsg + ' Save to queue as draft instead?', 'error', { confirm: true, confirmText: 'Save Draft' });
+                    if (saveDraft) {
+                        await addToQueue(text, 'draft');
+                        document.getElementById('composeTextarea').value = '';
+                        updateComposeCharCount();
+                    }
+                }
+            } catch {
+                const saveDraft = await showNotify('Connection Error', 'Could not connect to LinkedIn. Save to queue as draft instead?', 'error', { confirm: true, confirmText: 'Save Draft' });
+                if (saveDraft) {
+                    await addToQueue(text, 'draft');
+                    document.getElementById('composeTextarea').value = '';
+                    updateComposeCharCount();
+                }
             }
         }
 
-        function showCongratsModal() {
+        function showCongratsModal(isFirst) {
+            document.getElementById('congratsViewLink').href = lastPublishedUrl || 'https://www.linkedin.com/feed/';
+            if (isFirst) {
+                document.querySelector('.congrats-title').innerHTML = 'Congrats on your first post! &#127881;';
+                document.querySelector('.congrats-sub').textContent = 'Keep this going. You\'re doing the right thing.';
+            } else {
+                document.querySelector('.congrats-title').innerHTML = 'Post published! &#127881;';
+                document.querySelector('.congrats-sub').textContent = 'Your post is now live on LinkedIn.';
+            }
             document.getElementById('congratsModal').classList.remove('hidden');
             launchConfetti();
         }
@@ -3739,7 +3896,7 @@
         }
 
         function copyPostLink() {
-            const url = 'https://www.linkedin.com/feed/';
+            const url = lastPublishedUrl || 'https://www.linkedin.com/feed/';
             navigator.clipboard.writeText(url).then(() => {
                 const btn = document.querySelector('.congrats-btn-copy');
                 btn.textContent = '\u2705 Copied!';
@@ -3810,16 +3967,17 @@
 
         async function scheduleFromCompose() {
             const text = document.getElementById('composeTextarea').value.trim();
-            if (!text) { alert('Write or generate a post first!'); return; }
+            if (!text) { showNotify('Empty Post', 'Write or generate a post first!', 'warning'); return; }
             await addToQueue(text, 'scheduled');
             document.getElementById('composeTextarea').value = '';
             updateComposeCharCount();
             renderComposeScheduled();
+            showNotify('Scheduled', 'Your post has been scheduled.', 'success');
         }
 
         async function saveDraft() {
             const text = document.getElementById('composeTextarea').value.trim();
-            if (!text) { alert('Write something first!'); return; }
+            if (!text) { showNotify('Empty Post', 'Write something first!', 'warning'); return; }
             await addToQueue(text, 'draft');
             document.getElementById('composeTextarea').value = '';
             updateComposeCharCount();

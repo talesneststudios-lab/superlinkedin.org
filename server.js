@@ -485,6 +485,86 @@ app.post('/api/context/interests', async (req, res) => {
     res.json({ success: true });
 });
 
+// ---------- LINKEDIN PUBLISH ----------
+
+app.post('/api/publish', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { text, audience } = req.body;
+    if (!text || !text.trim()) {
+        return res.status(400).json({ error: 'Post text is required' });
+    }
+
+    const accessToken = req.session.user.accessToken;
+    if (!accessToken) {
+        return res.status(401).json({ error: 'No LinkedIn access token. Please sign in again.' });
+    }
+
+    const linkedinId = req.session.user.linkedinId;
+    const personUrn = `urn:li:person:${linkedinId}`;
+    const visibility = audience === 'connections' ? 'CONNECTIONS' : 'PUBLIC';
+
+    try {
+        const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+                'X-Restli-Protocol-Version': '2.0.0',
+            },
+            body: JSON.stringify({
+                author: personUrn,
+                lifecycleState: 'PUBLISHED',
+                specificContent: {
+                    'com.linkedin.ugc.ShareContent': {
+                        shareCommentary: { text: text.trim() },
+                        shareMediaCategory: 'NONE',
+                    },
+                },
+                visibility: {
+                    'com.linkedin.ugc.MemberNetworkVisibility': visibility,
+                },
+            }),
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            const postId = data.id;
+            const activityId = postId ? postId.replace('urn:li:share:', '') : '';
+            const postUrl = activityId
+                ? `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}/`
+                : `https://www.linkedin.com/feed/`;
+
+            console.log(`Post published to LinkedIn by ${req.session.user.name}: ${postId}`);
+            res.json({ success: true, postId, postUrl });
+        } else {
+            const errData = await response.text();
+            console.error('LinkedIn publish failed:', response.status, errData);
+
+            if (response.status === 401) {
+                return res.status(401).json({
+                    error: 'LinkedIn access token expired. Please sign out and sign in again.',
+                });
+            }
+            if (response.status === 403) {
+                return res.status(403).json({
+                    error: 'Missing LinkedIn posting permission. Please ensure "Share on LinkedIn" is enabled on your app.',
+                });
+            }
+
+            res.status(response.status).json({
+                error: 'Failed to publish to LinkedIn. Please try again.',
+                details: errData,
+            });
+        }
+    } catch (err) {
+        console.error('LinkedIn publish error:', err);
+        res.status(500).json({ error: 'Could not connect to LinkedIn. Please try again.' });
+    }
+});
+
 // ---------- AI & QUEUE ----------
 
 app.post('/api/ai/generate-posts', async (req, res) => {
