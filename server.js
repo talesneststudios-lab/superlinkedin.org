@@ -186,6 +186,35 @@ app.post('/api/checkout', async (req, res) => {
     }
 });
 
+// ---------- ONBOARDING ----------
+
+app.post('/api/onboarding/writing-dna', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { likedPosts } = req.body;
+    req.session.user.writingDNA = likedPosts || [];
+
+    const allTags = (likedPosts || []).flatMap(p => p.tags || []);
+    const tagCounts = {};
+    allTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
+    req.session.user.writingProfile = tagCounts;
+
+    console.log(`Writing DNA saved for ${req.session.user.name}:`, tagCounts);
+    res.json({ success: true, profile: tagCounts });
+});
+
+app.get('/api/onboarding/writing-dna', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    res.json({
+        writingDNA: req.session.user.writingDNA || [],
+        writingProfile: req.session.user.writingProfile || {},
+    });
+});
+
 // ---------- API ROUTES ----------
 
 // Get current user info

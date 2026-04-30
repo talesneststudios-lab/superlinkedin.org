@@ -489,8 +489,8 @@
                 <div class="post-author">
                     <div class="post-author-avatar" id="postAvatar">SL</div>
                     <div>
-                        <div class="post-author-name" id="postAuthor">SuperLinkedIn</div>
-                        <div class="post-author-handle" id="postHandle">@superlinkedin</div>
+                        <div class="post-author-name">SuperLinkedIn</div>
+                        <div class="post-author-handle">@superlinkedin</div>
                     </div>
                 </div>
                 <div class="post-body" id="postBody"></div>
@@ -512,7 +512,7 @@
                 <div class="progress-bar">
                     <div class="progress-fill" id="progressFill" style="width: 9%"></div>
                 </div>
-                <span class="progress-hint">Let's find your post style!</span>
+                <span class="progress-hint" id="progressHint">Let's find your post style!</span>
             </div>
         </div>
 
@@ -619,18 +619,66 @@
     </div>
 
     <script>
+        // Each post has tags so AI can later profile writing style preferences
         const POSTS = [
-            { author: "Sarah Chen", handle: "@sarahchen", initials: "SC", body: "<p>Starting a business can be painful.</p><p>You feel lost 97% of the time \u2013 the ups and downs are gut-wrenching.</p><p>I wish I had a cheat sheet of principles for my first startup.</p><p>So I wrote one.</p><p>Here are 40+ learnings about entrepreneurship that took me 10 years to figure out:</p>" },
-            { author: "Alex Rivera", handle: "@alexrivera", initials: "AR", body: "<p>I went from 0 to 50K LinkedIn followers in 8 months.</p><p>No ads. No viral hacks. No bought followers.</p><p>Just consistent, value-driven content.</p><p>Here's the exact framework I used \u2193</p>" },
-            { author: "Maya Patel", handle: "@mayapatel", initials: "MP", body: "<p>Hot take: Most LinkedIn content is boring because people write what they think sounds smart.</p><p>The best posts come from writing what you actually believe, even if it's unpopular.</p><p>Authenticity > Authority every single time.</p>" },
-            { author: "James Park", handle: "@jamespark", initials: "JP", body: "<p>I interviewed 200+ top performers in tech.</p><p>The #1 skill they all shared? It wasn't coding. It wasn't leadership.</p><p>It was storytelling.</p><p>People who tell better stories get promoted faster, close more deals, and build bigger networks.</p>" },
-            { author: "Lisa Wang", handle: "@lisawang", initials: "LW", body: "<p>I spent $50K on LinkedIn ads last year. Here's what I learned:</p><p>1. Organic content outperformed paid 3:1<br>2. Comments drive more leads than clicks<br>3. Personal profiles beat company pages<br>4. Consistency beats creativity</p><p>Save your money. Write better posts.</p>" },
-            { author: "David Kim", handle: "@davidkim", initials: "DK", body: "<p>The best career advice I ever got:</p><p>\"Your network is your net worth\" is wrong.</p><p>Your REPUTATION is your net worth. Your network just amplifies it.</p><p>Focus on being known for something specific. The network follows.</p>" },
-            { author: "Emma Brooks", handle: "@emmabrooks", initials: "EB", body: "<p>I doubled my consulting rate by doing one thing:</p><p>I started posting on LinkedIn every day for 90 days straight.</p><p>Not because of followers. Because potential clients could see my thinking before the sales call.</p><p>Content is the new cold email.</p>" },
-            { author: "Ryan Foster", handle: "@ryanfoster", initials: "RF", body: "<p>Unpopular opinion: You don't need a personal brand.</p><p>You need a personal REPUTATION.</p><p>Brands are manufactured. Reputations are earned.</p><p>Show your work. Share your failures. Help others publicly.</p><p>That's all you need.</p>" },
-            { author: "Nina Sharma", handle: "@ninasharma", initials: "NS", body: "<p>I analyzed the top 100 LinkedIn posts from last month.</p><p>The pattern? Every single one told a story.</p><p>Not tips. Not lists. Stories.</p><p>People don't remember advice. They remember how you made them feel.</p>" },
-            { author: "Chris Morgan", handle: "@chrismorgan", initials: "CM", body: "<p>3 years ago I was laid off. Today I run a 7-figure business.</p><p>LinkedIn was the bridge.</p><p>I posted my journey \u2013 the ugly parts too. People connected with the honesty.</p><p>Your lowest moment can be your biggest content asset.</p>" },
-            { author: "Priya Gupta", handle: "@priyagupta", initials: "PG", body: "<p>The LinkedIn algorithm isn't broken. Your content strategy is.</p><p>Stop chasing engagement. Start solving problems.</p><p>Every post should answer one question your ideal client is asking right now.</p><p>Do that consistently and the algorithm will reward you.</p>" },
+            {
+                tags: ["motivational", "list", "hard-truths"],
+                body: "<p>3 things people hate hearing that are true:</p><p>- Your life is your responsibility<br>- No one is coming to save you<br>- If you want to change your future, you have to change yourself</p>"
+            },
+            {
+                tags: ["empathy", "awareness", "mental-health"],
+                body: "<p>People with burnout will lie to you. Not because they intend to, they're lying to themselves too.</p><p>If someone tells you they're feeling \"a little bit burned out\", you should take it very seriously, because by the time they're ready to admit that to themselves, things are already bad.</p>"
+            },
+            {
+                tags: ["contrarian", "strategy", "productivity"],
+                body: "<p>We need to redefine \"hard work\" to include \"hard thinking.\"</p><p>The person who outsmarts you is out working you.<br>The person who finds shortcuts is out working you.<br>The person with a better strategy is out working you.</p><p>Usually, the hardest work is thinking of a better approach.</p>"
+            },
+            {
+                tags: ["reflective", "personal-growth", "life"],
+                body: "<p>I used to think being in your 30's would be about settling down, turns out it's about starting over, healing, &amp; becoming a new version of you.</p>"
+            },
+            {
+                tags: ["practical", "list", "resources"],
+                body: "<p>How I source content inspiration in 2026:</p><p>- LinkedIn: thought leadership<br>- Substack: long-form insights<br>- Feedly: industry trends</p><p>Literally all you need.</p>"
+            },
+            {
+                tags: ["empathy", "motivational", "resilience"],
+                body: "<p>I applaud people who try again. We never really talk about the strength required to get back up again.</p><p>People are just expected to bounce back. If you see someone struggling to try again, give them a hand. They really need it.</p>"
+            },
+            {
+                tags: ["reflective", "philosophical", "quotes"],
+                body: "<p>Sometimes I meet a person &amp; can't help but smile, happy to learn that I live in a world where they exist.</p><p>\"We sometimes encounter people, even perfect strangers, who begin to interest us at first sight, somehow suddenly, all at once, before a word has been spoken.\"</p>"
+            },
+            {
+                tags: ["provocative", "economics", "humor"],
+                body: "<p>Can anyone pinpoint the exact moment where everything became both:</p><p>a) worse<br>b) and more expensive</p><p>When did this happen?</p>"
+            },
+            {
+                tags: ["humor", "tech", "storytelling"],
+                body: "<p>I was doing a late night debugging session and I couldn't figure something out</p><p>and then I googled it</p><p>and the first result with my answer</p><p>was a blog post</p><p>that I wrote</p>"
+            },
+            {
+                tags: ["business", "concise", "framework"],
+                body: "<p>Branding is how people see you.</p><p>Marketing is how they find you.</p><p>Sales is how you get paid.</p><p>Master all three.</p>"
+            },
+            {
+                tags: ["entrepreneurship", "storytelling", "lessons"],
+                body: "<p>Starting a business can be painful.</p><p>You feel lost 97% of the time \u2013 the ups and downs are gut-wrenching.</p><p>I wish I had a cheat sheet of principles for my first startup.</p><p>So I wrote one.</p><p>Here are 40+ learnings about entrepreneurship that took me 10 years to figure out:</p>"
+            },
+        ];
+
+        const PROGRESS_HINTS = [
+            "Let's find your post style!",
+            "Let's find your post style!",
+            "Great choices!",
+            "Great choices!",
+            "Great choices!",
+            "You're doing amazing!",
+            "You're doing amazing!",
+            "You're doing amazing!",
+            "Nearly there!",
+            "Nearly there!",
+            "Just a few more!",
         ];
 
         const CREATORS = [
@@ -649,12 +697,10 @@
 
         function renderPost() {
             const post = POSTS[currentPost];
-            document.getElementById('postAvatar').textContent = post.initials;
-            document.getElementById('postAuthor').textContent = post.author;
-            document.getElementById('postHandle').textContent = post.handle;
             document.getElementById('postBody').innerHTML = post.body;
             document.getElementById('progressText').textContent = `${currentPost + 1} of ${POSTS.length}`;
             document.getElementById('progressFill').style.width = `${((currentPost + 1) / POSTS.length) * 100}%`;
+            document.getElementById('progressHint').textContent = PROGRESS_HINTS[currentPost] || '';
 
             const card = document.getElementById('postCard');
             card.style.animation = 'none';
@@ -662,18 +708,34 @@
             card.style.animation = 'fadeIn 0.4s ease';
         }
 
-        function nextPost() {
+        function advancePost() {
             currentPost++;
             if (currentPost >= POSTS.length) {
+                saveWritingDNA();
                 goToStep(1);
             } else {
                 renderPost();
             }
         }
 
+        function nextPost() {
+            advancePost();
+        }
+
         function likePost() {
-            likedPosts.push(POSTS[currentPost]);
-            nextPost();
+            likedPosts.push({
+                index: currentPost,
+                tags: POSTS[currentPost].tags,
+            });
+            advancePost();
+        }
+
+        function saveWritingDNA() {
+            fetch('/api/onboarding/writing-dna', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ likedPosts }),
+            }).catch(() => {});
         }
 
         function goToStep(stepIndex) {
