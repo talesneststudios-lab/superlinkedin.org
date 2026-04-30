@@ -699,6 +699,108 @@
             margin-bottom: 24px;
         }
 
+        /* EXTENSION PREVIEW */
+        .ext-preview-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ext-preview-img {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .ext-mock {
+            background: #f8f8fa;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .ext-mock-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 14px;
+            background: #f0f0f3;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .ext-mock-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+
+        .ext-mock-body {
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .ext-mock-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .ext-mock-bar {
+            height: 10px;
+            background: rgba(10, 102, 194, 0.08);
+            border-radius: 5px;
+        }
+
+        .ext-mock-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .ext-mock-cell {
+            height: 50px;
+            background: rgba(10, 102, 194, 0.05);
+            border-radius: 6px;
+            border: 1px solid rgba(10, 102, 194, 0.08);
+        }
+
+        .ext-features-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .ext-feature-pill {
+            padding: 8px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+
+        .ext-install-btn {
+            padding: 14px 32px;
+            background: #ccc;
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.9rem;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
         /* DONE STEP */
         .done-icon {
             width: 80px; height: 80px;
@@ -919,33 +1021,55 @@
         <!-- STEP 4: Extension -->
         <div class="step-content" id="step-3">
             <div class="step-icon">&#128268;</div>
-            <h1>Install the Chrome Extension</h1>
-            <p class="subtitle">Get AI-powered tools right inside LinkedIn</p>
+            <h1>Chrome Extension Included</h1>
+            <p class="subtitle">For the best SuperLinkedIn experience, install our Chrome extension for LinkedIn</p>
 
-            <div class="post-card" style="text-align: left;">
-                <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; margin-bottom: 16px;">
-                    The SuperLinkedIn Chrome Extension lets you:
-                </p>
-                <ul style="list-style: none; padding: 0;">
-                    <li style="display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: var(--text-secondary);">
-                        <span style="color: var(--green); font-weight: 700;">&#10003;</span> Write posts with AI directly on LinkedIn
-                    </li>
-                    <li style="display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: var(--text-secondary);">
-                        <span style="color: var(--green); font-weight: 700;">&#10003;</span> Auto-engage with your network
-                    </li>
-                    <li style="display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: var(--text-secondary);">
-                        <span style="color: var(--green); font-weight: 700;">&#10003;</span> Schedule posts from your feed
-                    </li>
-                    <li style="display: flex; align-items: center; gap: 10px; padding: 8px 0; font-size: 0.88rem; color: var(--text-secondary);">
-                        <span style="color: var(--green); font-weight: 700;">&#10003;</span> Analyze any profile instantly
-                    </li>
-                </ul>
+            <div class="ext-preview-card">
+                <div class="ext-preview-img">
+                    <div class="ext-mock">
+                        <div class="ext-mock-header">
+                            <div class="ext-mock-dot" style="background:#ef4444;"></div>
+                            <div class="ext-mock-dot" style="background:#f59e0b;"></div>
+                            <div class="ext-mock-dot" style="background:#22c55e;"></div>
+                            <span style="margin-left:12px;font-size:0.65rem;color:var(--text-muted);">SuperLinkedIn Extension</span>
+                        </div>
+                        <div class="ext-mock-body">
+                            <div class="ext-mock-row">
+                                <div class="ext-mock-bar" style="width:60%;"></div>
+                                <div class="ext-mock-bar" style="width:40%;background:rgba(10,102,194,0.12);"></div>
+                            </div>
+                            <div class="ext-mock-row">
+                                <div class="ext-mock-bar" style="width:80%;"></div>
+                            </div>
+                            <div class="ext-mock-grid">
+                                <div class="ext-mock-cell"></div>
+                                <div class="ext-mock-cell"></div>
+                                <div class="ext-mock-cell"></div>
+                            </div>
+                            <div class="ext-mock-row">
+                                <div class="ext-mock-bar" style="width:50%;"></div>
+                                <div class="ext-mock-bar" style="width:30%;background:rgba(34,197,94,0.15);"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ext-features-row">
+                    <div class="ext-feature-pill">&#128202; Advanced Insights</div>
+                    <div class="ext-feature-pill">&#9989; Growth Tracking</div>
+                    <div class="ext-feature-pill">&#129302; AI Chat</div>
+                </div>
+
+                <button class="ext-install-btn" disabled>
+                    &#128268; Install Chrome Extension &mdash; Coming Soon
+                </button>
             </div>
 
-            <button class="btn-primary" onclick="goToStep(4)" style="background: #e5e5ea; color: var(--text-secondary);">
-                Coming Soon &mdash; Continue &rarr;
-            </button>
-            <button class="btn-skip" onclick="goToStep(4)">Skip for now</button>
+            <div class="creators-nav">
+                <button class="btn-back" onclick="goToStep(2)">&larr; Back</button>
+                <button class="btn-skip" onclick="goToStep(4)">Skip this step</button>
+                <button class="btn-primary" onclick="goToStep(4)">Continue &rarr;</button>
+            </div>
         </div>
 
         <!-- STEP 5: Done -->
