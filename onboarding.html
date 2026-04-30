@@ -362,6 +362,78 @@
             color: var(--text-muted);
         }
 
+        /* ABOUT YOU CARD */
+        .about-you-card {
+            width: 100%;
+            max-width: 520px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            text-align: left;
+            margin-bottom: 16px;
+        }
+
+        .about-you-label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 12px;
+        }
+
+        .about-you-textarea {
+            width: 100%;
+            min-height: 140px;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            color: var(--text-primary);
+            line-height: 1.6;
+            resize: vertical;
+            outline: none;
+            transition: border 0.2s;
+        }
+
+        .about-you-textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .about-you-textarea::placeholder {
+            color: #b0b0bb;
+        }
+
+        .about-you-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .about-you-note {
+            font-size: 0.78rem;
+            color: var(--accent);
+            font-weight: 500;
+        }
+
+        .about-you-counter {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .about-you-tip {
+            width: 100%;
+            max-width: 520px;
+            text-align: left;
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 24px;
+        }
+
         /* DONE STEP */
         .done-icon {
             width: 80px; height: 80px;
@@ -519,46 +591,21 @@
         <!-- STEP 2: Profile -->
         <div class="step-content" id="step-1">
             <div class="step-icon">&#128100;</div>
-            <h1>Complete your profile</h1>
-            <p class="subtitle">Help us personalize your experience</p>
+            <h1>About You</h1>
+            <p class="subtitle">Tell us a bit about you to personalize content suggestions</p>
 
-            <div class="form-group">
-                <label>What industry are you in?</label>
-                <select id="industry">
-                    <option value="">Select your industry</option>
-                    <option>Technology</option>
-                    <option>Marketing</option>
-                    <option>Finance</option>
-                    <option>Consulting</option>
-                    <option>Healthcare</option>
-                    <option>Education</option>
-                    <option>Real Estate</option>
-                    <option>E-commerce</option>
-                    <option>SaaS</option>
-                    <option>Other</option>
-                </select>
+            <div class="about-you-card">
+                <label class="about-you-label">Tell us a bit about you</label>
+                <textarea id="aboutYou" class="about-you-textarea" maxlength="500" placeholder="e.g. I'm a marketing professional passionate about B2B growth strategies. I share insights on content marketing, personal branding, and leadership. I'm interested in connecting with like-minded professionals and exploring creative projects on LinkedIn."></textarea>
+                <div class="about-you-footer">
+                    <span class="about-you-note">Used to generate personalized content</span>
+                    <span class="about-you-counter"><span id="charCount">0</span>/500</span>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label>What's your LinkedIn goal?</label>
-                <select id="goal">
-                    <option value="">Select your main goal</option>
-                    <option>Grow my audience</option>
-                    <option>Generate leads</option>
-                    <option>Build personal brand</option>
-                    <option>Find a job</option>
-                    <option>Recruit talent</option>
-                    <option>Share thought leadership</option>
-                    <option>Promote my business</option>
-                </select>
-            </div>
+            <p class="about-you-tip"><strong>Tip:</strong> Include your interests, expertise, and what you typically post about. The more specific, the better our recommendations will be.</p>
 
-            <div class="form-group">
-                <label>Describe yourself in a sentence</label>
-                <textarea id="bio" placeholder="e.g. Marketing leader helping B2B startups grow through content"></textarea>
-            </div>
-
-            <button class="btn-primary" onclick="goToStep(2)">Continue &rarr;</button>
+            <button class="btn-primary" onclick="saveProfile(); goToStep(2)">Continue &rarr;</button>
             <button class="btn-skip" onclick="goToStep(2)">Skip for now</button>
         </div>
 
@@ -765,6 +812,26 @@
                     </div>
                 </div>
             `).join('');
+        }
+
+        // Character counter for About You
+        const aboutYouEl = document.getElementById('aboutYou');
+        const charCountEl = document.getElementById('charCount');
+        if (aboutYouEl) {
+            aboutYouEl.addEventListener('input', () => {
+                charCountEl.textContent = aboutYouEl.value.length;
+            });
+        }
+
+        function saveProfile() {
+            const aboutText = document.getElementById('aboutYou').value.trim();
+            if (aboutText) {
+                fetch('/api/onboarding/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ aboutYou: aboutText }),
+                }).catch(() => {});
+            }
         }
 
         renderPost();

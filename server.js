@@ -205,6 +205,18 @@ app.post('/api/onboarding/writing-dna', (req, res) => {
     res.json({ success: true, profile: tagCounts });
 });
 
+app.post('/api/onboarding/profile', (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { aboutYou } = req.body;
+    req.session.user.aboutYou = aboutYou || '';
+
+    console.log(`Profile saved for ${req.session.user.name}: "${aboutYou}"`);
+    res.json({ success: true });
+});
+
 app.get('/api/onboarding/writing-dna', (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
