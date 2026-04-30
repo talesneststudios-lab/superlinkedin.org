@@ -3266,11 +3266,28 @@
         }
 
         async function removeFromQueue(index) {
+            const confirmed = await showNotify('Delete Post', 'Are you sure you want to delete this post from the queue?', 'warning', { confirm: true, confirmText: 'Delete' });
+            if (!confirmed) return;
             try {
                 const res = await fetch('/api/queue', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ action: 'remove', index }),
+                });
+                const data = await res.json();
+                queue = data.queue || [];
+                renderQueue();
+                renderHomeQueuePreview();
+                showNotify('Deleted', 'Post removed from queue.', 'success');
+            } catch {}
+        }
+
+        async function updateQueueItem(index, text, status) {
+            try {
+                const res = await fetch('/api/queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'update', index, text, status }),
                 });
                 const data = await res.json();
                 queue = data.queue || [];
@@ -3428,13 +3445,64 @@
             renderQueue(status);
         }
 
+        let editingQueueIndex = null;
+
         function editQueueItem(index) {
             const item = queue[index];
             if (!item) return;
-            document.getElementById('createTextarea').value = item.text;
-            showPage('create');
-            updateCharCount();
-            updatePreview();
+            editingQueueIndex = index;
+
+            const panel = document.getElementById('composePanel');
+            if (panel.classList.contains('hidden')) toggleCompose();
+
+            document.getElementById('composeTextarea').value = item.text;
+            updateComposeCharCount();
+            showComposeTab('compose');
+
+            let saveBtn = document.getElementById('composeSaveEditBtn');
+            if (!saveBtn) {
+                saveBtn = document.createElement('button');
+                saveBtn.id = 'composeSaveEditBtn';
+                saveBtn.className = 'compose-publish-btn';
+                saveBtn.style.cssText = 'background:#22c55e;margin-top:6px;';
+                saveBtn.textContent = 'Save Changes';
+                saveBtn.onclick = saveQueueEdit;
+                const publishBtn = document.querySelector('.compose-publish-btn');
+                if (publishBtn) publishBtn.parentNode.insertBefore(saveBtn, publishBtn.nextSibling);
+            }
+            saveBtn.style.display = 'block';
+
+            const cancelBtn = document.getElementById('composeCancelEditBtn');
+            if (!cancelBtn) {
+                const c = document.createElement('button');
+                c.id = 'composeCancelEditBtn';
+                c.className = 'compose-publish-btn';
+                c.style.cssText = 'background:transparent;color:var(--text-secondary);border:1px solid var(--border);margin-top:4px;';
+                c.textContent = 'Cancel Edit';
+                c.onclick = cancelQueueEdit;
+                saveBtn.parentNode.insertBefore(c, saveBtn.nextSibling);
+            } else {
+                cancelBtn.style.display = 'block';
+            }
+        }
+
+        async function saveQueueEdit() {
+            if (editingQueueIndex === null) return;
+            const text = document.getElementById('composeTextarea').value.trim();
+            if (!text) { showNotify('Empty Post', 'Post text cannot be empty.', 'warning'); return; }
+            await updateQueueItem(editingQueueIndex, text);
+            showNotify('Updated', 'Your post has been updated.', 'success');
+            cancelQueueEdit();
+        }
+
+        function cancelQueueEdit() {
+            editingQueueIndex = null;
+            document.getElementById('composeTextarea').value = '';
+            updateComposeCharCount();
+            const saveBtn = document.getElementById('composeSaveEditBtn');
+            const cancelBtn = document.getElementById('composeCancelEditBtn');
+            if (saveBtn) saveBtn.style.display = 'none';
+            if (cancelBtn) cancelBtn.style.display = 'none';
         }
 
         async function renderHomeQueuePreview() {
@@ -4238,7 +4306,10 @@
             await loadUser();
             await loadQueue();
             updateCreditsPopup();
-            setTimeout(openModal, 800);
+            if (!localStorage.getItem('sl_welcome_shown')) {
+                localStorage.setItem('sl_welcome_shown', '1');
+                setTimeout(openModal, 800);
+            }
         }
 
         init();

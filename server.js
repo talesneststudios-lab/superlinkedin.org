@@ -722,6 +722,12 @@ app.post('/api/queue', async (req, res) => {
             status: status || 'draft',
             date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
         });
+    } else if (action === 'update' && typeof index === 'number' && text) {
+        if (req.session.user.queue[index]) {
+            req.session.user.queue[index].text = text;
+            if (status) req.session.user.queue[index].status = status;
+            req.session.user.queue[index].date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
     } else if (action === 'remove' && typeof index === 'number') {
         req.session.user.queue.splice(index, 1);
     }
