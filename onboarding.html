@@ -438,8 +438,11 @@
             margin-bottom: 16px;
             border: 1px solid var(--border);
             border-radius: 10px;
-            max-height: 180px;
+            max-height: 220px;
             overflow-y: auto;
+            position: relative;
+            z-index: 10;
+            background: var(--bg-white);
         }
 
         .search-result-item {
@@ -1194,7 +1197,7 @@
                 <div class="search-row">
                     <div class="search-input-wrap">
                         <span class="search-icon">&#128269;</span>
-                        <input type="text" id="creatorSearch" class="search-input" placeholder="Search by name or paste a LinkedIn profile URL..." oninput="onCreatorSearch(this.value)" onkeydown="if(event.key==='Enter')searchCreator()">
+                        <input type="text" id="creatorSearch" class="search-input" placeholder="Search by name or paste a LinkedIn profile URL..." oninput="onCreatorSearch(this.value)" onkeydown="if(event.key==='Enter')searchCreator()" onfocus="onCreatorSearch(this.value)" onpaste="setTimeout(()=>onCreatorSearch(this.value),100)">
                     </div>
                     <button class="search-btn" onclick="searchCreator()">Search</button>
                 </div>
