@@ -158,10 +158,129 @@
             background: rgba(255,255,255,0.04);
             border-radius: 8px;
             margin-bottom: 10px;
+            cursor: pointer;
+            position: relative;
+            transition: background 0.2s;
         }
+        .sidebar-credits:hover { background: rgba(255,255,255,0.08); }
 
         .sidebar-credits .credits-icon { font-size: 1rem; }
         .sidebar-credits span { font-size: 0.78rem; color: var(--sidebar-text); }
+
+        /* Credits hover dashboard */
+        .credits-popup {
+            display: none;
+            position: absolute;
+            left: calc(100% + 12px);
+            bottom: 0;
+            width: 320px;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 300;
+            padding: 20px;
+            color: var(--text-primary);
+        }
+        .sidebar-credits:hover .credits-popup { display: block; }
+
+        .credits-popup::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            bottom: 16px;
+            width: 12px;
+            height: 12px;
+            background: #fff;
+            transform: rotate(45deg);
+            box-shadow: -2px 2px 4px rgba(0,0,0,0.06);
+        }
+
+        .credits-popup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .credits-popup-title {
+            font-size: 0.95rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+        .credits-popup-total {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(10,102,194,0.08);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .credits-popup-bar {
+            width: 100%;
+            height: 8px;
+            background: #eee;
+            border-radius: 4px;
+            margin-bottom: 18px;
+            overflow: hidden;
+        }
+        .credits-popup-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #0A66C2, #70B5F9);
+            transition: width 0.4s ease;
+        }
+
+        .credits-popup-rows { margin-bottom: 14px; }
+        .credits-popup-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 0;
+            font-size: 0.8rem;
+            border-bottom: 1px solid #f2f2f2;
+        }
+        .credits-popup-row:last-child { border-bottom: none; }
+        .credits-popup-row-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+        }
+        .credits-popup-row-label .row-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            flex-shrink: 0;
+        }
+        .row-icon.blue { background: rgba(10,102,194,0.1); color: #0A66C2; }
+        .row-icon.green { background: rgba(34,197,94,0.1); color: #22c55e; }
+        .row-icon.purple { background: rgba(168,85,247,0.1); color: #a855f7; }
+        .row-icon.orange { background: rgba(249,115,22,0.1); color: #f97316; }
+        .credits-popup-row-value {
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .credits-popup-footer {
+            text-align: center;
+            padding-top: 6px;
+        }
+        .credits-popup-upgrade {
+            display: inline-block;
+            padding: 8px 24px;
+            background: var(--accent);
+            color: #fff;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .credits-popup-upgrade:hover { background: #0977d4; }
 
         .sidebar-user {
             display: flex;
@@ -380,100 +499,965 @@
             margin-top: 8px;
         }
 
-        /* HOME PAGE */
-        .home-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
+        /* PUBLISH MODAL */
+        .publish-modal {
+            max-width: 420px;
+            padding: 28px 32px 24px;
+            text-align: center;
         }
-
-        .home-grid .card.full-width {
-            grid-column: 1 / -1;
+        .publish-modal-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 4px;
         }
-
-        .tip-list { list-style: none; }
-        .tip-list li {
-            display: flex;
-            align-items: flex-start;
-            gap: 10px;
-            padding: 8px 0;
+        .publish-modal-sub {
             font-size: 0.88rem;
-            color: var(--text-secondary);
+            color: var(--text-muted);
+            margin-bottom: 18px;
         }
+        .publish-modal-now-btn {
+            width: 100%;
+            padding: 13px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 20px;
+            transition: background 0.2s;
+        }
+        .publish-modal-now-btn:hover { background: #0977d4; }
 
-        .tip-list li .tip-icon {
-            flex-shrink: 0;
-            width: 28px; height: 28px;
-            border-radius: 8px;
-            background: var(--accent-light);
+        .publish-modal-account {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 0;
+            border-top: 1px solid var(--border);
+        }
+        .publish-account-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            text-align: left;
+        }
+        .publish-account-avatar {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
             display: flex;
             align-items: center;
             justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.7rem;
+            flex-shrink: 0;
+        }
+        .publish-account-name {
+            font-weight: 700;
             font-size: 0.85rem;
         }
-
-        .tutorial-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 12px;
-        }
-
-        .tutorial-card {
-            padding: 16px;
-            background: var(--bg);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .tutorial-card:hover { background: #eee; }
-
-        .tutorial-card .tut-icon {
-            font-size: 1.4rem;
-            margin-bottom: 8px;
-        }
-
-        .tutorial-card h4 {
-            font-size: 0.82rem;
-            font-weight: 700;
-            margin-bottom: 4px;
-        }
-
-        .tutorial-card p {
+        .publish-account-handle {
             font-size: 0.75rem;
             color: var(--text-muted);
         }
-
-        /* QUEUE PAGE */
-        .queue-tabs {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 20px;
+        .publish-audience-select select {
+            padding: 6px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.8rem;
             background: var(--bg);
-            border-radius: 10px;
-            padding: 4px;
-            width: fit-content;
+            color: var(--text-primary);
+            cursor: pointer;
+            outline: none;
+        }
+        .publish-audience-select select:focus {
+            border-color: var(--accent);
         }
 
+        /* Toggle switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+        .toggle-switch.small { width: 34px; height: 18px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: #ccc;
+            border-radius: 22px;
+            transition: 0.25s;
+        }
+        .toggle-slider::before {
+            content: "";
+            position: absolute;
+            height: 16px; width: 16px;
+            left: 3px; bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: 0.25s;
+        }
+        .toggle-switch.small .toggle-slider::before {
+            height: 12px; width: 12px;
+        }
+        .toggle-switch input:checked + .toggle-slider {
+            background: #ef4444;
+        }
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(18px);
+        }
+        .toggle-switch.small input:checked + .toggle-slider::before {
+            transform: translateX(16px);
+        }
+
+        .publish-modal-options {
+            border-top: 1px solid var(--border);
+            padding-top: 12px;
+            margin-top: 4px;
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+        }
+        .publish-option {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        /* CONGRATS MODAL */
+        .congrats-modal {
+            max-width: 400px;
+            padding: 32px 32px 24px;
+            text-align: center;
+        }
+        .congrats-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+        }
+        .congrats-sub {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+        }
+        .congrats-platform {
+            font-size: 1.05rem;
+            font-weight: 700;
+            margin-bottom: 22px;
+            color: var(--text-primary);
+        }
+        .congrats-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 18px;
+        }
+        .congrats-btn-view {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 28px;
+            background: #0A66C2;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .congrats-btn-view:hover { background: #0977d4; }
+        .congrats-btn-copy {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 12px 22px;
+            background: #fff;
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            font-family: inherit;
+            font-size: 0.92rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .congrats-btn-copy:hover { background: var(--bg); }
+        .congrats-profile-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-top: 4px;
+        }
+        .congrats-profile-link:hover { color: var(--accent); }
+
+        /* HOME PAGE */
+        /* First steps section */
+        .home-steps-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+            position: relative;
+        }
+        .home-steps-close {
+            position: absolute;
+            top: 12px; right: 14px;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .home-steps-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .home-steps-sub {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .home-mission {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: var(--bg);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .home-mission:hover { background: #eee; }
+        .home-mission-icon {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .home-mission-text {
+            flex: 1;
+        }
+        .home-mission-text strong {
+            display: block;
+            font-size: 0.88rem;
+            margin-bottom: 2px;
+        }
+        .home-mission-text span {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+        .home-mission-reward {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(10,102,194,0.08);
+            padding: 4px 10px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .home-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            padding-top: 4px;
+        }
+        .home-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: #ddd;
+        }
+        .home-dot.active { background: var(--accent); }
+        .home-dot.done { background: var(--green); }
+
+        /* Playbook / learn section */
+        .home-playbook {
+            background: #1a1a2e;
+            border-radius: 14px;
+            padding: 28px 28px 20px;
+            margin-bottom: 28px;
+            position: relative;
+            overflow: hidden;
+        }
+        .home-playbook-close {
+            position: absolute;
+            top: 12px; right: 14px;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: rgba(255,255,255,0.5);
+        }
+        .home-playbook-close:hover { color: #fff; }
+        .home-playbook-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            background: rgba(10,102,194,0.2);
+            border-radius: 8px;
+            margin-bottom: 12px;
+        }
+        .home-playbook-badge span {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #70B5F9;
+        }
+        .home-playbook h3 {
+            font-size: 1.15rem;
+            font-weight: 800;
+            color: #fff;
+            margin-bottom: 4px;
+        }
+        .home-playbook p {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.5);
+        }
+
+        /* Ready to post section */
+        .home-ready-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .home-ready-title {
+            font-size: 1.15rem;
+            font-weight: 800;
+        }
+        .home-ready-viewall {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .home-ready-viewall:hover { color: var(--accent); }
+        .home-ready-sub {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .home-posts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .home-post-card {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+        .home-post-author {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .home-post-avatar {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: 800;
+            font-size: 0.55rem;
+            flex-shrink: 0;
+        }
+        .home-post-author-name {
+            font-size: 0.78rem;
+            font-weight: 700;
+        }
+        .home-post-author-handle {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .home-post-body {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            flex: 1;
+            margin-bottom: 12px;
+            white-space: pre-line;
+        }
+        .home-post-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: auto;
+        }
+        .home-post-inspired {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .home-post-inspired a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .home-post-edit-btn {
+            padding: 6px 16px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .home-post-edit-btn:hover { background: #0977d4; }
+
+        .home-post-loading {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            grid-column: 1 / -1;
+        }
+
+        /* CONTEXT PAGE */
+        .ctx-page-title {
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin-bottom: 4px;
+        }
+        .ctx-page-sub {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+        }
+        .ctx-section {
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+        .ctx-section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .ctx-section-icon {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .ctx-section-icon.blue { background: rgba(10,102,194,0.1); color: #0A66C2; }
+        .ctx-section-icon.orange { background: rgba(249,115,22,0.1); color: #f97316; }
+        .ctx-section-icon.purple { background: rgba(168,85,247,0.1); color: #a855f7; }
+        .ctx-section-icon.green { background: rgba(34,197,94,0.1); color: #22c55e; }
+        .ctx-section-icon.red { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .ctx-section-title {
+            font-size: 1rem;
+            font-weight: 800;
+        }
+        .ctx-section-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            margin-left: 38px;
+        }
+        .ctx-textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 12px 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            resize: vertical;
+            outline: none;
+            transition: border 0.2s;
+        }
+        .ctx-textarea:focus { border-color: var(--accent); }
+        .ctx-textarea-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+        .ctx-char-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .ctx-save-btn {
+            padding: 7px 20px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ctx-save-btn:hover { background: #0977d4; }
+        .ctx-save-btn.saved {
+            background: var(--green);
+        }
+
+        /* Creators section */
+        .ctx-creators-search {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .ctx-creators-search input {
+            flex: 1;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .ctx-creators-search input:focus { border-color: var(--accent); }
+        .ctx-creators-search button {
+            padding: 9px 18px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .ctx-selected-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        .ctx-creators-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .ctx-creator-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .ctx-creator-avatar {
+            width: 24px; height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.5rem;
+            font-weight: 800;
+        }
+        .ctx-creator-remove {
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 0 2px;
+        }
+        .ctx-creator-remove:hover { color: var(--red); }
+
+        /* Toggle row */
+        .ctx-toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-top: 1px solid var(--border);
+            margin-top: 12px;
+        }
+        .ctx-toggle-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .ctx-toggle-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        /* Products section */
+        .ctx-products-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .ctx-products-count {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+        .ctx-add-product-btn {
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--accent);
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+        .ctx-add-product-btn:hover { text-decoration: underline; }
+        .ctx-product-item {
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .ctx-product-url {
+            font-size: 0.78rem;
+            color: var(--accent);
+            word-break: break-all;
+            margin-bottom: 6px;
+        }
+        .ctx-product-title {
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-bottom: 2px;
+        }
+        .ctx-product-desc {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+        .ctx-product-remove {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 0.85rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .ctx-product-remove:hover { color: var(--red); }
+        .ctx-product-add-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .ctx-product-add-row input {
+            flex: 1;
+            padding: 9px 14px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            outline: none;
+        }
+        .ctx-product-add-row input:focus { border-color: var(--accent); }
+        .ctx-product-add-row button {
+            padding: 9px 16px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        /* Interests section */
+        .ctx-interests-category {
+            margin-bottom: 14px;
+        }
+        .ctx-interests-cat-label {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+        .ctx-interests-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .ctx-interest-tag {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            background: #fff;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+        .ctx-interest-tag:hover { border-color: var(--accent); color: var(--accent); }
+        .ctx-interest-tag.selected {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
+        /* QUEUE PAGE */
+        /* QUEUE BANNER */
+        .queue-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 20px;
+            background: #fff;
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+        .queue-banner-text {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .queue-banner-sub {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .queue-banner-actions { display: flex; align-items: center; gap: 10px; }
+        .queue-banner-btn {
+            padding: 8px 18px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 20px;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .queue-banner-btn:hover { background: #0977d4; }
+        .queue-banner-close {
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            padding: 2px 6px;
+            border-radius: 50%;
+        }
+        .queue-banner-close:hover { background: var(--bg); }
+
+        /* QUEUE HEADER */
+        .queue-header-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .queue-title {
+            font-size: 1.6rem;
+            font-weight: 900;
+            color: var(--text-primary);
+        }
+        .queue-user-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+        }
+        .queue-user-badge .badge-avatar {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 0.5rem;
+            font-weight: 800;
+        }
+
+        /* QUEUE TABS */
+        .queue-tabs-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .queue-tabs {
+            display: flex;
+            gap: 0;
+        }
         .queue-tab {
-            padding: 8px 20px;
+            padding: 10px 18px;
             border: none;
             background: transparent;
             font-family: inherit;
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             font-weight: 600;
             color: var(--text-muted);
             cursor: pointer;
-            border-radius: 8px;
-            transition: all 0.2s;
+            position: relative;
+            transition: color 0.2s;
         }
-
+        .queue-tab:hover { color: var(--text-primary); }
         .queue-tab.active {
-            background: var(--bg-white);
             color: var(--text-primary);
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        .queue-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0; right: 0;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 2px 2px 0 0;
+        }
+        .queue-tab .tab-count {
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-left: 2px;
+        }
+        .queue-edit-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border: 1px solid var(--accent);
+            background: #fff;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--accent);
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .queue-edit-btn:hover { background: rgba(10,102,194,0.04); }
+
+        /* QUEUE CALENDAR */
+        .queue-calendar { }
+        .queue-day-group { margin-bottom: 8px; }
+        .queue-day-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            padding-left: 2px;
+        }
+        .queue-day-label .day-name { color: var(--text-primary); }
+        .queue-day-label .day-date { color: var(--text-muted); font-weight: 600; margin-left: 6px; }
+        .queue-day-label .day-tz {
+            font-size: 0.7rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-left: 6px;
+            font-style: italic;
         }
 
+        .queue-slot {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: #FFF7F0;
+            border: 1px solid #FDE8D5;
+            border-radius: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .queue-slot:hover {
+            border-color: var(--accent);
+            box-shadow: 0 1px 4px rgba(10,102,194,0.08);
+        }
+        .queue-slot.has-post {
+            background: #fff;
+            border-color: var(--border);
+        }
+        .queue-slot-time {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            min-width: 72px;
+        }
+        .queue-slot-content {
+            flex: 1;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .queue-slot.has-post .queue-slot-content {
+            color: var(--text-primary);
+        }
+        .queue-slot-actions {
+            display: flex;
+            gap: 6px;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+        .queue-slot:hover .queue-slot-actions { opacity: 1; }
+        .queue-slot-btn {
+            padding: 4px 10px;
+            border: 1px solid var(--border);
+            background: #fff;
+            border-radius: 6px;
+            font-family: inherit;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .queue-slot-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .queue-slot-btn.delete:hover { border-color: var(--red); color: var(--red); }
+
+        /* Simple item list for drafts/posted/failed tabs */
         .queue-item {
             display: flex;
             align-items: flex-start;
@@ -481,22 +1465,18 @@
             padding: 16px;
             border-bottom: 1px solid var(--border);
         }
-
         .queue-item:last-child { border-bottom: none; }
-
         .queue-item-status {
             width: 10px; height: 10px;
             border-radius: 50%;
             margin-top: 6px;
             flex-shrink: 0;
         }
-
         .queue-item-status.scheduled { background: var(--orange); }
         .queue-item-status.draft { background: var(--border); }
         .queue-item-status.posted { background: var(--green); }
-
+        .queue-item-status.failed { background: var(--red); }
         .queue-item-content { flex: 1; min-width: 0; }
-
         .queue-item-text {
             font-size: 0.88rem;
             color: var(--text-primary);
@@ -507,18 +1487,15 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
-
         .queue-item-meta {
             font-size: 0.75rem;
             color: var(--text-muted);
         }
-
         .queue-item-actions {
             display: flex;
             gap: 8px;
             flex-shrink: 0;
         }
-
         .queue-action-btn {
             padding: 6px 12px;
             border: 1px solid var(--border);
@@ -530,7 +1507,6 @@
             color: var(--text-secondary);
             transition: all 0.15s;
         }
-
         .queue-action-btn:hover { border-color: var(--accent); color: var(--accent); }
         .queue-action-btn.delete:hover { border-color: var(--red); color: var(--red); }
 
@@ -539,7 +1515,6 @@
             padding: 48px 20px;
             color: var(--text-muted);
         }
-
         .queue-empty .empty-icon { font-size: 2.4rem; margin-bottom: 12px; opacity: 0.4; }
         .queue-empty p { font-size: 0.9rem; margin-bottom: 8px; }
 
@@ -1341,7 +2316,7 @@
             <a class="nav-item" data-page="analytics" onclick="showPage('analytics')">
                 <span class="nav-icon">&#128200;</span> <span>Analytics</span>
             </a>
-            <a class="nav-item" onclick="#">
+            <a class="nav-item" data-page="context" onclick="showPage('context')">
                 <span class="nav-icon">&#128218;</span> <span>Context</span>
             </a>
 
@@ -1383,6 +2358,49 @@
             <div class="sidebar-credits">
                 <span class="credits-icon">&#9889;</span>
                 <span><strong id="creditsCount">500</strong> credits</span>
+
+                <div class="credits-popup">
+                    <div class="credits-popup-header">
+                        <span class="credits-popup-title">Credits Dashboard</span>
+                        <span class="credits-popup-total">&#9889; <span id="popupCreditsTotal">500</span> left</span>
+                    </div>
+                    <div class="credits-popup-bar">
+                        <div class="credits-popup-bar-fill" id="creditsBarFill" style="width:100%"></div>
+                    </div>
+                    <div class="credits-popup-rows">
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">
+                                <span class="row-icon blue">&#9998;</span>
+                                AI Writer
+                            </span>
+                            <span class="credits-popup-row-value" id="creditsAIWriter">0 used</span>
+                        </div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">
+                                <span class="row-icon green">&#128172;</span>
+                                AI Posts
+                            </span>
+                            <span class="credits-popup-row-value" id="creditsAIPosts">0 used</span>
+                        </div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">
+                                <span class="row-icon purple">&#128202;</span>
+                                Analytics Syncs
+                            </span>
+                            <span class="credits-popup-row-value" id="creditsAnalytics">0 used</span>
+                        </div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">
+                                <span class="row-icon orange">&#128640;</span>
+                                Posts Published
+                            </span>
+                            <span class="credits-popup-row-value" id="creditsPublished">0 used</span>
+                        </div>
+                    </div>
+                    <div class="credits-popup-footer">
+                        <a class="credits-popup-upgrade" href="/upgrade">Get more credits</a>
+                    </div>
+                </div>
             </div>
             <div class="sidebar-user">
                 <div class="sidebar-user-avatar" id="sidebarAvatar"></div>
@@ -1409,90 +2427,112 @@
 
             <!-- HOME PAGE -->
             <div class="page active" id="page-home">
-                <div class="home-grid">
-                    <div class="card">
-                        <div class="card-title">&#128075; Your first post</div>
-                        <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:16px;">Complete these steps to publish your first LinkedIn post:</p>
-                        <ul class="tip-list">
-                            <li>
-                                <div class="tip-icon">1</div>
-                                <div><strong>Write or generate</strong> - Use the AI Writer to create a post that matches your style</div>
-                            </li>
-                            <li>
-                                <div class="tip-icon">2</div>
-                                <div><strong>Add to queue</strong> - Schedule it for optimal posting time</div>
-                            </li>
-                            <li>
-                                <div class="tip-icon">3</div>
-                                <div><strong>Engage</strong> - Respond to comments and grow your network</div>
-                            </li>
-                        </ul>
+
+                <!-- Your first steps -->
+                <div class="home-steps-card" id="homeStepsCard">
+                    <button class="home-steps-close" onclick="document.getElementById('homeStepsCard').style.display='none'">&times;</button>
+                    <div class="home-steps-title">Your first steps on SuperLinkedIn</div>
+                    <div class="home-steps-sub">Complete these missions to get familiar with the platform and earn free credits.</div>
+
+                    <div class="home-mission" onclick="showPage('create')">
+                        <div class="home-mission-icon">&#9998;</div>
+                        <div class="home-mission-text">
+                            <strong>Set up your profile</strong>
+                            <span>Tell our AI about you</span>
+                        </div>
+                        <span class="home-mission-reward">+100 free credits</span>
                     </div>
 
-                    <div class="card">
-                        <div class="card-title">&#128640; Ready to post</div>
-                        <div id="homeQueuePreview">
-                            <div class="queue-empty" style="padding:24px 8px;">
-                                <div class="empty-icon">&#128203;</div>
-                                <p>No posts in queue yet</p>
-                                <p style="font-size:0.8rem;">Generate posts with AI or write your own</p>
-                            </div>
+                    <div class="home-mission" onclick="toggleCompose()">
+                        <div class="home-mission-icon">&#128640;</div>
+                        <div class="home-mission-text">
+                            <strong>Publish your first post</strong>
+                            <span>Write or generate a post and publish it</span>
                         </div>
+                        <span class="home-mission-reward">+50 free credits</span>
                     </div>
 
-                    <div class="card full-width">
-                        <div class="card-title">&#128218; Learn how to grow on LinkedIn</div>
-                        <div class="tutorial-grid">
-                            <div class="tutorial-card">
-                                <div class="tut-icon">&#9997;</div>
-                                <h4>Write better posts</h4>
-                                <p>Hook readers in the first line</p>
-                            </div>
-                            <div class="tutorial-card">
-                                <div class="tut-icon">&#128200;</div>
-                                <h4>Optimize your timing</h4>
-                                <p>Post when your audience is active</p>
-                            </div>
-                            <div class="tutorial-card">
-                                <div class="tut-icon">&#129302;</div>
-                                <h4>Use AI to your advantage</h4>
-                                <p>Generate content that matches your voice</p>
-                            </div>
-                            <div class="tutorial-card">
-                                <div class="tut-icon">&#128101;</div>
-                                <h4>Build your network</h4>
-                                <p>Engage with creators in your niche</p>
-                            </div>
-                            <div class="tutorial-card">
-                                <div class="tut-icon">&#128176;</div>
-                                <h4>Monetize your audience</h4>
-                                <p>Turn followers into clients</p>
-                            </div>
-                            <div class="tutorial-card">
-                                <div class="tut-icon">&#128736;</div>
-                                <h4>Use the Chrome Extension</h4>
-                                <p>AI tools right inside LinkedIn</p>
-                            </div>
+                    <div class="home-mission" onclick="showPage('analytics')">
+                        <div class="home-mission-icon">&#128202;</div>
+                        <div class="home-mission-text">
+                            <strong>Connect Chrome Extension</strong>
+                            <span>Sync your LinkedIn analytics</span>
                         </div>
+                        <span class="home-mission-reward">+50 free credits</span>
+                    </div>
+
+                    <div class="home-dots">
+                        <div class="home-dot active"></div>
+                        <div class="home-dot"></div>
+                        <div class="home-dot"></div>
+                    </div>
+                </div>
+
+                <!-- Playbook -->
+                <div class="home-playbook" id="homePlaybook">
+                    <button class="home-playbook-close" onclick="document.getElementById('homePlaybook').style.display='none'">&times;</button>
+                    <div class="home-playbook-badge">
+                        <span>&#128214; SuperLinkedIn Playbook</span>
+                    </div>
+                    <h3>The complete guide to growing on LinkedIn in 2026</h3>
+                    <p>Everything you need to grow on LinkedIn</p>
+                </div>
+
+                <!-- Ready to post -->
+                <div class="home-ready-header">
+                    <span class="home-ready-title">Ready to post</span>
+                    <span class="home-ready-viewall" onclick="openModal()">View all</span>
+                </div>
+                <div class="home-ready-sub">SuperLinkedIn wrote these based on your profile. Post one to get started.</div>
+
+                <div class="home-posts-grid" id="homePostsGrid">
+                    <div class="home-post-loading">
+                        <div class="spinner" style="margin:0 auto 12px;"></div>
+                        Generating personalized posts...
                     </div>
                 </div>
             </div>
 
             <!-- QUEUE PAGE -->
             <div class="page" id="page-queue">
-                <div class="queue-tabs">
-                    <button class="queue-tab active" onclick="filterQueue('all', this)">All</button>
-                    <button class="queue-tab" onclick="filterQueue('scheduled', this)">Scheduled</button>
-                    <button class="queue-tab" onclick="filterQueue('draft', this)">Drafts</button>
-                    <button class="queue-tab" onclick="filterQueue('posted', this)">Posted</button>
+                <!-- Banner -->
+                <div class="queue-banner" id="queueBanner">
+                    <div>
+                        <div class="queue-banner-text">Fill your queue with posts</div>
+                        <div class="queue-banner-sub">We've prepared posts tailored to your style. Browse and add them to your queue.</div>
+                    </div>
+                    <div class="queue-banner-actions">
+                        <button class="queue-banner-btn" onclick="openModal()">Browse posts &rsaquo;</button>
+                        <button class="queue-banner-close" onclick="document.getElementById('queueBanner').style.display='none'">&times;</button>
+                    </div>
                 </div>
-                <div class="card" style="padding:0;">
-                    <div id="queueList">
-                        <div class="queue-empty">
-                            <div class="empty-icon">&#128197;</div>
-                            <p>Your queue is empty</p>
-                            <p style="font-size:0.82rem;">Create a post or generate one with AI to get started</p>
-                        </div>
+
+                <!-- Header -->
+                <div class="queue-header-row">
+                    <span class="queue-title">Queue</span>
+                    <div class="queue-user-badge">
+                        <span class="badge-avatar" id="queueBadgeAvatar"></span>
+                        <span id="queueBadgeHandle">@user</span>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="queue-tabs-row">
+                    <div class="queue-tabs">
+                        <button class="queue-tab active" onclick="filterQueue('scheduled', this)">Scheduled</button>
+                        <button class="queue-tab" onclick="filterQueue('draft', this)">Drafts</button>
+                        <button class="queue-tab" onclick="filterQueue('posted', this)">Posted <span class="tab-count" id="tabPostedCount"></span></button>
+                        <button class="queue-tab" onclick="filterQueue('failed', this)">Failed <span class="tab-count" id="tabFailedCount"></span></button>
+                    </div>
+                    <button class="queue-edit-btn" onclick="showPage('create')">&#9998; Edit Queue</button>
+                </div>
+
+                <!-- Queue content -->
+                <div id="queueList">
+                    <div class="queue-empty">
+                        <div class="empty-icon">&#128197;</div>
+                        <p>Your queue is empty</p>
+                        <p style="font-size:0.82rem;">Create a post or generate one with AI to get started</p>
                     </div>
                 </div>
             </div>
@@ -1671,6 +2711,100 @@
 
             </div>
 
+            <!-- CONTEXT PAGE -->
+            <div class="page" id="page-context">
+                <div class="ctx-page-title">Context Settings</div>
+                <div class="ctx-page-sub">This data influences your AI inspirations and generations.</div>
+
+                <!-- About You -->
+                <div class="ctx-section">
+                    <div class="ctx-section-header">
+                        <div class="ctx-section-icon blue">&#128100;</div>
+                        <div class="ctx-section-title">About You</div>
+                    </div>
+                    <div class="ctx-section-sub">Tell us a bit about you to personalize content suggestions.</div>
+                    <textarea class="ctx-textarea" id="ctxAboutYou" placeholder="I'm just starting out on LinkedIn as... I'm interested in..." oninput="document.getElementById('ctxAboutCount').textContent=this.value.length+'/500 characters'"></textarea>
+                    <div class="ctx-textarea-footer">
+                        <span class="ctx-char-count" id="ctxAboutCount">0/500 characters</span>
+                        <button class="ctx-save-btn" onclick="saveCtxAbout(this)">Save</button>
+                    </div>
+                </div>
+
+                <!-- Writing Voice -->
+                <div class="ctx-section">
+                    <div class="ctx-section-header">
+                        <div class="ctx-section-icon orange">&#9998;</div>
+                        <div class="ctx-section-title">Writing Voice</div>
+                    </div>
+                    <div class="ctx-section-sub">Shapes how your AI-generated posts are written.</div>
+                    <div style="font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">Favorite Creators</div>
+                    <div class="ctx-creators-search">
+                        <input type="text" id="ctxCreatorInput" placeholder="Search & add usernames...">
+                        <button onclick="addCtxCreator()">Add</button>
+                    </div>
+                    <div class="ctx-selected-label">Selected Creators (<span id="ctxCreatorCount">0</span>)</div>
+                    <div class="ctx-creators-list" id="ctxCreatorsList"></div>
+
+                    <div class="ctx-toggle-row">
+                        <div>
+                            <div class="ctx-toggle-label">Use my own writing instead</div>
+                            <div class="ctx-toggle-hint">Use a style guide based on your own posts. Your favorite creators above will be ignored.</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="ctxOwnWriting">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- SuperLinkedIn Rules -->
+                <div class="ctx-section">
+                    <div class="ctx-section-header">
+                        <div class="ctx-section-icon purple">&#128640;</div>
+                        <div class="ctx-section-title">SuperLinkedIn Rules</div>
+                    </div>
+                    <div class="ctx-section-sub">Add custom instructions that will be included in all AI generations.</div>
+                    <textarea class="ctx-textarea" id="ctxRules" placeholder='e.g., "Always start headlines with a question" or "Never use hashtags" or "Keep posts under 200 characters"' oninput="document.getElementById('ctxRulesCount').textContent=this.value.length+'/500 characters'"></textarea>
+                    <div class="ctx-textarea-footer">
+                        <span class="ctx-char-count" id="ctxRulesCount">0/500 characters</span>
+                        <button class="ctx-save-btn" onclick="saveCtxRules(this)">Save</button>
+                    </div>
+                    <p style="font-size:0.72rem;color:var(--text-muted);margin-top:6px;">These rules will be applied to all AI-generated content.</p>
+                </div>
+
+                <!-- Your Products -->
+                <div class="ctx-section">
+                    <div class="ctx-section-header">
+                        <div class="ctx-section-icon green">&#128722;</div>
+                        <div class="ctx-section-title">Your Products</div>
+                    </div>
+                    <div class="ctx-section-sub">Add links to products you want to promote (up to 5).</div>
+                    <div class="ctx-products-header">
+                        <span class="ctx-products-count">Product Links (<span id="ctxProductCount">0</span>/5)</span>
+                        <button class="ctx-add-product-btn" onclick="document.getElementById('ctxProductAddRow').style.display='flex'">+ Add Product</button>
+                    </div>
+                    <div class="ctx-product-add-row" id="ctxProductAddRow" style="display:none;">
+                        <input type="text" id="ctxProductUrl" placeholder="https://yourproduct.com">
+                        <button onclick="addCtxProduct()">Analyze &amp; Add</button>
+                    </div>
+                    <div id="ctxProductsList"></div>
+                </div>
+
+                <!-- Your Interests -->
+                <div class="ctx-section">
+                    <div class="ctx-section-header">
+                        <div class="ctx-section-icon red">&#127775;</div>
+                        <div class="ctx-section-title">Your Interests</div>
+                    </div>
+                    <div class="ctx-section-sub">Select topics to personalize your media recommendations.</div>
+                    <div id="ctxInterestsGrid"></div>
+                    <div class="ctx-textarea-footer" style="margin-top:12px;">
+                        <span class="ctx-char-count">These interests are used to personalize your media and article recommendations.</span>
+                        <button class="ctx-save-btn" onclick="saveCtxInterests(this)">Save</button>
+                    </div>
+                </div>
+            </div>
+
             <!-- CREATE PAGE -->
             <div class="page" id="page-create">
                 <div class="create-wrapper">
@@ -1832,6 +2966,80 @@
         </div>
     </div>
 
+    <!-- PUBLISH CONFIRMATION MODAL -->
+    <div class="modal-overlay hidden" id="publishModal" onclick="if(event.target===this)closePublishModal()">
+        <div class="modal publish-modal">
+            <button class="modal-close" onclick="closePublishModal()">&times;</button>
+            <h2 class="publish-modal-title">Publish</h2>
+            <p class="publish-modal-sub">Publish post to LinkedIn</p>
+            <button class="publish-modal-now-btn" onclick="confirmPublish()">Publish now</button>
+
+            <div class="publish-modal-account">
+                <div class="publish-account-toggle">
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="publishAccountToggle" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="publish-account-info">
+                    <div class="publish-account-avatar" id="publishAvatar"></div>
+                    <div>
+                        <div class="publish-account-name" id="publishAccountName">You</div>
+                        <div class="publish-account-handle" id="publishAccountHandle">@user</div>
+                    </div>
+                </div>
+                <div class="publish-audience-select">
+                    <select id="publishAudience">
+                        <option value="everyone">Everyone</option>
+                        <option value="connections">Connections only</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="publish-modal-options">
+                <label class="publish-option">
+                    <span>Auto-Hashtag</span>
+                    <label class="toggle-switch small">
+                        <input type="checkbox" id="publishAutoHashtag">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </label>
+                <label class="publish-option">
+                    <span>Auto-Comment</span>
+                    <label class="toggle-switch small">
+                        <input type="checkbox" id="publishAutoComment">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </label>
+                <label class="publish-option">
+                    <span>Auto-Delete</span>
+                    <label class="toggle-switch small">
+                        <input type="checkbox" id="publishAutoDelete">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONGRATS FIRST POST MODAL -->
+    <div class="modal-overlay hidden" id="congratsModal" onclick="if(event.target===this)closeCongratsModal()">
+        <div class="modal congrats-modal">
+            <button class="modal-close" onclick="closeCongratsModal()">&times;</button>
+            <h2 class="congrats-title">Congrats on your first post! &#127881;</h2>
+            <p class="congrats-sub">Keep this going. You're doing the right thing.</p>
+            <p class="congrats-platform">Published on <svg style="width:18px;height:18px;vertical-align:middle;margin-left:2px;" viewBox="0 0 24 24"><path fill="#0A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></p>
+            <div class="congrats-actions">
+                <a class="congrats-btn-view" href="https://www.linkedin.com/feed/" target="_blank">View post &#8599;</a>
+                <button class="congrats-btn-copy" onclick="copyPostLink()">&#128203; Copy link</button>
+            </div>
+            <a class="congrats-profile-link" href="https://www.linkedin.com/in/me/" target="_blank">&#8599; View your profile on <svg style="width:14px;height:14px;vertical-align:middle;" viewBox="0 0 24 24"><path fill="#0A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></a>
+        </div>
+    </div>
+
+    <!-- CONFETTI CANVAS -->
+    <canvas id="confettiCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
+
     <script>
         let currentUser = null;
         let queue = [];
@@ -1866,6 +3074,33 @@
             } catch {}
         }
 
+        let creditsUsed = { aiWriter: 0, aiPosts: 0, analytics: 0, published: 0 };
+        const TOTAL_CREDITS = 500;
+
+        function updateCreditsPopup() {
+            const published = queue.filter(q => q.status === 'posted').length;
+            creditsUsed.published = published;
+
+            const used = creditsUsed.aiWriter + creditsUsed.aiPosts + creditsUsed.analytics + creditsUsed.published;
+            const remaining = Math.max(0, TOTAL_CREDITS - used);
+            const pct = (remaining / TOTAL_CREDITS) * 100;
+
+            document.getElementById('creditsCount').textContent = remaining;
+            document.getElementById('popupCreditsTotal').textContent = remaining;
+            document.getElementById('creditsBarFill').style.width = pct + '%';
+            document.getElementById('creditsAIWriter').textContent = creditsUsed.aiWriter + ' used';
+            document.getElementById('creditsAIPosts').textContent = creditsUsed.aiPosts + ' used';
+            document.getElementById('creditsAnalytics').textContent = creditsUsed.analytics + ' used';
+            document.getElementById('creditsPublished').textContent = creditsUsed.published + ' used';
+        }
+
+        function trackCredit(type) {
+            if (type === 'aiWriter') creditsUsed.aiWriter++;
+            else if (type === 'aiPosts') creditsUsed.aiPosts++;
+            else if (type === 'analytics') creditsUsed.analytics++;
+            updateCreditsPopup();
+        }
+
         // Page navigation
         function showPage(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1875,10 +3110,11 @@
             const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
             if (navItem) navItem.classList.add('active');
 
-            const titles = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer' };
+            const titles = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer', context: 'Context' };
             document.getElementById('pageTitle').textContent = titles[page] || page;
 
             if (page === 'analytics') renderAnalytics();
+            if (page === 'context') loadContextPage();
         }
 
         // Modal
@@ -1900,6 +3136,7 @@
                 const data = await res.json();
 
                 if (data.posts && data.posts.length > 0) {
+                    trackCredit('aiPosts');
                     container.innerHTML = data.posts.map((post, i) => `
                         <div class="ai-post-card">
                             <div class="ai-post-author">
@@ -1960,34 +3197,147 @@
             } catch {}
         }
 
-        function renderQueue(filter) {
-            const list = document.getElementById('queueList');
-            let items = queue;
-            if (filter && filter !== 'all') {
-                items = queue.filter(q => q.status === filter);
+        const QUEUE_SCHEDULE_SLOTS = [
+            { h: 9, m: 0 }, { h: 10, m: 0 }, { h: 11, m: 0 }, { h: 13, m: 0 },
+        ];
+
+        let currentQueueFilter = 'scheduled';
+
+        function getScheduleDays(count) {
+            const days = [];
+            const now = new Date();
+            let d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            while (days.length < count) {
+                const dow = d.getDay();
+                if (dow !== 6) {
+                    days.push(new Date(d));
+                }
+                d = new Date(d); d.setDate(d.getDate() + 1);
             }
+            return days;
+        }
+
+        function formatSlotTime(h, m) {
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            const hh = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+            return String(hh).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+        }
+
+        function renderQueue(filter) {
+            if (filter) currentQueueFilter = filter;
+            const list = document.getElementById('queueList');
+
+            const postedCount = queue.filter(q => q.status === 'posted').length;
+            const failedCount = queue.filter(q => q.status === 'failed').length;
+            const el1 = document.getElementById('tabPostedCount');
+            const el2 = document.getElementById('tabFailedCount');
+            if (el1) el1.textContent = postedCount > 0 ? '(' + postedCount + ')' : '';
+            if (el2) el2.textContent = failedCount > 0 ? '(' + failedCount + ')' : '';
+
+            if (currentUser) {
+                const handle = '@' + (currentUser.name || 'user').toLowerCase().replace(/\s+/g, '');
+                const initials = currentUser.name ? currentUser.name.split(' ').map(w => w[0]).join('') : '?';
+                const badgeAvatar = document.getElementById('queueBadgeAvatar');
+                if (badgeAvatar) badgeAvatar.textContent = initials;
+                const badgeHandle = document.getElementById('queueBadgeHandle');
+                if (badgeHandle) badgeHandle.textContent = handle;
+            }
+
+            if (currentQueueFilter === 'scheduled') {
+                renderQueueCalendar(list);
+            } else {
+                renderQueueList(list, currentQueueFilter);
+            }
+
+            const postsEl = document.getElementById('aPosts');
+            if (postsEl) postsEl.textContent = queue.length;
+        }
+
+        function renderQueueCalendar(list) {
+            const scheduled = queue.filter(q => q.status === 'scheduled');
+            const days = getScheduleDays(14);
+            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const tzShort = tz ? '(' + tz.split('/').pop().replace(/_/g, ' ') + ')' : '';
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const today = new Date();
+            const todayStr = today.toDateString();
+
+            let slotIndex = 0;
+            let html = '';
+
+            days.forEach(day => {
+                const isToday = day.toDateString() === todayStr;
+                const dayLabel = isToday ? 'Today' : dayNames[day.getDay()];
+                const dateStr = monthNames[day.getMonth()] + '-' + String(day.getDate()).padStart(2, '0');
+                const dayColor = isToday ? 'var(--accent)' : ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899'][day.getDay()];
+
+                html += `<div class="queue-day-group">`;
+                html += `<div class="queue-day-label"><span class="day-name" style="color:${dayColor}">${dayLabel}</span><span class="day-date">${dateStr}</span>${isToday ? `<span class="day-tz">${tzShort}</span>` : ''}</div>`;
+
+                const slotsForDay = isToday
+                    ? QUEUE_SCHEDULE_SLOTS.filter(s => s.h > today.getHours() || (s.h === today.getHours() && s.m > today.getMinutes()))
+                    : QUEUE_SCHEDULE_SLOTS.filter((_, i) => {
+                        const dow = day.getDay();
+                        if (dow === 1 || dow === 4) return i === 1;
+                        if (dow === 2 || dow === 5) return i === 3;
+                        if (dow === 3) return i === 0;
+                        return i === 2 || i === 3;
+                    });
+
+                const useSlots = slotsForDay.length > 0 ? slotsForDay : [QUEUE_SCHEDULE_SLOTS[2]];
+
+                useSlots.forEach(slot => {
+                    const timeStr = formatSlotTime(slot.h, slot.m);
+                    const matchingPost = scheduled[slotIndex];
+
+                    if (matchingPost) {
+                        const realIdx = queue.indexOf(matchingPost);
+                        html += `<div class="queue-slot has-post">
+                            <span class="queue-slot-time">${timeStr}</span>
+                            <span class="queue-slot-content">${matchingPost.text}</span>
+                            <span class="queue-slot-actions">
+                                <button class="queue-slot-btn" onclick="editQueueItem(${realIdx})">Edit</button>
+                                <button class="queue-slot-btn delete" onclick="removeFromQueue(${realIdx})">&#10005;</button>
+                            </span>
+                        </div>`;
+                        slotIndex++;
+                    } else {
+                        html += `<div class="queue-slot" onclick="toggleCompose()">
+                            <span class="queue-slot-time">${timeStr}</span>
+                            <span class="queue-slot-content">Press "Add to Queue" to schedule your post</span>
+                        </div>`;
+                    }
+                });
+
+                html += `</div>`;
+            });
+
+            list.innerHTML = html;
+        }
+
+        function renderQueueList(list, filter) {
+            const items = queue.filter(q => q.status === filter);
 
             if (items.length === 0) {
                 list.innerHTML = '<div class="queue-empty"><div class="empty-icon">&#128197;</div><p>No posts here yet</p></div>';
                 return;
             }
 
-            list.innerHTML = items.map((q, i) => `
-                <div class="queue-item">
+            list.innerHTML = '<div class="card" style="padding:0;">' + items.map((q) => {
+                const realIdx = queue.indexOf(q);
+                return `<div class="queue-item">
                     <div class="queue-item-status ${q.status}"></div>
                     <div class="queue-item-content">
                         <div class="queue-item-text">${q.text}</div>
                         <div class="queue-item-meta">${q.status.charAt(0).toUpperCase() + q.status.slice(1)} &middot; ${q.date || 'Just now'}</div>
                     </div>
                     <div class="queue-item-actions">
-                        <button class="queue-action-btn" onclick="editQueueItem(${i})">Edit</button>
-                        <button class="queue-action-btn delete" onclick="removeFromQueue(${i})">Delete</button>
+                        <button class="queue-action-btn" onclick="editQueueItem(${realIdx})">Edit</button>
+                        <button class="queue-action-btn delete" onclick="removeFromQueue(${realIdx})">Delete</button>
                     </div>
-                </div>
-            `).join('');
-
-            const postsEl = document.getElementById('aPosts');
-            if (postsEl) postsEl.textContent = queue.length;
+                </div>`;
+            }).join('') + '</div>';
         }
 
         function filterQueue(status, btn) {
@@ -2005,18 +3355,49 @@
             updatePreview();
         }
 
-        function renderHomeQueuePreview() {
-            const container = document.getElementById('homeQueuePreview');
-            const scheduled = queue.filter(q => q.status === 'scheduled').slice(0, 3);
+        async function renderHomeQueuePreview() {
+            const grid = document.getElementById('homePostsGrid');
+            const name = currentUser ? currentUser.name : 'You';
+            const handle = '@' + (currentUser ? currentUser.name.toLowerCase().replace(/\s+/g, '') : 'user');
+            const initials = currentUser && currentUser.name ? currentUser.name.split(' ').map(w => w[0]).join('').toUpperCase() : 'SL';
 
-            if (scheduled.length === 0) {
-                container.innerHTML = '<div class="queue-empty" style="padding:24px 8px;"><div class="empty-icon">&#128203;</div><p>No posts in queue yet</p><p style="font-size:0.8rem;">Generate posts with AI or write your own</p></div>';
-                return;
+            try {
+                const res = await fetch('/api/ai/generate-posts', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.posts && data.posts.length > 0) {
+                    window._homePosts = data.posts;
+                    const likeOptions = ['1.3K', '2K', '3.3K', '1.9K', '5.6K', '4.1K', '2.8K', '6.2K'];
+                    grid.innerHTML = data.posts.map((post, i) => {
+                        const likes = likeOptions[i % likeOptions.length];
+                        return `<div class="home-post-card">
+                            <div class="home-post-author">
+                                <div class="home-post-avatar">${initials}</div>
+                                <div>
+                                    <div class="home-post-author-name">${name}</div>
+                                    <div class="home-post-author-handle">${handle}</div>
+                                </div>
+                            </div>
+                            <div class="home-post-body">${post}</div>
+                            <div class="home-post-footer">
+                                <div class="home-post-inspired">Inspired by a post with ${likes} likes <a href="#">&rarr;</a></div>
+                                <button class="home-post-edit-btn" onclick="editHomePost(${i})">Edit post</button>
+                            </div>
+                        </div>`;
+                    }).join('');
+                } else {
+                    grid.innerHTML = '<div class="home-post-loading">Could not generate posts. Please configure your OpenAI API key.</div>';
+                }
+            } catch {
+                grid.innerHTML = '<div class="home-post-loading">AI generation is not available yet. Add your OpenAI API key to get started.</div>';
             }
+        }
 
-            container.innerHTML = scheduled.map((q, i) => `
-                <div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--text-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${q.text}</div>
-            `).join('') + `<p style="margin-top:8px;"><a style="font-size:0.82rem;color:var(--accent);font-weight:600;cursor:pointer;" onclick="showPage('queue')">View all &rarr;</a></p>`;
+        function editHomePost(index) {
+            if (!window._homePosts || !window._homePosts[index]) return;
+            document.getElementById('composeTextarea').value = window._homePosts[index];
+            updateComposeCharCount();
+            toggleCompose();
         }
 
         // Create / AI Writer
@@ -2061,6 +3442,7 @@
                 const data = await res.json();
 
                 if (data.post) {
+                    trackCredit('aiWriter');
                     document.getElementById('createTextarea').value = data.post;
                     updateCharCount();
                 } else {
@@ -2296,6 +3678,7 @@
                 });
                 const data = await res.json();
                 if (data.post) {
+                    trackCredit('aiWriter');
                     document.getElementById('composeTextarea').value = data.post;
                     updateComposeCharCount();
                 } else {
@@ -2308,13 +3691,121 @@
             indicator.classList.add('hidden');
         }
 
-        async function publishFromCompose() {
+        function publishFromCompose() {
             const text = document.getElementById('composeTextarea').value.trim();
             if (!text) { alert('Write or generate a post first!'); return; }
+            openPublishModal();
+        }
+
+        function openPublishModal() {
+            const modal = document.getElementById('publishModal');
+            modal.classList.remove('hidden');
+
+            if (currentUser) {
+                const initials = currentUser.name ? currentUser.name.split(' ').map(w => w[0]).join('').toUpperCase() : '?';
+                document.getElementById('publishAvatar').textContent = initials;
+                document.getElementById('publishAccountName').textContent = currentUser.name || 'You';
+                document.getElementById('publishAccountHandle').textContent = '@' + (currentUser.name || 'user').toLowerCase().replace(/\s+/g, '');
+            }
+        }
+
+        function closePublishModal() {
+            document.getElementById('publishModal').classList.add('hidden');
+        }
+
+        async function confirmPublish() {
+            const text = document.getElementById('composeTextarea').value.trim();
+            if (!text) return;
+            const isFirstPost = queue.filter(q => q.status === 'posted').length === 0;
+            closePublishModal();
             await addToQueue(text, 'posted');
             document.getElementById('composeTextarea').value = '';
             updateComposeCharCount();
             renderComposeSent();
+            updateCreditsPopup();
+
+            if (isFirstPost) {
+                showCongratsModal();
+            }
+        }
+
+        function showCongratsModal() {
+            document.getElementById('congratsModal').classList.remove('hidden');
+            launchConfetti();
+        }
+
+        function closeCongratsModal() {
+            document.getElementById('congratsModal').classList.add('hidden');
+        }
+
+        function copyPostLink() {
+            const url = 'https://www.linkedin.com/feed/';
+            navigator.clipboard.writeText(url).then(() => {
+                const btn = document.querySelector('.congrats-btn-copy');
+                btn.textContent = '\u2705 Copied!';
+                setTimeout(() => { btn.innerHTML = '&#128203; Copy link'; }, 2000);
+            });
+        }
+
+        function launchConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const colors = ['#0A66C2', '#70B5F9', '#FFD700', '#FF6B6B', '#22c55e', '#f97316', '#a855f7', '#ec4899'];
+            const pieces = [];
+            const total = 150;
+
+            for (let i = 0; i < total; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height * -1,
+                    w: Math.random() * 8 + 4,
+                    h: Math.random() * 5 + 3,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: (Math.random() - 0.5) * 4,
+                    vy: Math.random() * 3 + 2,
+                    spin: Math.random() * 0.2 - 0.1,
+                    angle: Math.random() * Math.PI * 2,
+                    opacity: 1,
+                });
+            }
+
+            let frame = 0;
+            const maxFrames = 180;
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                frame++;
+
+                pieces.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.04;
+                    p.angle += p.spin;
+
+                    if (frame > maxFrames - 40) {
+                        p.opacity = Math.max(0, p.opacity - 0.025);
+                    }
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.angle);
+                    ctx.globalAlpha = p.opacity;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+                    ctx.restore();
+                });
+
+                if (frame < maxFrames) {
+                    requestAnimationFrame(draw);
+                } else {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+            }
+
+            draw();
         }
 
         async function scheduleFromCompose() {
@@ -2387,9 +3878,212 @@
         }
 
         // Init
+        // ============ CONTEXT PAGE ============
+        let ctxCreators = [];
+        let ctxProducts = [];
+        let ctxInterests = [];
+
+        const INTEREST_CATEGORIES = {
+            Business: ['Startups', 'Investing', 'Marketing', 'Sales', 'Leadership', 'Entrepreneurship'],
+            Technology: ['AI/ML', 'Web3', 'SaaS', 'Cybersecurity', 'DevOps', 'Mobile'],
+            Creativity: ['Design', 'Writing', 'Photography', 'Music', 'Film', 'Art'],
+            Lifestyle: ['Fitness', 'Travel', 'Food', 'Fashion', 'Wellness', 'Mindfulness'],
+            Science: ['Physics', 'Biology', 'Space', 'Climate', 'Medicine', 'Psychology'],
+            Finance: ['Crypto', 'Stocks', 'Real Estate', 'Personal Finance', 'Economics', 'Trading'],
+        };
+
+        async function loadContextPage() {
+            try {
+                const res = await fetch('/api/me');
+                const user = await res.json();
+
+                document.getElementById('ctxAboutYou').value = user.aboutYou || '';
+                document.getElementById('ctxAboutCount').textContent = (user.aboutYou || '').length + '/500 characters';
+
+                ctxCreators = user.favoriteCreators || [];
+                renderCtxCreators();
+
+                document.getElementById('ctxRules').value = user.customRules || '';
+                document.getElementById('ctxRulesCount').textContent = (user.customRules || '').length + '/500 characters';
+
+                ctxProducts = user.products || [];
+                renderCtxProducts();
+
+                ctxInterests = user.interests || [];
+                renderCtxInterests();
+            } catch {}
+        }
+
+        async function saveCtxAbout(btn) {
+            const aboutYou = document.getElementById('ctxAboutYou').value.trim();
+            try {
+                await fetch('/api/onboarding/profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ aboutYou }),
+                });
+                btn.textContent = 'Saved!';
+                btn.classList.add('saved');
+                setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 2000);
+            } catch {}
+        }
+
+        function renderCtxCreators() {
+            const list = document.getElementById('ctxCreatorsList');
+            document.getElementById('ctxCreatorCount').textContent = ctxCreators.length;
+            if (ctxCreators.length === 0) {
+                list.innerHTML = '<span style="font-size:0.78rem;color:var(--text-muted);">No creators selected yet.</span>';
+                return;
+            }
+            list.innerHTML = ctxCreators.map((c, i) => {
+                const name = typeof c === 'string' ? c : (c.name || c.url || '');
+                const initials = name.split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0, 2);
+                return `<div class="ctx-creator-chip">
+                    <div class="ctx-creator-avatar">${initials}</div>
+                    <span>${name}</span>
+                    <button class="ctx-creator-remove" onclick="removeCtxCreator(${i})">&times;</button>
+                </div>`;
+            }).join('');
+        }
+
+        async function addCtxCreator() {
+            const input = document.getElementById('ctxCreatorInput');
+            const val = input.value.trim();
+            if (!val) return;
+            const existing = ctxCreators.map(c => typeof c === 'string' ? c : c.name);
+            if (existing.includes(val)) return;
+            ctxCreators.push({ name: val, url: '' });
+            input.value = '';
+            renderCtxCreators();
+            await fetch('/api/onboarding/creators', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ creators: ctxCreators }),
+            });
+        }
+
+        async function removeCtxCreator(i) {
+            ctxCreators.splice(i, 1);
+            renderCtxCreators();
+            await fetch('/api/onboarding/creators', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ creators: ctxCreators }),
+            });
+        }
+
+        async function saveCtxRules(btn) {
+            const rules = document.getElementById('ctxRules').value.trim();
+            try {
+                await fetch('/api/context/rules', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ customRules: rules }),
+                });
+                btn.textContent = 'Saved!';
+                btn.classList.add('saved');
+                setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 2000);
+            } catch {}
+        }
+
+        function renderCtxProducts() {
+            const list = document.getElementById('ctxProductsList');
+            document.getElementById('ctxProductCount').textContent = ctxProducts.length;
+            if (ctxProducts.length === 0) {
+                list.innerHTML = '<span style="font-size:0.78rem;color:var(--text-muted);">No products added yet.</span>';
+                return;
+            }
+            list.innerHTML = ctxProducts.map((p, i) => `
+                <div class="ctx-product-item">
+                    <button class="ctx-product-remove" onclick="removeCtxProduct(${i})">&times;</button>
+                    <div class="ctx-product-url">${p.url}</div>
+                    ${p.title ? `<div class="ctx-product-title">${p.title}</div>` : ''}
+                    ${p.description ? `<div class="ctx-product-desc">${p.description}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        async function addCtxProduct() {
+            const input = document.getElementById('ctxProductUrl');
+            const url = input.value.trim();
+            if (!url || ctxProducts.length >= 5) return;
+
+            input.disabled = true;
+            try {
+                const res = await fetch('/api/onboarding/analyze-url', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url }),
+                });
+                const data = await res.json();
+                ctxProducts.push({ url, title: data.title || '', description: data.description || '' });
+            } catch {
+                ctxProducts.push({ url, title: '', description: '' });
+            }
+            input.value = '';
+            input.disabled = false;
+            document.getElementById('ctxProductAddRow').style.display = 'none';
+            renderCtxProducts();
+
+            await fetch('/api/onboarding/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ products: ctxProducts }),
+            });
+        }
+
+        async function removeCtxProduct(i) {
+            ctxProducts.splice(i, 1);
+            renderCtxProducts();
+            await fetch('/api/onboarding/products', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ products: ctxProducts }),
+            });
+        }
+
+        function renderCtxInterests() {
+            const grid = document.getElementById('ctxInterestsGrid');
+            let html = '';
+            for (const [cat, tags] of Object.entries(INTEREST_CATEGORIES)) {
+                html += `<div class="ctx-interests-category">
+                    <div class="ctx-interests-cat-label">${cat}</div>
+                    <div class="ctx-interests-tags">
+                        ${tags.map(tag => `<span class="ctx-interest-tag${ctxInterests.includes(tag) ? ' selected' : ''}" onclick="toggleCtxInterest('${tag}', this)">${tag}</span>`).join('')}
+                    </div>
+                </div>`;
+            }
+            grid.innerHTML = html;
+        }
+
+        function toggleCtxInterest(tag, el) {
+            const idx = ctxInterests.indexOf(tag);
+            if (idx >= 0) {
+                ctxInterests.splice(idx, 1);
+                el.classList.remove('selected');
+            } else {
+                ctxInterests.push(tag);
+                el.classList.add('selected');
+            }
+        }
+
+        async function saveCtxInterests(btn) {
+            try {
+                await fetch('/api/context/interests', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ interests: ctxInterests }),
+                });
+                btn.textContent = 'Saved!';
+                btn.classList.add('saved');
+                setTimeout(() => { btn.textContent = 'Save'; btn.classList.remove('saved'); }, 2000);
+            } catch {}
+        }
+
         async function init() {
             await loadUser();
             await loadQueue();
+            updateCreditsPopup();
             setTimeout(openModal, 800);
         }
 

@@ -463,6 +463,28 @@ app.get('/api/onboarding/writing-dna', (req, res) => {
     });
 });
 
+// ---------- CONTEXT SETTINGS ----------
+
+app.post('/api/context/rules', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    const { customRules } = req.body;
+    req.session.user.customRules = customRules || '';
+    await dbUpdateFields(req.session.user.linkedinId, { customRules: customRules || '' });
+    res.json({ success: true });
+});
+
+app.post('/api/context/interests', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    const { interests } = req.body;
+    req.session.user.interests = interests || [];
+    await dbUpdateFields(req.session.user.linkedinId, { interests: interests || [] });
+    res.json({ success: true });
+});
+
 // ---------- AI & QUEUE ----------
 
 app.post('/api/ai/generate-posts', async (req, res) => {
