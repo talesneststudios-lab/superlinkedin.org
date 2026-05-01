@@ -90,6 +90,19 @@ async function dbUpdateFields(linkedinId, fields) {
 
 app.set('trust proxy', 1);
 
+const CANONICAL_HOST = (() => {
+    try { return new URL(process.env.BASE_URL).host; } catch { return ''; }
+})();
+
+if (CANONICAL_HOST) {
+    app.use((req, res, next) => {
+        if (req.hostname !== CANONICAL_HOST.split(':')[0]) {
+            return res.redirect(301, process.env.BASE_URL + req.originalUrl);
+        }
+        next();
+    });
+}
+
 const LINKEDIN = {
     clientId: process.env.LINKEDIN_CLIENT_ID,
     clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
