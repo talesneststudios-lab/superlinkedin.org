@@ -2182,6 +2182,365 @@
             animation: spin 0.8s linear infinite;
         }
 
+        /* SCHEDULE POPUP */
+        .sched-overlay {
+            position: fixed; inset: 0; z-index: 5000; display: flex;
+            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .sched-overlay.open { opacity: 1; pointer-events: auto; }
+
+        .sched-modal {
+            background: var(--bg-white); border-radius: 16px; width: 440px; max-width: 94vw;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.18); padding: 28px 28px 24px;
+            transform: translateY(16px); transition: transform 0.2s;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .sched-overlay.open .sched-modal { transform: translateY(0); }
+
+        .sched-title-row {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
+        }
+        .sched-title { font-size: 1.3rem; font-weight: 800; }
+        .sched-close {
+            width: 32px; height: 32px; border: none; background: var(--bg-secondary);
+            border-radius: 8px; font-size: 1.2rem; cursor: pointer; color: var(--text-muted);
+            display: flex; align-items: center; justify-content: center; transition: 0.15s;
+        }
+        .sched-close:hover { background: var(--border); color: var(--text-primary); }
+
+        .sched-tz { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 18px; }
+
+        .sched-next-slot {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 16px; border: 2px solid #dc2626; border-radius: 12px;
+            cursor: pointer; transition: background 0.15s; margin-bottom: 12px;
+        }
+        .sched-next-slot:hover { background: rgba(220,38,38,0.04); }
+        .sched-next-slot-label { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+        .sched-next-slot-time { font-weight: 700; font-size: 0.88rem; color: #dc2626; }
+
+        .sched-divider {
+            display: flex; align-items: center; gap: 12px; margin: 16px 0;
+            font-size: 0.78rem; color: var(--text-muted);
+        }
+        .sched-divider::before, .sched-divider::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        .sched-time-input {
+            width: 100%; padding: 12px 14px; border: 1px solid var(--border);
+            border-radius: 10px; font-family: inherit; font-size: 0.88rem;
+            background: var(--bg-white); color: var(--text-primary);
+            transition: border-color 0.15s;
+        }
+        .sched-time-input:focus { outline: none; border-color: var(--accent); }
+        .sched-time-input::placeholder { color: var(--text-muted); }
+
+        .sched-parsed {
+            font-size: 0.78rem; margin-top: 6px; min-height: 18px;
+            color: #16a34a; font-weight: 600;
+        }
+        .sched-parsed.error { color: #dc2626; }
+
+        .sched-slots-btn {
+            display: flex; align-items: center; justify-content: space-between;
+            width: 100%; padding: 12px 14px; border: 1px solid var(--border);
+            border-radius: 10px; background: var(--bg-white); font-family: inherit;
+            font-size: 0.88rem; cursor: pointer; color: var(--text-primary);
+            margin-top: 12px; transition: border-color 0.15s;
+        }
+        .sched-slots-btn:hover { border-color: var(--accent); }
+        .sched-slots-icon { font-size: 1.1rem; }
+
+        .sched-slots-panel {
+            max-height: 0; overflow: hidden; transition: max-height 0.25s ease;
+            margin-top: 0;
+        }
+        .sched-slots-panel.open { max-height: 320px; margin-top: 10px; overflow-y: auto; }
+
+        .sched-slot-day { font-size: 0.78rem; font-weight: 700; color: var(--text-muted); margin: 10px 0 4px; text-transform: uppercase; }
+        .sched-slot-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+            border-radius: 8px; cursor: pointer; font-size: 0.84rem; transition: background 0.1s;
+        }
+        .sched-slot-item:hover { background: var(--bg-secondary); }
+        .sched-slot-item .slot-time { font-weight: 600; min-width: 80px; }
+        .sched-slot-item .slot-status { color: var(--text-muted); font-size: 0.78rem; }
+        .sched-slot-item.taken .slot-status { color: #f97316; }
+
+        .sched-account {
+            display: flex; align-items: center; gap: 12px;
+            margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--border);
+        }
+        .sched-account-toggle {
+            position: relative; width: 44px; height: 24px; border-radius: 12px;
+            background: var(--accent); border: none; cursor: default; flex-shrink: 0;
+        }
+        .sched-account-toggle::after {
+            content: ''; position: absolute; top: 3px; left: 23px;
+            width: 18px; height: 18px; border-radius: 50%; background: #fff;
+        }
+        .sched-account-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 0.72rem; flex-shrink: 0; overflow: hidden;
+        }
+        .sched-account-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .sched-account-info { flex: 1; }
+        .sched-account-name { font-weight: 700; font-size: 0.84rem; }
+        .sched-account-handle { font-size: 0.74rem; color: var(--text-muted); }
+        .sched-account-vis {
+            padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-family: inherit; font-size: 0.78rem; background: var(--bg-white);
+            color: var(--text-primary); cursor: default;
+        }
+
+        .sched-confirm-btn {
+            width: 100%; margin-top: 16px; padding: 12px; border: none; border-radius: 10px;
+            background: var(--accent); color: #fff; font-family: inherit;
+            font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: opacity 0.15s;
+        }
+        .sched-confirm-btn:hover { opacity: 0.9; }
+        .sched-confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* READY TO POST PAGE */
+        .rtp-header h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 2px; }
+        .rtp-header p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; }
+
+        .rtp-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
+        .rtp-tab {
+            padding: 10px 24px; font-size: 0.9rem; font-weight: 600; cursor: pointer;
+            color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px;
+            background: none; border-top: none; border-left: none; border-right: none;
+            font-family: inherit; transition: all 0.15s;
+        }
+        .rtp-tab:hover { color: var(--text-primary); }
+        .rtp-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .rtp-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        @media (max-width: 768px) { .rtp-grid { grid-template-columns: 1fr; } }
+
+        .rtp-card {
+            background: var(--bg-white); border: 1px solid var(--border); border-radius: 14px;
+            padding: 20px; display: flex; flex-direction: column; gap: 12px;
+            transition: box-shadow 0.15s;
+        }
+        .rtp-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .rtp-card-author { display: flex; align-items: center; gap: 10px; }
+        .rtp-card-avatar {
+            width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 0.78rem; overflow: hidden;
+        }
+        .rtp-card-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .rtp-card-name { font-weight: 700; font-size: 0.88rem; }
+        .rtp-card-handle { font-size: 0.75rem; color: var(--text-muted); }
+        .rtp-card-body {
+            font-size: 0.88rem; color: var(--text-secondary); line-height: 1.65;
+            flex: 1; white-space: pre-wrap;
+            max-height: 180px; overflow: hidden;
+        }
+        .rtp-card-footer { display: flex; gap: 8px; flex-wrap: wrap; }
+        .rtp-card-btn {
+            padding: 8px 16px; border-radius: 8px; font-family: inherit;
+            font-size: 0.8rem; font-weight: 700; cursor: pointer; transition: all 0.15s;
+        }
+        .rtp-card-btn.primary { background: var(--accent); color: #fff; border: none; }
+        .rtp-card-btn.primary:hover { background: var(--accent-hover); }
+        .rtp-card-btn.secondary { background: transparent; color: var(--accent); border: 1px solid var(--accent); }
+        .rtp-card-btn.secondary:hover { background: var(--accent); color: #fff; }
+
+        .rtp-generate-row {
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 24px; gap: 12px;
+        }
+        .rtp-generate-btn {
+            padding: 10px 28px; border: none; border-radius: 10px;
+            background: linear-gradient(135deg, #7c3aed, var(--accent));
+            color: #fff; font-family: inherit; font-weight: 700; font-size: 0.9rem;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .rtp-generate-btn:hover { opacity: 0.9; }
+        .rtp-generate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .rtp-loading {
+            text-align: center; padding: 40px 20px; color: var(--text-muted); font-size: 0.88rem;
+        }
+
+        .rtp-product-badge {
+            display: inline-block; padding: 3px 10px; border-radius: 6px;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            background: rgba(10,102,194,0.12); color: var(--accent); margin-bottom: 4px;
+        }
+
+        /* INSPIRATION PAGE */
+        .insp-header h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 2px; }
+        .insp-header p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; }
+
+        .insp-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
+        .insp-tab {
+            padding: 10px 20px; font-size: 0.88rem; font-weight: 600; cursor: pointer;
+            color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -2px;
+            background: none; border-top: none; border-left: none; border-right: none;
+            font-family: inherit; transition: all 0.15s;
+        }
+        .insp-tab:hover { color: var(--text-primary); }
+        .insp-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .insp-search-row {
+            display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap;
+        }
+        .insp-search-input {
+            flex: 1; min-width: 200px; padding: 10px 16px 10px 40px;
+            border: 1px solid var(--border); border-radius: 10px; font-size: 0.9rem;
+            font-family: inherit; background: var(--bg-white); color: var(--text-primary);
+            outline: none; transition: border 0.2s;
+        }
+        .insp-search-input:focus { border-color: var(--accent); }
+        .insp-search-wrap {
+            position: relative; flex: 1; min-width: 200px;
+        }
+        .insp-search-wrap::before {
+            content: '\1F50D'; position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+            font-size: 0.9rem; pointer-events: none;
+        }
+        .insp-search-btn {
+            padding: 10px 22px; border: none; border-radius: 10px;
+            background: var(--accent); color: #fff; font-family: inherit;
+            font-weight: 700; font-size: 0.88rem; cursor: pointer; transition: background 0.2s;
+        }
+        .insp-search-btn:hover { background: var(--accent-hover); }
+        .insp-filter-select {
+            padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+            font-family: inherit; font-size: 0.85rem; font-weight: 600;
+            background: var(--bg-white); color: var(--text-primary); cursor: pointer; outline: none;
+        }
+
+        .insp-tags { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .insp-tag {
+            padding: 7px 16px; border-radius: 99px; font-size: 0.82rem; font-weight: 600;
+            background: var(--bg-white); border: 1px solid var(--border); color: var(--text-secondary);
+            cursor: pointer; transition: all 0.15s; white-space: nowrap;
+        }
+        .insp-tag:hover { border-color: var(--accent); color: var(--accent); }
+
+        .insp-adv-toggle {
+            display: flex; align-items: center; gap: 6px; padding: 0; margin-bottom: 16px;
+            background: none; border: none; font-family: inherit; font-size: 0.85rem;
+            font-weight: 600; color: var(--text-muted); cursor: pointer;
+        }
+        .insp-adv-toggle:hover { color: var(--text-primary); }
+        .insp-adv-arrow { transition: transform 0.2s; display: inline-block; }
+        .insp-adv-toggle.open .insp-adv-arrow { transform: rotate(180deg); }
+
+        .insp-adv-panel {
+            display: none; background: var(--bg-white); border: 1px solid var(--border);
+            border-radius: 14px; padding: 24px; margin-bottom: 20px;
+        }
+        .insp-adv-panel.open { display: block; }
+
+        .insp-adv-section { margin-bottom: 20px; }
+        .insp-adv-section:last-child { margin-bottom: 0; }
+        .insp-adv-label {
+            font-size: 0.82rem; font-weight: 700; color: var(--accent); margin-bottom: 6px;
+        }
+        .insp-adv-sublabel { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; }
+        .insp-adv-row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+        .insp-adv-field label {
+            display: block; font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        .insp-adv-field input[type="number"] {
+            width: 90px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px;
+            font-family: inherit; font-size: 0.85rem; background: var(--bg-white);
+            color: var(--text-primary); outline: none;
+        }
+        .insp-adv-field input[type="number"]:focus { border-color: var(--accent); }
+
+        .insp-adv-toggles { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+        .insp-adv-tog {
+            display: flex; align-items: center; gap: 8px; font-size: 0.85rem;
+            font-weight: 500; color: var(--text-primary);
+        }
+        .insp-adv-tog input[type="checkbox"] {
+            width: 36px; height: 20px; appearance: none; -webkit-appearance: none;
+            background: var(--accent); border-radius: 99px; position: relative;
+            cursor: pointer; transition: background 0.2s;
+        }
+        .insp-adv-tog input[type="checkbox"]::before {
+            content: ''; position: absolute; width: 16px; height: 16px; border-radius: 50%;
+            background: #fff; top: 2px; left: 18px; transition: left 0.2s;
+        }
+        .insp-adv-tog input[type="checkbox"]:not(:checked) { background: #ccc; }
+        .insp-adv-tog input[type="checkbox"]:not(:checked)::before { left: 2px; }
+
+        .insp-reset-btn {
+            padding: 8px 18px; border: 1px solid var(--border); border-radius: 8px;
+            background: var(--bg-white); font-family: inherit; font-size: 0.82rem;
+            font-weight: 600; color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+        }
+        .insp-reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+        .insp-status {
+            font-size: 0.82rem; color: var(--accent); font-weight: 500; margin-bottom: 20px;
+        }
+
+        .insp-results { display: flex; flex-direction: column; gap: 16px; }
+
+        .insp-post {
+            background: var(--bg-white); border: 1px solid var(--border); border-radius: 14px;
+            padding: 20px; transition: box-shadow 0.15s;
+        }
+        .insp-post:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+        .insp-post-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px; }
+        .insp-post-avatar {
+            width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 0.85rem; overflow: hidden;
+        }
+        .insp-post-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .insp-post-name { font-weight: 700; font-size: 0.9rem; color: var(--text-primary); }
+        .insp-post-title {
+            font-size: 0.78rem; color: var(--text-muted); overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; max-width: 400px;
+        }
+        .insp-post-date { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; }
+
+        .insp-post-text {
+            font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6;
+            margin-bottom: 14px; white-space: pre-wrap;
+        }
+
+        .insp-post-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+        .insp-post-stats { display: flex; gap: 16px; font-size: 0.78rem; color: var(--text-muted); font-weight: 500; }
+        .insp-post-stat { display: flex; align-items: center; gap: 4px; }
+        .insp-use-btn {
+            padding: 7px 16px; border: 1px solid var(--accent); border-radius: 8px;
+            background: transparent; font-family: inherit; font-size: 0.78rem;
+            font-weight: 700; color: var(--accent); cursor: pointer; transition: all 0.15s;
+        }
+        .insp-use-btn:hover { background: var(--accent); color: #fff; }
+
+        .insp-empty {
+            text-align: center; padding: 60px 20px; color: var(--text-muted);
+        }
+        .insp-empty-title { font-size: 1rem; font-weight: 700; color: var(--accent); margin-bottom: 6px; }
+        .insp-empty-sub { font-size: 0.85rem; }
+
+        .insp-load-more {
+            display: block; margin: 20px auto 0; padding: 10px 28px;
+            border: 1px solid var(--border); border-radius: 10px; background: var(--bg-white);
+            font-family: inherit; font-size: 0.85rem; font-weight: 600;
+            color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+        }
+        .insp-load-more:hover { border-color: var(--accent); color: var(--accent); }
+
         /* COMPOSE PANEL */
         .compose-panel {
             width: 380px;
@@ -2358,6 +2717,44 @@
             background: var(--bg);
             color: var(--text-primary);
         }
+
+        .ai-improve-wrap {
+            position: relative;
+            display: inline-block;
+        }
+        .ai-improve-btn {
+            width: 34px; height: 34px;
+            display: flex; align-items: center; justify-content: center;
+            border: none; background: transparent; border-radius: 6px;
+            cursor: pointer; font-size: 1.1rem; color: var(--text-muted);
+            transition: all 0.15s;
+        }
+        .ai-improve-btn:hover { background: rgba(124,58,237,0.12); color: #7c3aed; }
+        .ai-improve-btn.active { background: rgba(124,58,237,0.15); color: #7c3aed; }
+
+        .ai-improve-menu {
+            display: none; position: absolute; bottom: 42px; left: 0;
+            width: 220px; background: var(--bg-white); border: 1px solid var(--border);
+            border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            padding: 8px 0; z-index: 200;
+        }
+        .ai-improve-menu.open { display: block; }
+        .ai-improve-menu.menu-up { bottom: 42px; top: auto; }
+        .ai-improve-menu.menu-down { top: 42px; bottom: auto; }
+
+        .ai-improve-label {
+            padding: 6px 16px 4px; font-size: 0.7rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.8px;
+            color: var(--text-muted);
+        }
+        .ai-improve-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 16px; font-size: 0.85rem; font-weight: 500;
+            color: var(--text-primary); cursor: pointer; transition: background 0.12s;
+        }
+        .ai-improve-item:hover { background: var(--accent-light); }
+        .ai-improve-item .ai-icon { font-size: 1rem; width: 20px; text-align: center; flex-shrink: 0; }
+        .ai-improve-sep { height: 1px; background: var(--border); margin: 6px 0; }
 
         .compose-tool-btn.ai-btn {
             background: linear-gradient(135deg, #7c3aed, var(--accent));
@@ -2570,10 +2967,10 @@
             </a>
 
             <div class="nav-section">Create</div>
-            <a class="nav-item nav-sub-item" onclick="showPage('create')">
+            <a class="nav-item nav-sub-item" data-page="readytopost" onclick="showPage('readytopost')">
                 <span class="nav-icon">&#9997;</span> <span>Ready to Post</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="#">
+            <a class="nav-item nav-sub-item" data-page="inspiration" onclick="showPage('inspiration')">
                 <span class="nav-icon">&#128161;</span> <span>Inspiration</span>
             </a>
             <a class="nav-item nav-sub-item" data-page="create" onclick="showPage('create')">
@@ -3188,6 +3585,139 @@
                 </div>
             </div>
 
+            <!-- READY TO POST PAGE -->
+            <div class="page" id="page-readytopost">
+                <div class="rtp-header">
+                    <h2>Ready to Post</h2>
+                    <p>AI-generated posts tailored to your profile. Pick one and publish.</p>
+                </div>
+
+                <div class="rtp-tabs">
+                    <button class="rtp-tab active" onclick="switchRtpTab('foryou', this)">For You</button>
+                    <button class="rtp-tab" onclick="switchRtpTab('product', this)">Product</button>
+                </div>
+
+                <div class="rtp-generate-row">
+                    <button class="rtp-generate-btn" id="rtpGenerateBtn" onclick="generateRtpPosts()">&#129302; Generate new posts</button>
+                </div>
+
+                <div id="rtpForYou">
+                    <div class="rtp-grid" id="rtpForYouGrid">
+                        <div class="rtp-loading">
+                            Click "Generate new posts" to create personalized posts based on your profile.
+                        </div>
+                    </div>
+                </div>
+
+                <div id="rtpProduct" style="display:none;">
+                    <div class="rtp-grid" id="rtpProductGrid">
+                        <div class="rtp-loading">
+                            Click "Generate new posts" to create posts about your products and services.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- INSPIRATION PAGE -->
+            <div class="page" id="page-inspiration">
+                <div class="insp-header">
+                    <h2>Inspiration</h2>
+                    <p>Discover trending content. Never run out of ideas.</p>
+                </div>
+
+                <div class="insp-tabs">
+                    <button class="insp-tab active" data-ctype="" onclick="setInspTab(this)">Posts</button>
+                    <button class="insp-tab" data-ctype="Documents" onclick="setInspTab(this)">Articles</button>
+                    <button class="insp-tab" data-ctype="Videos" onclick="setInspTab(this)">Media</button>
+                </div>
+
+                <div class="insp-search-row">
+                    <div class="insp-search-wrap">
+                        <input class="insp-search-input" id="inspKeywords" type="text" placeholder="Search by keyword..." onkeydown="if(event.key==='Enter')inspSearch()">
+                    </div>
+                    <button class="insp-search-btn" onclick="inspSearch()">Search</button>
+                    <select class="insp-filter-select" id="inspDatePosted" onchange="inspSearch()">
+                        <option value="Past 24 hours">Past 24h</option>
+                        <option value="Past week" selected>Past week</option>
+                        <option value="Past month">Past month</option>
+                        <option value="past-year">Past year</option>
+                    </select>
+                    <select class="insp-filter-select" id="inspAuthorKw">
+                        <option value="">All accounts</option>
+                        <option value="founder">Founders</option>
+                        <option value="ceo">CEOs</option>
+                        <option value="marketing">Marketing</option>
+                        <option value="engineer">Engineers</option>
+                        <option value="designer">Designers</option>
+                    </select>
+                </div>
+
+                <div class="insp-tags" id="inspTags">
+                    <span class="insp-tag" onclick="inspTagClick(this)">AI coding tips</span>
+                    <span class="insp-tag" onclick="inspTagClick(this)">marketing strategies</span>
+                    <span class="insp-tag" onclick="inspTagClick(this)">startup advice</span>
+                    <span class="insp-tag" onclick="inspTagClick(this)">productivity hacks</span>
+                    <span class="insp-tag" onclick="inspTagClick(this)">design inspiration</span>
+                    <span class="insp-tag" onclick="inspTagClick(this)">growth tactics</span>
+                    <span class="insp-tag" onclick="inspTagClick(this)">tech trends</span>
+                </div>
+
+                <button class="insp-adv-toggle" id="inspAdvToggle" onclick="toggleInspAdv()">
+                    &#9881; Advanced Filters <span class="insp-adv-arrow">&#9660;</span>
+                </button>
+
+                <div class="insp-adv-panel" id="inspAdvPanel">
+                    <div class="insp-adv-section">
+                        <div class="insp-adv-label">Sort by</div>
+                        <select class="insp-filter-select" id="inspSortBy">
+                            <option value="Top match">Most Relevant</option>
+                            <option value="Latest">Latest</option>
+                        </select>
+                    </div>
+
+                    <div class="insp-adv-section">
+                        <div class="insp-adv-label">Engagement</div>
+                        <div class="insp-adv-row">
+                            <div class="insp-adv-field"><label>Min Likes</label><input type="number" id="inspMinLikes" value="100" min="0"></div>
+                            <div class="insp-adv-field"><label>Min Reposts</label><input type="number" id="inspMinShares" value="0" min="0"></div>
+                            <div class="insp-adv-field"><label>Min Comments</label><input type="number" id="inspMinComments" value="0" min="0"></div>
+                        </div>
+                    </div>
+
+                    <div class="insp-adv-section">
+                        <div class="insp-adv-label">Content</div>
+                        <div class="insp-adv-row">
+                            <div class="insp-adv-field"><label>Min Length</label><div style="display:flex;align-items:center;gap:6px;"><input type="number" id="inspMinLen" value="0" min="0"> <span style="font-size:0.78rem;color:var(--text-muted);">chars</span></div></div>
+                        </div>
+                    </div>
+
+                    <div class="insp-adv-section">
+                        <div class="insp-adv-label">Exclude Topics</div>
+                        <div class="insp-adv-toggles">
+                            <label class="insp-adv-tog"><input type="checkbox" id="inspExCrypto" checked> Crypto / Web3</label>
+                            <label class="insp-adv-tog"><input type="checkbox" id="inspExPolitics" checked> Politics</label>
+                            <label class="insp-adv-tog"><input type="checkbox" id="inspExNsfw" checked> NSFW / Adult</label>
+                            <label class="insp-adv-tog"><input type="checkbox" id="inspExSpam" checked> Self-promo / Spam</label>
+                        </div>
+                    </div>
+
+                    <div style="margin-top:16px;">
+                        <button class="insp-reset-btn" onclick="resetInspFilters()">Reset all filters</button>
+                    </div>
+                </div>
+
+                <div class="insp-status" id="inspStatus"></div>
+
+                <div class="insp-results" id="inspResults">
+                    <div class="insp-empty">
+                        <div class="insp-empty-title">Search for inspiration</div>
+                        <div class="insp-empty-sub">Enter a keyword or click a tag above to find trending LinkedIn posts</div>
+                    </div>
+                </div>
+
+                <button class="insp-load-more" id="inspLoadMore" style="display:none;" onclick="inspLoadMore()">Load more posts</button>
+            </div>
+
             <!-- CREATE PAGE -->
             <div class="page" id="page-create">
                 <div class="create-wrapper">
@@ -3208,9 +3738,29 @@
                                 </select>
                                 <span class="create-char-count" id="createCharCount">0 characters</span>
                             </div>
-                            <div style="display:flex;gap:8px;">
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <div class="ai-improve-wrap">
+                                    <button class="ai-improve-btn" onclick="toggleAiMenu('writerAiMenu', this)" title="Improve writing with AI" style="width:38px;height:38px;font-size:1.15rem;">&#10024;</button>
+                                    <div class="ai-improve-menu menu-down" id="writerAiMenu">
+                                        <div class="ai-improve-item" onclick="aiImprove('grammar','createTextarea')"><span class="ai-icon">&#9998;</span> Improve grammar</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('translate','createTextarea')"><span class="ai-icon">&#127760;</span> Translate to English</div>
+                                        <div class="ai-improve-sep"></div>
+                                        <div class="ai-improve-label">Rephrase with</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('hook','createTextarea')"><span class="ai-icon">&#10024;</span> An engaging hook</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('details','createTextarea')"><span class="ai-icon">&#128196;</span> More details</div>
+                                        <div class="ai-improve-sep"></div>
+                                        <div class="ai-improve-label">Make it more</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('engaging','createTextarea')"><span class="ai-icon">&#128171;</span> Engaging</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('humorous','createTextarea')"><span class="ai-icon">&#128514;</span> Humorous</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('creative','createTextarea')"><span class="ai-icon">&#127912;</span> Creative</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('sarcastic','createTextarea')"><span class="ai-icon">&#128527;</span> Sarcastic</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('inspirational','createTextarea')"><span class="ai-icon">&#127775;</span> Inspirational</div>
+                                        <div class="ai-improve-item" onclick="aiImprove('concise','createTextarea')"><span class="ai-icon">&#9986;</span> Concise</div>
+                                    </div>
+                                </div>
                                 <button class="create-btn create-btn-ai" onclick="generateWithAI()">&#129302; Generate with AI</button>
                                 <button class="create-btn create-btn-queue" onclick="addToQueueFromCreate()">Add to Queue</button>
+                                <button class="create-btn create-btn-ai" onclick="openSchedPopup('create')" style="background:#dc2626;">&#128197; Schedule</button>
                             </div>
                         </div>
                         <div id="generatingIndicator" style="display:none;" class="generating-indicator">
@@ -3237,6 +3787,48 @@
         </div>
     </div>
 
+    <!-- SCHEDULE POPUP -->
+    <div class="sched-overlay" id="schedOverlay" onclick="if(event.target===this)closeSchedPopup()">
+        <div class="sched-modal">
+            <div class="sched-title-row">
+                <span class="sched-title">Schedule</span>
+                <button class="sched-close" onclick="closeSchedPopup()">&times;</button>
+            </div>
+            <div class="sched-tz" id="schedTzLabel">All times in your timezone</div>
+
+            <div class="sched-next-slot" id="schedNextSlot" onclick="schedUseNextSlot()">
+                <span class="sched-next-slot-label">Use next free slot</span>
+                <span class="sched-next-slot-time" id="schedNextSlotTime">...</span>
+            </div>
+
+            <div class="sched-divider">or pick a time</div>
+
+            <input class="sched-time-input" id="schedTimeInput"
+                   placeholder='Write any time, e.g. "tomorrow at 9am" or "in 3 hours"'
+                   oninput="parseSchedInput()">
+            <div class="sched-parsed" id="schedParsed"></div>
+
+            <button class="sched-slots-btn" onclick="toggleSchedSlots()">
+                <span>View queue time slots</span>
+                <span class="sched-slots-icon">&#128197;</span>
+            </button>
+
+            <div class="sched-slots-panel" id="schedSlotsPanel"></div>
+
+            <div class="sched-account" id="schedAccount">
+                <div class="sched-account-toggle"></div>
+                <div class="sched-account-avatar" id="schedAvatar"></div>
+                <div class="sched-account-info">
+                    <div class="sched-account-name" id="schedAccountName">You</div>
+                    <div class="sched-account-handle" id="schedAccountHandle">@user</div>
+                </div>
+                <span class="sched-account-vis">&#127760; Everyone</span>
+            </div>
+
+            <button class="sched-confirm-btn" id="schedConfirmBtn" onclick="confirmSchedule()" disabled>Schedule post</button>
+        </div>
+    </div>
+
     <!-- COMPOSE PANEL -->
     <aside class="compose-panel" id="composePanel">
         <div class="compose-header">
@@ -3245,7 +3837,7 @@
             </div>
             <div class="compose-header-actions">
                 <button class="compose-btn-draft" onclick="saveDraft()">+ New draft</button>
-                <button class="compose-btn-schedule" onclick="scheduleFromCompose()">Schedule</button>
+                <button class="compose-btn-schedule" onclick="openSchedPopup('compose')">Schedule</button>
                 <button class="compose-btn-publish" onclick="publishFromCompose()">Publish</button>
             </div>
         </div>
@@ -3277,10 +3869,29 @@
                 <button class="compose-tool-btn" title="Emoji">&#128522;</button>
                 <button class="compose-tool-btn" title="Bold"><b>B</b></button>
                 <button class="compose-tool-btn" title="Italic"><i>I</i></button>
-                <button class="compose-tool-btn ai-btn" onclick="generateInCompose()" title="Improve writing with AI">&#129302; AI</button>
+                <div class="ai-improve-wrap">
+                    <button class="ai-improve-btn" onclick="toggleAiMenu('composeAiMenu', this)" title="Improve writing with AI">&#10024;</button>
+                    <div class="ai-improve-menu menu-up" id="composeAiMenu">
+                        <div class="ai-improve-item" onclick="aiImprove('grammar','composeTextarea')"><span class="ai-icon">&#9998;</span> Improve grammar</div>
+                        <div class="ai-improve-item" onclick="aiImprove('translate','composeTextarea')"><span class="ai-icon">&#127760;</span> Translate to English</div>
+                        <div class="ai-improve-sep"></div>
+                        <div class="ai-improve-label">Rephrase with</div>
+                        <div class="ai-improve-item" onclick="aiImprove('hook','composeTextarea')"><span class="ai-icon">&#10024;</span> An engaging hook</div>
+                        <div class="ai-improve-item" onclick="aiImprove('details','composeTextarea')"><span class="ai-icon">&#128196;</span> More details</div>
+                        <div class="ai-improve-sep"></div>
+                        <div class="ai-improve-label">Make it more</div>
+                        <div class="ai-improve-item" onclick="aiImprove('engaging','composeTextarea')"><span class="ai-icon">&#128171;</span> Engaging</div>
+                        <div class="ai-improve-item" onclick="aiImprove('humorous','composeTextarea')"><span class="ai-icon">&#128514;</span> Humorous</div>
+                        <div class="ai-improve-item" onclick="aiImprove('creative','composeTextarea')"><span class="ai-icon">&#127912;</span> Creative</div>
+                        <div class="ai-improve-item" onclick="aiImprove('sarcastic','composeTextarea')"><span class="ai-icon">&#128527;</span> Sarcastic</div>
+                        <div class="ai-improve-item" onclick="aiImprove('inspirational','composeTextarea')"><span class="ai-icon">&#127775;</span> Inspirational</div>
+                        <div class="ai-improve-item" onclick="aiImprove('concise','composeTextarea')"><span class="ai-icon">&#9986;</span> Concise</div>
+                    </div>
+                </div>
+                <button class="compose-tool-btn ai-btn" onclick="generateInCompose()" title="Generate with AI">&#129302; AI</button>
                 <button class="compose-tool-btn" title="Quote">&#10078;</button>
                 <div style="flex:1;"></div>
-                <button class="compose-tool-btn" onclick="scheduleFromCompose()" title="Schedule Post">&#128197;</button>
+                <button class="compose-tool-btn" onclick="openSchedPopup('compose')" title="Schedule Post">&#128197;</button>
             </div>
         </div>
 
@@ -3690,7 +4301,7 @@
         }
 
         // Page navigation
-        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer', context: 'Context', settings: 'Account Settings' };
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', inspiration: 'Inspiration', context: 'Context', settings: 'Account Settings' };
 
         function showPage(page, updateHash) {
             if (!document.getElementById('page-' + page)) page = 'home';
@@ -3897,6 +4508,8 @@
 
         function renderQueueCalendar(list) {
             const scheduled = queue.filter(q => q.status === 'scheduled');
+            const withTime = scheduled.filter(q => q.scheduledFor);
+            const withoutTime = scheduled.filter(q => !q.scheduledFor);
             const days = getScheduleDays(14);
             const tz = getUserTimezone();
             const tzShort = tz ? '(' + tz.split('/').pop().replace(/_/g, ' ') + ')' : '';
@@ -3905,7 +4518,7 @@
             const nowInTz = getNowInTimezone();
             const todayStr = nowInTz.toDateString();
 
-            let slotIndex = 0;
+            let noTimeIdx = 0;
             let html = '';
 
             days.forEach(day => {
@@ -3916,6 +4529,27 @@
 
                 html += `<div class="queue-day-group">`;
                 html += `<div class="queue-day-label"><span class="day-name" style="color:${dayColor}">${dayLabel}</span><span class="day-date">${dateStr}</span>${isToday ? `<span class="day-tz">${tzShort}</span>` : ''}</div>`;
+
+                const dayStart = new Date(day); dayStart.setHours(0, 0, 0, 0);
+                const dayEnd = new Date(day); dayEnd.setHours(23, 59, 59, 999);
+                const postsForDay = withTime.filter(q => {
+                    const d = new Date(q.scheduledFor);
+                    return d >= dayStart && d <= dayEnd;
+                });
+
+                postsForDay.forEach(post => {
+                    const d = new Date(post.scheduledFor);
+                    const timeStr = formatSlotTime(d.getHours(), d.getMinutes());
+                    const realIdx = queue.indexOf(post);
+                    html += `<div class="queue-slot has-post">
+                        <span class="queue-slot-time">${timeStr}</span>
+                        <span class="queue-slot-content">${post.text}</span>
+                        <span class="queue-slot-actions">
+                            <button class="queue-slot-btn" onclick="editQueueItem(${realIdx})">Edit</button>
+                            <button class="queue-slot-btn delete" onclick="removeFromQueue(${realIdx})">&#10005;</button>
+                        </span>
+                    </div>`;
+                });
 
                 const slotsForDay = isToday
                     ? QUEUE_SCHEDULE_SLOTS.filter(s => s.h > nowInTz.getHours() || (s.h === nowInTz.getHours() && s.m > nowInTz.getMinutes()))
@@ -3930,20 +4564,27 @@
                 const useSlots = slotsForDay.length > 0 ? slotsForDay : [QUEUE_SCHEDULE_SLOTS[2]];
 
                 useSlots.forEach(slot => {
-                    const timeStr = formatSlotTime(slot.h, slot.m);
-                    const matchingPost = scheduled[slotIndex];
+                    const slotDt = new Date(day); slotDt.setHours(slot.h, slot.m, 0, 0);
+                    const alreadyShown = postsForDay.some(p => {
+                        const pd = new Date(p.scheduledFor);
+                        return pd.getHours() === slot.h && pd.getMinutes() === slot.m;
+                    });
+                    if (alreadyShown) return;
 
-                    if (matchingPost) {
-                        const realIdx = queue.indexOf(matchingPost);
+                    const timeStr = formatSlotTime(slot.h, slot.m);
+                    const unscheduled = withoutTime[noTimeIdx];
+
+                    if (unscheduled) {
+                        const realIdx = queue.indexOf(unscheduled);
                         html += `<div class="queue-slot has-post">
                             <span class="queue-slot-time">${timeStr}</span>
-                            <span class="queue-slot-content">${matchingPost.text}</span>
+                            <span class="queue-slot-content">${unscheduled.text}</span>
                             <span class="queue-slot-actions">
                                 <button class="queue-slot-btn" onclick="editQueueItem(${realIdx})">Edit</button>
                                 <button class="queue-slot-btn delete" onclick="removeFromQueue(${realIdx})">&#10005;</button>
                             </span>
                         </div>`;
-                        slotIndex++;
+                        noTimeIdx++;
                     } else {
                         html += `<div class="queue-slot" onclick="toggleCompose()">
                             <span class="queue-slot-time">${timeStr}</span>
@@ -4315,6 +4956,676 @@
             if (data.lastSync) {
                 document.getElementById('streakText').textContent = 'Last sync: ' + new Date(data.lastSync).toLocaleString();
             }
+        }
+
+        // AI Improve writing
+        function toggleAiMenu(menuId, btn) {
+            const menu = document.getElementById(menuId);
+            const wasOpen = menu.classList.contains('open');
+            document.querySelectorAll('.ai-improve-menu.open').forEach(m => m.classList.remove('open'));
+            document.querySelectorAll('.ai-improve-btn.active').forEach(b => b.classList.remove('active'));
+            if (!wasOpen) {
+                menu.classList.add('open');
+                btn.classList.add('active');
+            }
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.ai-improve-wrap')) {
+                document.querySelectorAll('.ai-improve-menu.open').forEach(m => m.classList.remove('open'));
+                document.querySelectorAll('.ai-improve-btn.active').forEach(b => b.classList.remove('active'));
+            }
+        });
+
+        async function aiImprove(action, textareaId) {
+            document.querySelectorAll('.ai-improve-menu.open').forEach(m => m.classList.remove('open'));
+            document.querySelectorAll('.ai-improve-btn.active').forEach(b => b.classList.remove('active'));
+
+            const textarea = document.getElementById(textareaId);
+            const text = textarea.value.trim();
+            if (!text) {
+                showNotify('No Text', 'Write something first, then use AI to improve it.', 'warning');
+                return;
+            }
+
+            const origText = textarea.value;
+            textarea.value = 'Improving with AI...';
+            textarea.disabled = true;
+
+            try {
+                const res = await fetch('/api/ai/improve', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, action }),
+                });
+                const data = await res.json();
+                if (data.text) {
+                    textarea.value = data.text;
+                    trackCredit('aiWriter');
+                } else {
+                    textarea.value = origText;
+                    showNotify('AI Error', data.error || 'Could not improve text.', 'error');
+                }
+            } catch {
+                textarea.value = origText;
+                showNotify('AI Unavailable', 'AI is not available. Configure your OpenAI API key.', 'error');
+            }
+
+            textarea.disabled = false;
+            textarea.focus();
+            if (textareaId === 'createTextarea') updateCharCount();
+            else updateComposeCharCount();
+        }
+
+        // Schedule Popup
+        let _schedPostText = '';
+        let _schedSource = '';
+        let _schedPickedDate = null;
+
+        function openSchedPopup(source) {
+            let text = '';
+            if (source === 'compose') {
+                text = document.getElementById('composeTextarea').value.trim();
+            } else if (source === 'create') {
+                text = document.getElementById('createTextarea').value.trim();
+            }
+            if (!text) {
+                showNotify('Empty Post', 'Write or generate a post first!', 'warning');
+                return;
+            }
+            _schedPostText = text;
+            _schedSource = source;
+            _schedPickedDate = null;
+
+            const tz = getUserTimezone();
+            const tzDisplay = tz.replace(/_/g, ' ').replace(/\//g, ' / ');
+            document.getElementById('schedTzLabel').textContent = 'All times in ' + tzDisplay;
+
+            if (currentUser) {
+                const initials = currentUser.name ? currentUser.name.split(' ').map(w => w[0]).join('').toUpperCase() : 'SL';
+                const avatarEl = document.getElementById('schedAvatar');
+                avatarEl.innerHTML = currentUser.picture
+                    ? `<img src="${currentUser.picture}" alt="${currentUser.name}">`
+                    : initials;
+                document.getElementById('schedAccountName').textContent = currentUser.name || 'You';
+                document.getElementById('schedAccountHandle').textContent = '@' + (currentUser.name || 'user').toLowerCase().replace(/\s+/g, '');
+            }
+
+            computeNextFreeSlot();
+            document.getElementById('schedTimeInput').value = '';
+            document.getElementById('schedParsed').textContent = '';
+            document.getElementById('schedSlotsPanel').classList.remove('open');
+            document.getElementById('schedConfirmBtn').disabled = true;
+            document.getElementById('schedConfirmBtn').textContent = 'Schedule post';
+
+            document.getElementById('schedOverlay').classList.add('open');
+        }
+
+        function closeSchedPopup() {
+            document.getElementById('schedOverlay').classList.remove('open');
+        }
+
+        function computeNextFreeSlot() {
+            const now = getNowInTimezone();
+            const scheduled = (queue || []).filter(q => q.status === 'scheduled' && q.scheduledFor);
+            const takenTimes = new Set(scheduled.map(q => new Date(q.scheduledFor).getTime()));
+
+            const days = getScheduleDays(14);
+            let found = null;
+
+            for (const day of days) {
+                const isToday = day.toDateString() === now.toDateString();
+                const slots = isToday
+                    ? QUEUE_SCHEDULE_SLOTS.filter(s => s.h > now.getHours() || (s.h === now.getHours() && s.m > now.getMinutes()))
+                    : QUEUE_SCHEDULE_SLOTS;
+
+                for (const slot of slots) {
+                    const dt = new Date(day);
+                    dt.setHours(slot.h, slot.m, 0, 0);
+                    if (!takenTimes.has(dt.getTime())) {
+                        found = dt;
+                        break;
+                    }
+                }
+                if (found) break;
+            }
+
+            const el = document.getElementById('schedNextSlotTime');
+            if (found) {
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const ampm = found.getHours() >= 12 ? 'PM' : 'AM';
+                const h = found.getHours() > 12 ? found.getHours() - 12 : (found.getHours() === 0 ? 12 : found.getHours());
+                const label = monthNames[found.getMonth()] + ' ' + found.getDate() + ', ' + h + ':' + String(found.getMinutes()).padStart(2, '0') + ' ' + ampm;
+                el.textContent = label + ' \u2192';
+                el.dataset.ts = found.toISOString();
+            } else {
+                el.textContent = 'No slots available';
+                el.dataset.ts = '';
+            }
+        }
+
+        function schedUseNextSlot() {
+            const ts = document.getElementById('schedNextSlotTime').dataset.ts;
+            if (!ts) return;
+            _schedPickedDate = new Date(ts);
+            const btn = document.getElementById('schedConfirmBtn');
+            btn.disabled = false;
+            btn.textContent = 'Schedule for ' + formatSchedDate(_schedPickedDate);
+            document.getElementById('schedParsed').textContent = '';
+            document.getElementById('schedTimeInput').value = '';
+        }
+
+        function formatSchedDate(d) {
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const ampm = d.getHours() >= 12 ? 'PM' : 'AM';
+            const h = d.getHours() > 12 ? d.getHours() - 12 : (d.getHours() === 0 ? 12 : d.getHours());
+            return monthNames[d.getMonth()] + ' ' + d.getDate() + ', ' + h + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + ampm;
+        }
+
+        function parseSchedInput() {
+            const raw = document.getElementById('schedTimeInput').value.trim().toLowerCase();
+            const parsed = document.getElementById('schedParsed');
+            const btn = document.getElementById('schedConfirmBtn');
+
+            if (!raw) {
+                parsed.textContent = '';
+                parsed.className = 'sched-parsed';
+                btn.disabled = true;
+                btn.textContent = 'Schedule post';
+                _schedPickedDate = null;
+                return;
+            }
+
+            const now = getNowInTimezone();
+            let target = null;
+
+            const inMatch = raw.match(/in\s+(\d+)\s*(hour|hr|h|minute|min|m|day|d)/i);
+            if (inMatch) {
+                const n = parseInt(inMatch[1]);
+                const unit = inMatch[2][0].toLowerCase();
+                target = new Date(now);
+                if (unit === 'h') target.setHours(target.getHours() + n);
+                else if (unit === 'm') target.setMinutes(target.getMinutes() + n);
+                else if (unit === 'd') target.setDate(target.getDate() + n);
+            }
+
+            if (!target) {
+                const tmrMatch = raw.match(/tomorrow\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+                if (tmrMatch) {
+                    target = new Date(now);
+                    target.setDate(target.getDate() + 1);
+                    let h = parseInt(tmrMatch[1]);
+                    const m = tmrMatch[2] ? parseInt(tmrMatch[2]) : 0;
+                    if (tmrMatch[3]) {
+                        if (tmrMatch[3].toLowerCase() === 'pm' && h < 12) h += 12;
+                        if (tmrMatch[3].toLowerCase() === 'am' && h === 12) h = 0;
+                    }
+                    target.setHours(h, m, 0, 0);
+                }
+            }
+
+            if (!target) {
+                const todayMatch = raw.match(/today\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+                if (todayMatch) {
+                    target = new Date(now);
+                    let h = parseInt(todayMatch[1]);
+                    const m = todayMatch[2] ? parseInt(todayMatch[2]) : 0;
+                    if (todayMatch[3]) {
+                        if (todayMatch[3].toLowerCase() === 'pm' && h < 12) h += 12;
+                        if (todayMatch[3].toLowerCase() === 'am' && h === 12) h = 0;
+                    }
+                    target.setHours(h, m, 0, 0);
+                }
+            }
+
+            if (!target) {
+                const timeOnly = raw.match(/^(\d{1,2})(?::(\d{2}))?\s*(am|pm)$/i);
+                if (timeOnly) {
+                    target = new Date(now);
+                    let h = parseInt(timeOnly[1]);
+                    const m = timeOnly[2] ? parseInt(timeOnly[2]) : 0;
+                    if (timeOnly[3].toLowerCase() === 'pm' && h < 12) h += 12;
+                    if (timeOnly[3].toLowerCase() === 'am' && h === 12) h = 0;
+                    target.setHours(h, m, 0, 0);
+                    if (target <= now) target.setDate(target.getDate() + 1);
+                }
+            }
+
+            if (!target) {
+                const dayTimeMatch = raw.match(/(monday|tuesday|wednesday|thursday|friday|saturday|sunday)\s+(?:at\s+)?(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+                if (dayTimeMatch) {
+                    const dayMap = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+                    const targetDay = dayMap[dayTimeMatch[1].toLowerCase()];
+                    target = new Date(now);
+                    let diff = targetDay - now.getDay();
+                    if (diff <= 0) diff += 7;
+                    target.setDate(target.getDate() + diff);
+                    let h = parseInt(dayTimeMatch[2]);
+                    const m = dayTimeMatch[3] ? parseInt(dayTimeMatch[3]) : 0;
+                    if (dayTimeMatch[4]) {
+                        if (dayTimeMatch[4].toLowerCase() === 'pm' && h < 12) h += 12;
+                        if (dayTimeMatch[4].toLowerCase() === 'am' && h === 12) h = 0;
+                    }
+                    target.setHours(h, m, 0, 0);
+                }
+            }
+
+            if (target && target > now) {
+                _schedPickedDate = target;
+                parsed.className = 'sched-parsed';
+                parsed.textContent = '\u2713 ' + formatSchedDate(target);
+                btn.disabled = false;
+                btn.textContent = 'Schedule for ' + formatSchedDate(target);
+            } else if (target) {
+                parsed.className = 'sched-parsed error';
+                parsed.textContent = 'Time must be in the future';
+                btn.disabled = true;
+                btn.textContent = 'Schedule post';
+                _schedPickedDate = null;
+            } else {
+                parsed.className = 'sched-parsed error';
+                parsed.textContent = 'Could not parse time. Try "tomorrow at 9am" or "in 2 hours"';
+                btn.disabled = true;
+                btn.textContent = 'Schedule post';
+                _schedPickedDate = null;
+            }
+        }
+
+        function toggleSchedSlots() {
+            const panel = document.getElementById('schedSlotsPanel');
+            if (panel.classList.contains('open')) {
+                panel.classList.remove('open');
+                return;
+            }
+
+            const now = getNowInTimezone();
+            const days = getScheduleDays(7);
+            const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const scheduled = (queue || []).filter(q => q.status === 'scheduled' && q.scheduledFor);
+            const takenTimes = new Set(scheduled.map(q => new Date(q.scheduledFor).getTime()));
+
+            let html = '';
+            days.forEach(day => {
+                const isToday = day.toDateString() === now.toDateString();
+                const label = isToday ? 'Today' : dayNames[day.getDay()] + ', ' + monthNames[day.getMonth()] + ' ' + day.getDate();
+                html += `<div class="sched-slot-day">${label}</div>`;
+
+                const slots = isToday
+                    ? QUEUE_SCHEDULE_SLOTS.filter(s => s.h > now.getHours() || (s.h === now.getHours() && s.m > now.getMinutes()))
+                    : QUEUE_SCHEDULE_SLOTS;
+
+                slots.forEach(slot => {
+                    const dt = new Date(day);
+                    dt.setHours(slot.h, slot.m, 0, 0);
+                    const taken = takenTimes.has(dt.getTime());
+                    const timeStr = formatSlotTime(slot.h, slot.m);
+                    html += `<div class="sched-slot-item ${taken ? 'taken' : ''}" onclick="${taken ? '' : `pickSchedSlot('${dt.toISOString()}')`}">
+                        <span class="slot-time">${timeStr}</span>
+                        <span class="slot-status">${taken ? 'Scheduled' : 'Available'}</span>
+                    </div>`;
+                });
+            });
+
+            panel.innerHTML = html;
+            panel.classList.add('open');
+        }
+
+        function pickSchedSlot(isoStr) {
+            _schedPickedDate = new Date(isoStr);
+            document.getElementById('schedTimeInput').value = '';
+            document.getElementById('schedParsed').textContent = '';
+            const btn = document.getElementById('schedConfirmBtn');
+            btn.disabled = false;
+            btn.textContent = 'Schedule for ' + formatSchedDate(_schedPickedDate);
+            document.getElementById('schedSlotsPanel').classList.remove('open');
+        }
+
+        async function confirmSchedule() {
+            if (!_schedPickedDate || !_schedPostText) return;
+
+            const btn = document.getElementById('schedConfirmBtn');
+            btn.disabled = true;
+            btn.textContent = 'Scheduling...';
+
+            try {
+                const res = await fetch('/api/queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: 'add',
+                        text: _schedPostText,
+                        status: 'scheduled',
+                        scheduledFor: _schedPickedDate.toISOString(),
+                    }),
+                });
+                const data = await res.json();
+                queue = data.queue || [];
+                renderQueue();
+                renderHomeQueuePreview();
+
+                if (_schedSource === 'compose') {
+                    document.getElementById('composeTextarea').value = '';
+                    updateComposeCharCount();
+                    renderComposeScheduled();
+                } else if (_schedSource === 'create') {
+                    document.getElementById('createTextarea').value = '';
+                    updateCharCount();
+                }
+
+                closeSchedPopup();
+                showNotify('Scheduled!', 'Post scheduled for ' + formatSchedDate(_schedPickedDate), 'success');
+            } catch {
+                showNotify('Error', 'Could not schedule post.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Schedule post';
+            }
+        }
+
+        // Ready to Post page
+        let rtpTab = 'foryou';
+        let rtpForYouPosts = [];
+        let rtpProductPosts = [];
+        let rtpProductNames = [];
+
+        function switchRtpTab(tab, btn) {
+            document.querySelectorAll('.rtp-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            rtpTab = tab;
+            document.getElementById('rtpForYou').style.display = tab === 'foryou' ? 'block' : 'none';
+            document.getElementById('rtpProduct').style.display = tab === 'product' ? 'block' : 'none';
+        }
+
+        async function generateRtpPosts() {
+            const btn = document.getElementById('rtpGenerateBtn');
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            if (rtpTab === 'foryou') {
+                await generateRtpForYou();
+            } else {
+                await generateRtpProduct();
+            }
+
+            btn.disabled = false;
+            btn.textContent = '\uD83E\uDD16 Generate new posts';
+        }
+
+        async function generateRtpForYou() {
+            const grid = document.getElementById('rtpForYouGrid');
+            grid.innerHTML = '<div class="rtp-loading"><div class="spinner" style="margin:0 auto 12px;"></div>Generating personalized posts...</div>';
+
+            try {
+                const res = await fetch('/api/ai/generate-posts', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.posts && data.posts.length > 0) {
+                    rtpForYouPosts = data.posts;
+                    renderRtpGrid(grid, data.posts);
+                } else {
+                    grid.innerHTML = '<div class="rtp-loading">Could not generate posts. Please configure your OpenAI API key.</div>';
+                }
+            } catch {
+                grid.innerHTML = '<div class="rtp-loading">AI generation is not available. Add your OpenAI API key to get started.</div>';
+            }
+        }
+
+        async function generateRtpProduct() {
+            const grid = document.getElementById('rtpProductGrid');
+            grid.innerHTML = '<div class="rtp-loading"><div class="spinner" style="margin:0 auto 12px;"></div>Generating product posts...</div>';
+
+            try {
+                const res = await fetch('/api/ai/generate-product-posts', { method: 'POST' });
+                const data = await res.json();
+
+                if (data.error) {
+                    grid.innerHTML = `<div class="rtp-loading">${data.error}</div>`;
+                    return;
+                }
+
+                if (data.posts && data.posts.length > 0) {
+                    rtpProductPosts = data.posts;
+                    rtpProductNames = data.products || [];
+                    renderRtpGrid(grid, data.posts, true);
+                } else {
+                    grid.innerHTML = '<div class="rtp-loading">Could not generate product posts. Check your OpenAI API key and products configuration.</div>';
+                }
+            } catch {
+                grid.innerHTML = '<div class="rtp-loading">AI generation is not available. Add your OpenAI API key.</div>';
+            }
+        }
+
+        function renderRtpGrid(grid, posts, isProduct) {
+            const name = currentUser ? currentUser.name : 'You';
+            const handle = '@' + (currentUser ? currentUser.name.toLowerCase().replace(/\s+/g, '') : 'user');
+            const initials = currentUser && currentUser.name ? currentUser.name.split(' ').map(w => w[0]).join('').toUpperCase() : 'SL';
+            const avatarHtml = currentUser && currentUser.picture
+                ? `<img src="${currentUser.picture}" alt="${name}">`
+                : initials;
+
+            grid.innerHTML = posts.map((post, i) => {
+                const productBadge = isProduct && rtpProductNames[0]
+                    ? `<div class="rtp-product-badge">${rtpProductNames[0]}</div>` : '';
+                return `<div class="rtp-card">
+                    <div class="rtp-card-author">
+                        <div class="rtp-card-avatar">${avatarHtml}</div>
+                        <div>
+                            <div class="rtp-card-name">${name}</div>
+                            <div class="rtp-card-handle">${handle}</div>
+                        </div>
+                    </div>
+                    ${productBadge}
+                    <div class="rtp-card-body">${post}</div>
+                    <div class="rtp-card-footer">
+                        <button class="rtp-card-btn primary" onclick="rtpAddToQueue(${i}, ${!!isProduct})">Add to Queue</button>
+                        <button class="rtp-card-btn secondary" onclick="rtpEditPost(${i}, ${!!isProduct})">Edit post</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        async function rtpAddToQueue(index, isProduct) {
+            const posts = isProduct ? rtpProductPosts : rtpForYouPosts;
+            if (!posts[index]) return;
+            await addToQueue(posts[index], 'scheduled');
+            showNotify('Added to Queue', 'Post has been scheduled.', 'success');
+        }
+
+        function rtpEditPost(index, isProduct) {
+            const posts = isProduct ? rtpProductPosts : rtpForYouPosts;
+            if (!posts[index]) return;
+            document.getElementById('composeTextarea').value = posts[index];
+            updateComposeCharCount();
+            toggleCompose();
+        }
+
+        // Inspiration page
+        let inspContentType = '';
+        let inspPage = 1;
+        let inspAllPosts = [];
+
+        function setInspTab(btn) {
+            document.querySelectorAll('.insp-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            inspContentType = btn.dataset.ctype;
+            inspPage = 1;
+            inspAllPosts = [];
+            inspSearch();
+        }
+
+        function inspTagClick(el) {
+            document.getElementById('inspKeywords').value = el.textContent;
+            inspPage = 1;
+            inspAllPosts = [];
+            inspSearch();
+        }
+
+        function toggleInspAdv() {
+            const toggle = document.getElementById('inspAdvToggle');
+            const panel = document.getElementById('inspAdvPanel');
+            toggle.classList.toggle('open');
+            panel.classList.toggle('open');
+        }
+
+        function resetInspFilters() {
+            document.getElementById('inspMinLikes').value = 100;
+            document.getElementById('inspMinShares').value = 0;
+            document.getElementById('inspMinComments').value = 0;
+            document.getElementById('inspMinLen').value = 0;
+            document.getElementById('inspSortBy').value = 'Top match';
+            document.getElementById('inspExCrypto').checked = true;
+            document.getElementById('inspExPolitics').checked = true;
+            document.getElementById('inspExNsfw').checked = true;
+            document.getElementById('inspExSpam').checked = true;
+        }
+
+        function getInspExcludes() {
+            const ex = [];
+            if (document.getElementById('inspExCrypto').checked) ex.push('crypto', 'web3', 'blockchain', 'nft', 'defi', 'bitcoin', 'ethereum');
+            if (document.getElementById('inspExPolitics').checked) ex.push('trump', 'biden', 'election', 'democrat', 'republican', 'congress', 'parliament');
+            if (document.getElementById('inspExNsfw').checked) ex.push('nsfw', 'onlyfans', 'adult');
+            if (document.getElementById('inspExSpam').checked) ex.push('dm me', 'link in bio', 'check my profile', 'follow me', 'giveaway');
+            return ex;
+        }
+
+        function filterInspPosts(posts) {
+            const minLikes = parseInt(document.getElementById('inspMinLikes').value) || 0;
+            const minShares = parseInt(document.getElementById('inspMinShares').value) || 0;
+            const minComments = parseInt(document.getElementById('inspMinComments').value) || 0;
+            const minLen = parseInt(document.getElementById('inspMinLen').value) || 0;
+            const excludes = getInspExcludes();
+
+            return posts.filter(p => {
+                if ((p.num_likes || 0) < minLikes) return false;
+                if ((p.num_shares || 0) < minShares) return false;
+                if ((p.num_comments || 0) < minComments) return false;
+                const text = p.text || '';
+                if (text.length < minLen) return false;
+                const lower = text.toLowerCase();
+                if (excludes.some(kw => lower.includes(kw))) return false;
+                return true;
+            });
+        }
+
+        async function inspSearch() {
+            const keywords = document.getElementById('inspKeywords').value.trim();
+            if (!keywords) return;
+
+            const results = document.getElementById('inspResults');
+            results.innerHTML = '<div class="insp-empty"><div class="spinner" style="margin:0 auto 12px;"></div>Searching LinkedIn posts...</div>';
+            document.getElementById('inspStatus').textContent = '';
+            document.getElementById('inspLoadMore').style.display = 'none';
+
+            const payload = {
+                keywords,
+                date_posted: document.getElementById('inspDatePosted').value,
+                sort_by: document.getElementById('inspSortBy').value,
+                page: inspPage,
+            };
+            const authorKw = document.getElementById('inspAuthorKw').value;
+            if (authorKw) payload.author_keyword = authorKw;
+            if (inspContentType) payload.content_type = inspContentType;
+
+            try {
+                const res = await fetch('/api/inspiration/search', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    results.innerHTML = `<div class="insp-empty"><div class="insp-empty-title">${data.error}</div></div>`;
+                    return;
+                }
+
+                const raw = data.data || [];
+                const filtered = filterInspPosts(raw);
+
+                if (inspPage === 1) inspAllPosts = [];
+                inspAllPosts = inspAllPosts.concat(filtered);
+
+                renderInspResults();
+
+                const minL = document.getElementById('inspMinLikes').value || 0;
+                const dateLabel = document.getElementById('inspDatePosted').value.toLowerCase();
+                document.getElementById('inspStatus').textContent = `Showing posts from ${dateLabel}${minL > 0 ? ' \u00b7 with ' + minL + '+ likes' : ''}`;
+
+                if (raw.length >= 10 && (data.total || 0) > inspPage * 10) {
+                    document.getElementById('inspLoadMore').style.display = 'block';
+                } else {
+                    document.getElementById('inspLoadMore').style.display = 'none';
+                }
+            } catch {
+                results.innerHTML = '<div class="insp-empty"><div class="insp-empty-title">Search failed</div><div class="insp-empty-sub">Please try again.</div></div>';
+            }
+        }
+
+        function inspLoadMore() {
+            inspPage++;
+            inspSearch();
+        }
+
+        function renderInspResults() {
+            const results = document.getElementById('inspResults');
+            if (inspAllPosts.length === 0) {
+                results.innerHTML = '<div class="insp-empty"><div class="insp-empty-title">No posts found</div><div class="insp-empty-sub">Try using shorter, broader keywords</div></div>';
+                return;
+            }
+
+            results.innerHTML = inspAllPosts.map((p, i) => {
+                const initials = (p.poster_name || 'U').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+                const text = (p.text || '').length > 500 ? p.text.substring(0, 500) + '...' : (p.text || '');
+                const date = p.posted ? new Date(p.posted).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '';
+                const likes = formatInspNum(p.num_likes);
+                const comments = formatInspNum(p.num_comments);
+                const shares = formatInspNum(p.num_shares);
+
+                return `<div class="insp-post">
+                    <div class="insp-post-header">
+                        <div class="insp-post-avatar">${initials}</div>
+                        <div>
+                            <div class="insp-post-name">${escHtml(p.poster_name || 'Unknown')}</div>
+                            <div class="insp-post-title">${escHtml(p.poster_title || '')}</div>
+                            <div class="insp-post-date">${date}</div>
+                        </div>
+                    </div>
+                    <div class="insp-post-text">${escHtml(text)}</div>
+                    <div class="insp-post-footer">
+                        <div class="insp-post-stats">
+                            <span class="insp-post-stat">\u2764\uFE0F ${likes}</span>
+                            <span class="insp-post-stat">\uD83D\uDCAC ${comments}</span>
+                            <span class="insp-post-stat">\uD83D\uDD01 ${shares}</span>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button class="insp-use-btn" onclick="useAsInspiration(${i})">Use as inspiration</button>
+                            ${p.post_url ? `<a href="${p.post_url}" target="_blank" class="insp-use-btn" style="text-decoration:none;">View post</a>` : ''}
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function formatInspNum(n) {
+            if (n == null) return '0';
+            if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+            if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+            return String(n);
+        }
+
+        function escHtml(s) {
+            const d = document.createElement('div');
+            d.textContent = s;
+            return d.innerHTML;
+        }
+
+        function useAsInspiration(index) {
+            const post = inspAllPosts[index];
+            if (!post) return;
+            document.getElementById('createTextarea').value = post.text || '';
+            updateCharCount();
+            showPage('create');
+            showNotify('Inspiration Loaded', 'Post loaded into AI Writer. Edit it and make it your own!', 'success');
         }
 
         // Compose panel

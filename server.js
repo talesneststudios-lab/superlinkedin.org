@@ -138,10 +138,10 @@ app.get('/app', (req, res) => {
     res.sendFile(path.join(__dirname, 'app.html'));
 });
 
-// Serve playbook (paid users only)
+// Serve playbook (logged-in users)
 app.get('/playbook', (req, res) => {
-    if (!req.session.user || !req.session.user.paid) {
-        return res.redirect('/upgrade');
+    if (!req.session.user) {
+        return res.redirect('/login');
     }
     res.sendFile(path.join(__dirname, 'playbook.html'));
 });
@@ -666,6 +666,12 @@ app.post('/api/ai/generate-posts', async (req, res) => {
     const gpCharMatch = customRules.match(/(\d+)\s*char/i);
     const gpCharLimit = gpCharMatch ? parseInt(gpCharMatch[1], 10) : 0;
 
+    const likeOptions = ['1.3K', '2K', '2.3K', '3.3K', '1.9K', '5.6K', '4.1K', '2.8K', '6.2K', '8.1K', '1.7K'];
+    const shuffled = [...POSTS_REF].sort(() => Math.random() - 0.5).slice(0, 3);
+    const inspirationTexts = shuffled.map(ref =>
+        ref.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim()
+    );
+
     let systemPrompt;
     if (customRules) {
         systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts. Return ONLY a JSON array of 3 strings.\n\n` +
@@ -679,8 +685,14 @@ app.post('/api/ai/generate-posts', async (req, res) => {
     if (likedPostBodies.length) systemPrompt += `\n\nWRITING DNA: The user liked these sample posts during onboarding. Use them as reference for the user's preferred writing style, tone, structure, and format:\n${likedPostBodies.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
     if (products.length) systemPrompt += `\n\nPRODUCT PROMOTION: The user has these products/services. Naturally weave mentions or value propositions of these into the posts where relevant (not every post needs to mention them, but at least one should):\n${productsList}`;
 
+    systemPrompt += `\n\nIMPORTANT: Each post MUST be directly inspired by its corresponding inspiration post below. Take the core idea, theme, or message from each inspiration and rewrite it in the user's own voice and style. The connection between the inspiration and the generated post must be obvious.`;
+
     const defaultLength = customRules ? '' : ' Keep posts between 100-300 words.';
-    const userPrompt = `Generate 3 LinkedIn posts for me.${gpCharLimit ? `\nHARD LIMIT: Each post MUST be under ${gpCharLimit} characters. Keep them extremely short and concise.` : ''}
+    const userPrompt = `Generate 3 LinkedIn posts for me. Each post must be inspired by the corresponding reference post below — take its core message and rephrase it in my voice.${gpCharLimit ? `\nHARD LIMIT: Each post MUST be under ${gpCharLimit} characters. Keep them extremely short and concise.` : ''}
+
+INSPIRATION POSTS (generate post 1 inspired by #1, post 2 inspired by #2, post 3 inspired by #3):
+${inspirationTexts.map((t, i) => `#${i + 1}: "${t}"`).join('\n')}
+
 About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
 My preferred writing styles: ${topTags.join(', ') || 'motivational, professional, storytelling'}${creators.length ? `\nWrite in a style similar to: ${creators.join(', ')}` : ''}${interests ? `\nMy interests: ${interests}` : ''}${productsList ? `\nMy products/services to promote: ${productsList}` : ''}
 Make each post different in format (one list-based, one story, one insight/opinion).${defaultLength} Do NOT include hashtags.${customRules ? `\nCRITICAL — Follow these rules strictly: ${customRules}` : ''}`;
@@ -722,15 +734,10 @@ Make each post different in format (one list-based, one story, one insight/opini
             });
         }
 
-        const likeOptions = ['1.3K', '2K', '2.3K', '3.3K', '1.9K', '5.6K', '4.1K', '2.8K', '6.2K', '8.1K', '1.7K'];
-        const shuffled = [...POSTS_REF].sort(() => Math.random() - 0.5);
-        const references = posts.map((_, i) => {
-            const ref = shuffled[i % shuffled.length];
-            return {
-                text: ref.body.replace(/<[^>]+>/g, '\n').replace(/\n{2,}/g, '\n\n').trim(),
-                likes: likeOptions[Math.floor(Math.random() * likeOptions.length)],
-            };
-        });
+        const references = shuffled.map(ref => ({
+            text: ref.body.replace(/<[^>]+>/g, '\n').replace(/\n{2,}/g, '\n\n').trim(),
+            likes: likeOptions[Math.floor(Math.random() * likeOptions.length)],
+        }));
 
         res.json({ posts, references });
     } catch (err) {
@@ -837,6 +844,190 @@ Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITI
     }
 });
 
+app.post('/api/ai/generate-product-posts', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
+        return res.json({ posts: [] });
+    }
+
+    const user = req.session.user;
+    const aboutYou = user.aboutYou || '';
+    const products = (user.products || []).filter(p => p.name || p.description);
+
+    if (products.length === 0) {
+        return res.json({ posts: [], error: 'No products configured. Add products in Context or Onboarding.' });
+    }
+
+    const productsList = products.map(p => {
+        let s = p.name || p.url || '';
+        if (p.description) s += ` — ${p.description}`;
+        return s;
+    }).join('\n');
+
+    const customRules = user.customRules || '';
+    const creators = (user.favoriteCreators || []).map(c => c.name).filter(Boolean);
+
+    let systemPrompt = `You are a LinkedIn content strategist specializing in product marketing. Generate 3 unique LinkedIn posts that promote the user's products/services in a natural, value-driven way. Each post should feel like genuine advice or a story, not a hard sell. Return ONLY a JSON array of 3 strings.`;
+    if (creators.length) systemPrompt += `\n\nWRITING STYLE: Mimic the style of: ${creators.join(', ')}.`;
+    if (customRules) {
+        systemPrompt += `\n\nMANDATORY RULES (override everything else):\n${customRules}`;
+        const cm = customRules.match(/(\d+)\s*char/i);
+        if (cm) systemPrompt += `\nEACH POST MUST BE UNDER ${cm[1]} CHARACTERS.`;
+    }
+
+    const userPrompt = `Generate 3 LinkedIn posts that naturally promote my products/services.
+About me: ${aboutYou || 'A professional on LinkedIn.'}
+My products/services:
+${productsList}
+
+Each post should take a different angle:
+1. A success story or case study style
+2. A problem-solution format showing how the product helps
+3. A thought leadership post that naturally weaves in the product
+
+Make them engaging, authentic, and not salesy. Do NOT include hashtags.${customRules ? `\nFollow these rules: ${customRules}` : ''}`;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt },
+                ],
+                temperature: 0.8,
+                max_tokens: 2000,
+            }),
+        });
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || '';
+
+        let posts = [];
+        try {
+            const jsonMatch = content.match(/\[[\s\S]*\]/);
+            if (jsonMatch) posts = JSON.parse(jsonMatch[0]);
+        } catch {
+            posts = content.split('\n\n').filter(p => p.trim().length > 50).slice(0, 3);
+        }
+
+        res.json({ posts, products: products.map(p => p.name || p.url || 'Product') });
+    } catch (err) {
+        console.error('Product post generation error:', err);
+        res.json({ posts: [] });
+    }
+});
+
+// ---------- INSPIRATION SEARCH ----------
+
+app.post('/api/inspiration/search', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const rapidKey = process.env.RAPIDAPI_KEY;
+    if (!rapidKey || rapidKey === 'your-rapidapi-key-here') {
+        return res.json({ data: [], total: 0, error: 'RapidAPI key not configured' });
+    }
+
+    const { keywords, sort_by, date_posted, content_type, page } = req.body;
+    if (!keywords) {
+        return res.json({ data: [], total: 0 });
+    }
+
+    const payload = { search_keywords: keywords, page: page || 1 };
+    if (sort_by) payload.sort_by = sort_by;
+    if (date_posted) payload.date_posted = date_posted;
+    if (content_type) payload.content_type = content_type;
+
+    try {
+        const response = await fetch('https://web-scraping-api2.p.rapidapi.com/search-posts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-rapidapi-key': rapidKey,
+                'x-rapidapi-host': 'web-scraping-api2.p.rapidapi.com',
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+        res.json(data);
+    } catch (err) {
+        console.error('Inspiration search error:', err);
+        res.json({ data: [], total: 0, error: 'Search failed' });
+    }
+});
+
+app.post('/api/ai/improve', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
+        return res.json({ error: 'OpenAI API key not configured' });
+    }
+
+    const { text, action } = req.body;
+    if (!text || !action) {
+        return res.json({ error: 'Missing text or action' });
+    }
+
+    const instructions = {
+        grammar: 'Fix all grammar, spelling, and punctuation errors. Keep the meaning and tone identical. Return only the corrected text.',
+        translate: 'Translate the following text to English. Keep the same tone, style, and formatting. Return only the translated text.',
+        hook: 'Rewrite this post with a much stronger, more attention-grabbing opening hook that makes people stop scrolling. Keep the core message the same. Return only the rewritten text.',
+        details: 'Expand this post with more specific details, examples, or data points to make it more compelling and credible. Return only the rewritten text.',
+        engaging: 'Rewrite this post to be more engaging — add energy, vary sentence length, and make the reader want to comment or share. Return only the rewritten text.',
+        humorous: 'Rewrite this post with humor and wit while keeping the core message intact. Add clever wordplay or a funny twist. Return only the rewritten text.',
+        creative: 'Rewrite this post in a more creative and original way — use vivid language, unexpected angles, or fresh metaphors. Return only the rewritten text.',
+        sarcastic: 'Rewrite this post with a sarcastic, tongue-in-cheek tone while keeping the core message. Return only the rewritten text.',
+        inspirational: 'Rewrite this post to be more inspirational and uplifting — make it motivate the reader to take action. Return only the rewritten text.',
+        concise: 'Rewrite this post to be much shorter and more concise. Remove filler words, redundancy, and fluff. Keep the core message. Return only the rewritten text.',
+    };
+
+    const instruction = instructions[action];
+    if (!instruction) {
+        return res.json({ error: 'Unknown action' });
+    }
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+            },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: `You are a LinkedIn writing assistant. ${instruction}` },
+                    { role: 'user', content: text },
+                ],
+                temperature: 0.7,
+                max_tokens: 1500,
+            }),
+        });
+
+        const data = await response.json();
+        const result = data.choices?.[0]?.message?.content?.trim() || '';
+        res.json({ text: result });
+    } catch (err) {
+        console.error('AI improve error:', err);
+        res.json({ error: 'Failed to improve text' });
+    }
+});
+
 app.get('/api/queue', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
@@ -856,18 +1047,21 @@ app.post('/api/queue', async (req, res) => {
     }
 
     if (!req.session.user.queue) req.session.user.queue = [];
-    const { action, text, status, index } = req.body;
+    const { action, text, status, index, scheduledFor } = req.body;
 
     if (action === 'add' && text) {
-        req.session.user.queue.push({
+        const item = {
             text,
             status: status || 'draft',
             date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
-        });
+        };
+        if (scheduledFor) item.scheduledFor = scheduledFor;
+        req.session.user.queue.push(item);
     } else if (action === 'update' && typeof index === 'number' && text) {
         if (req.session.user.queue[index]) {
             req.session.user.queue[index].text = text;
             if (status) req.session.user.queue[index].status = status;
+            if (scheduledFor) req.session.user.queue[index].scheduledFor = scheduledFor;
             req.session.user.queue[index].date = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
     } else if (action === 'remove' && typeof index === 'number') {
@@ -1078,6 +1272,40 @@ app.get('/api/auth/status', (req, res) => {
     res.json({ authenticated: !!req.session.user });
 });
 
+// ---------- POST SCHEDULER ----------
+
+async function processScheduledPosts() {
+    try {
+        const now = new Date();
+        const result = await ddb.send(new ScanCommand({ TableName: DYNAMO_TABLE }));
+        const users = result.Items || [];
+
+        for (const user of users) {
+            if (!user.queue || !Array.isArray(user.queue)) continue;
+            let changed = false;
+
+            for (const item of user.queue) {
+                if (item.status !== 'scheduled' || !item.scheduledFor) continue;
+                const scheduledTime = new Date(item.scheduledFor);
+                if (scheduledTime <= now) {
+                    item.status = 'posted';
+                    item.postedAt = now.toISOString();
+                    changed = true;
+                    console.log(`[Scheduler] Posted queued item for user ${user.linkedinId} scheduled at ${item.scheduledFor}`);
+                }
+            }
+
+            if (changed) {
+                await dbUpdateFields(user.linkedinId, { queue: user.queue });
+            }
+        }
+    } catch (err) {
+        console.error('[Scheduler] Error processing scheduled posts:', err.message);
+    }
+}
+
+setInterval(processScheduledPosts, 60 * 1000);
+
 // ---------- START SERVER ----------
 
 app.listen(PORT, () => {
@@ -1088,4 +1316,6 @@ app.listen(PORT, () => {
         console.log('  ⚠  Edit .env and add your LinkedIn app credentials.');
         console.log('  ⚠  Get them from https://www.linkedin.com/developers/apps\n');
     }
+
+    processScheduledPosts();
 });
