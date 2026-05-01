@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <title>SuperLinkedIn &mdash; Dashboard</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +31,7 @@
             --radius: 12px;
         }
 
-        body.dark-mode {
+        :root.dark-mode, :root.dark-mode body {
             --bg: #0f0f1a;
             --bg-white: #1a1a2e;
             --bg-card: #1a1a2e;
@@ -41,20 +43,20 @@
             --queue-slot-bg: #1e1e34;
             --queue-slot-border: #2a2a40;
         }
-        body.dark-mode .card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-        body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+        .dark-mode .card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        .dark-mode input, .dark-mode select, .dark-mode textarea {
             background: #12121f !important;
             border-color: #2a2a40 !important;
             color: var(--text-primary) !important;
         }
-        body.dark-mode .compose-panel { background: #1a1a2e; border-color: #2a2a40; }
-        body.dark-mode .home-steps-card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-        body.dark-mode .home-post-card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-        body.dark-mode .home-mission { border-color: #2a2a40; }
-        body.dark-mode .home-mission:hover { background: rgba(255,255,255,0.03); }
-        body.dark-mode .queue-edit-btn:hover { background: rgba(10,102,194,0.12); }
-        body.dark-mode .notify-btn-secondary:hover { background: #12121f; }
-        body.dark-mode .congrats-btn-copy:hover { background: #12121f; }
+        .dark-mode .compose-panel { background: #1a1a2e; border-color: #2a2a40; }
+        .dark-mode .home-steps-card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        .dark-mode .home-post-card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        .dark-mode .home-mission { border-color: #2a2a40; }
+        .dark-mode .home-mission:hover { background: rgba(255,255,255,0.03); }
+        .dark-mode .queue-edit-btn:hover { background: rgba(10,102,194,0.12); }
+        .dark-mode .notify-btn-secondary:hover { background: #12121f; }
+        .dark-mode .congrats-btn-copy:hover { background: #12121f; }
 
         .dark-toggle {
             position: relative;
@@ -1093,17 +1095,18 @@
             display: flex;
             align-items: center;
             gap: 4px;
+            cursor: pointer;
         }
+        .home-post-inspired:hover { color: var(--accent); }
         .home-post-inspired .inspired-icon { color: var(--green); }
         .home-post-inspired .inspired-arrow {
             color: var(--accent);
             font-weight: 700;
-            cursor: pointer;
             font-size: 0.85rem;
             transition: transform 0.15s;
             display: inline-block;
         }
-        .home-post-inspired .inspired-arrow:hover { transform: translateX(3px); }
+        .home-post-inspired:hover .inspired-arrow { transform: translateX(3px); }
 
         .ref-popup {
             display: none;
@@ -2537,7 +2540,7 @@
     </style>
 </head>
 <body>
-    <script>if (localStorage.getItem('sl_dark_mode') === 'true') document.body.classList.add('dark-mode');</script>
+    <script>if (localStorage.getItem('sl_dark_mode') === 'true') { document.documentElement.classList.add('dark-mode'); document.body.classList.add('dark-mode'); }</script>
 
     <!-- MOBILE MENU -->
     <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open');document.getElementById('sidebarOverlay').classList.toggle('active')">&#9776;</button>
@@ -2691,7 +2694,7 @@
             <div class="sidebar-links">
                 <a class="sidebar-link" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'" style="cursor:pointer;">&#128218; Learn / Help</a>
                 <div class="sidebar-help-submenu" style="display:none;padding:4px 0 4px 20px;">
-                    <a class="sidebar-link" onclick="showPage('home');document.getElementById('homePlaybook').style.display='block';document.getElementById('homePlaybook').scrollIntoView({behavior:'smooth'})" style="font-size:0.72rem;padding:4px 0;cursor:pointer;">&#128214; Playbook</a>
+                    <a class="sidebar-link" href="/playbook" target="_blank" style="font-size:0.72rem;padding:4px 0;">&#128214; Playbook</a>
                     <a class="sidebar-link" href="mailto:info@superlinkedin.org?subject=SuperLinkedIn%20Support%20Request" style="font-size:0.72rem;padding:4px 0;">&#128172; Get Support</a>
                 </div>
                 <a class="sidebar-link">&#127873; Earn 40% Referral</a>
@@ -2744,7 +2747,7 @@
                         <span class="home-mission-reward" id="missionRewardExtension">+50 free credits</span>
                     </div>
 
-                    <div class="home-mission" onclick="showPage('home');document.getElementById('homePlaybook').style.display='block';document.getElementById('homePlaybook').scrollIntoView({behavior:'smooth'})">
+                    <div class="home-mission" onclick="window.open('/playbook','_blank')">
                         <div class="home-mission-check">&#128214;</div>
                         <div class="home-mission-text">
                             <strong>Read the SuperLinkedIn Playbook</strong>
@@ -2757,13 +2760,13 @@
                 </div>
 
                 <!-- Playbook -->
-                <div class="home-playbook" id="homePlaybook">
-                    <button class="home-playbook-close" onclick="document.getElementById('homePlaybook').style.display='none'">&times;</button>
+                <div class="home-playbook" id="homePlaybook" onclick="window.open('/playbook','_blank')" style="cursor:pointer;">
+                    <button class="home-playbook-close" onclick="event.stopPropagation();document.getElementById('homePlaybook').style.display='none'">&times;</button>
                     <div class="home-playbook-badge">
                         <span>&#128214; SuperLinkedIn Playbook</span>
                     </div>
                     <h3>The complete guide to growing on LinkedIn in 2026</h3>
-                    <p>Everything you need to grow on LinkedIn</p>
+                    <p>Everything you need to grow on LinkedIn &mdash; click to read the full playbook &rsaquo;</p>
                 </div>
 
                 <!-- Ready to post -->
@@ -3502,6 +3505,7 @@
         }
 
         function toggleDarkMode(enabled) {
+            document.documentElement.classList.toggle('dark-mode', enabled);
             document.body.classList.toggle('dark-mode', enabled);
             localStorage.setItem('sl_dark_mode', enabled ? 'true' : 'false');
             const toggle = document.getElementById('darkModeToggle');
@@ -3585,7 +3589,7 @@
             el('teamOwnerName').textContent = currentUser.name || 'You';
             el('teamOwnerEmail').textContent = currentUser.email || '';
             const dmToggle = document.getElementById('darkModeToggle');
-            if (dmToggle) dmToggle.checked = document.body.classList.contains('dark-mode');
+            if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark-mode');
             populateTimezoneSelect();
             const firstTab = document.querySelector('.settings-tab');
             if (firstTab) switchSettingsTab('general', firstTab);
@@ -3686,7 +3690,10 @@
         }
 
         // Page navigation
-        function showPage(page) {
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer', context: 'Context', settings: 'Account Settings' };
+
+        function showPage(page, updateHash) {
+            if (!document.getElementById('page-' + page)) page = 'home';
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
 
@@ -3694,13 +3701,21 @@
             const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
             if (navItem) navItem.classList.add('active');
 
-            const titles = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer', context: 'Context', settings: 'Account Settings' };
-            document.getElementById('pageTitle').textContent = titles[page] || page;
+            document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || page;
+
+            if (updateHash !== false) location.hash = page === 'home' ? '' : page;
 
             if (page === 'analytics') renderAnalytics();
             if (page === 'context') loadContextPage();
             if (page === 'settings') loadSettingsPage();
         }
+
+        function getPageFromHash() {
+            const h = location.hash.replace('#', '');
+            return h && PAGE_TITLES[h] ? h : 'home';
+        }
+
+        window.addEventListener('hashchange', () => showPage(getPageFromHash(), false));
 
         // Modal
         let modalShownOnce = localStorage.getItem('modalShownOnce') === 'true';
@@ -3741,10 +3756,10 @@
                                 </div>
                             </div>
                             <div class="ai-post-body">${post}</div>
-                            <div class="home-post-inspired" style="margin-bottom:10px;">
+                            <div class="home-post-inspired" style="margin-bottom:10px;" onclick="toggleRefPopup('modalRef${i}')">
                                 <span class="inspired-icon">&#10003;</span>
                                 Inspired by a post with ${likes} likes
-                                <span class="inspired-arrow" onclick="toggleRefPopup('modalRef${i}')">&rarr;</span>
+                                <span class="inspired-arrow">&rarr;</span>
                             </div>
                             ${ref ? `<div class="ref-popup" id="modalRef${i}">
                                 <button class="ref-popup-close" onclick="toggleRefPopup('modalRef${i}')">&times;</button>
@@ -4059,10 +4074,10 @@
                             </div>
                             <div class="home-post-body">${post}</div>
                             <div class="home-post-footer">
-                                <div class="home-post-inspired">
+                                <div class="home-post-inspired" onclick="toggleRefPopup('homeRef${i}')">
                                     <span class="inspired-icon">&#10003;</span>
                                     Inspired by a post with ${likes} likes
-                                    <span class="inspired-arrow" onclick="toggleRefPopup('homeRef${i}')">&rarr;</span>
+                                    <span class="inspired-arrow">&rarr;</span>
                                 </div>
                                 <button class="home-post-edit-btn" onclick="editHomePost(${i})">Edit post</button>
                             </div>
@@ -4851,6 +4866,10 @@
             await loadQueue();
             updateCreditsPopup();
             checkMissions();
+
+            const startPage = getPageFromHash();
+            if (startPage !== 'home') showPage(startPage, false);
+
             if (!modalShownOnce) {
                 setTimeout(openModal, 800);
             }

@@ -125,6 +125,14 @@ app.get('/app', (req, res) => {
     res.sendFile(path.join(__dirname, 'app.html'));
 });
 
+// Serve playbook (paid users only)
+app.get('/playbook', (req, res) => {
+    if (!req.session.user || !req.session.user.paid) {
+        return res.redirect('/upgrade');
+    }
+    res.sendFile(path.join(__dirname, 'playbook.html'));
+});
+
 // ---------- AUTH ROUTES ----------
 
 // Step 1: Redirect user to LinkedIn authorization page
@@ -642,17 +650,27 @@ app.post('/api/ai/generate-posts', async (req, res) => {
         return s;
     }).join('; ');
 
-    let systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts for a user. Each post should be engaging, authentic, and ready to publish. Return ONLY a JSON array of 3 strings, each being a complete post.`;
+    const gpCharMatch = customRules.match(/(\d+)\s*char/i);
+    const gpCharLimit = gpCharMatch ? parseInt(gpCharMatch[1], 10) : 0;
+
+    let systemPrompt;
+    if (customRules) {
+        systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts. Return ONLY a JSON array of 3 strings.\n\n` +
+            `MANDATORY RULES (highest priority — override everything else):\n${customRules}\n`;
+        if (gpCharLimit) systemPrompt += `EACH POST MUST BE UNDER ${gpCharLimit} CHARACTERS TOTAL. Count every letter, space, and punctuation mark. Write very short, punchy posts. Do NOT exceed ${gpCharLimit} characters per post.\n`;
+    } else {
+        systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts for a user. Each post should be engaging, authentic, and ready to publish. Return ONLY a JSON array of 3 strings, each being a complete post.`;
+    }
+
     if (creators.length) systemPrompt += `\n\nWRITING STYLE: Study and mimic the writing style of these LinkedIn creators the user admires: ${creators.join(', ')}. Write as if the user were influenced by their voice, structure, and tone.`;
     if (likedPostBodies.length) systemPrompt += `\n\nWRITING DNA: The user liked these sample posts during onboarding. Use them as reference for the user's preferred writing style, tone, structure, and format:\n${likedPostBodies.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
     if (products.length) systemPrompt += `\n\nPRODUCT PROMOTION: The user has these products/services. Naturally weave mentions or value propositions of these into the posts where relevant (not every post needs to mention them, but at least one should):\n${productsList}`;
-    if (customRules) systemPrompt += `\n\nIMPORTANT — The user has set the following custom rules. These OVERRIDE any default length or formatting guidelines. You MUST follow them strictly:\n${customRules}`;
 
     const defaultLength = customRules ? '' : ' Keep posts between 100-300 words.';
-    const userPrompt = `Generate 3 LinkedIn posts for me.
+    const userPrompt = `Generate 3 LinkedIn posts for me.${gpCharLimit ? `\nHARD LIMIT: Each post MUST be under ${gpCharLimit} characters. Keep them extremely short and concise.` : ''}
 About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
 My preferred writing styles: ${topTags.join(', ') || 'motivational, professional, storytelling'}${creators.length ? `\nWrite in a style similar to: ${creators.join(', ')}` : ''}${interests ? `\nMy interests: ${interests}` : ''}${productsList ? `\nMy products/services to promote: ${productsList}` : ''}
-Make each post different in format (one list-based, one story, one insight/opinion).${defaultLength} Do NOT include hashtags.${customRules ? `\nCRITICAL — Follow these rules: ${customRules}` : ''}`;
+Make each post different in format (one list-based, one story, one insight/opinion).${defaultLength} Do NOT include hashtags.${customRules ? `\nCRITICAL — Follow these rules strictly: ${customRules}` : ''}`;
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -667,8 +685,8 @@ Make each post different in format (one list-based, one story, one insight/opini
                     { role: 'system', content: systemPrompt },
                     { role: 'user', content: userPrompt },
                 ],
-                temperature: 0.8,
-                max_tokens: 2000,
+                temperature: gpCharLimit ? 0.6 : 0.8,
+                max_tokens: gpCharLimit ? Math.max(200, Math.ceil(gpCharLimit * 3 / 2)) : 2000,
             }),
         });
 
@@ -681,6 +699,14 @@ Make each post different in format (one list-based, one story, one insight/opini
             if (jsonMatch) posts = JSON.parse(jsonMatch[0]);
         } catch {
             posts = content.split('\n\n').filter(p => p.trim().length > 50).slice(0, 3);
+        }
+
+        if (gpCharLimit) {
+            posts = posts.map(p => {
+                if (p.length <= gpCharLimit) return p;
+                const cut = p.lastIndexOf(' ', gpCharLimit - 3);
+                return p.substring(0, cut > 0 ? cut : gpCharLimit - 3) + '...';
+            });
         }
 
         const likeOptions = ['1.3K', '2K', '2.3K', '3.3K', '1.9K', '5.6K', '4.1K', '2.8K', '6.2K', '8.1K', '1.7K'];
@@ -744,17 +770,28 @@ app.post('/api/ai/write', async (req, res) => {
     const customRules = user.customRules || '';
     const interests = (user.interests || []).join(', ');
 
+    const charLimitMatch = customRules.match(/(\d+)\s*char/i);
+    const charLimit = charLimitMatch ? parseInt(charLimitMatch[1], 10) : 0;
+
     const defaultReqs = customRules ? 'engaging opening line, no hashtags, ready to publish' : '100-300 words, engaging opening line, no hashtags, ready to publish';
-    const userPrompt = `Write a single LinkedIn post for me.
-About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
-Tone: ${toneDesc[tone] || toneDesc.auto}${creators.length ? `\nWrite in a style similar to: ${creators.join(', ')}` : ''}${interests ? `\nMy interests: ${interests}` : ''}${productsList ? `\nNaturally mention my product/service where relevant: ${productsList}` : ''}
-Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITICAL — Follow these rules: ${customRules}` : ''}`;
 
     let systemContent = `You are a LinkedIn content writer. Write a single LinkedIn post. Return ONLY the post text, nothing else.`;
+
+    if (customRules) {
+        systemContent = `You are a LinkedIn content writer. You MUST obey the user's custom rules ABOVE ALL ELSE — they override every other instruction.\n\n` +
+            `MANDATORY RULES (highest priority):\n${customRules}\n`;
+        if (charLimit) systemContent += `THE ENTIRE POST MUST BE UNDER ${charLimit} CHARACTERS TOTAL — count every letter, space, and punctuation mark. Write a very short, punchy post. Do NOT exceed ${charLimit} characters under any circumstance.\n`;
+        systemContent += `\nReturn ONLY the post text, nothing else.`;
+    }
+
     if (creators.length) systemContent += `\n\nWRITING STYLE: Mimic the writing style of these LinkedIn creators: ${creators.join(', ')}. Match their voice, structure, and tone.`;
     if (likedPostBodies.length) systemContent += `\n\nWRITING DNA: Use these posts the user liked as reference for their preferred style:\n${likedPostBodies.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
     if (products.length) systemContent += `\n\nPRODUCT PROMOTION: Naturally weave in the user's product/service where relevant: ${productsList}`;
-    if (customRules) systemContent += `\n\nIMPORTANT — The user has set the following custom rules. These OVERRIDE any default length or formatting guidelines. You MUST follow them strictly:\n${customRules}`;
+
+    const userPrompt = `Write a single LinkedIn post for me.${charLimit ? `\nHARD LIMIT: The post MUST be under ${charLimit} characters. Keep it extremely short and concise.` : ''}
+About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
+Tone: ${toneDesc[tone] || toneDesc.auto}${creators.length ? `\nWrite in a style similar to: ${creators.join(', ')}` : ''}${interests ? `\nMy interests: ${interests}` : ''}${productsList ? `\nNaturally mention my product/service where relevant: ${productsList}` : ''}
+Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITICAL — Follow these rules strictly: ${customRules}` : ''}`;
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -769,13 +806,17 @@ Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITI
                     { role: 'system', content: systemContent },
                     { role: 'user', content: userPrompt },
                 ],
-                temperature: 0.8,
-                max_tokens: 1000,
+                temperature: charLimit ? 0.6 : 0.8,
+                max_tokens: charLimit ? Math.max(60, Math.ceil(charLimit / 2)) : 1000,
             }),
         });
 
         const data = await response.json();
-        const post = data.choices?.[0]?.message?.content?.trim() || '';
+        let post = data.choices?.[0]?.message?.content?.trim() || '';
+        if (charLimit && post.length > charLimit) {
+            const cut = post.lastIndexOf(' ', charLimit - 3);
+            post = post.substring(0, cut > 0 ? cut : charLimit - 3) + '...';
+        }
         res.json({ post });
     } catch (err) {
         console.error('AI write error:', err);

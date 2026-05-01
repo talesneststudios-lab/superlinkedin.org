@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <title>SuperLinkedIn Playbook &mdash; The Complete Guide to LinkedIn Growth in 2026</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --linkedin-blue: #0A66C2;
+            --linkedin-dark: #004182;
+            --linkedin-light: #70B5F9;
+            --bg: #0a0a0f;
+            --bg-card: #16161f;
+            --text-primary: #f0f0f5;
+            --text-secondary: #b0b0c0;
+            --text-muted: #666677;
+            --accent: #0A66C2;
+            --accent-light: #70B5F9;
+            --border: rgba(255,255,255,0.08);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            line-height: 1.75;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== TOP NAV ===== */
+        .top-nav {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+            padding: 14px 24px;
+            backdrop-filter: blur(24px);
+            background: rgba(10,10,15,0.85);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .top-nav-left { display: flex; align-items: center; gap: 12px; }
+        .top-nav-logo {
+            width: 34px; height: 34px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--linkedin-blue), var(--linkedin-light));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 0.72rem; color: #fff;
+            letter-spacing: -0.5px; text-decoration: none;
+        }
+        .top-nav-title { font-weight: 700; font-size: 0.95rem; color: var(--text-primary); }
+        .top-nav-back {
+            padding: 7px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+            color: var(--accent-light); background: rgba(10,102,194,0.15);
+            border: 1px solid rgba(10,102,194,0.25); text-decoration: none;
+            transition: all 0.2s;
+        }
+        .top-nav-back:hover { background: rgba(10,102,194,0.3); }
+
+        /* ===== LAYOUT ===== */
+        .playbook-wrapper {
+            display: flex; max-width: 1100px; margin: 0 auto;
+            padding: 80px 24px 60px;
+        }
+
+        /* ===== SIDEBAR TOC ===== */
+        .toc {
+            position: sticky; top: 80px; align-self: flex-start;
+            width: 260px; min-width: 260px; margin-right: 48px;
+            max-height: calc(100vh - 100px); overflow-y: auto;
+            padding-right: 12px;
+        }
+        .toc::-webkit-scrollbar { width: 3px; }
+        .toc::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        .toc-label {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 14px;
+        }
+        .toc a {
+            display: block; padding: 7px 12px; margin-bottom: 2px;
+            font-size: 0.82rem; font-weight: 500; color: var(--text-secondary);
+            text-decoration: none; border-radius: 8px; border-left: 2px solid transparent;
+            transition: all 0.15s;
+        }
+        .toc a:hover { color: var(--text-primary); background: rgba(255,255,255,0.04); }
+        .toc a.active {
+            color: var(--accent-light); background: rgba(10,102,194,0.12);
+            border-left-color: var(--accent-light);
+        }
+
+        /* ===== CONTENT ===== */
+        .content { flex: 1; min-width: 0; }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 18px; border-radius: 99px;
+            background: rgba(10,102,194,0.15); border: 1px solid rgba(10,102,194,0.25);
+            font-size: 0.78rem; font-weight: 700; color: var(--accent-light);
+            margin-bottom: 20px;
+        }
+        .hero h1 {
+            font-size: 2.8rem; font-weight: 900; line-height: 1.15;
+            margin-bottom: 20px;
+            background: linear-gradient(135deg, #fff 60%, var(--accent-light));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .hero p { font-size: 1.08rem; color: var(--text-secondary); max-width: 620px; margin-bottom: 14px; }
+        .hero .intro-list { list-style: none; padding: 0; margin: 24px 0 36px; }
+        .hero .intro-list li {
+            padding: 6px 0; font-size: 0.95rem; color: var(--text-secondary);
+        }
+        .hero .intro-list li::before {
+            content: '✓'; display: inline-block; width: 22px;
+            color: var(--accent-light); font-weight: 700;
+        }
+
+        .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+
+        /* Module headings */
+        .module-anchor { scroll-margin-top: 80px; }
+        .module-tag {
+            display: inline-block; padding: 4px 12px; border-radius: 6px;
+            font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1px; color: var(--accent-light);
+            background: rgba(10,102,194,0.15); margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 1.65rem; font-weight: 800; line-height: 1.25;
+            margin-bottom: 16px; color: #fff;
+        }
+        h3 {
+            font-size: 1.2rem; font-weight: 700; margin: 32px 0 12px; color: #fff;
+        }
+        h4 { font-size: 1.02rem; font-weight: 700; margin: 24px 0 8px; color: #eee; }
+
+        .content p { font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 16px; }
+
+        .content ul, .content ol {
+            margin: 12px 0 20px 20px; font-size: 0.93rem; color: var(--text-secondary);
+        }
+        .content li { margin-bottom: 8px; }
+        .content li strong { color: var(--text-primary); }
+
+        .callout {
+            background: rgba(10,102,194,0.1); border-left: 3px solid var(--accent);
+            border-radius: 0 10px 10px 0; padding: 16px 20px; margin: 20px 0;
+            font-size: 0.9rem; color: var(--text-secondary);
+        }
+        .callout em { color: var(--text-primary); }
+        .callout-tip {
+            background: rgba(112,181,249,0.08); border-left-color: var(--accent-light);
+        }
+
+        .numbered-list { counter-reset: step; list-style: none; padding: 0; margin: 16px 0 24px; }
+        .numbered-list li {
+            counter-increment: step; position: relative;
+            padding: 10px 0 10px 40px; font-size: 0.93rem; color: var(--text-secondary);
+        }
+        .numbered-list li::before {
+            content: counter(step); position: absolute; left: 0; top: 10px;
+            width: 26px; height: 26px; border-radius: 8px;
+            background: rgba(10,102,194,0.2); color: var(--accent-light);
+            font-size: 0.78rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        blockquote {
+            border-left: 3px solid var(--accent-light);
+            padding: 12px 20px; margin: 20px 0;
+            background: rgba(255,255,255,0.02); border-radius: 0 10px 10px 0;
+            font-style: italic; color: var(--text-secondary); font-size: 0.92rem;
+        }
+
+        strong { color: var(--text-primary); }
+
+        /* FAQ */
+        .faq-item { margin-bottom: 24px; }
+        .faq-q { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; margin-bottom: 6px; }
+        .faq-a { font-size: 0.9rem; color: var(--text-secondary); }
+
+        /* Footer */
+        .playbook-footer {
+            text-align: center; padding: 48px 24px;
+            border-top: 1px solid var(--border); margin-top: 48px;
+            font-size: 0.82rem; color: var(--text-muted);
+        }
+
+        /* Responsive */
+        @media (max-width: 860px) {
+            .toc { display: none; }
+            .playbook-wrapper { padding: 72px 16px 40px; }
+            .hero h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="top-nav">
+    <div class="top-nav-left">
+        <a class="top-nav-logo" href="/app">SL</a>
+        <span class="top-nav-title">SuperLinkedIn Playbook</span>
+    </div>
+    <a class="top-nav-back" href="/app">&larr; Back to App</a>
+</div>
+
+<div class="playbook-wrapper">
+
+    <!-- SIDEBAR TOC -->
+    <nav class="toc" id="toc">
+        <div class="toc-label">Playbook</div>
+        <a href="#intro">Introduction</a>
+        <a href="#module1">Module 1: LinkedIn in 2026</a>
+        <a href="#module2">Module 2: How the Feed Works</a>
+        <a href="#module3">Module 3: The Action Hierarchy</a>
+        <a href="#module4">Module 4: Winning Out-of-Network</a>
+        <a href="#module5">Module 5: The Engagement Loop</a>
+        <a href="#module6">Module 6: Research System</a>
+        <a href="#module7">Module 7: Execution with SuperLinkedIn</a>
+        <a href="#module8">Module 8: Weekly Routine</a>
+        <a href="#module9">Module 9: Common Failure Modes</a>
+        <a href="#faqs">FAQs</a>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <main class="content">
+
+        <!-- HERO -->
+        <section class="hero module-anchor" id="intro">
+            <div class="hero-badge">&#128214; SuperLinkedIn Playbook</div>
+            <h1>SuperLinkedIn Playbook</h1>
+            <p>Most people are doing LinkedIn wrong in 2026. They're still playing by 2022 rules &mdash; posting more, chasing likes, hoping something sticks. Meanwhile, the platform has completely transformed with new algorithms, new features, and a completely different playbook for success.</p>
+            <p>The creators who are winning have cracked the code on what actually works now.</p>
+
+            <h3>Welcome to SuperLinkedIn Playbook.</h3>
+            <p>This isn't another generic "post more often" guide. This is your complete roadmap to thriving on LinkedIn in 2026, built on how the platform actually works today, not how it used to work.</p>
+            <p>Here's what's changed: LinkedIn is now an algorithmic ecosystem where strategic content beats volume, where certain types of engagement matter 10x more than others, and where understanding the feed is the difference between 100 views and 100,000 views.</p>
+
+            <p><strong>In this playbook, you'll learn:</strong></p>
+            <ul class="intro-list">
+                <li>Why the old growth tactics are dead (and what replaced them)</li>
+                <li>How LinkedIn's algorithm actually decides who to show your content to</li>
+                <li>The exact types of posts that trigger algorithmic discovery in 2026</li>
+                <li>A week-by-week routine that makes growth sustainable, not exhausting</li>
+                <li>The engagement strategies that actually move the needle on your follower count</li>
+            </ul>
+            <p>Whether you're a creator, entrepreneur, or building your personal brand, this playbook will show you how to grow efficiently on LinkedIn without burning out or guessing what works.</p>
+            <p>Let's dive in.</p>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 1 -->
+        <section class="module-anchor" id="module1">
+            <div class="module-tag">Module 1</div>
+            <h2>LinkedIn in 2026: What Changed and Why It Matters</h2>
+
+            <p>LinkedIn is not the old job-search timeline anymore.</p>
+            <p>In 2026, most growth comes from <strong>discovery</strong>, not from your connections seeing everything you post. The platform and the algorithm are optimized to keep people on-platform, predict what they'll engage with, and feed them more of that.</p>
+            <p>Understanding these changes is critical because strategies that worked in 2018 or 2020 might fall flat now.</p>
+            <p>If you want reach now, you're playing 3 games at once:</p>
+            <ol class="numbered-list">
+                <li><strong>Discovery game:</strong> getting shown to non-connections</li>
+                <li><strong>Engagement game:</strong> triggering the right actions (not just likes)</li>
+                <li><strong>Format game:</strong> using the formats LinkedIn is actively pushing</li>
+            </ol>
+
+            <h3>What changed?</h3>
+
+            <ul>
+                <li><strong>The algorithmic feed.</strong> LinkedIn now heavily relies on an algorithmic feed to show content, rather than a purely chronological timeline. This algorithm is highly refined and machine-learning driven, selecting content for each user out of millions of posts. Your connection count matters less than the <em>actions</em> your post triggers. Each post is judged on its own. Consistency in a niche matters because it helps the system understand who your posts are for.</li>
+
+                <li><strong>Out-of-network reach.</strong> A meaningful chunk of the feed is content from accounts people don't follow. That's the whole point of the product now: discovery. For creators, this means your growth depends on reaching people beyond your connections. LinkedIn in 2026 is geared towards viral growth: a great post can be shown to thousands of strangers if it gains traction.</li>
+
+                <li><strong>LinkedIn Premium and Creator Mode.</strong> Premium changes what you can do, not just how you look. Premium accounts get algorithmic boosts &mdash; posts from premium and creator-mode users might get prioritized in feeds and replies. The two big practical benefits: you unlock more content formats, and you get access to more features designed for serious posting, distribution, and monetization.</li>
+
+                <li><strong>New content formats.</strong> LinkedIn expanded the ways you can publish. The creators who win are the ones who use these formats intentionally:
+                    <ul>
+                        <li><strong>Long-form articles:</strong> LinkedIn's native publishing lets you write in-depth essays that get distributed through the feed.</li>
+                        <li><strong>Document carousels:</strong> PDF carousels are one of the highest-performing formats in 2026. They keep users swiping and boost dwell time.</li>
+                        <li><strong>Newsletters:</strong> LinkedIn Newsletters let you build a subscriber base directly on the platform. Subscribers get notified for every issue &mdash; massive built-in distribution.</li>
+                        <li><strong>Video &amp; Live:</strong> Native video is getting a lot of reach. LinkedIn is clearly pushing it as they compete for attention. Short-form and live video are easy reach levers right now.</li>
+                        <li><strong>Polls and collaborative articles:</strong> Interactive formats that drive engagement signals.</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="callout">
+                <strong>In summary,</strong> LinkedIn in 2026 is a platform where <em>algorithmic curation, richer content formats, and active participation</em> define success. It's no longer just about posting updates occasionally; it's about understanding why some content spreads like wildfire and aligning your strategy with how the system works now.
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 2 -->
+        <section class="module-anchor" id="module2">
+            <div class="module-tag">Module 2</div>
+            <h2>How the LinkedIn Feed Actually Works (Simple but Accurate)</h2>
+
+            <p>If you want to grow on LinkedIn, you need a clear mental model of <strong>the feed</strong>. This is the algorithmic timeline where most discovery happens and where new followers come from.</p>
+            <p>At a high level, the LinkedIn feed is LinkedIn's <strong>personalized recommendation system</strong>. It does not show posts in simple chronological order. Instead, it predicts which posts each user is most likely to engage with and ranks them accordingly.</p>
+            <p>Here's how it works, step by step.</p>
+
+            <h4>1) Candidate sourcing (where posts come from)</h4>
+            <p>Every time someone opens LinkedIn, the system starts by building a <strong>candidate pool</strong> of posts from two sources:</p>
+            <ul>
+                <li><strong>In-network posts:</strong> Recent posts from people the user already follows or is connected with.</li>
+                <li><strong>Out-of-network posts:</strong> Posts from accounts the user does <em>not</em> follow, retrieved using machine-learning similarity based on engagement history.</li>
+            </ul>
+
+            <h4>2) Query hydration (adding user context)</h4>
+            <p>Before ranking anything, LinkedIn enriches the request with <strong>user context</strong>: recent engagement history, connection list, preferences and mute/block settings, and session-level signals. The same post can rank very differently for two different users.</p>
+
+            <h4>3) Candidate hydration (adding post data)</h4>
+            <p>Each candidate post is enriched with metadata: post text, images, videos, author information, media attributes, and engagement counts.</p>
+
+            <h4>4) Filtering (removing ineligible posts)</h4>
+            <p>Before scoring, the system removes duplicate posts, very old posts, posts from blocked or muted accounts, posts with muted keywords, and posts the user has already seen.</p>
+
+            <h4>5) Scoring (predicting user actions)</h4>
+            <p>This is the core of the system. A <strong>machine-learning model</strong> scores each remaining post independently, predicting the probability of: reply, like, repost/share, click, profile visit, dwell time, and follow after viewing. It also predicts <strong>negative actions</strong> such as "not interested," hide, or report. These predictions are combined into a <strong>weighted score</strong>.</p>
+
+            <h4>6) Diversity adjustment</h4>
+            <p>After scoring, the system applies <strong>author diversity logic</strong> to prevent one account from dominating the feed. This is why posting too many times in a short window can quietly reduce reach.</p>
+
+            <h4>7) Selection and final filtering</h4>
+            <p>Posts are sorted by final score. The top candidates are selected and shown. A final visibility pass removes posts that were deleted, flagged as spam, or violate policies.</p>
+
+            <h4>8) Continuous learning in real time</h4>
+            <p>As users scroll, stop, expand posts, reply, or scroll past, the system learns. These actions influence what is fetched and ranked next.</p>
+
+            <div class="callout callout-tip">
+                <strong>What this means for creators:</strong> The feed is the main discovery engine. Every post is judged independently. The algorithm is prediction-driven &mdash; it rewards posts that trigger meaningful engagement and quietly suppresses posts that lead to negative reactions. Out-of-network reach happens when the system believes your post fits a specific audience cluster.
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 3 -->
+        <section class="module-anchor" id="module3">
+            <div class="module-tag">Module 3</div>
+            <h2>The Only Scoreboard That Matters: The Action Hierarchy</h2>
+
+            <p><strong>Not all engagements are created equal.</strong> Many people focus on getting likes, but in 2026 the algorithm's scoreboard values certain actions much more than others.</p>
+
+            <h3>LinkedIn rewards 2 kinds of signals:</h3>
+
+            <ol>
+                <li><strong>Distribution signals</strong> &mdash; actions that help your post escape your audience and reach non-followers: reposts, shares, saves/bookmarks, profile clicks, follows after viewing.</li>
+                <li><strong>Depth signals</strong> &mdash; actions that prove the post was worth time and attention: comments, comment threads (back-and-forth), dwell time (people stop, expand, read), video watch time, and carousel swipe-through rate.</li>
+            </ol>
+
+            <p>You need both. Distribution gets you reach, and depth helps the system trust the post and keep it circulating.</p>
+
+            <h3>Hierarchy from most to least valuable:</h3>
+
+            <ul>
+                <li><strong>Comments (Especially Threaded Conversations):</strong> A direct comment on your post is worth far more than a simple like. If you reply back (creating a longer thread), that interaction is weighted extremely high. A post that sparks lots of comments &mdash; and where the original poster actively replies back &mdash; signals "this content is interesting, it's generating discussion," so the algorithm pushes it to more people.</li>
+
+                <li><strong>Reposts and Shares:</strong> When someone shares your post to their own network, it's a strong signal of value. A repost with their own commentary can be weighed especially heavily. It says "this post is good enough, I want others to see it."</li>
+
+                <li><strong>Profile Clicks and Follows:</strong> A user clicking your profile shows genuine interest beyond the single post. If someone actually follows you after seeing the post, that's even better. Posts that pique curiosity about the author often do well because the algorithm notices these signals.</li>
+
+                <li><strong>Likes / Reactions:</strong> A reaction is the most common form of positive engagement and certainly helps, but it's more of a baseline. Think of a reaction as 1 point; a comment might be worth 10+, a repost 20+. A strategy <em>only</em> aiming for likes may underperform content that provokes comments or shares.</li>
+
+                <li><strong>Negative Actions:</strong> If someone hides your post, reports you, or clicks "Not interested," those are strong negative signals that will reduce your reach. Annoying your audience or coming off as low-quality can silently sabotage your reach.</li>
+            </ul>
+
+            <div class="callout">
+                <strong>Practical takeaways:</strong> Create content that invites comments. When you get replies, <em>engage back</em> &mdash; especially in the first hour or two. Encourage sharing by creating content people <em>want</em> to share. Make people curious about you. Don't obsess over vanity metrics; 10 comments and 2 reshares can be more valuable than 50 reactions with no comments.
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 4 -->
+        <section class="module-anchor" id="module4">
+            <div class="module-tag">Module 4</div>
+            <h2>Winning Out-of-Network (How Strangers See You)</h2>
+
+            <p>One of the biggest shifts on LinkedIn is the importance of <strong>out-of-network reach</strong> &mdash; getting your content in front of people who don't follow you yet. This is where "strangers" become new fans and followers.</p>
+
+            <p>You can't just rely on your existing connections to grow; you need the algorithm and social dynamics to introduce you to new audiences.</p>
+
+            <ul>
+                <li><strong>Create engaging content:</strong> When your connections comment on or share your post, that activity surfaces your post to <em>their</em> connections. Every engagement is like a portal to new people. Focus on content that prompts action &mdash; helpful tips, relatable insights, bold opinions, conversation starters.</li>
+
+                <li><strong>Leverage strategic commenting:</strong> Find larger accounts or trending discussions in your niche and contribute meaningful comments. The goal is to appear under posts that lots of people are reading. If you can be one of the first or most insightful comments on a popular post, many of that account's followers will see your reply. Add value: share an insight, a different perspective, or a useful resource.</li>
+
+                <li><strong>Participate in trending topics and LinkedIn groups:</strong> If there's a trending conversation in your industry, jumping in can expose you to a wave of people. Timing is crucial &mdash; add your voice when the topic is hot, but with a unique angle.</li>
+
+                <li><strong>Optimize timing for maximum exposure:</strong> Post when your followers are most active and can respond quickly. Early replies, shares, and meaningful engagement increase your chances of being pushed further out-of-network. Use SuperLinkedIn's analytics to find your peak times.</li>
+            </ul>
+
+            <div class="callout callout-tip">
+                <strong>In short,</strong> winning out-of-network is about visibility and timing. A post can start with 10 likes from your connections and snowball to 10,000 likes mostly from people who never heard of you &mdash; but only if you play to the dynamics that allow that snowball to form.
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 5 -->
+        <section class="module-anchor" id="module5">
+            <div class="module-tag">Module 5</div>
+            <h2>The Engagement Loop Strategy (The "Comment King" Reframed)</h2>
+
+            <p>Growing on LinkedIn isn't just about what you post &mdash; it's also about how you <strong>interact</strong>. The Engagement Loop Strategy is a system of actively engaging with others to create loops of visibility.</p>
+
+            <ol class="numbered-list">
+                <li><strong>Strategically comment on others.</strong> Identify a handful of accounts in your niche that have large followings and high engagement. When they post something relevant, <strong>be early to comment</strong> with a meaningful reply. Early is key because initial comments get the most exposure. Turn on post notifications for key creators and act fast. Add value: share a quick insight, a different perspective, or a useful resource. SuperLinkedIn's Engage feature helps you stay on top of your lists.</li>
+
+                <li><strong>Engage your engagers.</strong> Whenever you post, actively jump into the conversation. If someone comments, reply back. Ask a follow-up question, thank them, or build on their point. This doubles the engagement on your post and makes individuals feel seen &mdash; they'll keep interacting with you.</li>
+
+                <li><strong>Close the loop &mdash; bring them back.</strong> After a back-and-forth with someone, you've caught their attention. Subtly encourage them to check out more of your content. End a reply with a hint like "I actually wrote about this last week &mdash; feel free to check it out on my profile!"</li>
+
+                <li><strong>Rinse and repeat consistently.</strong> Spend 20 minutes each day on outbound engagement (commenting on relevant posts) and 20 minutes on inbound engagement (responding to your commenters). Over time, you become a familiar presence, which attracts even more engagement.</li>
+            </ol>
+
+            <div class="callout">
+                <strong>Etiquette note:</strong> Always keep your replies relevant and respectful. Don't reply to someone's heartfelt post with "cool, check out my page." That's spammy. Empathize or add insight that naturally leads people to wanting to learn more about you.
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 6 -->
+        <section class="module-anchor" id="module6">
+            <div class="module-tag">Module 6</div>
+            <h2>The Research System (Reverse-Engineering Winners)</h2>
+
+            <p>Instead of guessing what might work, smart creators use a <strong>research system</strong> to study what's already working for others and then <strong>reverse-engineer those wins</strong>.</p>
+
+            <ul>
+                <li><strong>Identify the winners in your niche.</strong> Pinpoint accounts that are killing it on LinkedIn in your area. Don't just look at follower count &mdash; look for accounts where posts frequently get lots of comments, reposts, and reactions relative to their following. You can use SuperLinkedIn's Inspiration feature to find popular posts from your niche.</li>
+
+                <li><strong>Analyze their content patterns.</strong> What topics get the most traction? Do they use certain formats more (carousels, long posts, images)? How often do they post? Do they engage with their audience in comments? Take notes on patterns.</li>
+
+                <li><strong>Reverse-engineer engagement strategies.</strong> Try to deduce <em>why</em> those top posts did so well. Did the author actively reply back? Did they post at a specific time? Did they ask a question that invited responses? Did they use a super intriguing hook?</li>
+
+                <li><strong>Use tools for deeper insights.</strong> SuperLinkedIn's analytics and browser extension can track other accounts' stats, identify their top posts over time, and help in research. LinkedIn's own analytics show you how your posts performed.</li>
+            </ul>
+
+            <div class="callout callout-tip">
+                By reverse-engineering winners, you essentially fast-track your learning curve. You're standing on the shoulders of giants rather than reinventing the wheel.
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 7 -->
+        <section class="module-anchor" id="module7">
+            <div class="module-tag">Module 7</div>
+            <h2>Execution with SuperLinkedIn (Features &rarr; Outcomes)</h2>
+
+            <p>This module is where everything becomes operational. The goal is to build a repeatable workflow you can run every day without relying on motivation, inspiration, or willpower.</p>
+
+            <p>Most people fail on LinkedIn for one boring reason: they have no system. They open the app, scroll, feel behind, post something random, and disappear. SuperLinkedIn exists to turn growth into a set of steps you can follow.</p>
+
+            <p>The simplest way to think about SuperLinkedIn is as an engine that runs the same loop repeatedly: <strong>Inspiration &rarr; Remix &rarr; Publish &rarr; Engage &rarr; Learn &rarr; Repurpose.</strong></p>
+
+            <h3>Context Is Your Distribution Strategy</h3>
+            <p>Before you do anything else, you set your context. This step decides whether SuperLinkedIn becomes a high-signal growth tool or just another generic post generator. In 2026, niche clarity is not branding fluff &mdash; it is an algorithmic requirement. LinkedIn's discovery system needs to know who your posts are for.</p>
+            <p>Your context means defining the themes you want your account to be known for, the tone you write in, the kinds of posts you want to create, and the accounts you want to be in conversation with.</p>
+
+            <div class="callout">
+                <strong>Sanity check:</strong> If someone saw five of your posts in a row, would they immediately understand what you do, what you believe, and why they should follow? If the answer is unclear, your context is too broad.
+            </div>
+
+            <h3>Step 1: Start with the Viral Library</h3>
+            <p>The Viral Library removes blank-page paralysis. You begin with posts that already worked and use them as raw material. When you browse the Library, you're looking for <strong>repeatable patterns</strong>: the opening hook, the rhythm of the writing, the structure of the argument, the type of engagement it triggered.</p>
+            <p>Your job is to notice what kind of post it is and then adapt it to your world. A good remix keeps the underlying structure but changes the content.</p>
+
+            <h3>Step 2: Remix with the AI Writer</h3>
+            <p>Use the AI as a co-writer that helps you explore variations quickly, while you stay in control of voice, specificity, and taste. Generate multiple versions and choose. A practical workflow is to create Version A and Version B, compare them, pick the best, and do a quick human edit.</p>
+            <p>Self-check before publishing: would a stranger comment on this, share it, or click my profile after reading it? If the only reaction is "nice," the post is optimized for likes, not growth.</p>
+
+            <h3>Step 3: Publish with Timing and Automation</h3>
+            <p>The first engagement window after posting matters disproportionately. LinkedIn's system tests posts early and uses those signals to determine wider distribution. Schedule your best post at peak time. The goal is not volume for its own sake &mdash; it's consistent high-signal publishing.</p>
+
+            <h3>Step 4: Engage with Intention</h3>
+            <p>Use the <strong>3&ndash;3&ndash;3 rule</strong> for your engagement circle: three accounts around ~1,000 followers, three around ~10,000 followers, and three around ~100,000+ followers. This mix creates a balanced network for discovery at all levels. SuperLinkedIn's Engage Lists make this operational.</p>
+
+            <h3>Step 5: Learn from Analytics</h3>
+            <p>Understand which posts earned the actions that actually matter: comments, shares, profile visits, and follows. Over time, you'll notice patterns specific to you. Stop relying on generic advice &mdash; double down on what worked for <em>you</em>.</p>
+
+            <h3>Step 6: Repurpose Winners</h3>
+            <p>A single winning idea can produce five strong posts if you know how to repackage it: a tighter single post, a longer article, a carousel, a video script, a follow-up. Repurpose based on performance signals &mdash; if a post earned comments, write a follow-up; if it earned shares, turn it into a cleaner version; if it earned profile clicks, expand that worldview.</p>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 8 -->
+        <section class="module-anchor" id="module8">
+            <div class="module-tag">Module 8</div>
+            <h2>The Operating System: Weekly Routine</h2>
+
+            <p>Your weekly SuperLinkedIn checklist &mdash; with the reason for every step:</p>
+
+            <ol class="numbered-list">
+                <li><strong>Update your context first.</strong> Your context keeps content inside one or two clear topic clusters. When you drift, the algorithm takes longer to understand who your posts are for.</li>
+                <li><strong>Pick your weekly "theme stack" (2&ndash;4 themes).</strong> Most accounts fail because they post across too many topics. A theme stack creates repetition without boredom.</li>
+                <li><strong>Build a weekly idea bank from the Viral Library (save 10&ndash;20 inspirations).</strong> This removes daily blank-page pressure and forces you to start from proven patterns.</li>
+                <li><strong>For each saved inspiration, write down what "job" it did</strong> (comments, reposts, profile clicks). Labeling the job helps you design your hook and closing line around the action hierarchy.</li>
+                <li><strong>Set your posting plan (minimum 5 posts, ideally 7).</strong> Consistency is how the system learns you. Skipping days breaks momentum.</li>
+                <li><strong>Schedule your top 3 posts at your best times.</strong> Your strongest posts deserve the best first window.</li>
+                <li><strong>Choose 1 experiment format for the week</strong> (video, carousel, article, newsletter). One experiment per week gives you learning without chaos.</li>
+                <li><strong>Create or refresh your Engage circle using the 3&ndash;3&ndash;3 rule.</strong> Your circle is a distribution lever &mdash; it puts your name repeatedly in front of relevant audiences.</li>
+                <li><strong>Add 1&ndash;2 new accounts to Engage Discover each week.</strong> Circles get stale. New accounts keep you connected to growing sub-communities.</li>
+                <li><strong>Do one daily inbound engagement block (10&ndash;20 minutes).</strong> Comment threads are one of the strongest positive signals.</li>
+                <li><strong>Protect your first window for top posts (30&ndash;60 minutes after posting).</strong> Being active early turns one comment into a thread and one thread into distribution.</li>
+                <li><strong>Track your weekly winners (top 3 posts by meaningful actions).</strong> Winners show you what your audience rewards and what the algorithm distributes.</li>
+                <li><strong>Write down the pattern behind each winner</strong> (topic, hook type, format, call-to-action). This builds your repeatable playbook.</li>
+                <li><strong>Repurpose one winner into 2 new assets for next week.</strong> Repurposing compounds and reduces burnout.</li>
+                <li><strong>Identify one failure mode and fix it with a rule.</strong> Growth improves fastest when you remove what kills reach.</li>
+                <li><strong>End the week with a simple scorecard (15 minutes).</strong> Answer: Did I post consistently? Did I engage consistently? What actions did I earn? What will I repeat?</li>
+            </ol>
+        </section>
+
+        <hr class="divider">
+
+        <!-- MODULE 9 -->
+        <section class="module-anchor" id="module9">
+            <div class="module-tag">Module 9</div>
+            <h2>Common Failure Modes (What Kills Reach Now)</h2>
+
+            <p>Even with the best strategies, there are pitfalls that can undermine your growth. Knowing these failure modes helps you steer clear.</p>
+
+            <ul>
+                <li><strong>Inconsistent posting or long gaps.</strong> The algorithm and audience both favor creators who show up regularly. Inactivity causes the algorithm to "forget" you, and your next post has to work harder to gain traction. Aim for sustainable consistency over boom-and-bust cycles.</li>
+
+                <li><strong>Engagement bait and low-quality tricks.</strong> Posting "Like if you agree!" or trivial polls just to rack up reactions often backfires. Users have grown savvy and may ignore or even report bait. LinkedIn's algorithm can detect and downrank spammy patterns. Quality of engagement beats quantity.</li>
+
+                <li><strong>Ignoring comments and community.</strong> If you treat LinkedIn as a one-way publishing platform, you'll miss out. The algorithm notices if you never participate beyond your own posts. Followers lose interest if you never acknowledge them.</li>
+
+                <li><strong>Too many external links / constant self-promotion.</strong> The algorithm shows link-heavy posts less. If every post is a link to your blog or product, people will tune you out. Follow the 80/20 rule: 80% pure value, 20% gentle promotion.</li>
+
+                <li><strong>Not adapting to new features.</strong> LinkedIn evolves quickly. Early adopters of new features often get algorithmic boosts. If you see a new format rolling out, experiment with it.</li>
+
+                <li><strong>Controversy and negative engagement traps.</strong> Being controversial can generate engagement, but it can also attract negative signals. If your content frequently provokes fights or reports, the algorithm will throttle you. Aim for positive engagement &mdash; take strong positions, but invite discussion, not hate.</li>
+
+                <li><strong>Giving up too soon.</strong> Growth can sometimes plateau before a big break. Many creators grind for months quietly and then suddenly have a viral moment. If your approach is solid, don't let a lull discourage you.</li>
+
+                <li><strong>Overlooking profile hygiene.</strong> If people visit your profile and find a blank bio, low-effort photo, or no featured posts, you lose the follow. Ensure your profile clearly states who you are and what value you offer.</li>
+            </ul>
+        </section>
+
+        <hr class="divider">
+
+        <!-- FAQs -->
+        <section class="module-anchor" id="faqs">
+            <div class="module-tag">FAQs</div>
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-q">Q1: How long will it take to see growth using these strategies?</div>
+                <div class="faq-a">It varies, but generally expect a few months of consistent effort for significant results. Some people notice small wins within days &mdash; a post doing better than usual or a steady uptick in followers. The big breakthroughs usually come after you've built a foundation. LinkedIn growth is often exponential &mdash; slow at first, then faster as you gain momentum. Stick with the program.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">Q2: Do I need LinkedIn Premium to succeed?</div>
+                <div class="faq-a">Not necessarily, but it can help. Premium offers advantages like increased visibility, the ability to see who viewed your profile, and additional analytics. Many successful creators grow without paying. If you're serious and the cost isn't a burden, Premium can accelerate things &mdash; but it's not required.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">Q3: What if I'm starting from scratch with zero followers?</div>
+                <div class="faq-a">The strategies here are perfect for those starting fresh because they focus on out-of-network reach and smart engagement &mdash; which is how you attract followers when you have none. For new accounts, dial up engagement with others vs. posting your own content at first, just to get on the radar. As soon as some folks are watching, start demonstrating your own content value too.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">Q4: How do I handle negative feedback or trolls?</div>
+                <div class="faq-a">Don't engage trolls &mdash; feeding them usually leads nowhere and creates negative engagement. Use LinkedIn's tools to hide or block bad-faith actors. For genuine criticism, respond calmly and thoughtfully; showing professionalism earns respect. Don't let a few negative voices discourage you.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">Q5: Is it too late to grow on LinkedIn?</div>
+                <div class="faq-a">Not at all! While LinkedIn is more crowded than ever, the audience has also grown massively. New voices break out every day. The algorithm levels the playing field &mdash; if you say something truly engaging, it can spread regardless of your follower count. Be strategic, put in the effort, and you can absolutely carve out your space.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">Q6: How can I use SuperLinkedIn Playbook with my own brand voice?</div>
+                <div class="faq-a">The tactics and principles work regardless of your style or niche. Adapt everything to feel authentic to you. If humor is your thing, infuse it. If you're data-driven, share stats in your replies. Use the strategy as a skeleton and put your own creative voice on it. Bringing your unique perspective is an advantage.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">Q7: What if I have a bad week or fall behind?</div>
+                <div class="faq-a">Don't panic. One off-week won't ruin your long-term growth if you resume course. If you're consistently unable to follow the routine, scale it back to something manageable. Progress on LinkedIn is a marathon, not a sprint &mdash; even marathons have water breaks.</div>
+            </div>
+        </section>
+
+        <hr class="divider">
+
+        <p style="text-align:center;color:var(--text-muted);font-size:0.88rem;margin-top:12px;">
+            <strong style="color:var(--accent-light);">SuperLinkedIn Playbook's goal is to empower you with knowledge and a plan.</strong><br>
+            The rest is in your hands &mdash; apply these lessons, stay adaptable, and you'll be on your way to building a strong presence on LinkedIn. Good luck, and see you in the feed!
+        </p>
+
+        <!-- FOOTER -->
+        <div class="playbook-footer">
+            &copy; 2026 SuperLinkedIn. All Rights Reserved.
+        </div>
+
+    </main>
+</div>
+
+<script>
+(function () {
+    fetch('/api/me').then(r => r.json()).then(u => {
+        if (!u || !u.paid) window.location.href = '/upgrade';
+    }).catch(() => { window.location.href = '/login'; });
+
+    const tocLinks = document.querySelectorAll('.toc a');
+    const sections = document.querySelectorAll('.module-anchor');
+
+    function updateActive() {
+        let current = '';
+        sections.forEach(s => {
+            if (s.getBoundingClientRect().top <= 120) current = s.id;
+        });
+        tocLinks.forEach(a => {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+        });
+    }
+    window.addEventListener('scroll', updateActive, { passive: true });
+    updateActive();
+})();
+</script>
+
+</body>
+</html>
