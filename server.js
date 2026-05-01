@@ -300,6 +300,20 @@ app.post('/api/checkout/confirm', async (req, res) => {
 
 // ---------- ONBOARDING ----------
 
+const POSTS_REF = [
+    { body: "<p>3 things people hate hearing that are true:</p><p>- Your life is your responsibility<br>- No one is coming to save you<br>- If you want to change your future, you have to change yourself</p>" },
+    { body: "<p>People with burnout will lie to you. Not because they intend to, they're lying to themselves too.</p><p>If someone tells you they're feeling \"a little bit burned out\", you should take it very seriously, because by the time they're ready to admit that to themselves, things are already bad.</p>" },
+    { body: "<p>We need to redefine \"hard work\" to include \"hard thinking.\"</p><p>The person who outsmarts you is out working you.<br>The person who finds shortcuts is out working you.<br>The person with a better strategy is out working you.</p><p>Usually, the hardest work is thinking of a better approach.</p>" },
+    { body: "<p>I used to think being in your 30's would be about settling down, turns out it's about starting over, healing, & becoming a new version of you.</p>" },
+    { body: "<p>How I source content inspiration in 2026:</p><p>- LinkedIn: thought leadership<br>- Substack: long-form insights<br>- Feedly: industry trends</p><p>Literally all you need.</p>" },
+    { body: "<p>I applaud people who try again. We never really talk about the strength required to get back up again.</p><p>People are just expected to bounce back. If you see someone struggling to try again, give them a hand. They really need it.</p>" },
+    { body: "<p>Sometimes I meet a person & can't help but smile, happy to learn that I live in a world where they exist.</p><p>\"We sometimes encounter people, even perfect strangers, who begin to interest us at first sight, somehow suddenly, all at once, before a word has been spoken.\"</p>" },
+    { body: "<p>Can anyone pinpoint the exact moment where everything became both:</p><p>a) worse<br>b) and more expensive</p><p>When did this happen?</p>" },
+    { body: "<p>I was doing a late night debugging session and I couldn't figure something out</p><p>and then I googled it</p><p>and the first result with my answer</p><p>was a blog post</p><p>that I wrote</p>" },
+    { body: "<p>Branding is how people see you.</p><p>Marketing is how they find you.</p><p>Sales is how you get paid.</p><p>Master all three.</p>" },
+    { body: "<p>Starting a business can be painful.</p><p>You feel lost 97% of the time – the ups and downs are gut-wrenching.</p><p>I wish I had a cheat sheet of principles for my first startup.</p><p>So I wrote one.</p><p>Here are 40+ learnings about entrepreneurship that took me 10 years to figure out:</p>" },
+];
+
 app.post('/api/onboarding/writing-dna', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
@@ -596,19 +610,34 @@ app.post('/api/ai/generate-posts', async (req, res) => {
     const writingProfile = user.writingProfile || {};
     const topTags = Object.entries(writingProfile).sort((a, b) => b[1] - a[1]).map(e => e[0]).slice(0, 5);
     const aboutYou = user.aboutYou || '';
-    const creators = (user.favoriteCreators || []).map(c => c.name).join(', ');
+
+    const creators = (user.favoriteCreators || []).map(c => c.name).filter(Boolean);
+    const writingDNA = user.writingDNA || [];
+    const likedPostBodies = writingDNA.map(p => {
+        const post = POSTS_REF[p.index];
+        return post ? post.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : null;
+    }).filter(Boolean).slice(0, 5);
 
     const customRules = user.customRules || '';
     const interests = (user.interests || []).join(', ');
-    const products = (user.products || []).map(p => p.name || p.url).join(', ');
+    const products = (user.products || []).filter(p => p.name || p.description);
+    const productsList = products.map(p => {
+        let s = p.name || p.url;
+        if (p.description) s += ` — ${p.description}`;
+        return s;
+    }).join('; ');
 
-    const systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts for a user. Each post should be engaging, authentic, and ready to publish. Return ONLY a JSON array of 3 strings, each being a complete post.${customRules ? `\n\nIMPORTANT RULES from the user that MUST be followed:\n${customRules}` : ''}`;
+    let systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts for a user. Each post should be engaging, authentic, and ready to publish. Return ONLY a JSON array of 3 strings, each being a complete post.`;
+    if (creators.length) systemPrompt += `\n\nWRITING STYLE: Study and mimic the writing style of these LinkedIn creators the user admires: ${creators.join(', ')}. Write as if the user were influenced by their voice, structure, and tone.`;
+    if (likedPostBodies.length) systemPrompt += `\n\nWRITING DNA: The user liked these sample posts during onboarding. Use them as reference for the user's preferred writing style, tone, structure, and format:\n${likedPostBodies.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
+    if (products.length) systemPrompt += `\n\nPRODUCT PROMOTION: The user has these products/services. Naturally weave mentions or value propositions of these into the posts where relevant (not every post needs to mention them, but at least one should):\n${productsList}`;
+    if (customRules) systemPrompt += `\n\nIMPORTANT — The user has set the following custom rules. These OVERRIDE any default length or formatting guidelines. You MUST follow them strictly:\n${customRules}`;
 
+    const defaultLength = customRules ? '' : ' Keep posts between 100-300 words.';
     const userPrompt = `Generate 3 LinkedIn posts for me.
 About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
-My preferred writing styles: ${topTags.join(', ') || 'motivational, professional, storytelling'}
-Creators I admire: ${creators || 'thought leaders in my industry'}${interests ? `\nMy interests: ${interests}` : ''}${products ? `\nMy products/services: ${products}` : ''}
-Make each post different in format (one list-based, one story, one insight/opinion). Keep posts between 100-300 words. Do NOT include hashtags.`;
+My preferred writing styles: ${topTags.join(', ') || 'motivational, professional, storytelling'}${creators.length ? `\nWrite in a style similar to: ${creators.join(', ')}` : ''}${interests ? `\nMy interests: ${interests}` : ''}${productsList ? `\nMy products/services to promote: ${productsList}` : ''}
+Make each post different in format (one list-based, one story, one insight/opinion).${defaultLength} Do NOT include hashtags.${customRules ? `\nCRITICAL — Follow these rules: ${customRules}` : ''}`;
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -639,7 +668,17 @@ Make each post different in format (one list-based, one story, one insight/opini
             posts = content.split('\n\n').filter(p => p.trim().length > 50).slice(0, 3);
         }
 
-        res.json({ posts });
+        const likeOptions = ['1.3K', '2K', '2.3K', '3.3K', '1.9K', '5.6K', '4.1K', '2.8K', '6.2K', '8.1K', '1.7K'];
+        const shuffled = [...POSTS_REF].sort(() => Math.random() - 0.5);
+        const references = posts.map((_, i) => {
+            const ref = shuffled[i % shuffled.length];
+            return {
+                text: ref.body.replace(/<[^>]+>/g, '\n').replace(/\n{2,}/g, '\n\n').trim(),
+                likes: likeOptions[Math.floor(Math.random() * likeOptions.length)],
+            };
+        });
+
+        res.json({ posts, references });
     } catch (err) {
         console.error('AI generation error:', err);
         res.json({ posts: [] });
@@ -662,6 +701,20 @@ app.post('/api/ai/write', async (req, res) => {
     const topTags = Object.entries(writingProfile).sort((a, b) => b[1] - a[1]).map(e => e[0]).slice(0, 5);
     const aboutYou = user.aboutYou || '';
 
+    const creators = (user.favoriteCreators || []).map(c => c.name).filter(Boolean);
+    const writingDNA = user.writingDNA || [];
+    const likedPostBodies = writingDNA.map(p => {
+        const post = POSTS_REF[p.index];
+        return post ? post.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : null;
+    }).filter(Boolean).slice(0, 3);
+
+    const products = (user.products || []).filter(p => p.name || p.description);
+    const productsList = products.map(p => {
+        let s = p.name || p.url;
+        if (p.description) s += ` — ${p.description}`;
+        return s;
+    }).join('; ');
+
     const toneDesc = {
         auto: topTags.join(', ') || 'professional and authentic',
         professional: 'professional, polished, industry-focused',
@@ -676,12 +729,17 @@ app.post('/api/ai/write', async (req, res) => {
     const customRules = user.customRules || '';
     const interests = (user.interests || []).join(', ');
 
+    const defaultReqs = customRules ? 'engaging opening line, no hashtags, ready to publish' : '100-300 words, engaging opening line, no hashtags, ready to publish';
     const userPrompt = `Write a single LinkedIn post for me.
 About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
-Tone: ${toneDesc[tone] || toneDesc.auto}${interests ? `\nMy interests: ${interests}` : ''}
-Requirements: 100-300 words, engaging opening line, no hashtags, ready to publish. Return ONLY the post text.`;
+Tone: ${toneDesc[tone] || toneDesc.auto}${creators.length ? `\nWrite in a style similar to: ${creators.join(', ')}` : ''}${interests ? `\nMy interests: ${interests}` : ''}${productsList ? `\nNaturally mention my product/service where relevant: ${productsList}` : ''}
+Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITICAL — Follow these rules: ${customRules}` : ''}`;
 
-    const systemContent = `You are a LinkedIn content writer. Write a single LinkedIn post. Return ONLY the post text, nothing else.${customRules ? `\n\nIMPORTANT RULES from the user that MUST be followed:\n${customRules}` : ''}`;
+    let systemContent = `You are a LinkedIn content writer. Write a single LinkedIn post. Return ONLY the post text, nothing else.`;
+    if (creators.length) systemContent += `\n\nWRITING STYLE: Mimic the writing style of these LinkedIn creators: ${creators.join(', ')}. Match their voice, structure, and tone.`;
+    if (likedPostBodies.length) systemContent += `\n\nWRITING DNA: Use these posts the user liked as reference for their preferred style:\n${likedPostBodies.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
+    if (products.length) systemContent += `\n\nPRODUCT PROMOTION: Naturally weave in the user's product/service where relevant: ${productsList}`;
+    if (customRules) systemContent += `\n\nIMPORTANT — The user has set the following custom rules. These OVERRIDE any default length or formatting guidelines. You MUST follow them strictly:\n${customRules}`;
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {

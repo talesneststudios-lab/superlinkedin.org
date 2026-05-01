@@ -32,11 +32,14 @@
         body.dark-mode {
             --bg: #0f0f1a;
             --bg-white: #1a1a2e;
+            --bg-card: #1a1a2e;
             --text-primary: #e4e4ed;
             --text-secondary: #a0a0b8;
             --text-muted: #6b6b80;
             --border: #2a2a40;
             --accent-light: rgba(10,102,194,0.15);
+            --queue-slot-bg: #1e1e34;
+            --queue-slot-border: #2a2a40;
         }
         body.dark-mode .card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
         body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
@@ -45,6 +48,13 @@
             color: var(--text-primary) !important;
         }
         body.dark-mode .compose-panel { background: #1a1a2e; border-color: #2a2a40; }
+        body.dark-mode .home-steps-card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        body.dark-mode .home-post-card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        body.dark-mode .home-mission { border-color: #2a2a40; }
+        body.dark-mode .home-mission:hover { background: rgba(255,255,255,0.03); }
+        body.dark-mode .queue-edit-btn:hover { background: rgba(10,102,194,0.12); }
+        body.dark-mode .notify-btn-secondary:hover { background: #12121f; }
+        body.dark-mode .congrats-btn-copy:hover { background: #12121f; }
 
         .dark-toggle {
             position: relative;
@@ -775,7 +785,7 @@
         .notify-btn-primary:hover { background: #0977d4; }
         .notify-btn-secondary {
             padding: 10px 24px;
-            background: #fff;
+            background: var(--bg-white);
             color: var(--text-primary);
             border: 1px solid var(--border);
             border-radius: 10px;
@@ -838,7 +848,7 @@
             align-items: center;
             gap: 6px;
             padding: 12px 22px;
-            background: #fff;
+            background: var(--bg-white);
             color: var(--text-primary);
             border: 1px solid var(--border);
             border-radius: 30px;
@@ -863,7 +873,7 @@
         /* HOME PAGE */
         /* First steps section */
         .home-steps-card {
-            background: #fff;
+            background: var(--bg-white);
             border: 1px solid var(--border);
             border-radius: 14px;
             padding: 20px 24px;
@@ -1030,7 +1040,7 @@
         }
 
         .home-post-card {
-            background: #fff;
+            background: var(--bg-white);
             border: 1px solid var(--border);
             border-radius: 12px;
             padding: 18px;
@@ -1080,11 +1090,52 @@
         .home-post-inspired {
             font-size: 0.7rem;
             color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
-        .home-post-inspired a {
+        .home-post-inspired .inspired-icon { color: var(--green); }
+        .home-post-inspired .inspired-arrow {
             color: var(--accent);
-            text-decoration: none;
-            font-weight: 600;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: transform 0.15s;
+            display: inline-block;
+        }
+        .home-post-inspired .inspired-arrow:hover { transform: translateX(3px); }
+
+        .ref-popup {
+            display: none;
+            margin-top: 10px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            position: relative;
+        }
+        .ref-popup.open { display: block; }
+        .ref-popup-close {
+            position: absolute;
+            top: 8px; right: 10px;
+            background: none; border: none;
+            font-size: 1rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+        .ref-popup-label {
+            font-size: 0.65rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--accent);
+            margin-bottom: 8px;
+        }
+        .ref-popup-text {
+            font-size: 0.82rem;
+            color: var(--text-primary);
+            line-height: 1.55;
+            white-space: pre-line;
         }
         .home-post-edit-btn {
             padding: 6px 16px;
@@ -1119,7 +1170,7 @@
             margin-bottom: 28px;
         }
         .ctx-section {
-            background: #fff;
+            background: var(--bg-white);
             border: 1px solid var(--border);
             border-radius: 14px;
             padding: 24px;
@@ -1388,7 +1439,7 @@
             font-size: 0.78rem;
             font-weight: 600;
             cursor: pointer;
-            background: #fff;
+            background: var(--bg-white);
             color: var(--text-secondary);
             transition: all 0.15s;
         }
@@ -1406,7 +1457,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 14px 20px;
-            background: #fff;
+            background: var(--bg-white);
             border: 1px solid var(--accent);
             border-radius: 12px;
             margin-bottom: 20px;
@@ -1525,7 +1576,7 @@
             gap: 6px;
             padding: 8px 16px;
             border: 1px solid var(--accent);
-            background: #fff;
+            background: var(--bg-white);
             border-radius: 8px;
             font-family: inherit;
             font-size: 0.82rem;
@@ -1560,8 +1611,8 @@
             align-items: center;
             gap: 12px;
             padding: 12px 16px;
-            background: #FFF7F0;
-            border: 1px solid #FDE8D5;
+            background: var(--queue-slot-bg, #FFF7F0);
+            border: 1px solid var(--queue-slot-border, #FDE8D5);
             border-radius: 10px;
             margin-bottom: 6px;
             cursor: pointer;
@@ -1572,7 +1623,7 @@
             box-shadow: 0 1px 4px rgba(10,102,194,0.08);
         }
         .queue-slot.has-post {
-            background: #fff;
+            background: var(--bg-white);
             border-color: var(--border);
         }
         .queue-slot-time {
@@ -1602,7 +1653,7 @@
         .queue-slot-btn {
             padding: 4px 10px;
             border: 1px solid var(--border);
-            background: #fff;
+            background: var(--bg-white);
             border-radius: 6px;
             font-family: inherit;
             font-size: 0.7rem;
@@ -3076,8 +3127,7 @@
                             </div>
                             <div style="margin-bottom:16px;">
                                 <label style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Timezone</label>
-                                <select id="settingsTimezone" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
-                                    <option>Auto-detect</option>
+                                <select id="settingsTimezone" onchange="saveTimezone(this.value)" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
                                 </select>
                             </div>
                             <div style="margin-bottom:16px;">
@@ -3458,6 +3508,61 @@
             if (toggle) toggle.checked = enabled;
         }
 
+        function getUserTimezone() {
+            return localStorage.getItem('sl_timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone;
+        }
+
+        function saveTimezone(tz) {
+            localStorage.setItem('sl_timezone', tz);
+            renderQueue();
+        }
+
+        function populateTimezoneSelect() {
+            const select = document.getElementById('settingsTimezone');
+            if (!select || select.options.length > 1) return;
+            const allTz = Intl.supportedValuesOf('timeZone');
+            const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const savedTz = getUserTimezone();
+
+            select.innerHTML = '';
+            const autoOpt = document.createElement('option');
+            autoOpt.value = browserTz;
+            autoOpt.textContent = `Auto-detect (${browserTz.replace(/_/g, ' ')})`;
+            select.appendChild(autoOpt);
+
+            const regions = {};
+            allTz.forEach(tz => {
+                const parts = tz.split('/');
+                const region = parts[0];
+                if (!regions[region]) regions[region] = [];
+                regions[region].push(tz);
+            });
+
+            Object.keys(regions).sort().forEach(region => {
+                const group = document.createElement('optgroup');
+                group.label = region.replace(/_/g, ' ');
+                regions[region].forEach(tz => {
+                    const opt = document.createElement('option');
+                    opt.value = tz;
+                    const now = new Date();
+                    let offset = '';
+                    try {
+                        const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(now);
+                        const tzPart = parts.find(p => p.type === 'timeZoneName');
+                        if (tzPart) offset = ' (' + tzPart.value + ')';
+                    } catch {}
+                    opt.textContent = tz.replace(/_/g, ' ') + offset;
+                    if (tz === savedTz) opt.selected = true;
+                    group.appendChild(opt);
+                });
+                select.appendChild(group);
+            });
+
+            if (!savedTz || savedTz === browserTz) {
+                select.value = browserTz;
+            }
+        }
+
         function loadSettingsPage() {
             if (!currentUser) return;
             const el = id => document.getElementById(id);
@@ -3481,6 +3586,7 @@
             el('teamOwnerEmail').textContent = currentUser.email || '';
             const dmToggle = document.getElementById('darkModeToggle');
             if (dmToggle) dmToggle.checked = document.body.classList.contains('dark-mode');
+            populateTimezoneSelect();
             const firstTab = document.querySelector('.settings-tab');
             if (firstTab) switchSettingsTab('general', firstTab);
         }
@@ -3622,8 +3728,11 @@
 
                 if (data.posts && data.posts.length > 0) {
                     trackCredit('aiPosts');
-                    container.innerHTML = data.posts.map((post, i) => `
-                        <div class="ai-post-card">
+                    window._modalRefs = data.references || [];
+                    container.innerHTML = data.posts.map((post, i) => {
+                        const ref = window._modalRefs[i];
+                        const likes = ref ? ref.likes : '2.3K';
+                        return `<div class="ai-post-card">
                             <div class="ai-post-author">
                                 <div class="ai-post-author-avatar">${currentUser && currentUser.picture ? `<img src="${currentUser.picture}">` : (currentUser ? currentUser.name.split(' ').map(n=>n[0]).join('') : 'SL')}</div>
                                 <div>
@@ -3632,9 +3741,19 @@
                                 </div>
                             </div>
                             <div class="ai-post-body">${post}</div>
+                            <div class="home-post-inspired" style="margin-bottom:10px;">
+                                <span class="inspired-icon">&#10003;</span>
+                                Inspired by a post with ${likes} likes
+                                <span class="inspired-arrow" onclick="toggleRefPopup('modalRef${i}')">&rarr;</span>
+                            </div>
+                            ${ref ? `<div class="ref-popup" id="modalRef${i}">
+                                <button class="ref-popup-close" onclick="toggleRefPopup('modalRef${i}')">&times;</button>
+                                <div class="ref-popup-label">Original Reference</div>
+                                <div class="ref-popup-text">${ref.text}</div>
+                            </div>` : ''}
                             <button class="ai-post-add-btn" id="modalAddBtn${i}" onclick="addModalPostToQueue(${i}, this)">Add to queue</button>
-                        </div>
-                    `).join('');
+                        </div>`;
+                    }).join('');
                     window._modalPosts = data.posts;
                 } else {
                     container.innerHTML = '<p style="text-align:center;padding:24px;color:var(--text-muted);">Could not generate posts. Please configure your OpenAI API key.</p>';
@@ -3725,6 +3844,12 @@
             return String(hh).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ' ' + ampm;
         }
 
+        function getNowInTimezone() {
+            const tz = getUserTimezone();
+            const str = new Date().toLocaleString('en-US', { timeZone: tz });
+            return new Date(str);
+        }
+
         function renderQueue(filter) {
             if (filter) currentQueueFilter = filter;
             const list = document.getElementById('queueList');
@@ -3758,12 +3883,12 @@
         function renderQueueCalendar(list) {
             const scheduled = queue.filter(q => q.status === 'scheduled');
             const days = getScheduleDays(14);
-            const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const tz = getUserTimezone();
             const tzShort = tz ? '(' + tz.split('/').pop().replace(/_/g, ' ') + ')' : '';
             const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
             const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            const today = new Date();
-            const todayStr = today.toDateString();
+            const nowInTz = getNowInTimezone();
+            const todayStr = nowInTz.toDateString();
 
             let slotIndex = 0;
             let html = '';
@@ -3778,7 +3903,7 @@
                 html += `<div class="queue-day-label"><span class="day-name" style="color:${dayColor}">${dayLabel}</span><span class="day-date">${dateStr}</span>${isToday ? `<span class="day-tz">${tzShort}</span>` : ''}</div>`;
 
                 const slotsForDay = isToday
-                    ? QUEUE_SCHEDULE_SLOTS.filter(s => s.h > today.getHours() || (s.h === today.getHours() && s.m > today.getMinutes()))
+                    ? QUEUE_SCHEDULE_SLOTS.filter(s => s.h > nowInTz.getHours() || (s.h === nowInTz.getHours() && s.m > nowInTz.getMinutes()))
                     : QUEUE_SCHEDULE_SLOTS.filter((_, i) => {
                         const dow = day.getDay();
                         if (dow === 1 || dow === 4) return i === 1;
@@ -3920,9 +4045,10 @@
 
                 if (data.posts && data.posts.length > 0) {
                     window._homePosts = data.posts;
-                    const likeOptions = ['1.3K', '2K', '3.3K', '1.9K', '5.6K', '4.1K', '2.8K', '6.2K'];
+                    window._homeRefs = data.references || [];
                     grid.innerHTML = data.posts.map((post, i) => {
-                        const likes = likeOptions[i % likeOptions.length];
+                        const ref = window._homeRefs[i];
+                        const likes = ref ? ref.likes : '2.3K';
                         return `<div class="home-post-card">
                             <div class="home-post-author">
                                 <div class="home-post-avatar">${initials}</div>
@@ -3933,9 +4059,18 @@
                             </div>
                             <div class="home-post-body">${post}</div>
                             <div class="home-post-footer">
-                                <div class="home-post-inspired">Inspired by a post with ${likes} likes <a href="#">&rarr;</a></div>
+                                <div class="home-post-inspired">
+                                    <span class="inspired-icon">&#10003;</span>
+                                    Inspired by a post with ${likes} likes
+                                    <span class="inspired-arrow" onclick="toggleRefPopup('homeRef${i}')">&rarr;</span>
+                                </div>
                                 <button class="home-post-edit-btn" onclick="editHomePost(${i})">Edit post</button>
                             </div>
+                            ${ref ? `<div class="ref-popup" id="homeRef${i}">
+                                <button class="ref-popup-close" onclick="toggleRefPopup('homeRef${i}')">&times;</button>
+                                <div class="ref-popup-label">Original Reference</div>
+                                <div class="ref-popup-text">${ref.text}</div>
+                            </div>` : ''}
                         </div>`;
                     }).join('');
                 } else {
@@ -3944,6 +4079,12 @@
             } catch {
                 grid.innerHTML = '<div class="home-post-loading">AI generation is not available yet. Add your OpenAI API key to get started.</div>';
             }
+        }
+
+        function toggleRefPopup(id) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.classList.toggle('open');
         }
 
         function editHomePost(index) {
