@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const path = require('path');
 const Stripe = require('stripe');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -26,6 +26,21 @@ async function dbGetUser(linkedinId) {
         return result.Item || null;
     } catch (err) {
         console.error('DynamoDB getUser error:', err.message);
+        return null;
+    }
+}
+
+async function dbFindByEmail(email) {
+    try {
+        const result = await ddb.send(new ScanCommand({
+            TableName: DYNAMO_TABLE,
+            FilterExpression: 'email = :email',
+            ExpressionAttributeValues: { ':email': email },
+            Limit: 1,
+        }));
+        return (result.Items && result.Items[0]) || null;
+    } catch (err) {
+        console.error('DynamoDB findByEmail error:', err.message);
         return null;
     }
 }
@@ -215,12 +230,12 @@ app.get('/auth/linkedin/callback', async (req, res) => {
 
         console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!req.session.user.paid} | onboarded=${!!req.session.user.onboardingComplete}`);
 
-        if (req.session.user.paid && req.session.user.onboardingComplete) {
+        if (req.session.user.paid) {
             res.redirect('/app');
-        } else if (req.session.user.paid) {
-            res.redirect('/onboarding');
+        } else if (req.session.user.onboardingComplete) {
+            res.redirect('/app');
         } else {
-            res.redirect('/upgrade');
+            res.redirect('/onboarding');
         }
 
     } catch (err) {
@@ -819,14 +834,16 @@ app.post('/api/extension/auth', async (req, res) => {
     const { email, linkedinId } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required' });
 
-    // Find user by email in DynamoDB (scan is fine for small user counts)
     let user = null;
     if (linkedinId) {
         user = await dbGetUser(linkedinId);
     }
 
     if (!user) {
-        // Try to find by looking up session user
+        user = await dbFindByEmail(email);
+    }
+
+    if (!user) {
         if (req.session.user && req.session.user.email === email) {
             user = req.session.user;
         }
