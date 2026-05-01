@@ -174,18 +174,23 @@
             position: absolute;
             left: 8px;
             right: 8px;
-            bottom: calc(100% + 10px);
+            bottom: 100%;
+            padding-bottom: 12px;
+            z-index: 300;
+        }
+        .sidebar-credits:hover .credits-popup { display: block; }
+
+        .credits-popup-inner {
             background: #1e1e2e;
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            z-index: 300;
             padding: 16px;
             color: #fff;
+            position: relative;
         }
-        .sidebar-credits:hover .credits-popup { display: block; }
 
-        .credits-popup::after {
+        .credits-popup-inner::after {
             content: '';
             position: absolute;
             left: 24px;
@@ -264,6 +269,53 @@
             align-items: center;
             gap: 10px;
             padding: 8px 4px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.2s;
+            position: relative;
+        }
+        .sidebar-user:hover { background: rgba(255,255,255,0.06); }
+
+        .sidebar-user-arrow {
+            margin-left: auto;
+            font-size: 0.65rem;
+            color: var(--sidebar-text);
+            transition: transform 0.2s;
+        }
+        .sidebar-user.menu-open .sidebar-user-arrow { transform: rotate(180deg); }
+
+        .sidebar-user-menu {
+            display: none;
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: calc(100% + 6px);
+            background: #1e1e2e;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 400;
+            overflow: hidden;
+        }
+        .sidebar-user.menu-open .sidebar-user-menu { display: block; }
+
+        .sidebar-user-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            font-size: 0.82rem;
+            font-weight: 500;
+            color: #fff;
+            text-decoration: none;
+            transition: background 0.15s;
+            cursor: pointer;
+        }
+        .sidebar-user-menu-item:hover { background: rgba(255,255,255,0.08); }
+        .sidebar-user-menu-item .menu-icon { font-size: 0.95rem; width: 20px; text-align: center; }
+        .sidebar-user-menu-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
         }
 
         .sidebar-user-avatar {
@@ -811,6 +863,14 @@
             justify-content: center;
             color: #fff;
             font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .home-mission-check {
+            width: 28px; height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
             flex-shrink: 0;
         }
         .home-mission-text {
@@ -2333,18 +2393,56 @@
         }
 
         @media (max-width: 768px) {
-            .sidebar { width: 60px; }
-            .sidebar-logo span, .sidebar-create-btn, .nav-item span,
-            .nav-section, .sidebar-bottom, .nav-sub-item { display: none; }
-            .nav-item { justify-content: center; padding: 12px; }
-            .main { margin-left: 60px; }
+            .sidebar {
+                position: fixed;
+                left: -240px;
+                top: 0;
+                width: 240px;
+                z-index: 1000;
+                transition: left 0.3s ease;
+            }
+            .sidebar.mobile-open { left: 0; }
+            .sidebar-overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0,0,0,0.5);
+                z-index: 999;
+            }
+            .sidebar-overlay.active { display: block; }
+            .main { margin-left: 0; }
+            .main-header { padding-left: 56px; }
+            .mobile-menu-btn {
+                display: flex;
+                position: fixed;
+                top: 14px;
+                left: 12px;
+                z-index: 998;
+                width: 36px; height: 36px;
+                align-items: center;
+                justify-content: center;
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                color: var(--text-primary);
+                font-size: 1.2rem;
+                cursor: pointer;
+            }
             .main-content { padding: 20px 16px; }
             .stats-grid { grid-template-columns: 1fr; }
             .engagement-stats { grid-template-columns: 1fr; }
         }
+        @media (min-width: 769px) {
+            .mobile-menu-btn { display: none; }
+            .sidebar-overlay { display: none !important; }
+        }
     </style>
 </head>
 <body>
+
+    <!-- MOBILE MENU -->
+    <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open');document.getElementById('sidebarOverlay').classList.toggle('active')">&#9776;</button>
+    <div class="sidebar-overlay" id="sidebarOverlay" onclick="document.querySelector('.sidebar').classList.remove('mobile-open');this.classList.remove('active')"></div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
@@ -2381,24 +2479,24 @@
             </a>
 
             <div class="nav-section">Engage</div>
-            <a class="nav-item nav-sub-item" onclick="#">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
                 <span class="nav-icon">&#128269;</span> <span>Discover</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="#">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
                 <span class="nav-icon">&#128172;</span> <span>Mentions</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="#">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
                 <span class="nav-icon">&#128203;</span> <span>Lists</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="#">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
                 <span class="nav-icon">&#128172;</span> <span>Replies</span>
             </a>
 
-            <div class="nav-section">&nbsp;</div>
-            <a class="nav-item" onclick="#">
+            <div class="nav-section">CRM</div>
+            <a class="nav-item" onclick="showEngageDisclaimer()">
                 <span class="nav-icon">&#128101;</span> <span>CRM</span>
             </a>
-            <a class="nav-item" onclick="#">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
                 <span class="nav-icon">&#9993;</span> <span>DMs</span>
             </a>
         </nav>
@@ -2409,6 +2507,7 @@
                 <span><strong id="creditsCount">500</strong> credits</span>
 
                 <div class="credits-popup">
+                    <div class="credits-popup-inner">
                     <div class="credits-popup-title">Credits for AI-powered features</div>
 
                     <div class="credits-popup-section">
@@ -2464,17 +2563,38 @@
 
                     <div class="credits-popup-note">Trial limits are reduced. Your limits will increase when you subscribe.</div>
                     <a class="credits-popup-upgrade" href="/upgrade">Skip Trial &amp; Upgrade</a>
+                    </div>
                 </div>
             </div>
-            <div class="sidebar-user">
+            <div class="sidebar-user" onclick="this.classList.toggle('menu-open')">
                 <div class="sidebar-user-avatar" id="sidebarAvatar"></div>
                 <div class="sidebar-user-info">
                     <div class="sidebar-user-name" id="sidebarName">Loading...</div>
                     <div class="sidebar-user-handle" id="sidebarHandle">@user</div>
                 </div>
+                <span class="sidebar-user-arrow">&#9650;</span>
+                <div class="sidebar-user-menu" onclick="event.stopPropagation()">
+                    <a class="sidebar-user-menu-item" onclick="showPage('settings');document.querySelector('.sidebar-user').classList.remove('menu-open')">
+                        <span class="menu-icon">&#9881;</span> Account Settings
+                    </a>
+                    <a class="sidebar-user-menu-item" href="https://chromewebstore.google.com/detail/superlinkedin" target="_blank" rel="noopener">
+                        <span class="menu-icon">&#128268;</span> Chrome Extension
+                    </a>
+                    <a class="sidebar-user-menu-item" onclick="showAddAccountModal()">
+                        <span class="menu-icon">&#10010;</span> Add Account
+                    </a>
+                    <div class="sidebar-user-menu-divider"></div>
+                    <a class="sidebar-user-menu-item" href="/auth/logout">
+                        <span class="menu-icon">&#128682;</span> Sign Out
+                    </a>
+                </div>
             </div>
             <div class="sidebar-links">
-                <a class="sidebar-link">&#128218; Learn / Help</a>
+                <a class="sidebar-link" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'" style="cursor:pointer;">&#128218; Learn / Help</a>
+                <div class="sidebar-help-submenu" style="display:none;padding:4px 0 4px 20px;">
+                    <a class="sidebar-link" onclick="showPage('home');document.getElementById('homePlaybook').style.display='block';document.getElementById('homePlaybook').scrollIntoView({behavior:'smooth'})" style="font-size:0.72rem;padding:4px 0;cursor:pointer;">&#128214; Playbook</a>
+                    <a class="sidebar-link" href="mailto:info@superlinkedin.org?subject=SuperLinkedIn%20Support%20Request" style="font-size:0.72rem;padding:4px 0;">&#128172; Get Support</a>
+                </div>
                 <a class="sidebar-link">&#127873; Earn 40% Referral</a>
             </div>
         </div>
@@ -2498,38 +2618,43 @@
                     <div class="home-steps-title">Your first steps on SuperLinkedIn</div>
                     <div class="home-steps-sub">Complete these missions to get familiar with the platform and earn free credits.</div>
 
-                    <div class="home-mission" onclick="showPage('create')">
-                        <div class="home-mission-icon">&#9998;</div>
+                    <div class="home-mission" id="mission-profile" onclick="showPage('context')">
+                        <div class="home-mission-check" id="missionCheckProfile">&#9898;</div>
                         <div class="home-mission-text">
-                            <strong>Set up your profile</strong>
+                            <strong id="missionTextProfile">Set up your profile</strong>
                             <span>Tell our AI about you</span>
                         </div>
-                        <span class="home-mission-reward">+100 free credits</span>
+                        <span class="home-mission-reward" id="missionRewardProfile">+100 free credits</span>
                     </div>
 
-                    <div class="home-mission" onclick="toggleCompose()">
-                        <div class="home-mission-icon">&#128640;</div>
+                    <div class="home-mission" id="mission-post" onclick="toggleCompose()">
+                        <div class="home-mission-check" id="missionCheckPost">&#9898;</div>
                         <div class="home-mission-text">
-                            <strong>Publish your first post</strong>
+                            <strong id="missionTextPost">Publish your first post</strong>
                             <span>Write or generate a post and publish it</span>
                         </div>
-                        <span class="home-mission-reward">+50 free credits</span>
+                        <span class="home-mission-reward" id="missionRewardPost">+50 free credits</span>
                     </div>
 
-                    <div class="home-mission" onclick="showPage('analytics')">
-                        <div class="home-mission-icon">&#128202;</div>
+                    <div class="home-mission" id="mission-extension" onclick="window.open('https://chromewebstore.google.com/detail/superlinkedin','_blank')">
+                        <div class="home-mission-check" id="missionCheckExtension">&#9898;</div>
                         <div class="home-mission-text">
-                            <strong>Connect Chrome Extension</strong>
+                            <strong id="missionTextExtension">Connect Chrome Extension</strong>
                             <span>Sync your LinkedIn analytics</span>
                         </div>
-                        <span class="home-mission-reward">+50 free credits</span>
+                        <span class="home-mission-reward" id="missionRewardExtension">+50 free credits</span>
                     </div>
 
-                    <div class="home-dots">
-                        <div class="home-dot active"></div>
-                        <div class="home-dot"></div>
-                        <div class="home-dot"></div>
+                    <div class="home-mission" onclick="showPage('home');document.getElementById('homePlaybook').style.display='block';document.getElementById('homePlaybook').scrollIntoView({behavior:'smooth'})">
+                        <div class="home-mission-check">&#128214;</div>
+                        <div class="home-mission-text">
+                            <strong>Read the SuperLinkedIn Playbook</strong>
+                            <span>Learn how to grow on LinkedIn</span>
+                        </div>
+                        <span class="home-mission-reward">Free</span>
                     </div>
+
+                    <div id="missionProgress" style="font-size:0.75rem;color:var(--text-muted);text-align:center;margin-top:8px;">0 / 3 completed</div>
                 </div>
 
                 <!-- Playbook -->
@@ -2869,6 +2994,86 @@
                 </div>
             </div>
 
+            <!-- SETTINGS PAGE -->
+            <div class="page" id="page-settings">
+                <div style="max-width:700px;">
+                    <div style="margin-bottom:24px;">
+                        <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:4px;">Account Settings</h2>
+                        <p style="font-size:0.85rem;color:var(--text-secondary);">Manage your account preferences</p>
+                    </div>
+
+                    <div class="settings-tabs" style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;">
+                        <button class="settings-tab active" onclick="switchSettingsTab('general',this)" style="padding:10px 20px;background:none;border:none;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;">General</button>
+                        <button class="settings-tab" onclick="switchSettingsTab('team',this)" style="padding:10px 20px;background:none;border:none;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;">Team & Permissions</button>
+                        <button class="settings-tab" onclick="switchSettingsTab('plans',this)" style="padding:10px 20px;background:none;border:none;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;">Plans</button>
+                    </div>
+
+                    <!-- General Tab -->
+                    <div class="settings-panel" id="settingsGeneral">
+                        <div class="card" style="padding:24px;margin-bottom:16px;">
+                            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+                                <div id="settingsAvatar" style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#70B5F9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:1.2rem;overflow:hidden;"></div>
+                                <div>
+                                    <div id="settingsName" style="font-weight:700;font-size:1rem;">Loading...</div>
+                                    <div id="settingsEmail" style="font-size:0.82rem;color:var(--text-secondary);"></div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Display Name</label>
+                                <input type="text" id="settingsDisplayName" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Email</label>
+                                <input type="email" id="settingsEmailInput" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--bg-card);color:var(--text-secondary);outline:none;" disabled>
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Timezone</label>
+                                <select id="settingsTimezone" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.9rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                    <option>Auto-detect</option>
+                                </select>
+                            </div>
+                            <button onclick="showNotify('Saved','Settings saved successfully.','success')" style="padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">Save Changes</button>
+                        </div>
+
+                        <div class="card" style="padding:24px;">
+                            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:12px;color:#ef4444;">Danger Zone</h3>
+                            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">Once you delete your account, there is no going back.</p>
+                            <button style="padding:8px 20px;background:none;border:1px solid #ef4444;color:#ef4444;border-radius:8px;font-family:inherit;font-weight:600;font-size:0.82rem;cursor:pointer;">Delete Account</button>
+                        </div>
+                    </div>
+
+                    <!-- Team Tab -->
+                    <div class="settings-panel" id="settingsTeam" style="display:none;">
+                        <div class="card" style="padding:24px;">
+                            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:8px;">Team Members</h3>
+                            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px;">Manage who has access to your SuperLinkedIn workspace.</p>
+                            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;">
+                                <div id="teamOwnerAvatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#70B5F9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.75rem;overflow:hidden;"></div>
+                                <div style="flex:1;">
+                                    <div id="teamOwnerName" style="font-weight:600;font-size:0.85rem;">You</div>
+                                    <div id="teamOwnerEmail" style="font-size:0.75rem;color:var(--text-muted);">owner</div>
+                                </div>
+                                <span style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;">Owner</span>
+                            </div>
+                            <button style="padding:10px 20px;background:rgba(10,102,194,0.08);color:var(--accent);border:1px solid rgba(10,102,194,0.2);border-radius:8px;font-family:inherit;font-weight:600;font-size:0.82rem;cursor:pointer;">+ Invite Team Member</button>
+                        </div>
+                    </div>
+
+                    <!-- Plans Tab -->
+                    <div class="settings-panel" id="settingsPlans" style="display:none;">
+                        <div class="card" style="padding:24px;">
+                            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:8px;">Current Plan</h3>
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                                <span style="padding:4px 14px;background:rgba(10,102,194,0.1);color:var(--accent);border-radius:20px;font-size:0.78rem;font-weight:700;">Trial</span>
+                                <span style="font-size:0.85rem;color:var(--text-secondary);">3-day free trial</span>
+                            </div>
+                            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px;">Upgrade to unlock all features, higher limits, and priority support.</p>
+                            <a href="/upgrade" style="display:inline-block;padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;text-decoration:none;">View Plans & Upgrade</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- CREATE PAGE -->
             <div class="page" id="page-create">
                 <div class="create-wrapper">
@@ -2954,14 +3159,14 @@
                 Generating with AI...
             </div>
             <div class="compose-toolbar">
+                <button class="compose-tool-btn" title="Media">&#128247;</button>
                 <button class="compose-tool-btn" title="Emoji">&#128522;</button>
-                <button class="compose-tool-btn" title="Image">&#128247;</button>
                 <button class="compose-tool-btn" title="Bold"><b>B</b></button>
                 <button class="compose-tool-btn" title="Italic"><i>I</i></button>
-                <button class="compose-tool-btn" title="Link">&#128279;</button>
-                <button class="compose-tool-btn" title="Bookmark">&#9734;</button>
+                <button class="compose-tool-btn ai-btn" onclick="generateInCompose()" title="Improve writing with AI">&#129302; AI</button>
+                <button class="compose-tool-btn" title="Quote">&#10078;</button>
                 <div style="flex:1;"></div>
-                <button class="compose-tool-btn ai-btn" onclick="generateInCompose()" title="Generate with AI">&#129302; AI</button>
+                <button class="compose-tool-btn" onclick="scheduleFromCompose()" title="Schedule Post">&#128197;</button>
             </div>
         </div>
 
@@ -3114,12 +3319,134 @@
         </div>
     </div>
 
+    <!-- ADD ACCOUNT MODAL -->
+    <div class="modal-overlay hidden" id="addAccountModal" onclick="if(event.target===this)document.getElementById('addAccountModal').classList.add('hidden')">
+        <div class="modal" style="max-width:420px;">
+            <button class="modal-close" onclick="document.getElementById('addAccountModal').classList.add('hidden')">&times;</button>
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:2rem;margin-bottom:12px;">&#128100;</div>
+                <h2 style="font-size:1.15rem;font-weight:800;margin-bottom:8px;">Add LinkedIn Account</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;">Connect another LinkedIn account to manage multiple profiles from one dashboard.</p>
+            </div>
+            <a href="/auth/linkedin" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#0A66C2;color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;text-decoration:none;">
+                <svg style="width:18px;height:18px;" viewBox="0 0 24 24"><path fill="#fff" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                Connect with LinkedIn
+            </a>
+        </div>
+    </div>
+
+    <!-- ENGAGE DISCLAIMER MODAL -->
+    <div class="modal-overlay hidden" id="engageDisclaimerModal" onclick="if(event.target===this)return">
+        <div class="modal" style="max-width:440px;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:2.5rem;margin-bottom:12px;">&#9888;&#65039;</div>
+                <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;">Important Disclaimer</h2>
+                <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">SuperLinkedIn's Engage and DM features interact with LinkedIn on your behalf. By continuing, you acknowledge that:</p>
+            </div>
+            <ul style="font-size:0.82rem;color:var(--text-secondary);line-height:1.7;padding-left:20px;margin-bottom:20px;">
+                <li>You are responsible for all interactions made through SuperLinkedIn</li>
+                <li>Automated engagement should comply with LinkedIn's Terms of Service</li>
+                <li>SuperLinkedIn is not liable for any account restrictions resulting from usage</li>
+                <li>Use these features responsibly and authentically</li>
+            </ul>
+            <button onclick="acceptEngageDisclaimer()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;transition:background 0.2s;">I Understand</button>
+        </div>
+    </div>
+
     <!-- CONFETTI CANVAS -->
     <canvas id="confettiCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
 
     <script>
         let currentUser = null;
         let queue = [];
+        let engageDisclaimerAccepted = localStorage.getItem('engageDisclaimerAccepted') === 'true';
+
+        function showEngageDisclaimer() {
+            if (engageDisclaimerAccepted) return;
+            document.getElementById('engageDisclaimerModal').classList.remove('hidden');
+        }
+
+        function acceptEngageDisclaimer() {
+            engageDisclaimerAccepted = true;
+            localStorage.setItem('engageDisclaimerAccepted', 'true');
+            document.getElementById('engageDisclaimerModal').classList.add('hidden');
+        }
+
+        function showAddAccountModal() {
+            document.getElementById('addAccountModal').classList.remove('hidden');
+        }
+
+        function switchSettingsTab(tab, btn) {
+            document.querySelectorAll('.settings-panel').forEach(p => p.style.display = 'none');
+            document.querySelectorAll('.settings-tab').forEach(t => {
+                t.classList.remove('active');
+                t.style.borderBottomColor = 'transparent';
+                t.style.color = 'var(--text-secondary)';
+            });
+            const panel = document.getElementById('settings' + tab.charAt(0).toUpperCase() + tab.slice(1));
+            if (panel) panel.style.display = 'block';
+            btn.classList.add('active');
+            btn.style.borderBottomColor = 'var(--accent)';
+            btn.style.color = 'var(--text-primary)';
+        }
+
+        function loadSettingsPage() {
+            if (!currentUser) return;
+            const el = id => document.getElementById(id);
+            el('settingsName').textContent = currentUser.name || '';
+            el('settingsEmail').textContent = currentUser.email || '';
+            el('settingsDisplayName').value = currentUser.name || '';
+            el('settingsEmailInput').value = currentUser.email || '';
+            const avatar = el('settingsAvatar');
+            if (currentUser.picture) {
+                avatar.innerHTML = `<img src="${currentUser.picture}" style="width:100%;height:100%;object-fit:cover;">`;
+            } else {
+                avatar.textContent = (currentUser.name || '').split(' ').map(n=>n[0]).join('').toUpperCase();
+            }
+            const teamAvatar = el('teamOwnerAvatar');
+            if (currentUser.picture) {
+                teamAvatar.innerHTML = `<img src="${currentUser.picture}" style="width:100%;height:100%;object-fit:cover;">`;
+            } else {
+                teamAvatar.textContent = (currentUser.name || '').split(' ').map(n=>n[0]).join('').toUpperCase();
+            }
+            el('teamOwnerName').textContent = currentUser.name || 'You';
+            el('teamOwnerEmail').textContent = currentUser.email || '';
+            // Activate first tab
+            const firstTab = document.querySelector('.settings-tab');
+            if (firstTab) switchSettingsTab('general', firstTab);
+        }
+
+        function checkMissions() {
+            const completedMissions = JSON.parse(localStorage.getItem('sl_missions') || '{}');
+            let count = 0;
+
+            if (currentUser && currentUser.aboutYou) {
+                completedMissions.profile = true;
+            }
+            if (queue.some(q => q.status === 'posted')) {
+                completedMissions.post = true;
+            }
+            if (currentUser && currentUser.analyticsLastSync) {
+                completedMissions.extension = true;
+            }
+
+            localStorage.setItem('sl_missions', JSON.stringify(completedMissions));
+
+            ['profile', 'post', 'extension'].forEach(key => {
+                const check = document.getElementById('missionCheck' + key.charAt(0).toUpperCase() + key.slice(1));
+                const text = document.getElementById('missionText' + key.charAt(0).toUpperCase() + key.slice(1));
+                const reward = document.getElementById('missionReward' + key.charAt(0).toUpperCase() + key.slice(1));
+                if (completedMissions[key]) {
+                    if (check) { check.innerHTML = '&#9989;'; check.style.color = '#22c55e'; }
+                    if (text) text.style.textDecoration = 'line-through';
+                    if (reward) { reward.style.color = '#22c55e'; reward.textContent = 'Earned!'; }
+                    count++;
+                }
+            });
+
+            const progress = document.getElementById('missionProgress');
+            if (progress) progress.textContent = count + ' / 3 completed';
+        }
 
         // Load user info
         async function loadUser() {
@@ -3192,17 +3519,24 @@
             const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
             if (navItem) navItem.classList.add('active');
 
-            const titles = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer', context: 'Context' };
+            const titles = { home: 'Home', queue: 'Queue', analytics: 'Analytics', create: 'AI Writer', context: 'Context', settings: 'Account Settings' };
             document.getElementById('pageTitle').textContent = titles[page] || page;
 
             if (page === 'analytics') renderAnalytics();
             if (page === 'context') loadContextPage();
+            if (page === 'settings') loadSettingsPage();
         }
 
         // Modal
+        let modalShownOnce = localStorage.getItem('modalShownOnce') === 'true';
+
         function openModal() {
             document.getElementById('aiModal').classList.remove('hidden');
             generateModalPosts();
+            if (!modalShownOnce) {
+                modalShownOnce = true;
+                localStorage.setItem('modalShownOnce', 'true');
+            }
         }
 
         function closeModal() {
@@ -4306,8 +4640,8 @@
             await loadUser();
             await loadQueue();
             updateCreditsPopup();
-            if (!localStorage.getItem('sl_welcome_shown')) {
-                localStorage.setItem('sl_welcome_shown', '1');
+            checkMissions();
+            if (!modalShownOnce) {
                 setTimeout(openModal, 800);
             }
         }

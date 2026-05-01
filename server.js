@@ -598,12 +598,16 @@ app.post('/api/ai/generate-posts', async (req, res) => {
     const aboutYou = user.aboutYou || '';
     const creators = (user.favoriteCreators || []).map(c => c.name).join(', ');
 
-    const systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts for a user. Each post should be engaging, authentic, and ready to publish. Return ONLY a JSON array of 3 strings, each being a complete post.`;
+    const customRules = user.customRules || '';
+    const interests = (user.interests || []).join(', ');
+    const products = (user.products || []).map(p => p.name || p.url).join(', ');
+
+    const systemPrompt = `You are a LinkedIn content strategist. Generate 3 unique LinkedIn posts for a user. Each post should be engaging, authentic, and ready to publish. Return ONLY a JSON array of 3 strings, each being a complete post.${customRules ? `\n\nIMPORTANT RULES from the user that MUST be followed:\n${customRules}` : ''}`;
 
     const userPrompt = `Generate 3 LinkedIn posts for me.
 About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
 My preferred writing styles: ${topTags.join(', ') || 'motivational, professional, storytelling'}
-Creators I admire: ${creators || 'thought leaders in my industry'}
+Creators I admire: ${creators || 'thought leaders in my industry'}${interests ? `\nMy interests: ${interests}` : ''}${products ? `\nMy products/services: ${products}` : ''}
 Make each post different in format (one list-based, one story, one insight/opinion). Keep posts between 100-300 words. Do NOT include hashtags.`;
 
     try {
@@ -669,10 +673,15 @@ app.post('/api/ai/write', async (req, res) => {
         humorous: 'humorous, witty, lighthearted',
     };
 
+    const customRules = user.customRules || '';
+    const interests = (user.interests || []).join(', ');
+
     const userPrompt = `Write a single LinkedIn post for me.
 About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
-Tone: ${toneDesc[tone] || toneDesc.auto}
+Tone: ${toneDesc[tone] || toneDesc.auto}${interests ? `\nMy interests: ${interests}` : ''}
 Requirements: 100-300 words, engaging opening line, no hashtags, ready to publish. Return ONLY the post text.`;
+
+    const systemContent = `You are a LinkedIn content writer. Write a single LinkedIn post. Return ONLY the post text, nothing else.${customRules ? `\n\nIMPORTANT RULES from the user that MUST be followed:\n${customRules}` : ''}`;
 
     try {
         const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -684,7 +693,7 @@ Requirements: 100-300 words, engaging opening line, no hashtags, ready to publis
             body: JSON.stringify({
                 model: 'gpt-4o-mini',
                 messages: [
-                    { role: 'system', content: 'You are a LinkedIn content writer. Write a single LinkedIn post. Return ONLY the post text, nothing else.' },
+                    { role: 'system', content: systemContent },
                     { role: 'user', content: userPrompt },
                 ],
                 temperature: 0.8,
@@ -701,9 +710,15 @@ Requirements: 100-300 words, engaging opening line, no hashtags, ready to publis
     }
 });
 
-app.get('/api/queue', (req, res) => {
+app.get('/api/queue', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
+    }
+    if (!req.session.user.queue || req.session.user.queue.length === 0) {
+        const dbUser = await dbGetUser(req.session.user.linkedinId);
+        if (dbUser && dbUser.queue) {
+            req.session.user.queue = dbUser.queue;
+        }
     }
     res.json({ queue: req.session.user.queue || [] });
 });
