@@ -29,6 +29,53 @@
             --radius: 12px;
         }
 
+        body.dark-mode {
+            --bg: #0f0f1a;
+            --bg-white: #1a1a2e;
+            --text-primary: #e4e4ed;
+            --text-secondary: #a0a0b8;
+            --text-muted: #6b6b80;
+            --border: #2a2a40;
+            --accent-light: rgba(10,102,194,0.15);
+        }
+        body.dark-mode .card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+            background: #12121f !important;
+            border-color: #2a2a40 !important;
+            color: var(--text-primary) !important;
+        }
+        body.dark-mode .compose-panel { background: #1a1a2e; border-color: #2a2a40; }
+
+        .dark-toggle {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
+        }
+        .dark-toggle input { opacity: 0; width: 0; height: 0; }
+        .dark-toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #ccc;
+            border-radius: 24px;
+            transition: background 0.25s;
+        }
+        .dark-toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.25s;
+        }
+        .dark-toggle input:checked + .dark-toggle-slider { background: var(--accent); }
+        .dark-toggle input:checked + .dark-toggle-slider::before { transform: translateX(20px); }
+
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
@@ -2439,6 +2486,7 @@
     </style>
 </head>
 <body>
+    <script>if (localStorage.getItem('sl_dark_mode') === 'true') document.body.classList.add('dark-mode');</script>
 
     <!-- MOBILE MENU -->
     <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open');document.getElementById('sidebarOverlay').classList.toggle('active')">&#9776;</button>
@@ -3032,6 +3080,19 @@
                                     <option>Auto-detect</option>
                                 </select>
                             </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">Appearance</label>
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);">
+                                    <div>
+                                        <div style="font-size:0.88rem;font-weight:600;color:var(--text-primary);">Dark Mode</div>
+                                        <div style="font-size:0.78rem;color:var(--text-secondary);margin-top:2px;">Switch to a darker color scheme</div>
+                                    </div>
+                                    <label class="dark-toggle">
+                                        <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode(this.checked)">
+                                        <span class="dark-toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
                             <button onclick="showNotify('Saved','Settings saved successfully.','success')" style="padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">Save Changes</button>
                         </div>
 
@@ -3390,6 +3451,13 @@
             btn.style.color = 'var(--text-primary)';
         }
 
+        function toggleDarkMode(enabled) {
+            document.body.classList.toggle('dark-mode', enabled);
+            localStorage.setItem('sl_dark_mode', enabled ? 'true' : 'false');
+            const toggle = document.getElementById('darkModeToggle');
+            if (toggle) toggle.checked = enabled;
+        }
+
         function loadSettingsPage() {
             if (!currentUser) return;
             const el = id => document.getElementById(id);
@@ -3411,7 +3479,8 @@
             }
             el('teamOwnerName').textContent = currentUser.name || 'You';
             el('teamOwnerEmail').textContent = currentUser.email || '';
-            // Activate first tab
+            const dmToggle = document.getElementById('darkModeToggle');
+            if (dmToggle) dmToggle.checked = document.body.classList.contains('dark-mode');
             const firstTab = document.querySelector('.settings-tab');
             if (firstTab) switchSettingsTab('general', firstTab);
         }
