@@ -7066,7 +7066,8 @@
             const caption = document.getElementById('carouselCaption').value.trim();
             if (!caption) return showNotify('Caption Required', 'Add a post caption for your LinkedIn post.', 'error');
 
-            if (!confirm('Publish this carousel to LinkedIn now?')) return;
+            const confirmed = await showNotify('Publish Carousel', 'Publish this carousel to LinkedIn now?', 'info', { confirm: true, confirmText: 'Publish' });
+            if (!confirmed) return;
 
             const brandColor = document.getElementById('carouselBrandColor').value || '#0A66C2';
             const topic = document.getElementById('carouselTopic').value.trim();
