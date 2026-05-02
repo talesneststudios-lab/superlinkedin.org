@@ -100,13 +100,33 @@
         <a href="/onboarding" class="btn">Start Setup &rarr;</a>
     </div>
     <script>
-        fetch('/api/checkout/confirm', { method: 'POST' }).then(() => {
-            return fetch('/api/me');
-        }).then(r => r.json()).then(user => {
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get('session_id');
+
+        async function confirmCheckout() {
+            let plan = 'pro_monthly';
+            if (sessionId) {
+                try {
+                    const sr = await fetch('/api/checkout/session?session_id=' + sessionId);
+                    const sd = await sr.json();
+                    if (sd.plan) plan = sd.plan;
+                } catch {}
+            }
+
+            await fetch('/api/checkout/confirm', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan }),
+            });
+
+            const r = await fetch('/api/me');
+            const user = await r.json();
             if (user.onboardingComplete) {
                 window.location.href = '/app';
             }
-        }).catch(() => {});
+        }
+
+        confirmCheckout().catch(() => {});
     </script>
 </body>
 </html>

@@ -113,10 +113,18 @@ const LINKEDIN = {
     scope: 'openid profile email w_member_social',
 };
 
+const DynamoDBStore = require('connect-dynamodb')({ session });
+
 app.use(session({
+    store: new DynamoDBStore({
+        table: process.env.DYNAMODB_SESSIONS_TABLE || 'superlinkedin-sessions',
+        AWSConfigJSON: { region: process.env.AWS_REGION || 'us-east-1' },
+        readCapacityUnits: 5,
+        writeCapacityUnits: 5,
+    }),
     secret: process.env.SESSION_SECRET || 'fallback-secret',
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
         secure: process.env.NODE_ENV === 'production',
         httpOnly: true,
@@ -215,13 +223,11 @@ app.get('/auth/linkedin/callback', async (req, res) => {
 
         const profile = await profileResponse.json();
 
-        // Step 5: Look up existing user in DynamoDB, merge with session
+        // Step 5: Look up existing user in DynamoDB — DB is the source of truth
         const dbUser = await dbGetUser(profile.sub) || {};
-        const existingSession = req.session.user || {};
 
         req.session.user = {
             ...dbUser,
-            ...existingSession,
             linkedinId: profile.sub,
             name: profile.name,
             email: profile.email,
@@ -271,13 +277,27 @@ const stripe = process.env.STRIPE_SECRET_KEY
     ? new Stripe(process.env.STRIPE_SECRET_KEY)
     : null;
 
+const PLAN_LIMITS = {
+    pro:      { aiCredits: 500, creditPeriod: 'month', maxProfiles: 3,  postsPerMonth: null, features: ['schedule', 'auto_post', 'basic_analytics', 'chrome_extension'] },
+    advanced: { aiCredits: 2000, creditPeriod: 'day',  maxProfiles: 5,  postsPerMonth: null, features: ['schedule', 'auto_post', 'advanced_analytics', 'chrome_extension', 'carousel', 'engage_engine', 'auto_repost', 'viral_library'] },
+    ultra:    { aiCredits: 5000, creditPeriod: 'day',  maxProfiles: 15, postsPerMonth: 5000, features: ['schedule', 'auto_post', 'advanced_analytics', 'chrome_extension', 'carousel', 'engage_engine', 'auto_repost', 'viral_library', 'team', 'white_label', 'api_access'] },
+};
+
+function getPlanTier(planKey) {
+    if (!planKey) return null;
+    if (planKey.startsWith('ultra')) return 'ultra';
+    if (planKey.startsWith('advanced')) return 'advanced';
+    if (planKey.startsWith('pro')) return 'pro';
+    return null;
+}
+
 const PLANS = {
-    pro_monthly:      { price: process.env.STRIPE_PRICE_PRO_MONTHLY,      name: 'SuperLinkedIn Pro',      trial: 3 },
-    pro_yearly:       { price: process.env.STRIPE_PRICE_PRO_YEARLY,       name: 'SuperLinkedIn Pro',      trial: 3 },
-    advanced_monthly: { price: process.env.STRIPE_PRICE_ADVANCED_MONTHLY, name: 'SuperLinkedIn Advanced', trial: 3 },
-    advanced_yearly:  { price: process.env.STRIPE_PRICE_ADVANCED_YEARLY,  name: 'SuperLinkedIn Advanced', trial: 3 },
-    ultra_monthly:    { price: process.env.STRIPE_PRICE_ULTRA_MONTHLY,    name: 'SuperLinkedIn Ultra',    trial: 3 },
-    ultra_yearly:     { price: process.env.STRIPE_PRICE_ULTRA_YEARLY,     name: 'SuperLinkedIn Ultra',    trial: 3 },
+    pro_monthly:      { price: process.env.STRIPE_PRICE_PRO_MONTHLY,      name: 'SuperLinkedIn Pro',      trial: 3, tier: 'pro' },
+    pro_yearly:       { price: process.env.STRIPE_PRICE_PRO_YEARLY,       name: 'SuperLinkedIn Pro',      trial: 3, tier: 'pro' },
+    advanced_monthly: { price: process.env.STRIPE_PRICE_ADVANCED_MONTHLY, name: 'SuperLinkedIn Advanced', trial: 3, tier: 'advanced' },
+    advanced_yearly:  { price: process.env.STRIPE_PRICE_ADVANCED_YEARLY,  name: 'SuperLinkedIn Advanced', trial: 3, tier: 'advanced' },
+    ultra_monthly:    { price: process.env.STRIPE_PRICE_ULTRA_MONTHLY,    name: 'SuperLinkedIn Ultra',    trial: 3, tier: 'ultra' },
+    ultra_yearly:     { price: process.env.STRIPE_PRICE_ULTRA_YEARLY,     name: 'SuperLinkedIn Ultra',    trial: 3, tier: 'ultra' },
 };
 
 app.post('/api/checkout', async (req, res) => {
@@ -323,15 +343,109 @@ app.post('/api/checkout', async (req, res) => {
     }
 });
 
+app.get('/api/checkout/session', async (req, res) => {
+    if (!stripe) return res.json({});
+    try {
+        const session = await stripe.checkout.sessions.retrieve(req.query.session_id);
+        res.json({ plan: session.metadata?.plan || 'pro_monthly' });
+    } catch {
+        res.json({ plan: 'pro_monthly' });
+    }
+});
+
 app.post('/api/checkout/confirm', async (req, res) => {
     if (req.session.user) {
+        const { plan } = req.body;
+        const tier = getPlanTier(plan) || 'pro';
         req.session.user.paid = true;
+        req.session.user.plan = plan || 'pro_monthly';
+        req.session.user.planTier = tier;
+        req.session.user.aiCreditsUsed = 0;
+        req.session.user.aiCreditsResetAt = new Date().toISOString();
+
         await dbUpdateFields(req.session.user.linkedinId, {
             paid: true,
             paidAt: new Date().toISOString(),
+            plan: req.session.user.plan,
+            planTier: tier,
+            aiCreditsUsed: 0,
+            aiCreditsResetAt: new Date().toISOString(),
         });
     }
     res.json({ ok: true });
+});
+
+// ---------- SUBSCRIPTION MANAGEMENT ----------
+
+app.post('/api/subscription/cancel', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    req.session.user.subscriptionCancelled = true;
+    req.session.user.cancelledAt = new Date().toISOString();
+
+    await dbUpdateFields(req.session.user.linkedinId, {
+        subscriptionCancelled: true,
+        cancelledAt: new Date().toISOString(),
+    });
+
+    console.log(`Subscription cancelled for ${req.session.user.name} (${req.session.user.email})`);
+    res.json({ ok: true });
+});
+
+// ---------- CREDITS ----------
+
+function getUserCreditsInfo(user) {
+    const tier = user.planTier || 'pro';
+    const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
+    const now = new Date();
+    const resetAt = user.aiCreditsResetAt ? new Date(user.aiCreditsResetAt) : new Date(0);
+
+    let shouldReset = false;
+    if (limits.creditPeriod === 'day') {
+        shouldReset = now.toDateString() !== resetAt.toDateString();
+    } else {
+        shouldReset = now.getMonth() !== resetAt.getMonth() || now.getFullYear() !== resetAt.getFullYear();
+    }
+
+    const used = shouldReset ? 0 : (user.aiCreditsUsed || 0);
+    return { tier, limits, used, shouldReset, remaining: Math.max(0, limits.aiCredits - used) };
+}
+
+async function consumeCredit(user, count) {
+    const info = getUserCreditsInfo(user);
+    const newUsed = info.shouldReset ? count : (user.aiCreditsUsed || 0) + count;
+    user.aiCreditsUsed = newUsed;
+    if (info.shouldReset) user.aiCreditsResetAt = new Date().toISOString();
+
+    await dbUpdateFields(user.linkedinId, {
+        aiCreditsUsed: newUsed,
+        aiCreditsResetAt: user.aiCreditsResetAt || new Date().toISOString(),
+    });
+}
+
+app.get('/api/credits', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    const user = req.session.user;
+    const info = getUserCreditsInfo(user);
+
+    if (info.shouldReset) {
+        user.aiCreditsUsed = 0;
+        user.aiCreditsResetAt = new Date().toISOString();
+        await dbUpdateFields(user.linkedinId, { aiCreditsUsed: 0, aiCreditsResetAt: user.aiCreditsResetAt });
+    }
+
+    res.json({
+        planTier: info.tier,
+        planName: (PLANS[(user.plan || 'pro_monthly')] || PLANS.pro_monthly).name,
+        creditPeriod: info.limits.creditPeriod,
+        aiCreditsTotal: info.limits.aiCredits,
+        aiCreditsUsed: info.used,
+        aiCreditsRemaining: info.remaining,
+        maxProfiles: info.limits.maxProfiles,
+        postsPerMonth: info.limits.postsPerMonth,
+        features: info.limits.features,
+    });
 });
 
 // ---------- ONBOARDING ----------
@@ -637,6 +751,11 @@ app.post('/api/ai/generate-posts', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
+    const credits = getUserCreditsInfo(req.session.user);
+    if (credits.remaining < 3) {
+        return res.json({ posts: [], error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
+    }
+
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
         return res.json({ posts: [] });
@@ -739,6 +858,7 @@ Make each post different in format (one list-based, one story, one insight/opini
             likes: likeOptions[Math.floor(Math.random() * likeOptions.length)],
         }));
 
+        await consumeCredit(req.session.user, posts.length);
         res.json({ posts, references });
     } catch (err) {
         console.error('AI generation error:', err);
@@ -749,6 +869,11 @@ Make each post different in format (one list-based, one story, one insight/opini
 app.post('/api/ai/write', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const credits = getUserCreditsInfo(req.session.user);
+    if (credits.remaining < 1) {
+        return res.json({ error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -837,6 +962,7 @@ Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITI
             const cut = post.lastIndexOf(' ', charLimit - 3);
             post = post.substring(0, cut > 0 ? cut : charLimit - 3) + '...';
         }
+        await consumeCredit(req.session.user, 1);
         res.json({ post });
     } catch (err) {
         console.error('AI write error:', err);
@@ -847,6 +973,11 @@ Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITI
 app.post('/api/ai/generate-product-posts', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const credits = getUserCreditsInfo(req.session.user);
+    if (credits.remaining < 3) {
+        return res.json({ posts: [], error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
     }
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -920,6 +1051,7 @@ Make them engaging, authentic, and not salesy. Do NOT include hashtags.${customR
             posts = content.split('\n\n').filter(p => p.trim().length > 50).slice(0, 3);
         }
 
+        await consumeCredit(req.session.user, posts.length);
         res.json({ posts, products: products.map(p => p.name || p.url || 'Product') });
     } catch (err) {
         console.error('Product post generation error:', err);
@@ -973,6 +1105,11 @@ app.post('/api/ai/improve', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
+    const credits = getUserCreditsInfo(req.session.user);
+    if (credits.remaining < 1) {
+        return res.json({ error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
+    }
+
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
         return res.json({ error: 'OpenAI API key not configured' });
@@ -1021,6 +1158,7 @@ app.post('/api/ai/improve', async (req, res) => {
 
         const data = await response.json();
         const result = data.choices?.[0]?.message?.content?.trim() || '';
+        await consumeCredit(req.session.user, 1);
         res.json({ text: result });
     } catch (err) {
         console.error('AI improve error:', err);
@@ -1251,11 +1389,24 @@ app.get('/api/analytics', async (req, res) => {
 
 // ---------- API ROUTES ----------
 
-// Get current user info
-app.get('/api/me', (req, res) => {
+// Get current user info (re-hydrate from DB to catch any missed updates)
+app.get('/api/me', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
+
+    const dbUser = await dbGetUser(req.session.user.linkedinId);
+    if (dbUser) {
+        req.session.user = {
+            ...dbUser,
+            linkedinId: req.session.user.linkedinId,
+            name: dbUser.name || req.session.user.name,
+            email: dbUser.email || req.session.user.email,
+            picture: dbUser.picture || req.session.user.picture,
+            accessToken: req.session.user.accessToken,
+        };
+    }
+
     const { accessToken, ...safeUser } = req.session.user;
     res.json(safeUser);
 });

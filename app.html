@@ -1620,6 +1620,8 @@
             margin-bottom: 6px;
             cursor: pointer;
             transition: border-color 0.15s, box-shadow 0.15s;
+            overflow: hidden;
+            min-width: 0;
         }
         .queue-slot:hover {
             border-color: var(--accent);
@@ -1634,6 +1636,7 @@
             font-weight: 700;
             color: var(--text-primary);
             min-width: 72px;
+            flex-shrink: 0;
         }
         .queue-slot-content {
             flex: 1;
@@ -1642,6 +1645,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            min-width: 0;
         }
         .queue-slot.has-post .queue-slot-content {
             color: var(--text-primary);
@@ -1649,10 +1653,14 @@
         .queue-slot-actions {
             display: flex;
             gap: 6px;
-            opacity: 0;
-            transition: opacity 0.15s;
+            flex-shrink: 0;
         }
-        .queue-slot:hover .queue-slot-actions { opacity: 1; }
+        .queue-slot-expand {
+            padding: 4px 8px; border: 1px solid var(--border); background: var(--bg-white);
+            border-radius: 6px; font-size: 1rem; cursor: pointer; color: var(--text-muted);
+            line-height: 1; transition: 0.15s; flex-shrink: 0;
+        }
+        .queue-slot-expand:hover { border-color: var(--accent); color: var(--accent); }
         .queue-slot-btn {
             padding: 4px 10px;
             border: 1px solid var(--border);
@@ -1666,6 +1674,28 @@
         }
         .queue-slot-btn:hover { border-color: var(--accent); color: var(--accent); }
         .queue-slot-btn.delete:hover { border-color: var(--red); color: var(--red); }
+
+        .queue-preview-overlay {
+            position: fixed; inset: 0; z-index: 5000; display: flex;
+            align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.45); opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .queue-preview-overlay.open { opacity: 1; pointer-events: auto; }
+        .queue-preview-modal {
+            background: var(--bg-white); border-radius: 16px; width: 520px; max-width: 94vw;
+            max-height: 80vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,0.18);
+            padding: 28px; transform: translateY(16px); transition: transform 0.2s;
+        }
+        .queue-preview-overlay.open .queue-preview-modal { transform: translateY(0); }
+        .queue-preview-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+        }
+        .queue-preview-header h3 { font-size: 1.1rem; font-weight: 800; }
+        .queue-preview-body {
+            font-size: 0.9rem; line-height: 1.7; color: var(--text-secondary);
+            white-space: pre-wrap; word-break: break-word;
+        }
+        .queue-preview-footer { display: flex; gap: 8px; margin-top: 20px; justify-content: flex-end; }
 
         /* Simple item list for drafts/posted/failed tabs */
         .queue-item {
@@ -2891,6 +2921,8 @@
         }
 
         @media (max-width: 768px) {
+            #planCardsGrid { grid-template-columns: 1fr !important; }
+            #planTestimonials { grid-template-columns: 1fr !important; }
             .sidebar {
                 position: fixed;
                 left: -240px;
@@ -2945,10 +2977,10 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <div class="sidebar-logo">
+        <a class="sidebar-logo" href="/" style="text-decoration:none;">
             <div class="logo-icon">SL</div>
             <span>SuperLinkedIn</span>
-        </div>
+        </a>
 
         <button class="sidebar-create-btn" onclick="toggleCompose()">+ Create a post</button>
 
@@ -3007,60 +3039,48 @@
 
                 <div class="credits-popup">
                     <div class="credits-popup-inner">
-                    <div class="credits-popup-title">Credits for AI-powered features</div>
+                    <div class="credits-popup-title">AI Credits</div>
 
                     <div class="credits-popup-section">
                         <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Daily limit:</span>
-                            <span class="credits-popup-row-value" id="popupDailyLimit">200</span>
+                            <span class="credits-popup-row-label">Plan limit:</span>
+                            <span class="credits-popup-row-value" id="popupDailyLimit">500/month</span>
                         </div>
                         <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Used today:</span>
+                            <span class="credits-popup-row-label">Used:</span>
                             <span class="credits-popup-row-value" id="popupUsedToday">0</span>
                         </div>
                         <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">Remaining:</span>
+                            <span class="credits-popup-row-value" id="popupCreditsTotal">500</span>
+                        </div>
+                    </div>
+
+                    <div class="credits-popup-section">
+                        <div class="credits-popup-section-title">Usage</div>
+                        <div class="credits-popup-row">
+                            <span class="credits-popup-row-label">AI credits:</span>
+                            <span class="credits-popup-row-value" id="creditsAIPosts">0 / 500</span>
+                        </div>
+                        <div class="credits-popup-row">
                             <span class="credits-popup-row-label">Available:</span>
-                            <span class="credits-popup-row-value" id="popupCreditsTotal">200</span>
-                        </div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Resets in:</span>
-                            <span class="credits-popup-row-value">24h</span>
+                            <span class="credits-popup-row-value" id="creditsAnalytics">500</span>
                         </div>
                     </div>
 
                     <div class="credits-popup-section">
-                        <div class="credits-popup-section-title">Engage Quota</div>
+                        <div class="credits-popup-section-title">Plan Details</div>
                         <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Used:</span>
-                            <span class="credits-popup-row-value" id="creditsAIPosts">0 / 75</span>
+                            <span class="credits-popup-row-label">Posts published:</span>
+                            <span class="credits-popup-row-value" id="creditsPublished">0</span>
                         </div>
                         <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Remaining:</span>
-                            <span class="credits-popup-row-value" id="creditsAnalytics">75</span>
-                        </div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Resets:</span>
-                            <span class="credits-popup-row-value">30d</span>
+                            <span class="credits-popup-row-label">Plan:</span>
+                            <span class="credits-popup-row-value" id="creditsAIWriter">Pro (3 profiles)</span>
                         </div>
                     </div>
 
-                    <div class="credits-popup-section">
-                        <div class="credits-popup-section-title">Post Quota</div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Used:</span>
-                            <span class="credits-popup-row-value" id="creditsPublished">0 / 50</span>
-                        </div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Remaining:</span>
-                            <span class="credits-popup-row-value" id="creditsAIWriter">50</span>
-                        </div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Resets:</span>
-                            <span class="credits-popup-row-value">30d</span>
-                        </div>
-                    </div>
-
-                    <div class="credits-popup-note">Trial limits are reduced. Your limits will increase when you subscribe.</div>
+                    <div class="credits-popup-note">Upgrade your plan for more AI credits and connected profiles.</div>
                     <a class="credits-popup-upgrade" href="/upgrade">Skip Trial &amp; Upgrade</a>
                     </div>
                 </div>
@@ -3079,8 +3099,8 @@
                     <a class="sidebar-user-menu-item" href="https://chromewebstore.google.com/detail/superlinkedin" target="_blank" rel="noopener">
                         <span class="menu-icon">&#128268;</span> Chrome Extension
                     </a>
-                    <a class="sidebar-user-menu-item" onclick="showAddAccountModal()">
-                        <span class="menu-icon">&#10010;</span> Add Account
+                    <a class="sidebar-user-menu-item" onclick="showAddAccountModal()" style="color:#f97316;">
+                        <span class="menu-icon" style="color:#f97316;">&#10010;</span> Add Account
                     </a>
                     <div class="sidebar-user-menu-divider"></div>
                     <a class="sidebar-user-menu-item" href="/auth/logout">
@@ -3546,6 +3566,33 @@
                             <button onclick="showNotify('Saved','Settings saved successfully.','success')" style="padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">Save Changes</button>
                         </div>
 
+                        <div class="card" style="padding:0;margin-bottom:16px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:18px 24px 0;">
+                                <h3 style="font-size:1.05rem;font-weight:800;">Subscription</h3>
+                                <button onclick="openManageSubPopup()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted);padding:4px;" title="Manage Subscription">&#8943;</button>
+                            </div>
+                            <div style="padding:0 24px 20px;">
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);">
+                                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">Subscription plan</span>
+                                    <span style="font-size:0.88rem;font-weight:700;display:flex;align-items:center;gap:6px;" id="subPlanName">
+                                        <span style="font-size:1.1rem;">&#127942;</span> Loading...
+                                    </span>
+                                </div>
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);">
+                                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">Status</span>
+                                    <span style="font-size:0.88rem;font-weight:700;" id="subStatus">—</span>
+                                </div>
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);">
+                                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">Renews at</span>
+                                    <span style="font-size:0.88rem;font-weight:700;" id="subRenewDate">—</span>
+                                </div>
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;">
+                                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">AI Credits</span>
+                                    <span style="font-size:0.88rem;font-weight:700;" id="subCredits">—</span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="card" style="padding:24px;">
                             <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:12px;color:#ef4444;">Danger Zone</h3>
                             <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:12px;">Once you delete your account, there is no going back.</p>
@@ -3571,15 +3618,120 @@
                     </div>
 
                     <!-- Plans Tab -->
-                    <div class="settings-panel" id="settingsPlans" style="display:none;">
-                        <div class="card" style="padding:24px;">
-                            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:8px;">Current Plan</h3>
-                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-                                <span style="padding:4px 14px;background:rgba(10,102,194,0.1);color:var(--accent);border-radius:20px;font-size:0.78rem;font-weight:700;">Trial</span>
-                                <span style="font-size:0.85rem;color:var(--text-secondary);">3-day free trial</span>
+                    <div class="settings-panel" id="settingsPlans" style="display:none;max-width:900px;">
+
+                        <!-- Billing toggle -->
+                        <div style="display:flex;justify-content:center;margin-bottom:28px;">
+                            <div style="display:flex;background:var(--bg-secondary);border-radius:24px;padding:3px;border:1px solid var(--border);">
+                                <button id="planToggleMonthly" onclick="switchPlanBilling('monthly')" style="padding:8px 24px;border-radius:22px;border:none;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;background:#ef4444;color:#fff;transition:all 0.2s;">Monthly</button>
+                                <button id="planToggleYearly" onclick="switchPlanBilling('yearly')" style="padding:8px 24px;border-radius:22px;border:none;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;background:transparent;color:var(--text-secondary);transition:all 0.2s;">Yearly</button>
                             </div>
-                            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px;">Upgrade to unlock all features, higher limits, and priority support.</p>
-                            <a href="/upgrade" style="display:inline-block;padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;text-decoration:none;">View Plans & Upgrade</a>
+                        </div>
+
+                        <!-- Plan cards -->
+                        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;" id="planCardsGrid">
+
+                            <!-- PRO -->
+                            <div class="card" style="padding:24px;position:relative;border:1px solid var(--border);">
+                                <div style="font-size:0.78rem;font-weight:800;color:#7c3aed;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">PRO</div>
+                                <div style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:16px;">Start growing your audience</div>
+                                <div style="margin-bottom:4px;">
+                                    <span style="font-size:0.82rem;color:var(--text-muted);vertical-align:top;">$</span>
+                                    <span style="font-size:2.5rem;font-weight:900;line-height:1;" id="planPriceProNum">39</span>
+                                    <span style="font-size:0.82rem;color:var(--text-muted);" id="planPriceProPeriod">/mo</span>
+                                </div>
+                                <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:20px;" id="planPriceProSub">Everything you need to get started</div>
+                                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> 3 connected LinkedIn profiles</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Schedule & auto-post</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Optimized posting times</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Basic analytics dashboard</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> 500 AI credits/month</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Chrome extension access</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Email support</div>
+                                </div>
+                                <button onclick="startCheckout('pro')" id="planBtnPro" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--text-primary);transition:0.15s;">Get Started</button>
+                                <div style="text-align:center;font-size:0.7rem;color:var(--text-muted);margin-top:8px;">cancel any time &middot; 100% content ownership</div>
+                            </div>
+
+                            <!-- ADVANCED -->
+                            <div class="card" style="padding:24px;position:relative;border:2px solid var(--accent);">
+                                <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;font-size:0.68rem;font-weight:800;padding:4px 14px;border-radius:12px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Early Discount!</div>
+                                <div style="font-size:0.78rem;font-weight:800;color:#f97316;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">ADVANCED</div>
+                                <div style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:16px;">Grow and monetize at full speed</div>
+                                <div style="margin-bottom:4px;">
+                                    <span style="font-size:0.82rem;color:var(--text-muted);vertical-align:top;">$</span>
+                                    <span style="font-size:2.5rem;font-weight:900;line-height:1;" id="planPriceAdvNum">39</span>
+                                    <span style="font-size:0.82rem;color:var(--text-muted);text-decoration:line-through;margin-left:4px;" id="planPriceAdvOld">$49</span>
+                                    <span style="font-size:0.72rem;color:#ef4444;font-weight:700;margin-left:4px;" id="planPriceAdvDiscount">-20% OFF</span>
+                                    <span style="font-size:0.82rem;color:var(--text-muted);" id="planPriceAdvPeriod">/mo</span>
+                                </div>
+                                <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:20px;" id="planPriceAdvSub">Launch offer (regular price at $49/month)</div>
+                                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+                                    <div style="font-size:0.72rem;font-weight:700;color:#ef4444;text-transform:uppercase;margin-bottom:2px;">&#10024; Everything in Pro</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> 5 connected LinkedIn profiles</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> AI Post & Carousel Writer</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> SuperLinkedIn Engage engine</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Auto-repost & auto-comment</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> 10M+ viral posts library</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> 2,000 AI credits/day</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Advanced analytics & insights</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Carousel & document support</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Priority support</div>
+                                </div>
+                                <button onclick="startCheckout('advanced')" id="planBtnAdv" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;transition:0.15s;">Get Started</button>
+                                <div style="text-align:center;font-size:0.7rem;color:var(--text-muted);margin-top:8px;">cancel any time &middot; 100% content ownership</div>
+                            </div>
+
+                            <!-- ULTRA -->
+                            <div class="card" style="padding:24px;position:relative;border:1px solid var(--border);">
+                                <div style="position:absolute;top:-12px;right:16px;background:#f97316;color:#fff;font-size:0.68rem;font-weight:800;padding:4px 12px;border-radius:12px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Limited time offer</div>
+                                <div style="font-size:0.78rem;font-weight:800;color:#ef4444;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">ULTRA</div>
+                                <div style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:16px;">Highest limits for power users</div>
+                                <div style="margin-bottom:4px;">
+                                    <span style="font-size:0.82rem;color:var(--text-muted);vertical-align:top;">$</span>
+                                    <span style="font-size:2.5rem;font-weight:900;line-height:1;" id="planPriceUltraNum">199</span>
+                                    <span style="font-size:0.82rem;color:var(--text-muted);" id="planPriceUltraPeriod">/mo</span>
+                                </div>
+                                <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:20px;">For teams and agencies</div>
+                                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+                                    <div style="font-size:0.72rem;font-weight:700;color:#ef4444;text-transform:uppercase;margin-bottom:2px;">&#10024; Everything in Advanced</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> 15 connected LinkedIn profiles</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> 5,000 posts/month</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> 5,000 AI credits/day</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Team collaboration tools</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> White-label reporting</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> API access</div>
+                                </div>
+                                <button onclick="startCheckout('ultra')" id="planBtnUltra" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--text-primary);transition:0.15s;">Contact Sales</button>
+                                <div style="text-align:center;font-size:0.7rem;color:var(--text-muted);margin-top:8px;">cancel any time &middot; 100% content ownership</div>
+                            </div>
+                        </div>
+
+                        <!-- Community testimonials -->
+                        <div style="text-align:center;margin:40px 0 24px;font-size:1rem;font-weight:600;color:var(--text-secondary);">See what our community says</div>
+
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;" id="planTestimonials">
+                            <div class="card" style="padding:20px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                    <div style="width:40px;height:40px;border-radius:50%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.75rem;color:#555;">M</div>
+                                    <div>
+                                        <div style="font-weight:700;font-size:0.88rem;">Marshall</div>
+                                        <div style="font-size:0.75rem;color:var(--text-muted);">@mdnlabs</div>
+                                    </div>
+                                </div>
+                                <p style="font-size:0.82rem;line-height:1.6;color:var(--text-secondary);">Since using SuperLinkedIn:<br>- Profile visits: 26,000<br>- New followers: +4,000<br>- Engagements: +150,000<br><br>Cost: $39.00<br>Profit: $1,242.56 &#128176;<br><br>That's 2.5 years of SuperLinkedIn subs. &#129327;</p>
+                            </div>
+                            <div class="card" style="padding:20px;">
+                                <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                                    <div style="width:40px;height:40px;border-radius:50%;background:#e0e0e0;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.75rem;color:#555;">J</div>
+                                    <div>
+                                        <div style="font-weight:700;font-size:0.88rem;">Jeoffrey</div>
+                                        <div style="font-size:0.75rem;color:var(--text-muted);">@jeoste_</div>
+                                    </div>
+                                </div>
+                                <p style="font-size:0.82rem;line-height:1.6;color:var(--text-secondary);">A week ago, I decided to subscribe to LinkedIn Premium and a SuperLinkedIn yearly subscription.<br><br>One week later, the results are way above my expectations! &#128640;<br><br>From literally zero everywhere to:<br>&gt; 52 followers (32 verified!)<br>&gt; Almost 24k impressions<br>&gt; 1k+ profile views</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -3783,6 +3935,59 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- QUEUE POST PREVIEW POPUP -->
+    <div class="queue-preview-overlay" id="queuePreviewOverlay" onclick="if(event.target===this)closeQueuePreview()">
+        <div class="queue-preview-modal">
+            <div class="queue-preview-header">
+                <h3>Scheduled Post</h3>
+                <button class="sched-close" onclick="closeQueuePreview()">&times;</button>
+            </div>
+            <div class="queue-preview-body" id="queuePreviewBody"></div>
+            <div class="queue-preview-footer">
+                <button class="queue-slot-btn" id="queuePreviewEditBtn" onclick="closeQueuePreview()">Edit</button>
+                <button class="queue-slot-btn delete" id="queuePreviewDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MANAGE SUBSCRIPTION POPUP -->
+    <div class="sched-overlay" id="manageSubOverlay" onclick="if(event.target===this)closeManageSubPopup()">
+        <div class="sched-modal" style="width:480px;">
+            <div class="sched-title-row">
+                <span class="sched-title">Manage Subscription</span>
+                <button class="sched-close" onclick="closeManageSubPopup()">&times;</button>
+            </div>
+
+            <div style="margin-top:16px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">Current plan</span>
+                    <span style="font-size:0.88rem;font-weight:700;" id="msubPlanName">—</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">Status</span>
+                    <span style="font-size:0.88rem;font-weight:700;" id="msubStatus">—</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">AI Credits remaining</span>
+                    <span style="font-size:0.88rem;font-weight:700;" id="msubCredits">—</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border);">
+                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">Connected profiles</span>
+                    <span style="font-size:0.88rem;font-weight:700;" id="msubProfiles">—</span>
+                </div>
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 0;">
+                    <span style="font-size:0.88rem;font-weight:600;color:var(--text-secondary);">Renews at</span>
+                    <span style="font-size:0.88rem;font-weight:700;" id="msubRenew">—</span>
+                </div>
+            </div>
+
+            <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
+                <a href="/upgrade" class="sched-confirm-btn" style="text-align:center;text-decoration:none;background:var(--accent);">Upgrade Plan</a>
+                <button class="sched-confirm-btn" onclick="confirmCancelSub()" style="background:none;border:1px solid #ef4444;color:#ef4444;">Cancel Subscription</button>
             </div>
         </div>
     </div>
@@ -4115,6 +4320,77 @@
             btn.style.color = 'var(--text-primary)';
         }
 
+        let planBilling = 'monthly';
+
+        function switchPlanBilling(period) {
+            planBilling = period;
+            const mBtn = document.getElementById('planToggleMonthly');
+            const yBtn = document.getElementById('planToggleYearly');
+            if (period === 'monthly') {
+                mBtn.style.background = '#ef4444'; mBtn.style.color = '#fff';
+                yBtn.style.background = 'transparent'; yBtn.style.color = 'var(--text-secondary)';
+                document.getElementById('planPriceProNum').textContent = '39';
+                document.getElementById('planPriceProPeriod').textContent = '/mo';
+                document.getElementById('planPriceAdvNum').textContent = '39';
+                document.getElementById('planPriceAdvPeriod').textContent = '/mo';
+                document.getElementById('planPriceAdvOld').textContent = '$49';
+                document.getElementById('planPriceAdvOld').style.display = '';
+                document.getElementById('planPriceAdvDiscount').style.display = '';
+                document.getElementById('planPriceAdvSub').textContent = 'Launch offer (regular price at $49/month)';
+                document.getElementById('planPriceUltraNum').textContent = '199';
+                document.getElementById('planPriceUltraPeriod').textContent = '/mo';
+            } else {
+                yBtn.style.background = '#ef4444'; yBtn.style.color = '#fff';
+                mBtn.style.background = 'transparent'; mBtn.style.color = 'var(--text-secondary)';
+                document.getElementById('planPriceProNum').textContent = '29';
+                document.getElementById('planPriceProPeriod').textContent = '/mo';
+                document.getElementById('planPriceAdvNum').textContent = '35';
+                document.getElementById('planPriceAdvPeriod').textContent = '/mo';
+                document.getElementById('planPriceAdvOld').textContent = '$49';
+                document.getElementById('planPriceAdvOld').style.display = '';
+                document.getElementById('planPriceAdvDiscount').textContent = '-29% OFF';
+                document.getElementById('planPriceAdvDiscount').style.display = '';
+                document.getElementById('planPriceAdvSub').textContent = 'Billed yearly ($420/year)';
+                document.getElementById('planPriceUltraNum').textContent = '159';
+                document.getElementById('planPriceUltraPeriod').textContent = '/mo';
+            }
+            highlightCurrentPlan();
+        }
+
+        function highlightCurrentPlan() {
+            const tier = creditsData.planTier || '';
+            ['Pro', 'Adv', 'Ultra'].forEach(t => {
+                const btn = document.getElementById('planBtn' + t);
+                if (!btn) return;
+                const tierMap = { Pro: 'pro', Adv: 'advanced', Ultra: 'ultra' };
+                if (tierMap[t] === tier && currentUser && currentUser.paid) {
+                    btn.textContent = 'Current Plan';
+                    btn.style.background = 'var(--bg-secondary)';
+                    btn.style.color = 'var(--text-muted)';
+                    btn.style.border = '1px solid var(--border)';
+                    btn.disabled = true;
+                } else {
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        async function startCheckout(tier) {
+            const plan = tier + '_' + planBilling;
+            try {
+                const res = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ plan }),
+                });
+                const data = await res.json();
+                if (data.url) window.location.href = data.url;
+                else showNotify('Error', data.error || 'Could not start checkout.', 'error');
+            } catch {
+                showNotify('Error', 'Checkout is not available. Please try again.', 'error');
+            }
+        }
+
         function toggleDarkMode(enabled) {
             document.documentElement.classList.toggle('dark-mode', enabled);
             document.body.classList.toggle('dark-mode', enabled);
@@ -4178,7 +4454,7 @@
             }
         }
 
-        function loadSettingsPage() {
+        async function loadSettingsPage() {
             if (!currentUser) return;
             const el = id => document.getElementById(id);
             el('settingsName').textContent = currentUser.name || '';
@@ -4204,6 +4480,73 @@
             populateTimezoneSelect();
             const firstTab = document.querySelector('.settings-tab');
             if (firstTab) switchSettingsTab('general', firstTab);
+            await loadSubscriptionInfo();
+            highlightCurrentPlan();
+        }
+
+        async function loadSubscriptionInfo() {
+            try {
+                const res = await fetch('/api/credits');
+                if (!res.ok) return;
+                const c = await res.json();
+
+                const tierIcons = { pro: '\uD83C\uDFC5', advanced: '\uD83C\uDFC6', ultra: '\uD83D\uDC51' };
+                const icon = tierIcons[c.planTier] || '\uD83C\uDFC5';
+                const planLabel = c.planName || 'SuperLinkedIn Pro';
+                const periodLabel = c.creditPeriod === 'day' ? '/day' : '/month';
+
+                const isPaid = currentUser && currentUser.paid;
+                const paidAt = currentUser && currentUser.paidAt ? new Date(currentUser.paidAt) : null;
+                let renewDate = '—';
+                if (paidAt) {
+                    const renew = new Date(paidAt);
+                    renew.setMonth(renew.getMonth() + 1);
+                    renewDate = renew.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+                }
+                const status = !isPaid ? 'Free' : (paidAt && (new Date() - paidAt) < 3 * 24 * 60 * 60 * 1000 ? 'Trial' : 'Active');
+
+                document.getElementById('subPlanName').innerHTML = `<span style="font-size:1.1rem;">${icon}</span> ${planLabel}`;
+                document.getElementById('subStatus').textContent = status;
+                document.getElementById('subStatus').style.color = status === 'Active' ? '#16a34a' : (status === 'Trial' ? '#f97316' : 'var(--text-muted)');
+                document.getElementById('subRenewDate').textContent = renewDate;
+                document.getElementById('subCredits').textContent = c.aiCreditsRemaining + ' / ' + c.aiCreditsTotal + periodLabel;
+
+                window._subData = { ...c, status, renewDate, icon, planLabel };
+            } catch {}
+        }
+
+        function openManageSubPopup() {
+            const d = window._subData || {};
+            document.getElementById('msubPlanName').textContent = d.planLabel || '—';
+            document.getElementById('msubStatus').textContent = d.status || '—';
+            document.getElementById('msubCredits').textContent = d.aiCreditsRemaining !== undefined
+                ? d.aiCreditsRemaining + ' / ' + d.aiCreditsTotal
+                : '—';
+            document.getElementById('msubProfiles').textContent = d.maxProfiles ? '1 / ' + d.maxProfiles : '—';
+            document.getElementById('msubRenew').textContent = d.renewDate || '—';
+            document.getElementById('manageSubOverlay').classList.add('open');
+        }
+
+        function closeManageSubPopup() {
+            document.getElementById('manageSubOverlay').classList.remove('open');
+        }
+
+        async function confirmCancelSub() {
+            const confirmed = await showNotify(
+                'Cancel Subscription',
+                'Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your billing period.',
+                'warning',
+                { confirm: true, confirmText: 'Yes, Cancel' }
+            );
+            if (!confirmed) return;
+            try {
+                await fetch('/api/subscription/cancel', { method: 'POST' });
+                closeManageSubPopup();
+                showNotify('Cancelled', 'Your subscription has been cancelled. You can still use premium features until the end of your billing period.', 'success');
+                loadSubscriptionInfo();
+            } catch {
+                showNotify('Error', 'Could not cancel subscription. Please try again.', 'error');
+            }
         }
 
         function checkMissions() {
@@ -4268,35 +4611,30 @@
             } catch {}
         }
 
-        let creditsUsed = { aiWriter: 0, aiPosts: 0, analytics: 0, published: 0 };
-        const DAILY_LIMIT = 200;
-        const ENGAGE_QUOTA = 75;
-        const POST_QUOTA = 50;
+        let creditsData = { planTier: 'pro', planName: 'SuperLinkedIn Pro', creditPeriod: 'month', aiCreditsTotal: 500, aiCreditsUsed: 0, aiCreditsRemaining: 500, maxProfiles: 3 };
 
-        function updateCreditsPopup() {
+        async function updateCreditsPopup() {
+            try {
+                const res = await fetch('/api/credits');
+                if (res.ok) creditsData = await res.json();
+            } catch {}
+
             const published = queue.filter(q => q.status === 'posted').length;
-            creditsUsed.published = published;
+            const periodLabel = creditsData.creditPeriod === 'day' ? '/day' : '/month';
 
-            const usedToday = creditsUsed.aiWriter + creditsUsed.aiPosts + creditsUsed.analytics + creditsUsed.published;
-            const available = Math.max(0, DAILY_LIMIT - usedToday);
-            const engageUsed = creditsUsed.aiPosts + creditsUsed.analytics;
-            const engageRemaining = Math.max(0, ENGAGE_QUOTA - engageUsed);
-            const postRemaining = Math.max(0, POST_QUOTA - creditsUsed.published);
-
-            document.getElementById('creditsCount').textContent = available;
-            document.getElementById('popupDailyLimit').textContent = DAILY_LIMIT;
-            document.getElementById('popupUsedToday').textContent = usedToday;
-            document.getElementById('popupCreditsTotal').textContent = available;
-            document.getElementById('creditsAIPosts').textContent = engageUsed + ' / ' + ENGAGE_QUOTA;
-            document.getElementById('creditsAnalytics').textContent = engageRemaining;
-            document.getElementById('creditsPublished').textContent = creditsUsed.published + ' / ' + POST_QUOTA;
-            document.getElementById('creditsAIWriter').textContent = postRemaining;
+            document.getElementById('creditsCount').textContent = creditsData.aiCreditsRemaining;
+            document.getElementById('popupDailyLimit').textContent = creditsData.aiCreditsTotal + periodLabel;
+            document.getElementById('popupUsedToday').textContent = creditsData.aiCreditsUsed;
+            document.getElementById('popupCreditsTotal').textContent = creditsData.aiCreditsRemaining;
+            document.getElementById('creditsAIPosts').textContent = creditsData.aiCreditsUsed + ' / ' + creditsData.aiCreditsTotal;
+            document.getElementById('creditsAnalytics').textContent = creditsData.aiCreditsRemaining;
+            document.getElementById('creditsPublished').textContent = published;
+            document.getElementById('creditsAIWriter').textContent = creditsData.planName + ' (' + creditsData.maxProfiles + ' profiles)';
         }
 
         function trackCredit(type) {
-            if (type === 'aiWriter') creditsUsed.aiWriter++;
-            else if (type === 'aiPosts') creditsUsed.aiPosts++;
-            else if (type === 'analytics') creditsUsed.analytics++;
+            creditsData.aiCreditsUsed++;
+            creditsData.aiCreditsRemaining = Math.max(0, creditsData.aiCreditsRemaining - 1);
             updateCreditsPopup();
         }
 
@@ -4544,10 +4882,7 @@
                     html += `<div class="queue-slot has-post">
                         <span class="queue-slot-time">${timeStr}</span>
                         <span class="queue-slot-content">${post.text}</span>
-                        <span class="queue-slot-actions">
-                            <button class="queue-slot-btn" onclick="editQueueItem(${realIdx})">Edit</button>
-                            <button class="queue-slot-btn delete" onclick="removeFromQueue(${realIdx})">&#10005;</button>
-                        </span>
+                        <button class="queue-slot-expand" onclick="event.stopPropagation();openQueuePreview(${realIdx})" title="View full post">&#8943;</button>
                     </div>`;
                 });
 
@@ -4579,10 +4914,7 @@
                         html += `<div class="queue-slot has-post">
                             <span class="queue-slot-time">${timeStr}</span>
                             <span class="queue-slot-content">${unscheduled.text}</span>
-                            <span class="queue-slot-actions">
-                                <button class="queue-slot-btn" onclick="editQueueItem(${realIdx})">Edit</button>
-                                <button class="queue-slot-btn delete" onclick="removeFromQueue(${realIdx})">&#10005;</button>
-                            </span>
+                            <button class="queue-slot-expand" onclick="event.stopPropagation();openQueuePreview(${realIdx})" title="View full post">&#8943;</button>
                         </div>`;
                         noTimeIdx++;
                     } else {
@@ -4615,12 +4947,28 @@
                         <div class="queue-item-text">${q.text}</div>
                         <div class="queue-item-meta">${q.status.charAt(0).toUpperCase() + q.status.slice(1)} &middot; ${q.date || 'Just now'}</div>
                     </div>
-                    <div class="queue-item-actions">
-                        <button class="queue-action-btn" onclick="editQueueItem(${realIdx})">Edit</button>
-                        <button class="queue-action-btn delete" onclick="removeFromQueue(${realIdx})">Delete</button>
-                    </div>
+                    <button class="queue-slot-expand" onclick="event.stopPropagation();openQueuePreview(${realIdx})" title="View full post" style="align-self:center;">&#8943;</button>
                 </div>`;
             }).join('') + '</div>';
+        }
+
+        function openQueuePreview(index) {
+            const item = queue[index];
+            if (!item) return;
+            document.getElementById('queuePreviewBody').textContent = item.text;
+            document.getElementById('queuePreviewEditBtn').onclick = function () {
+                closeQueuePreview();
+                editQueueItem(index);
+            };
+            document.getElementById('queuePreviewDeleteBtn').onclick = function () {
+                closeQueuePreview();
+                removeFromQueue(index);
+            };
+            document.getElementById('queuePreviewOverlay').classList.add('open');
+        }
+
+        function closeQueuePreview() {
+            document.getElementById('queuePreviewOverlay').classList.remove('open');
         }
 
         function filterQueue(status, btn) {
