@@ -441,7 +441,11 @@ const stripe = process.env.STRIPE_SECRET_KEY
     ? new Stripe(process.env.STRIPE_SECRET_KEY)
     : null;
 
+const TRIAL_DAYS = 3;
+const TRIAL_CREDITS = 200;
+
 const PLAN_LIMITS = {
+    free:     { aiCredits: TRIAL_CREDITS, creditPeriod: 'trial', maxProfiles: 1, postsPerMonth: null, features: ['schedule', 'basic_analytics'] },
     pro:      { aiCredits: 500, creditPeriod: 'month', maxProfiles: 3,  postsPerMonth: null, features: ['schedule', 'auto_post', 'basic_analytics', 'chrome_extension'] },
     advanced: { aiCredits: 2000, creditPeriod: 'day',  maxProfiles: 5,  postsPerMonth: null, features: ['schedule', 'auto_post', 'advanced_analytics', 'chrome_extension', 'carousel', 'engage_engine', 'auto_repost', 'viral_library'] },
     ultra:    { aiCredits: 5000, creditPeriod: 'day',  maxProfiles: 15, postsPerMonth: 5000, features: ['schedule', 'auto_post', 'advanced_analytics', 'chrome_extension', 'carousel', 'engage_engine', 'auto_repost', 'viral_library', 'team', 'white_label', 'api_access'] },
@@ -669,7 +673,35 @@ app.post('/api/profiles/remove', async (req, res) => {
 
 // ---------- CREDITS ----------
 
+function isUserOnTrial(user) {
+    if (user.paid) return false;
+    const createdAt = user.createdAt ? new Date(user.createdAt) : new Date();
+    const now = new Date();
+    const daysSinceCreation = (now - createdAt) / (1000 * 60 * 60 * 24);
+    return daysSinceCreation <= TRIAL_DAYS;
+}
+
+function isTrialExpired(user) {
+    if (user.paid) return false;
+    const createdAt = user.createdAt ? new Date(user.createdAt) : new Date();
+    const now = new Date();
+    const daysSinceCreation = (now - createdAt) / (1000 * 60 * 60 * 24);
+    return daysSinceCreation > TRIAL_DAYS;
+}
+
 function getUserCreditsInfo(user) {
+    const onTrial = isUserOnTrial(user);
+    const trialExpired = isTrialExpired(user);
+
+    if (!user.paid && (onTrial || trialExpired)) {
+        const limits = PLAN_LIMITS.free;
+        const used = user.aiCreditsUsed || 0;
+        const remaining = trialExpired ? 0 : Math.max(0, TRIAL_CREDITS - used);
+        const createdAt = user.createdAt ? new Date(user.createdAt) : new Date();
+        const trialEndsAt = new Date(createdAt.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+        return { tier: 'free', limits, used, shouldReset: false, remaining, onTrial, trialExpired, trialEndsAt };
+    }
+
     const tier = user.planTier || 'pro';
     const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
     const now = new Date();
@@ -683,7 +715,7 @@ function getUserCreditsInfo(user) {
     }
 
     const used = shouldReset ? 0 : (user.aiCreditsUsed || 0);
-    return { tier, limits, used, shouldReset, remaining: Math.max(0, limits.aiCredits - used) };
+    return { tier, limits, used, shouldReset, remaining: Math.max(0, limits.aiCredits - used), onTrial: false, trialExpired: false };
 }
 
 async function consumeCredit(session, count) {
@@ -722,13 +754,16 @@ app.get('/api/credits', async (req, res) => {
 
     res.json({
         planTier: info.tier,
-        planName: (PLANS[(primaryUser.plan || 'pro_monthly')] || PLANS.pro_monthly).name,
+        planName: info.onTrial ? 'Free Trial' : (info.trialExpired ? 'Trial Expired' : (PLANS[(primaryUser.plan || 'pro_monthly')] || PLANS.pro_monthly).name),
         creditPeriod: info.limits.creditPeriod,
         aiCreditsTotal: info.limits.aiCredits,
         aiCreditsUsed: info.used,
         aiCreditsRemaining: info.remaining,
         maxProfiles: info.limits.maxProfiles,
         postsPerMonth: info.limits.postsPerMonth,
+        onTrial: info.onTrial || false,
+        trialExpired: info.trialExpired || false,
+        trialEndsAt: info.trialEndsAt || null,
         features: info.limits.features,
     });
 });

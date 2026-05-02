@@ -4992,7 +4992,7 @@
             } catch {}
 
             const published = queue.filter(q => q.status === 'posted').length;
-            const periodLabel = creditsData.creditPeriod === 'day' ? '/day' : '/month';
+            const periodLabel = creditsData.creditPeriod === 'trial' ? ' (trial)' : (creditsData.creditPeriod === 'day' ? '/day' : '/month');
 
             document.getElementById('creditsCount').textContent = creditsData.aiCreditsRemaining;
             document.getElementById('popupDailyLimit').textContent = creditsData.aiCreditsTotal + periodLabel;
@@ -5002,6 +5002,34 @@
             document.getElementById('creditsAnalytics').textContent = creditsData.aiCreditsRemaining;
             document.getElementById('creditsPublished').textContent = published;
             document.getElementById('creditsAIWriter').textContent = creditsData.planName + ' (' + creditsData.maxProfiles + ' profiles)';
+
+            // Show trial banner
+            let trialBanner = document.getElementById('trialBanner');
+            if (creditsData.onTrial) {
+                if (!trialBanner) {
+                    trialBanner = document.createElement('div');
+                    trialBanner.id = 'trialBanner';
+                    trialBanner.style.cssText = 'background:linear-gradient(135deg,#0A66C2,#004182);color:#fff;padding:10px 20px;text-align:center;font-size:0.82rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;';
+                    document.querySelector('.main-content')?.prepend(trialBanner);
+                }
+                const endsAt = creditsData.trialEndsAt ? new Date(creditsData.trialEndsAt) : null;
+                const daysLeft = endsAt ? Math.max(0, Math.ceil((endsAt - new Date()) / (1000 * 60 * 60 * 24))) : 0;
+                trialBanner.innerHTML = `&#9200; Free trial: <strong>${daysLeft} day${daysLeft !== 1 ? 's' : ''} left</strong> &middot; ${creditsData.aiCreditsRemaining} of ${creditsData.aiCreditsTotal} credits remaining <a href="#" onclick="showPage('settings');document.querySelectorAll('.settings-tab').forEach((t,i)=>{if(i===2)switchSettingsTab('plans',t)});return false;" style="color:#fff;background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:6px;text-decoration:none;margin-left:4px;font-weight:700;">Upgrade Now</a>`;
+                trialBanner.style.display = 'flex';
+            } else if (creditsData.trialExpired) {
+                if (!trialBanner) {
+                    trialBanner = document.createElement('div');
+                    trialBanner.id = 'trialBanner';
+                    trialBanner.style.cssText = 'background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;padding:10px 20px;text-align:center;font-size:0.82rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;';
+                    document.querySelector('.main-content')?.prepend(trialBanner);
+                }
+                trialBanner.style.background = 'linear-gradient(135deg,#dc2626,#991b1b)';
+                trialBanner.innerHTML = `&#9888; Your free trial has expired. Upgrade to continue using SuperLinkedIn. <a href="#" onclick="showPage('settings');document.querySelectorAll('.settings-tab').forEach((t,i)=>{if(i===2)switchSettingsTab('plans',t)});return false;" style="color:#fff;background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:6px;text-decoration:none;margin-left:4px;font-weight:700;">Upgrade Now</a>`;
+                trialBanner.style.display = 'flex';
+            } else if (trialBanner) {
+                trialBanner.style.display = 'none';
+            }
+
             if (typeof updateCarouselNavLock === 'function') updateCarouselNavLock();
         }
 
