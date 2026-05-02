@@ -158,6 +158,14 @@ app.use(session(sessionConfig));
 const cors = require('cors');
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+app.use((req, res, next) => {
+    if (req.path.startsWith('/auth/')) {
+        console.log(`[Request] ${req.method} ${req.path} — session ready: ${!!req.session}`);
+    }
+    next();
+});
+
 app.use(express.static(path.join(__dirname), {
     index: 'index.html',
     extensions: ['html'],
@@ -199,6 +207,7 @@ async function getPrimaryUser(session) {
 
 // Step 1: Redirect user to LinkedIn authorization page
 app.get('/auth/linkedin', (req, res) => {
+    console.log('[Auth] LinkedIn login initiated, redirectUri:', LINKEDIN.redirectUri);
     const state = crypto.randomBytes(32).toString('hex');
     req.session.oauthState = state;
 
@@ -210,7 +219,12 @@ app.get('/auth/linkedin', (req, res) => {
         state: state,
     });
 
-    res.redirect(`${LINKEDIN.authUrl}?${params.toString()}`);
+    const redirectUrl = `${LINKEDIN.authUrl}?${params.toString()}`;
+    req.session.save((err) => {
+        if (err) console.error('[Auth] Session save error:', err.message);
+        console.log('[Auth] Redirecting to LinkedIn OAuth');
+        res.redirect(redirectUrl);
+    });
 });
 
 // Add-profile route: sets flag then triggers same OAuth flow
