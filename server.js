@@ -7,6 +7,8 @@ const Stripe = require('stripe');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
 
+const PDFDocument = require('pdfkit');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -1460,6 +1462,362 @@ app.post('/api/queue', async (req, res) => {
     });
 
     res.json({ queue: req.session.user.queue });
+});
+
+// ---------- CAROUSEL ----------
+
+function hasFeature(session, feature) {
+    const primaryId = getPrimaryAccountId(session);
+    const tier = session.user?.planTier || 'pro';
+    const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
+    return (limits.features || []).includes(feature);
+}
+
+app.post('/api/ai/generate-carousel', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    if (!hasFeature(req.session, 'carousel')) {
+        return res.status(403).json({ error: 'Carousel is available on Advanced and Ultra plans. Upgrade to access this feature.' });
+    }
+
+    const credits = await getCreditsForSession(req.session);
+    if (credits.remaining < 3) {
+        return res.json({ error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
+        return res.json({ error: 'OpenAI API key not configured' });
+    }
+
+    const { topic, slideCount = 8, style = 'professional' } = req.body;
+    if (!topic) return res.status(400).json({ error: 'Topic is required' });
+
+    const user = req.session.user;
+    const aboutYou = user.aboutYou || '';
+    const customRules = user.customRules || '';
+
+    const styleDescriptions = {
+        professional: 'Clean, corporate style with data-driven insights and clear headings.',
+        bold: 'Eye-catching, bold statements with high contrast and punchy one-liners.',
+        minimal: 'Minimalist design approach with short text, lots of whitespace, one idea per slide.',
+        colorful: 'Vibrant and energetic tone with metaphors, emojis, and storytelling elements.',
+    };
+
+    const styleGuide = styleDescriptions[style] || styleDescriptions.professional;
+    const count = Math.min(Math.max(parseInt(slideCount) || 8, 4), 15);
+
+    const systemPrompt = `You are a LinkedIn carousel content expert. Create a ${count}-slide carousel about the given topic.
+
+Return ONLY a valid JSON array of exactly ${count} objects. Each object must have:
+- "title": string (short, max 8 words)
+- "body": string (1-2 sentences, max 30 words)
+- "bulletPoints": array of strings (0-4 bullet points, each max 10 words)
+
+Slide structure:
+- Slide 1: Cover slide — catchy title, short subtitle in body, no bullets
+- Slides 2 to ${count - 1}: Content slides — each covering one key point
+- Slide ${count}: CTA slide — call-to-action title, body with next step, no bullets
+
+Style: ${styleGuide}
+${customRules ? `\nUser rules: ${customRules}` : ''}
+${aboutYou ? `\nAbout the author: ${aboutYou}` : ''}
+
+Return ONLY the JSON array, no markdown, no explanation.`;
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: `Create a ${count}-slide LinkedIn carousel about: ${topic}` },
+                ],
+                temperature: 0.7,
+                max_tokens: 2000,
+            }),
+        });
+
+        const data = await response.json();
+        const content = data.choices?.[0]?.message?.content || '';
+
+        let slides = [];
+        try {
+            const jsonMatch = content.match(/\[[\s\S]*\]/);
+            if (jsonMatch) slides = JSON.parse(jsonMatch[0]);
+        } catch {
+            return res.json({ error: 'Failed to parse AI response. Please try again.' });
+        }
+
+        if (!slides.length) return res.json({ error: 'No slides generated. Please try a different topic.' });
+
+        await consumeCredit(req.session, 3);
+        res.json({ slides });
+    } catch (err) {
+        console.error('Carousel generation error:', err);
+        res.json({ error: 'Failed to generate carousel.' });
+    }
+});
+
+function renderCarouselPDF(slides, brandColor, title, userName) {
+    const WIDTH = 1080;
+    const HEIGHT = 1080;
+    const MARGIN = 80;
+    const color = brandColor || '#0A66C2';
+
+    const doc = new PDFDocument({ size: [WIDTH, HEIGHT], margin: 0, autoFirstPage: false });
+
+    slides.forEach((slide, i) => {
+        doc.addPage({ size: [WIDTH, HEIGHT], margin: 0 });
+
+        // Background
+        doc.rect(0, 0, WIDTH, HEIGHT).fill('#FFFFFF');
+
+        // Accent bar
+        doc.rect(0, 0, WIDTH, 12).fill(color);
+
+        // Slide number
+        if (i > 0 && i < slides.length - 1) {
+            doc.fontSize(14).fillColor('#999999')
+               .text(`${i + 1} / ${slides.length}`, WIDTH - MARGIN - 40, HEIGHT - 50, { width: 80, align: 'right' });
+        }
+
+        const isFirst = i === 0;
+        const isLast = i === slides.length - 1;
+
+        if (isFirst) {
+            // Cover slide
+            doc.rect(0, HEIGHT - 200, WIDTH, 200).fill(color);
+            doc.fontSize(52).fillColor(color)
+               .text(slide.title || title || '', MARGIN, 280, { width: WIDTH - MARGIN * 2, align: 'center', lineGap: 8 });
+            doc.fontSize(22).fillColor('#555555')
+               .text(slide.body || '', MARGIN, 500, { width: WIDTH - MARGIN * 2, align: 'center', lineGap: 6 });
+            if (userName) {
+                doc.fontSize(18).fillColor('#FFFFFF')
+                   .text(userName, MARGIN, HEIGHT - 130, { width: WIDTH - MARGIN * 2, align: 'center' });
+            }
+            doc.fontSize(14).fillColor('#FFFFFF').opacity(0.7)
+               .text('Swipe to read more →', MARGIN, HEIGHT - 60, { width: WIDTH - MARGIN * 2, align: 'center' });
+            doc.opacity(1);
+        } else if (isLast) {
+            // CTA slide
+            doc.rect(0, 0, WIDTH, HEIGHT).fill(color);
+            doc.fontSize(44).fillColor('#FFFFFF')
+               .text(slide.title || 'Thanks for reading!', MARGIN, 320, { width: WIDTH - MARGIN * 2, align: 'center', lineGap: 8 });
+            doc.fontSize(22).fillColor('#FFFFFF').opacity(0.85)
+               .text(slide.body || 'Follow for more content like this.', MARGIN, 500, { width: WIDTH - MARGIN * 2, align: 'center', lineGap: 6 });
+            doc.opacity(1);
+            if (userName) {
+                doc.fontSize(20).fillColor('#FFFFFF')
+                   .text(userName, MARGIN, 650, { width: WIDTH - MARGIN * 2, align: 'center' });
+            }
+        } else {
+            // Content slide
+            let y = 60;
+            doc.fontSize(36).fillColor(color)
+               .text(slide.title || '', MARGIN, y, { width: WIDTH - MARGIN * 2, lineGap: 6 });
+            y += doc.heightOfString(slide.title || '', { width: WIDTH - MARGIN * 2, fontSize: 36 }) + 30;
+
+            doc.rect(MARGIN, y, 60, 4).fill(color);
+            y += 30;
+
+            if (slide.body) {
+                doc.fontSize(20).fillColor('#333333')
+                   .text(slide.body, MARGIN, y, { width: WIDTH - MARGIN * 2, lineGap: 8 });
+                y += doc.heightOfString(slide.body, { width: WIDTH - MARGIN * 2, fontSize: 20 }) + 24;
+            }
+
+            if (slide.bulletPoints && slide.bulletPoints.length > 0) {
+                slide.bulletPoints.forEach(bp => {
+                    doc.fontSize(20).fillColor(color).text('●', MARGIN, y, { continued: false });
+                    doc.fontSize(19).fillColor('#444444')
+                       .text('  ' + bp, MARGIN + 24, y, { width: WIDTH - MARGIN * 2 - 24, lineGap: 6 });
+                    y += doc.heightOfString('  ' + bp, { width: WIDTH - MARGIN * 2 - 24, fontSize: 19 }) + 16;
+                });
+            }
+        }
+    });
+
+    doc.end();
+    return doc;
+}
+
+app.post('/api/carousel/generate-pdf', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    if (!hasFeature(req.session, 'carousel')) {
+        return res.status(403).json({ error: 'Carousel is available on Advanced and Ultra plans.' });
+    }
+
+    const { slides, brandColor, title } = req.body;
+    if (!slides || !Array.isArray(slides) || !slides.length) {
+        return res.status(400).json({ error: 'Slides data is required' });
+    }
+
+    const userName = req.session.user.name || '';
+
+    try {
+        const doc = renderCarouselPDF(slides, brandColor, title, userName);
+        const chunks = [];
+        doc.on('data', c => chunks.push(c));
+        doc.on('end', () => {
+            const pdfBuffer = Buffer.concat(chunks);
+            res.setHeader('Content-Type', 'application/pdf');
+            res.setHeader('Content-Disposition', `attachment; filename="carousel-${Date.now()}.pdf"`);
+            res.send(pdfBuffer);
+        });
+        doc.on('error', err => {
+            console.error('PDF generation error:', err);
+            res.status(500).json({ error: 'Failed to generate PDF' });
+        });
+    } catch (err) {
+        console.error('PDF render error:', err);
+        res.status(500).json({ error: 'Failed to generate PDF' });
+    }
+});
+
+app.post('/api/carousel/publish', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    if (!hasFeature(req.session, 'carousel')) {
+        return res.status(403).json({ error: 'Carousel is available on Advanced and Ultra plans.' });
+    }
+
+    const credits = await getCreditsForSession(req.session);
+    if (credits.remaining < 1) {
+        return res.json({ error: `AI credit limit reached.` });
+    }
+
+    const { slides, brandColor, title, text, audience } = req.body;
+    if (!slides || !Array.isArray(slides) || !slides.length) {
+        return res.status(400).json({ error: 'Slides data is required' });
+    }
+    if (!text || !text.trim()) {
+        return res.status(400).json({ error: 'Post caption text is required' });
+    }
+
+    const accessToken = req.session.user.accessToken;
+    if (!accessToken) {
+        return res.status(401).json({ error: 'No LinkedIn access token. Please sign in again.' });
+    }
+
+    const linkedinId = req.session.user.linkedinId;
+    const personUrn = `urn:li:person:${linkedinId}`;
+    const visibility = audience === 'connections' ? 'CONNECTIONS' : 'PUBLIC';
+    const userName = req.session.user.name || '';
+
+    try {
+        // Generate PDF
+        const doc = renderCarouselPDF(slides, brandColor, title, userName);
+        const chunks = [];
+        const pdfBuffer = await new Promise((resolve, reject) => {
+            doc.on('data', c => chunks.push(c));
+            doc.on('end', () => resolve(Buffer.concat(chunks)));
+            doc.on('error', reject);
+        });
+
+        // Step 1: Register upload
+        const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+                registerUploadRequest: {
+                    recipes: ['urn:li:digitalmediaRecipe:feedshare-document'],
+                    owner: personUrn,
+                    serviceRelationships: [{
+                        relationshipType: 'OWNER',
+                        identifier: 'urn:li:userGeneratedContent',
+                    }],
+                },
+            }),
+        });
+
+        if (!registerRes.ok) {
+            const errText = await registerRes.text();
+            console.error('LinkedIn register upload failed:', errText);
+            return res.status(500).json({ error: 'Failed to register upload with LinkedIn.' });
+        }
+
+        const registerData = await registerRes.json();
+        const uploadUrl = registerData.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
+        const asset = registerData.value?.asset;
+
+        if (!uploadUrl || !asset) {
+            return res.status(500).json({ error: 'LinkedIn upload registration returned invalid data.' });
+        }
+
+        // Step 2: Upload PDF
+        const uploadRes = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/pdf',
+            },
+            body: pdfBuffer,
+        });
+
+        if (!uploadRes.ok) {
+            console.error('LinkedIn PDF upload failed:', uploadRes.status);
+            return res.status(500).json({ error: 'Failed to upload PDF to LinkedIn.' });
+        }
+
+        // Step 3: Create post with document
+        const postRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+                'X-Restli-Protocol-Version': '2.0.0',
+            },
+            body: JSON.stringify({
+                author: personUrn,
+                lifecycleState: 'PUBLISHED',
+                specificContent: {
+                    'com.linkedin.ugc.ShareContent': {
+                        shareCommentary: { text: text.trim() },
+                        shareMediaCategory: 'ARTICLE',
+                        media: [{
+                            status: 'READY',
+                            media: asset,
+                            title: { text: title || 'Carousel Post' },
+                        }],
+                    },
+                },
+                visibility: {
+                    'com.linkedin.ugc.MemberNetworkVisibility': visibility,
+                },
+            }),
+        });
+
+        if (postRes.ok) {
+            const postData = await postRes.json();
+            const postId = postData.id;
+            const activityId = postId ? postId.replace('urn:li:share:', '') : '';
+            const postUrl = activityId
+                ? `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}/`
+                : 'https://www.linkedin.com/feed/';
+
+            await consumeCredit(req.session, 1);
+            console.log(`Carousel published to LinkedIn by ${req.session.user.name}: ${postId}`);
+            res.json({ success: true, postId, postUrl });
+        } else {
+            const errData = await postRes.text();
+            console.error('LinkedIn carousel post failed:', postRes.status, errData);
+
+            if (postRes.status === 401) {
+                return res.status(401).json({ error: 'LinkedIn access token expired. Please sign out and sign in again.' });
+            }
+            res.status(postRes.status).json({ error: 'Failed to publish carousel to LinkedIn.', details: errData });
+        }
+    } catch (err) {
+        console.error('Carousel publish error:', err);
+        res.status(500).json({ error: 'Could not publish carousel. Please try again.' });
+    }
 });
 
 // ---------- EXTENSION & ANALYTICS ----------

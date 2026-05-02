@@ -422,6 +422,52 @@
             padding: 2px 4px 4px;
         }
 
+        /* Carousel slide preview cards */
+        .crs-slide {
+            flex-shrink: 0;
+            width: 280px; height: 280px;
+            background: #fff;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            overflow: hidden;
+            position: relative;
+            transition: border-color 0.2s;
+            cursor: default;
+        }
+        .crs-slide:hover { border-color: var(--accent); }
+        .crs-slide-bar { height: 6px; width: 100%; }
+        .crs-slide-num {
+            position: absolute; top: 14px; right: 14px;
+            font-size: 0.6rem; font-weight: 700; color: #bbb;
+        }
+        .crs-slide-body { padding: 20px; height: calc(100% - 6px); display: flex; flex-direction: column; justify-content: center; }
+        .crs-slide-title {
+            font-size: 1rem; font-weight: 800; line-height: 1.3; margin-bottom: 8px;
+            outline: none; cursor: text;
+        }
+        .crs-slide-text {
+            font-size: 0.72rem; color: #555; line-height: 1.5;
+            outline: none; cursor: text;
+        }
+        .crs-slide-bullet {
+            font-size: 0.72rem; color: #444; line-height: 1.5; margin-top: 3px;
+            outline: none; cursor: text;
+        }
+        .crs-slide-bullet::before { content: "● "; font-size: 0.55rem; }
+        .crs-slide.crs-cover .crs-slide-body { text-align: center; }
+        .crs-slide.crs-cover .crs-slide-title { font-size: 1.15rem; }
+        .crs-slide.crs-cta .crs-slide-body { text-align: center; color: #fff; }
+        .crs-slide.crs-cta .crs-slide-title { color: #fff; font-size: 1.1rem; }
+        .crs-slide.crs-cta .crs-slide-text { color: rgba(255,255,255,0.85); }
+
+        #carouselSlideStrip::-webkit-scrollbar { height: 6px; }
+        #carouselSlideStrip::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+
+        .crs-nav-locked {
+            display: flex; align-items: center; gap: 4px;
+            font-size: 0.7rem; color: rgba(255,255,255,0.5);
+        }
+
         .sidebar-user-avatar {
             width: 32px; height: 32px;
             border-radius: 50%;
@@ -3053,6 +3099,9 @@
             <a class="nav-item nav-sub-item" data-page="create" onclick="showPage('create')">
                 <span class="nav-icon">&#129302;</span> <span>AI Writer</span>
             </a>
+            <a class="nav-item nav-sub-item" data-page="carousel" onclick="handleCarouselNav()" id="navCarousel">
+                <span class="nav-icon">&#127912;</span> <span>Carousel</span> <span id="carouselLockIcon" class="crs-nav-locked" style="display:none;">&#128274;</span>
+            </a>
 
             <div class="nav-section">Engage</div>
             <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
@@ -3996,6 +4045,104 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Carousel Creator Page -->
+            <div class="page" id="page-carousel">
+                <div style="max-width:960px;margin:0 auto;">
+                    <!-- Upgrade overlay for non-carousel plans -->
+                    <div id="carouselUpgradeOverlay" style="display:none;">
+                        <div class="card" style="padding:48px;text-align:center;">
+                            <div style="font-size:3rem;margin-bottom:16px;">&#128274;</div>
+                            <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:8px;">Carousel Posts — Advanced & Ultra</h2>
+                            <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:20px;">Create stunning multi-slide PDF carousels with AI. Upgrade to Advanced or Ultra to unlock this feature.</p>
+                            <button onclick="showPage('settings');document.querySelectorAll('.settings-tab').forEach((t,i)=>{if(i===2)switchSettingsTab('plans',t)});" style="padding:12px 32px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;">Upgrade Plan</button>
+                        </div>
+                    </div>
+
+                    <!-- Carousel creator content -->
+                    <div id="carouselCreatorContent">
+                        <div class="card" style="padding:24px;margin-bottom:16px;">
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+                                <span style="font-size:1.5rem;">&#127912;</span>
+                                <div>
+                                    <h2 style="font-size:1.1rem;font-weight:800;margin:0;">Carousel Creator</h2>
+                                    <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Generate beautiful multi-slide PDF carousels with AI</p>
+                                </div>
+                            </div>
+
+                            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+                                <div>
+                                    <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Topic *</label>
+                                    <input type="text" id="carouselTopic" placeholder="e.g. 10 Leadership Lessons from 2026" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                </div>
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                                    <div>
+                                        <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Slides</label>
+                                        <select id="carouselSlideCount" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                            <option value="5">5 slides</option>
+                                            <option value="6">6 slides</option>
+                                            <option value="7">7 slides</option>
+                                            <option value="8" selected>8 slides</option>
+                                            <option value="10">10 slides</option>
+                                            <option value="12">12 slides</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Style</label>
+                                        <select id="carouselStyle" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                            <option value="professional">Professional</option>
+                                            <option value="bold">Bold</option>
+                                            <option value="minimal">Minimal</option>
+                                            <option value="colorful">Colorful</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+                                <div>
+                                    <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Brand Color</label>
+                                    <input type="color" id="carouselBrandColor" value="#0A66C2" style="width:44px;height:36px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px;">
+                                </div>
+                                <div style="flex:1;"></div>
+                                <button onclick="generateCarouselSlides()" id="carouselGenerateBtn" style="padding:10px 28px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;">
+                                    &#129302; Generate Slides
+                                </button>
+                            </div>
+
+                            <div id="carouselGenerating" style="display:none;text-align:center;padding:24px;">
+                                <div class="spinner" style="margin:0 auto 12px;"></div>
+                                <div style="font-size:0.88rem;color:var(--accent);font-weight:600;">Generating your carousel slides...</div>
+                            </div>
+                        </div>
+
+                        <!-- Slides Preview -->
+                        <div id="carouselSlidesContainer" style="display:none;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                                <h3 style="font-size:0.95rem;font-weight:800;">Slide Preview <span style="font-size:0.75rem;color:var(--text-muted);font-weight:500;">(click any text to edit)</span></h3>
+                                <div style="display:flex;gap:8px;">
+                                    <button onclick="carouselScrollLeft()" style="width:32px;height:32px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);cursor:pointer;font-size:1rem;color:var(--text-secondary);">&#8249;</button>
+                                    <button onclick="carouselScrollRight()" style="width:32px;height:32px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);cursor:pointer;font-size:1rem;color:var(--text-secondary);">&#8250;</button>
+                                </div>
+                            </div>
+                            <div id="carouselSlideStrip" style="display:flex;gap:16px;overflow-x:auto;padding-bottom:16px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch;"></div>
+
+                            <!-- Actions -->
+                            <div class="card" style="padding:16px;margin-top:16px;">
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Post Caption</label>
+                                    <textarea id="carouselCaption" placeholder="Write a caption for your carousel post..." style="width:100%;height:60px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);outline:none;resize:vertical;"></textarea>
+                                </div>
+                                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                                    <button onclick="downloadCarouselPDF()" style="padding:10px 20px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;">&#128196; Download PDF</button>
+                                    <button onclick="addCarouselToQueue()" style="padding:10px 20px;background:rgba(10,102,194,0.08);color:var(--accent);border:1px solid rgba(10,102,194,0.2);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;">&#128197; Add to Queue</button>
+                                    <button onclick="publishCarousel()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;">&#128640; Publish to LinkedIn</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -4846,6 +4993,7 @@
             document.getElementById('creditsAnalytics').textContent = creditsData.aiCreditsRemaining;
             document.getElementById('creditsPublished').textContent = published;
             document.getElementById('creditsAIWriter').textContent = creditsData.planName + ' (' + creditsData.maxProfiles + ' profiles)';
+            if (typeof updateCarouselNavLock === 'function') updateCarouselNavLock();
         }
 
         function trackCredit(type) {
@@ -4855,7 +5003,7 @@
         }
 
         // Page navigation
-        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', inspiration: 'Inspiration', context: 'Context', settings: 'Account Settings' };
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', inspiration: 'Inspiration', context: 'Context', settings: 'Account Settings' };
 
         function showPage(page, updateHash) {
             if (!document.getElementById('page-' + page)) page = 'home';
@@ -6736,14 +6884,225 @@
             } catch {}
         }
 
+        // ---------- CAROUSEL CREATOR ----------
+
+        let carouselSlides = [];
+
+        function handleCarouselNav() {
+            const features = creditsData.features || [];
+            if (!features.includes('carousel')) {
+                showPage('carousel');
+                document.getElementById('carouselUpgradeOverlay').style.display = '';
+                document.getElementById('carouselCreatorContent').style.display = 'none';
+                return;
+            }
+            showPage('carousel');
+            document.getElementById('carouselUpgradeOverlay').style.display = 'none';
+            document.getElementById('carouselCreatorContent').style.display = '';
+        }
+
+        function updateCarouselNavLock() {
+            const features = creditsData.features || [];
+            const lockIcon = document.getElementById('carouselLockIcon');
+            if (lockIcon) lockIcon.style.display = features.includes('carousel') ? 'none' : 'inline-flex';
+        }
+
+        async function generateCarouselSlides() {
+            const topic = document.getElementById('carouselTopic').value.trim();
+            if (!topic) return showNotify('Topic Required', 'Please enter a topic for your carousel.', 'error');
+
+            const slideCount = document.getElementById('carouselSlideCount').value;
+            const style = document.getElementById('carouselStyle').value;
+            const btn = document.getElementById('carouselGenerateBtn');
+
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Generating...';
+            document.getElementById('carouselGenerating').style.display = '';
+            document.getElementById('carouselSlidesContainer').style.display = 'none';
+
+            try {
+                const res = await fetch('/api/ai/generate-carousel', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, slideCount: parseInt(slideCount), style }),
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    showNotify('Error', data.error, 'error');
+                    return;
+                }
+
+                carouselSlides = data.slides || [];
+                renderCarouselPreview();
+                document.getElementById('carouselSlidesContainer').style.display = '';
+            } catch (e) {
+                showNotify('Error', 'Failed to generate slides.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '&#129302; Generate Slides';
+                document.getElementById('carouselGenerating').style.display = 'none';
+            }
+        }
+
+        function renderCarouselPreview() {
+            const strip = document.getElementById('carouselSlideStrip');
+            const brandColor = document.getElementById('carouselBrandColor').value || '#0A66C2';
+            strip.innerHTML = '';
+
+            carouselSlides.forEach((slide, i) => {
+                const isFirst = i === 0;
+                const isLast = i === carouselSlides.length - 1;
+                const card = document.createElement('div');
+                card.className = 'crs-slide' + (isFirst ? ' crs-cover' : '') + (isLast ? ' crs-cta' : '');
+
+                if (isLast) {
+                    card.style.background = brandColor;
+                }
+
+                let bulletsHtml = '';
+                if (slide.bulletPoints && slide.bulletPoints.length > 0) {
+                    bulletsHtml = slide.bulletPoints.map((bp, bi) =>
+                        `<div class="crs-slide-bullet" contenteditable="true" data-idx="${i}" data-bi="${bi}">${escapeHtml(bp)}</div>`
+                    ).join('');
+                }
+
+                card.innerHTML = `
+                    <div class="crs-slide-bar" style="background:${brandColor}"></div>
+                    ${(!isFirst && !isLast) ? `<div class="crs-slide-num">${i + 1} / ${carouselSlides.length}</div>` : ''}
+                    <div class="crs-slide-body">
+                        <div class="crs-slide-title" contenteditable="true" data-idx="${i}" data-field="title" style="${isFirst || isLast ? '' : 'color:' + brandColor}">${escapeHtml(slide.title || '')}</div>
+                        <div class="crs-slide-text" contenteditable="true" data-idx="${i}" data-field="body">${escapeHtml(slide.body || '')}</div>
+                        ${bulletsHtml}
+                    </div>
+                `;
+
+                card.querySelectorAll('[contenteditable]').forEach(el => {
+                    el.addEventListener('blur', () => syncSlideEdit(el));
+                });
+
+                strip.appendChild(card);
+            });
+        }
+
+        function syncSlideEdit(el) {
+            const idx = parseInt(el.dataset.idx);
+            const field = el.dataset.field;
+            const bi = el.dataset.bi;
+
+            if (bi !== undefined) {
+                carouselSlides[idx].bulletPoints[parseInt(bi)] = el.textContent.trim();
+            } else if (field) {
+                carouselSlides[idx][field] = el.textContent.trim();
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function carouselScrollLeft() {
+            const strip = document.getElementById('carouselSlideStrip');
+            strip.scrollBy({ left: -296, behavior: 'smooth' });
+        }
+
+        function carouselScrollRight() {
+            const strip = document.getElementById('carouselSlideStrip');
+            strip.scrollBy({ left: 296, behavior: 'smooth' });
+        }
+
+        async function downloadCarouselPDF() {
+            if (!carouselSlides.length) return showNotify('No Slides', 'Generate slides first.', 'error');
+
+            const brandColor = document.getElementById('carouselBrandColor').value || '#0A66C2';
+            const topic = document.getElementById('carouselTopic').value.trim();
+
+            try {
+                const res = await fetch('/api/carousel/generate-pdf', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ slides: carouselSlides, brandColor, title: topic }),
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    return showNotify('Error', err.error || 'Failed to generate PDF.', 'error');
+                }
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `carousel-${Date.now()}.pdf`;
+                a.click();
+                window.URL.revokeObjectURL(url);
+                showNotify('Downloaded', 'Carousel PDF downloaded!', 'success');
+            } catch {
+                showNotify('Error', 'Failed to download PDF.', 'error');
+            }
+        }
+
+        function addCarouselToQueue() {
+            if (!carouselSlides.length) return showNotify('No Slides', 'Generate slides first.', 'error');
+            const caption = document.getElementById('carouselCaption').value.trim();
+            if (!caption) return showNotify('Caption Required', 'Add a post caption before queuing.', 'error');
+
+            showNotify('Coming Soon', 'Carousel queue scheduling will be available soon.', 'info');
+        }
+
+        async function publishCarousel() {
+            if (!carouselSlides.length) return showNotify('No Slides', 'Generate slides first.', 'error');
+            const caption = document.getElementById('carouselCaption').value.trim();
+            if (!caption) return showNotify('Caption Required', 'Add a post caption for your LinkedIn post.', 'error');
+
+            if (!confirm('Publish this carousel to LinkedIn now?')) return;
+
+            const brandColor = document.getElementById('carouselBrandColor').value || '#0A66C2';
+            const topic = document.getElementById('carouselTopic').value.trim();
+
+            try {
+                const res = await fetch('/api/carousel/publish', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        slides: carouselSlides,
+                        brandColor,
+                        title: topic,
+                        text: caption,
+                        audience: 'public',
+                    }),
+                });
+                const data = await res.json();
+
+                if (data.error) {
+                    showNotify('Error', data.error, 'error');
+                    return;
+                }
+
+                if (data.success) {
+                    showNotify('Published!', 'Carousel posted to LinkedIn!', 'success');
+                    updateCreditsPopup();
+                }
+            } catch {
+                showNotify('Error', 'Failed to publish carousel.', 'error');
+            }
+        }
+
         async function init() {
             await loadUser();
             await loadQueue();
             updateCreditsPopup();
             checkMissions();
+            updateCarouselNavLock();
 
             const startPage = getPageFromHash();
-            if (startPage !== 'home') showPage(startPage, false);
+            if (startPage === 'carousel') {
+                handleCarouselNav();
+            } else if (startPage !== 'home') {
+                showPage(startPage, false);
+            }
 
             if (!modalShownOnce) {
                 setTimeout(openModal, 800);
