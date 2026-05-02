@@ -1970,7 +1970,7 @@ async function authExtension(req, res, next) {
 
 // Receive scraped analytics data from extension
 app.post('/api/analytics/sync', authExtension, async (req, res) => {
-    const { followers, posts } = req.body;
+    const { followers, posts, dashboardStats } = req.body;
     const linkedinId = req.extUser.linkedinId;
 
     const updates = {};
@@ -2008,6 +2008,23 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
 
         if (existing.length > 200) existing.splice(0, existing.length - 200);
         updates.analyticsPostMetrics = existing;
+    }
+
+    if (dashboardStats) {
+        const user = await dbGetUser(linkedinId);
+        const existing = (user && user.analyticsDashboard) || {};
+        updates.analyticsDashboard = { ...existing, ...dashboardStats, updatedAt: now };
+
+        if (dashboardStats.profileViews !== undefined) updates.analyticsProfileViews = dashboardStats.profileViews;
+        if (dashboardStats.searchAppearances !== undefined) updates.analyticsSearchAppearances = dashboardStats.searchAppearances;
+        if (dashboardStats.postImpressions !== undefined) {
+            if (!updates.analyticsEngagement) {
+                const eng = (user && user.analyticsEngagement) || {};
+                updates.analyticsEngagement = { ...eng, impressions: dashboardStats.postImpressions };
+            } else {
+                updates.analyticsEngagement.impressions = dashboardStats.postImpressions;
+            }
+        }
     }
 
     updates.analyticsLastSync = now;
@@ -2060,6 +2077,9 @@ app.get('/api/analytics', async (req, res) => {
         postMetrics: user.analyticsPostMetrics || [],
         engagement: user.analyticsEngagement || {},
         lastSync: user.analyticsLastSync || null,
+        profileViews: user.analyticsProfileViews || 0,
+        searchAppearances: user.analyticsSearchAppearances || 0,
+        dashboard: user.analyticsDashboard || {},
     });
 });
 

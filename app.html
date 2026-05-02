@@ -3344,6 +3344,16 @@
             <!-- ANALYTICS PAGE -->
             <div class="page" id="page-analytics">
 
+                <!-- Extension Connect Banner -->
+                <div id="analyticsExtBanner" style="display:none;background:linear-gradient(135deg,#0A66C2,#004182);border-radius:12px;padding:20px 24px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:16px;">
+                    <div style="font-size:2rem;">&#128268;</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:800;font-size:0.95rem;margin-bottom:4px;">Connect the SuperLinkedIn Extension</div>
+                        <div style="font-size:0.78rem;opacity:0.85;line-height:1.5;">Install the Chrome extension and browse LinkedIn to automatically collect your analytics — followers, impressions, engagement, and more.</div>
+                    </div>
+                    <a href="https://chromewebstore.google.com/detail/superlinkedin" target="_blank" style="padding:8px 20px;background:rgba(255,255,255,0.2);color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:0.82rem;white-space:nowrap;">Get Extension</a>
+                </div>
+
                 <!-- Top Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
@@ -5665,6 +5675,12 @@
             const totalImpressions = engagement.impressions || 0;
             const totalEngagements = (engagement.likes || 0) + (engagement.comments || 0) + (engagement.reposts || 0);
 
+            // Show extension connect banner if no analytics data yet
+            const banner = document.getElementById('analyticsExtBanner');
+            if (banner) {
+                banner.style.display = (!data.lastSync && followers === 0 && postMetrics.length === 0) ? 'flex' : 'none';
+            }
+
             document.getElementById('aFollowers').textContent = followers.toLocaleString();
             document.getElementById('aPosts').textContent = totalPosts.toLocaleString();
             document.getElementById('aImpressions').textContent = totalImpressions.toLocaleString();
@@ -5673,13 +5689,18 @@
             document.getElementById('aLikes').textContent = (engagement.likes || 0).toLocaleString();
             document.getElementById('aReposts').textContent = (engagement.reposts || 0).toLocaleString();
             document.getElementById('aReplies').textContent = (engagement.comments || 0).toLocaleString();
-            document.getElementById('aBookmarks').textContent = '0';
+            document.getElementById('aBookmarks').textContent = (data.profileViews || 0).toLocaleString();
+
+            // Update labels to reflect LinkedIn metrics
+            const bookmarkLabel = document.querySelector('#aBookmarks')?.closest('.engagement-stat-card')?.querySelector('.engagement-stat-label');
+            if (bookmarkLabel) bookmarkLabel.textContent = 'Profile Views';
 
             if (totalEngagements > 0 && totalImpressions > 0) {
                 const pct = (val) => ((val / totalImpressions) * 100).toFixed(1) + '%';
                 document.querySelectorAll('.engagement-stat-pct')[0].textContent = pct(engagement.likes || 0);
                 document.querySelectorAll('.engagement-stat-pct')[1].textContent = pct(engagement.reposts || 0);
                 document.querySelectorAll('.engagement-stat-pct')[2].textContent = pct(engagement.comments || 0);
+                document.querySelectorAll('.engagement-stat-pct')[3].textContent = data.searchAppearances ? data.searchAppearances.toLocaleString() + ' searches' : '0%';
             }
 
             buildFollowerChart(data.followersHistory || []);

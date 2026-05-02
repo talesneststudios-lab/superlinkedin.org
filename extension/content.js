@@ -131,6 +131,38 @@
         chrome.runtime.sendMessage({ type: 'ANALYTICS_DATA', payload: data });
     }
 
+    function scrapeAnalyticsDashboard() {
+        const stats = {};
+
+        // Profile views
+        const viewsEls = document.querySelectorAll('.analytics-card, .pv-recent-activity-section, [data-test-id="analytics"]');
+        document.querySelectorAll('.t-bold, .t-24, .t-black--light').forEach(el => {
+            const label = el.closest('.artdeco-card, .pv-recent-activity-section__container, .analytics-section');
+            if (!label) return;
+            const text = label.textContent || '';
+            const num = parseNumber(el.textContent);
+            if (/profile view/i.test(text) && num > 0) stats.profileViews = num;
+            if (/search appear/i.test(text) && num > 0) stats.searchAppearances = num;
+            if (/post impression/i.test(text) && num > 0) stats.postImpressions = num;
+        });
+
+        // Try to get analytics from the dedicated analytics page
+        document.querySelectorAll('.analytics-highlight-card, .dashboard-analytics-card').forEach(card => {
+            const val = card.querySelector('.t-24, .t-bold, .artdeco-entity-lockup__title');
+            const lbl = card.querySelector('.t-14, .t-normal, .artdeco-entity-lockup__subtitle');
+            if (val && lbl) {
+                const num = parseNumber(val.textContent);
+                const labelText = lbl.textContent.toLowerCase();
+                if (labelText.includes('profile view') && num > 0) stats.profileViews = num;
+                if (labelText.includes('post impression') && num > 0) stats.postImpressions = num;
+                if (labelText.includes('search') && num > 0) stats.searchAppearances = num;
+                if (labelText.includes('follower') && num > 0) stats.followers = num;
+            }
+        });
+
+        return Object.keys(stats).length > 0 ? stats : null;
+    }
+
     function runScrape() {
         const url = window.location.href;
         const data = { url, timestamp: new Date().toISOString() };
@@ -143,6 +175,17 @@
             }
             const profile = scrapeProfileInfo();
             data.profile = profile;
+
+            const dashboardStats = scrapeAnalyticsDashboard();
+            if (dashboardStats) {
+                data.dashboardStats = dashboardStats;
+                if (dashboardStats.followers) sidebarData.followers = dashboardStats.followers;
+            }
+        }
+
+        if (url.includes('/dashboard/')) {
+            const dashboardStats = scrapeAnalyticsDashboard();
+            if (dashboardStats) data.dashboardStats = dashboardStats;
         }
 
         if (url.includes('/feed') || url.includes('/in/') || url.includes('/posts/')) {
@@ -153,7 +196,7 @@
             }
         }
 
-        if (data.followers !== undefined || (data.posts && data.posts.length > 0)) {
+        if (data.followers !== undefined || (data.posts && data.posts.length > 0) || data.dashboardStats) {
             sendToBackground(data);
         }
 
