@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "SuperLinkedIn",
-  "description": "AI-powered LinkedIn growth tools — analytics, post insights, and engagement tracking right in your feed.",
-  "version": "1.0.0",
+  "description": "Super insights for your LinkedIn activities and engagements — analytics dashboard, AI post writer, engagement tracking, post scheduler, and growth tools right in your feed.",
+  "version": "1.1.0",
   "permissions": ["storage", "activeTab", "alarms"],
   "host_permissions": ["https://www.linkedin.com/*"],
   "background": {
@@ -12,6 +12,7 @@
     {
       "matches": ["https://www.linkedin.com/*"],
       "js": ["content.js"],
+      "css": ["sidebar.css"],
       "run_at": "document_idle"
     }
   ],

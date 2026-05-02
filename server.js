@@ -154,10 +154,50 @@ app.get('/playbook', (req, res) => {
     res.sendFile(path.join(__dirname, 'playbook.html'));
 });
 
+// ---------- MULTI-PROFILE HELPERS ----------
+
+function getActiveProfileId(session) {
+    if (session.activeProfileId) return session.activeProfileId;
+    if (session.user) return session.user.linkedinId;
+    return null;
+}
+
+function getPrimaryAccountId(session) {
+    return session.primaryAccountId || (session.user && session.user.linkedinId) || null;
+}
+
+async function getPrimaryUser(session) {
+    const primaryId = getPrimaryAccountId(session);
+    if (!primaryId) return null;
+    if (primaryId === session.user.linkedinId) return session.user;
+    return await dbGetUser(primaryId);
+}
+
 // ---------- AUTH ROUTES ----------
 
 // Step 1: Redirect user to LinkedIn authorization page
 app.get('/auth/linkedin', (req, res) => {
+    const state = crypto.randomBytes(32).toString('hex');
+    req.session.oauthState = state;
+
+    const params = new URLSearchParams({
+        response_type: 'code',
+        client_id: LINKEDIN.clientId,
+        redirect_uri: LINKEDIN.redirectUri,
+        scope: LINKEDIN.scope,
+        state: state,
+    });
+
+    res.redirect(`${LINKEDIN.authUrl}?${params.toString()}`);
+});
+
+// Add-profile route: sets flag then triggers same OAuth flow
+app.get('/auth/linkedin/add-profile', (req, res) => {
+    if (!req.session.user) return res.redirect('/');
+
+    req.session.addingProfile = true;
+    req.session.addingProfilePrimaryId = req.session.primaryAccountId || req.session.user.linkedinId;
+
     const state = crypto.randomBytes(32).toString('hex');
     req.session.oauthState = state;
 
@@ -223,8 +263,86 @@ app.get('/auth/linkedin/callback', async (req, res) => {
 
         const profile = await profileResponse.json();
 
-        // Step 5: Look up existing user in DynamoDB — DB is the source of truth
+        // ── ADD-PROFILE MODE ──
+        if (req.session.addingProfile && req.session.addingProfilePrimaryId) {
+            const primaryId = req.session.addingProfilePrimaryId;
+            delete req.session.addingProfile;
+            delete req.session.addingProfilePrimaryId;
+            delete req.session.oauthState;
+
+            const primaryUser = await dbGetUser(primaryId);
+            if (!primaryUser || !primaryUser.paid) {
+                return res.redirect('/auth/error.html?message=' + encodeURIComponent('Primary account not found or not paid'));
+            }
+
+            const tier = primaryUser.planTier || 'pro';
+            const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
+            const linkedProfiles = primaryUser.linkedProfiles || [{ linkedinId: primaryId, name: primaryUser.name, email: primaryUser.email, picture: primaryUser.picture, addedAt: primaryUser.createdAt || new Date().toISOString() }];
+
+            if (linkedProfiles.length >= limits.maxProfiles) {
+                return res.redirect('/auth/error.html?message=' + encodeURIComponent(`Profile limit reached (${limits.maxProfiles} for ${tier} plan). Upgrade to add more.`));
+            }
+
+            if (linkedProfiles.some(p => p.linkedinId === profile.sub)) {
+                req.session.activeProfileId = profile.sub;
+                req.session.primaryAccountId = primaryId;
+                const existingProfile = await dbGetUser(profile.sub);
+                if (existingProfile) {
+                    req.session.user = { ...existingProfile, linkedinId: profile.sub, accessToken };
+                }
+                console.log(`Profile ${profile.name} already linked, switching to it`);
+                return res.redirect('/app');
+            }
+
+            linkedProfiles.push({
+                linkedinId: profile.sub,
+                name: profile.name,
+                email: profile.email,
+                picture: profile.picture,
+                addedAt: new Date().toISOString(),
+            });
+
+            await dbUpdateFields(primaryId, { linkedProfiles });
+
+            const existingDbProfile = await dbGetUser(profile.sub);
+            if (!existingDbProfile) {
+                await dbSaveUser({
+                    linkedinId: profile.sub,
+                    name: profile.name,
+                    email: profile.email,
+                    picture: profile.picture,
+                    parentAccountId: primaryId,
+                    paid: false,
+                    onboardingComplete: false,
+                    createdAt: new Date().toISOString(),
+                });
+            } else {
+                await dbUpdateFields(profile.sub, {
+                    name: profile.name,
+                    email: profile.email,
+                    picture: profile.picture,
+                    parentAccountId: primaryId,
+                });
+            }
+
+            req.session.primaryAccountId = primaryId;
+            req.session.activeProfileId = profile.sub;
+            const newProfile = await dbGetUser(profile.sub) || {};
+            req.session.user = { ...newProfile, linkedinId: profile.sub, accessToken };
+
+            console.log(`Profile added: ${profile.name} (${profile.email}) under primary ${primaryId}`);
+
+            if (newProfile.onboardingComplete) {
+                return res.redirect('/app');
+            }
+            return res.redirect('/onboarding');
+        }
+
+        // ── NORMAL LOGIN MODE ──
         const dbUser = await dbGetUser(profile.sub) || {};
+
+        // Check if this profile is a linked child — route to its parent
+        const parentId = dbUser.parentAccountId || null;
 
         req.session.user = {
             ...dbUser,
@@ -235,7 +353,6 @@ app.get('/auth/linkedin/callback', async (req, res) => {
             accessToken: accessToken,
         };
 
-        // Upsert basic profile to DynamoDB
         if (!dbUser.linkedinId) {
             await dbSaveUser({
                 linkedinId: profile.sub,
@@ -253,13 +370,24 @@ app.get('/auth/linkedin/callback', async (req, res) => {
             });
         }
 
+        // Initialize linkedProfiles for the primary account if not set
+        if (!parentId && req.session.user.paid && !dbUser.linkedProfiles) {
+            const initialProfiles = [{ linkedinId: profile.sub, name: profile.name, email: profile.email, picture: profile.picture, addedAt: dbUser.createdAt || new Date().toISOString() }];
+            await dbUpdateFields(profile.sub, { linkedProfiles: initialProfiles });
+            req.session.user.linkedProfiles = initialProfiles;
+        }
+
+        req.session.primaryAccountId = parentId || profile.sub;
+        req.session.activeProfileId = profile.sub;
+
         delete req.session.oauthState;
 
-        console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!req.session.user.paid} | onboarded=${!!req.session.user.onboardingComplete}`);
+        const isPaid = req.session.user.paid || (parentId && (await dbGetUser(parentId))?.paid);
+        console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!isPaid} | onboarded=${!!req.session.user.onboardingComplete}`);
 
-        if (req.session.user.paid) {
+        if (req.session.user.onboardingComplete) {
             res.redirect('/app');
-        } else if (req.session.user.onboardingComplete) {
+        } else if (isPaid && req.session.user.onboardingComplete === undefined) {
             res.redirect('/app');
         } else {
             res.redirect('/onboarding');
@@ -363,14 +491,22 @@ app.post('/api/checkout/confirm', async (req, res) => {
         req.session.user.aiCreditsUsed = 0;
         req.session.user.aiCreditsResetAt = new Date().toISOString();
 
-        await dbUpdateFields(req.session.user.linkedinId, {
+        const linkedinId = req.session.user.linkedinId;
+        const initialProfiles = [{ linkedinId, name: req.session.user.name, email: req.session.user.email, picture: req.session.user.picture, addedAt: new Date().toISOString() }];
+
+        await dbUpdateFields(linkedinId, {
             paid: true,
             paidAt: new Date().toISOString(),
             plan: req.session.user.plan,
             planTier: tier,
             aiCreditsUsed: 0,
             aiCreditsResetAt: new Date().toISOString(),
+            linkedProfiles: initialProfiles,
         });
+
+        req.session.user.linkedProfiles = initialProfiles;
+        req.session.primaryAccountId = linkedinId;
+        req.session.activeProfileId = linkedinId;
     }
     res.json({ ok: true });
 });
@@ -380,15 +516,118 @@ app.post('/api/checkout/confirm', async (req, res) => {
 app.post('/api/subscription/cancel', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
 
-    req.session.user.subscriptionCancelled = true;
-    req.session.user.cancelledAt = new Date().toISOString();
+    const primaryId = getPrimaryAccountId(req.session);
 
-    await dbUpdateFields(req.session.user.linkedinId, {
+    await dbUpdateFields(primaryId, {
         subscriptionCancelled: true,
         cancelledAt: new Date().toISOString(),
     });
 
-    console.log(`Subscription cancelled for ${req.session.user.name} (${req.session.user.email})`);
+    console.log(`Subscription cancelled for primary account ${primaryId}`);
+    res.json({ ok: true });
+});
+
+// ---------- MULTI-PROFILE MANAGEMENT ----------
+
+app.get('/api/profiles', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    const primaryId = getPrimaryAccountId(req.session);
+    const primaryUser = await dbGetUser(primaryId);
+    if (!primaryUser) return res.json({ profiles: [], activeProfileId: null, maxProfiles: 3 });
+
+    let linkedProfiles = primaryUser.linkedProfiles || [];
+    if (!linkedProfiles.length) {
+        linkedProfiles = [{ linkedinId: primaryId, name: primaryUser.name, email: primaryUser.email, picture: primaryUser.picture, addedAt: primaryUser.createdAt || new Date().toISOString() }];
+    }
+
+    const tier = primaryUser.planTier || 'pro';
+    const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
+
+    const enriched = [];
+    for (const p of linkedProfiles) {
+        const pUser = await dbGetUser(p.linkedinId);
+        enriched.push({
+            linkedinId: p.linkedinId,
+            name: pUser?.name || p.name,
+            email: pUser?.email || p.email,
+            picture: pUser?.picture || p.picture,
+            addedAt: p.addedAt,
+            isPrimary: p.linkedinId === primaryId,
+            onboardingComplete: !!pUser?.onboardingComplete,
+        });
+    }
+
+    res.json({
+        profiles: enriched,
+        activeProfileId: getActiveProfileId(req.session),
+        primaryAccountId: primaryId,
+        maxProfiles: limits.maxProfiles,
+        planTier: tier,
+    });
+});
+
+app.post('/api/profiles/switch', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { linkedinId } = req.body;
+    if (!linkedinId) return res.status(400).json({ error: 'linkedinId is required' });
+
+    const primaryId = getPrimaryAccountId(req.session);
+    const primaryUser = await dbGetUser(primaryId);
+    if (!primaryUser) return res.status(404).json({ error: 'Primary account not found' });
+
+    const linkedProfiles = primaryUser.linkedProfiles || [];
+    const found = linkedProfiles.find(p => p.linkedinId === linkedinId) || linkedinId === primaryId;
+    if (!found) return res.status(403).json({ error: 'Profile not linked to your account' });
+
+    const profileUser = await dbGetUser(linkedinId);
+    if (!profileUser) return res.status(404).json({ error: 'Profile not found' });
+
+    req.session.activeProfileId = linkedinId;
+    req.session.user = {
+        ...profileUser,
+        linkedinId,
+        accessToken: req.session.user.accessToken,
+    };
+
+    const { accessToken, ...safeUser } = req.session.user;
+    console.log(`Switched active profile to ${profileUser.name} (${linkedinId})`);
+    res.json({ ok: true, user: safeUser });
+});
+
+app.post('/api/profiles/remove', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    const { linkedinId } = req.body;
+    if (!linkedinId) return res.status(400).json({ error: 'linkedinId is required' });
+
+    const primaryId = getPrimaryAccountId(req.session);
+    if (linkedinId === primaryId) {
+        return res.status(400).json({ error: 'Cannot remove the primary account' });
+    }
+
+    const primaryUser = await dbGetUser(primaryId);
+    if (!primaryUser) return res.status(404).json({ error: 'Primary account not found' });
+
+    let linkedProfiles = primaryUser.linkedProfiles || [];
+    const idx = linkedProfiles.findIndex(p => p.linkedinId === linkedinId);
+    if (idx === -1) return res.status(404).json({ error: 'Profile not linked to your account' });
+
+    linkedProfiles.splice(idx, 1);
+    await dbUpdateFields(primaryId, { linkedProfiles });
+
+    await dbUpdateFields(linkedinId, { parentAccountId: null });
+
+    if (req.session.activeProfileId === linkedinId) {
+        req.session.activeProfileId = primaryId;
+        const pUser = await dbGetUser(primaryId);
+        if (pUser) {
+            req.session.user = { ...pUser, linkedinId: primaryId, accessToken: req.session.user.accessToken };
+        }
+    }
+
+    console.log(`Removed profile ${linkedinId} from primary ${primaryId}`);
     res.json({ ok: true });
 });
 
@@ -411,33 +650,43 @@ function getUserCreditsInfo(user) {
     return { tier, limits, used, shouldReset, remaining: Math.max(0, limits.aiCredits - used) };
 }
 
-async function consumeCredit(user, count) {
-    const info = getUserCreditsInfo(user);
-    const newUsed = info.shouldReset ? count : (user.aiCreditsUsed || 0) + count;
-    user.aiCreditsUsed = newUsed;
-    if (info.shouldReset) user.aiCreditsResetAt = new Date().toISOString();
+async function consumeCredit(session, count) {
+    const primaryId = getPrimaryAccountId(session);
+    const primaryUser = primaryId ? (await dbGetUser(primaryId)) || session.user : session.user;
+    const info = getUserCreditsInfo(primaryUser);
+    const newUsed = info.shouldReset ? count : (primaryUser.aiCreditsUsed || 0) + count;
+    primaryUser.aiCreditsUsed = newUsed;
+    if (info.shouldReset) primaryUser.aiCreditsResetAt = new Date().toISOString();
 
-    await dbUpdateFields(user.linkedinId, {
+    await dbUpdateFields(primaryId || primaryUser.linkedinId, {
         aiCreditsUsed: newUsed,
-        aiCreditsResetAt: user.aiCreditsResetAt || new Date().toISOString(),
+        aiCreditsResetAt: primaryUser.aiCreditsResetAt || new Date().toISOString(),
     });
+}
+
+async function getCreditsForSession(session) {
+    const primaryId = getPrimaryAccountId(session);
+    const primaryUser = primaryId ? (await dbGetUser(primaryId)) || session.user : session.user;
+    return getUserCreditsInfo(primaryUser);
 }
 
 app.get('/api/credits', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
 
-    const user = req.session.user;
-    const info = getUserCreditsInfo(user);
+    const primaryId = getPrimaryAccountId(req.session);
+    const primaryUser = primaryId ? (await dbGetUser(primaryId)) || req.session.user : req.session.user;
+
+    const info = getUserCreditsInfo(primaryUser);
 
     if (info.shouldReset) {
-        user.aiCreditsUsed = 0;
-        user.aiCreditsResetAt = new Date().toISOString();
-        await dbUpdateFields(user.linkedinId, { aiCreditsUsed: 0, aiCreditsResetAt: user.aiCreditsResetAt });
+        primaryUser.aiCreditsUsed = 0;
+        primaryUser.aiCreditsResetAt = new Date().toISOString();
+        await dbUpdateFields(primaryId || primaryUser.linkedinId, { aiCreditsUsed: 0, aiCreditsResetAt: primaryUser.aiCreditsResetAt });
     }
 
     res.json({
         planTier: info.tier,
-        planName: (PLANS[(user.plan || 'pro_monthly')] || PLANS.pro_monthly).name,
+        planName: (PLANS[(primaryUser.plan || 'pro_monthly')] || PLANS.pro_monthly).name,
         creditPeriod: info.limits.creditPeriod,
         aiCreditsTotal: info.limits.aiCredits,
         aiCreditsUsed: info.used,
@@ -751,7 +1000,7 @@ app.post('/api/ai/generate-posts', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const credits = getUserCreditsInfo(req.session.user);
+    const credits = await getCreditsForSession(req.session);
     if (credits.remaining < 3) {
         return res.json({ posts: [], error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
     }
@@ -858,7 +1107,7 @@ Make each post different in format (one list-based, one story, one insight/opini
             likes: likeOptions[Math.floor(Math.random() * likeOptions.length)],
         }));
 
-        await consumeCredit(req.session.user, posts.length);
+        await consumeCredit(req.session, posts.length);
         res.json({ posts, references });
     } catch (err) {
         console.error('AI generation error:', err);
@@ -871,7 +1120,7 @@ app.post('/api/ai/write', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const credits = getUserCreditsInfo(req.session.user);
+    const credits = await getCreditsForSession(req.session);
     if (credits.remaining < 1) {
         return res.json({ error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
     }
@@ -962,7 +1211,7 @@ Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITI
             const cut = post.lastIndexOf(' ', charLimit - 3);
             post = post.substring(0, cut > 0 ? cut : charLimit - 3) + '...';
         }
-        await consumeCredit(req.session.user, 1);
+        await consumeCredit(req.session, 1);
         res.json({ post });
     } catch (err) {
         console.error('AI write error:', err);
@@ -975,7 +1224,7 @@ app.post('/api/ai/generate-product-posts', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const credits = getUserCreditsInfo(req.session.user);
+    const credits = await getCreditsForSession(req.session);
     if (credits.remaining < 3) {
         return res.json({ posts: [], error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
     }
@@ -1051,7 +1300,7 @@ Make them engaging, authentic, and not salesy. Do NOT include hashtags.${customR
             posts = content.split('\n\n').filter(p => p.trim().length > 50).slice(0, 3);
         }
 
-        await consumeCredit(req.session.user, posts.length);
+        await consumeCredit(req.session, posts.length);
         res.json({ posts, products: products.map(p => p.name || p.url || 'Product') });
     } catch (err) {
         console.error('Product post generation error:', err);
@@ -1105,7 +1354,7 @@ app.post('/api/ai/improve', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const credits = getUserCreditsInfo(req.session.user);
+    const credits = await getCreditsForSession(req.session);
     if (credits.remaining < 1) {
         return res.json({ error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
     }
@@ -1158,7 +1407,7 @@ app.post('/api/ai/improve', async (req, res) => {
 
         const data = await response.json();
         const result = data.choices?.[0]?.message?.content?.trim() || '';
-        await consumeCredit(req.session.user, 1);
+        await consumeCredit(req.session, 1);
         res.json({ text: result });
     } catch (err) {
         console.error('AI improve error:', err);
@@ -1387,6 +1636,37 @@ app.get('/api/analytics', async (req, res) => {
     });
 });
 
+// Analytics summary for extension popup/sidebar (bearer-token auth)
+app.get('/api/analytics/summary', authExtension, async (req, res) => {
+    const user = await dbGetUser(req.extUser.linkedinId);
+    if (!user) return res.json({});
+
+    const posts = user.analyticsPostMetrics || [];
+    const eng = user.analyticsEngagement || {};
+    const topPosts = [...posts]
+        .sort((a, b) => ((b.likes || 0) + (b.comments || 0) + (b.reposts || 0))
+                       - ((a.likes || 0) + (a.comments || 0) + (a.reposts || 0)))
+        .slice(0, 5);
+
+    const totalEng = (eng.likes || 0) + (eng.comments || 0) + (eng.reposts || 0);
+    const avgEngagement = posts.length > 0
+        ? (totalEng / posts.length / Math.max((eng.impressions || 0) / posts.length, 1) * 100)
+        : 0;
+
+    res.json({
+        followers: user.analyticsFollowers || 0,
+        totalPosts: posts.length,
+        avgEngagement: Math.round(avgEngagement * 10) / 10,
+        totalImpressions: eng.impressions || 0,
+        totalLikes: eng.likes || 0,
+        totalComments: eng.comments || 0,
+        totalReposts: eng.reposts || 0,
+        topPosts,
+        followerHistory: user.analyticsFollowersHistory || [],
+        plan: user.planTier || user.plan || 'pro',
+    });
+});
+
 // ---------- API ROUTES ----------
 
 // Get current user info (re-hydrate from DB to catch any missed updates)
@@ -1395,11 +1675,12 @@ app.get('/api/me', async (req, res) => {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const dbUser = await dbGetUser(req.session.user.linkedinId);
+    const activeId = getActiveProfileId(req.session);
+    const dbUser = await dbGetUser(activeId);
     if (dbUser) {
         req.session.user = {
             ...dbUser,
-            linkedinId: req.session.user.linkedinId,
+            linkedinId: activeId,
             name: dbUser.name || req.session.user.name,
             email: dbUser.email || req.session.user.email,
             picture: dbUser.picture || req.session.user.picture,
@@ -1407,7 +1688,26 @@ app.get('/api/me', async (req, res) => {
         };
     }
 
+    const primaryId = getPrimaryAccountId(req.session);
+    let paid = req.session.user.paid;
+    let plan = req.session.user.plan;
+    let planTier = req.session.user.planTier;
+
+    if (primaryId && primaryId !== activeId) {
+        const primaryUser = await dbGetUser(primaryId);
+        if (primaryUser) {
+            paid = primaryUser.paid;
+            plan = primaryUser.plan;
+            planTier = primaryUser.planTier;
+        }
+    }
+
     const { accessToken, ...safeUser } = req.session.user;
+    safeUser.paid = paid;
+    safeUser.plan = plan;
+    safeUser.planTier = planTier;
+    safeUser.activeProfileId = activeId;
+    safeUser.primaryAccountId = primaryId;
     res.json(safeUser);
 });
 

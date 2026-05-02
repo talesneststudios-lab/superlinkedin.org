@@ -1339,7 +1339,7 @@
 
     <script>
         fetch('/api/me').then(r => r.json()).then(u => {
-            if (u.paid || u.onboardingComplete) window.location.href = '/app';
+            if (u.onboardingComplete) window.location.href = '/app';
         }).catch(() => {});
 
         // Each post has tags so AI can later profile writing style preferences

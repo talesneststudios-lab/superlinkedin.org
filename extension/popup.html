@@ -9,13 +9,19 @@
 <body>
     <div class="popup">
         <div class="header">
-            <div class="logo">SL</div>
-            <span class="brand">SuperLinkedIn</span>
+            <div class="header-left">
+                <div class="logo">SL</div>
+                <span class="brand">SuperLinkedIn</span>
+            </div>
+            <div class="header-right" id="headerActions" style="display:none;">
+                <button class="icon-btn" id="toggleSidebarBtn" title="Toggle LinkedIn Sidebar">&#9776;</button>
+                <button class="icon-btn" id="settingsBtn" title="Settings">&#9881;</button>
+            </div>
         </div>
 
         <!-- Logged out state -->
         <div id="loginView">
-            <p class="subtitle">Connect your account to sync LinkedIn analytics.</p>
+            <p class="subtitle">Connect your account to unlock LinkedIn analytics, AI writing tools, and growth insights.</p>
             <div class="form-group">
                 <label>Email</label>
                 <input type="email" id="emailInput" placeholder="you@example.com">
@@ -26,34 +32,138 @@
             </div>
             <button id="loginBtn" class="btn-primary">Connect Account</button>
             <p id="loginError" class="error"></p>
+            <div class="login-features">
+                <div class="login-feature"><span class="feat-icon">&#128200;</span> Real-time analytics</div>
+                <div class="login-feature"><span class="feat-icon">&#129302;</span> AI post writer</div>
+                <div class="login-feature"><span class="feat-icon">&#128197;</span> Post scheduler</div>
+                <div class="login-feature"><span class="feat-icon">&#128640;</span> Growth tracking</div>
+            </div>
         </div>
 
         <!-- Logged in state -->
         <div id="statusView" style="display:none;">
-            <div class="status-card">
-                <div class="status-icon connected"></div>
-                <div>
-                    <div class="status-label">Connected as</div>
-                    <div class="status-name" id="userName">--</div>
+
+            <!-- Tabs -->
+            <div class="tabs">
+                <button class="tab active" data-tab="overview" onclick="switchTab('overview',this)">Overview</button>
+                <button class="tab" data-tab="analytics" onclick="switchTab('analytics',this)">Analytics</button>
+                <button class="tab" data-tab="ai" onclick="switchTab('ai',this)">AI Tools</button>
+            </div>
+
+            <!-- Overview Tab -->
+            <div class="tab-panel active" id="panelOverview">
+                <div class="status-card">
+                    <div class="status-icon connected"></div>
+                    <div class="status-info">
+                        <div class="status-label">Connected as</div>
+                        <div class="status-name" id="userName">--</div>
+                    </div>
+                    <div class="plan-badge" id="planBadge">Pro</div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statFollowers">--</div>
+                        <div class="stat-label">Followers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statPosts">--</div>
+                        <div class="stat-label">Posts Tracked</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statEngagement">--</div>
+                        <div class="stat-label">Avg Engagement</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statImpressions">--</div>
+                        <div class="stat-label">Impressions</div>
+                    </div>
+                </div>
+
+                <div class="section-title">Quick Actions</div>
+                <div class="quick-actions">
+                    <button class="action-btn" onclick="openDashboard()"><span>&#128200;</span> Dashboard</button>
+                    <button class="action-btn" onclick="switchTab('ai',document.querySelector('[data-tab=ai]'))"><span>&#129302;</span> AI Writer</button>
+                    <button class="action-btn" onclick="toggleLinkedInSidebar()"><span>&#128736;</span> Sidebar</button>
+                    <button class="action-btn" id="syncBtnOverview" onclick="doSync()"><span>&#128259;</span> Sync Now</button>
+                </div>
+
+                <div class="sync-bar">
+                    <span class="sync-label">Last sync: <span id="lastSyncTime">Never</span></span>
+                    <span class="sync-status" id="syncStatus">&#9679; Active</span>
                 </div>
             </div>
 
-            <div class="sync-info">
-                <div class="sync-row">
-                    <span>Last sync</span>
-                    <span id="lastSyncTime" class="sync-value">Never</span>
+            <!-- Analytics Tab -->
+            <div class="tab-panel" id="panelAnalytics">
+                <div class="section-title">Top Posts</div>
+                <div id="topPostsList" class="top-posts-list">
+                    <div class="empty-state">Sync your data to see top posts</div>
                 </div>
-                <div class="sync-row">
-                    <span>Status</span>
-                    <span id="syncStatus" class="sync-value status-ok">Active</span>
+
+                <div class="section-title" style="margin-top:16px;">Engagement Breakdown</div>
+                <div class="engagement-grid">
+                    <div class="eng-row">
+                        <span class="eng-label">&#128077; Likes</span>
+                        <div class="eng-bar-wrap"><div class="eng-bar" id="engLikesBar" style="width:0%"></div></div>
+                        <span class="eng-value" id="engLikesVal">0</span>
+                    </div>
+                    <div class="eng-row">
+                        <span class="eng-label">&#128172; Comments</span>
+                        <div class="eng-bar-wrap"><div class="eng-bar comments" id="engCommentsBar" style="width:0%"></div></div>
+                        <span class="eng-value" id="engCommentsVal">0</span>
+                    </div>
+                    <div class="eng-row">
+                        <span class="eng-label">&#128257; Reposts</span>
+                        <div class="eng-bar-wrap"><div class="eng-bar reposts" id="engRepostsBar" style="width:0%"></div></div>
+                        <span class="eng-value" id="engRepostsVal">0</span>
+                    </div>
+                    <div class="eng-row">
+                        <span class="eng-label">&#128065; Views</span>
+                        <div class="eng-bar-wrap"><div class="eng-bar views" id="engViewsBar" style="width:0%"></div></div>
+                        <span class="eng-value" id="engViewsVal">0</span>
+                    </div>
+                </div>
+
+                <div class="section-title" style="margin-top:16px;">Follower Growth</div>
+                <div class="follower-chart" id="followerChart">
+                    <div class="empty-state">Keep syncing to build your growth chart</div>
                 </div>
             </div>
 
-            <button id="syncBtn" class="btn-primary">Sync Now</button>
-            <p id="syncMessage" class="success"></p>
+            <!-- AI Tools Tab -->
+            <div class="tab-panel" id="panelAi">
+                <div class="section-title">AI Post Writer</div>
+                <textarea class="ai-textarea" id="aiTextarea" placeholder="Write or paste your post here..."></textarea>
+                <div class="ai-actions">
+                    <button class="ai-btn" onclick="aiAction('generate')">&#129302; Generate Post</button>
+                    <button class="ai-btn secondary" onclick="aiAction('improve')">&#10024; Improve</button>
+                </div>
 
-            <div class="footer-links">
-                <a href="https://rwz9r5zqtw.us-east-1.awsapprunner.com/app" target="_blank">Open Dashboard</a>
+                <div class="section-title" style="margin-top:14px;">Quick Improve</div>
+                <div class="ai-quick-grid">
+                    <button class="ai-quick-btn" onclick="aiAction('grammar')">&#9998; Grammar</button>
+                    <button class="ai-quick-btn" onclick="aiAction('translate')">&#127760; Translate</button>
+                    <button class="ai-quick-btn" onclick="aiAction('hook')">&#10024; Hook</button>
+                    <button class="ai-quick-btn" onclick="aiAction('concise')">&#9986; Concise</button>
+                    <button class="ai-quick-btn" onclick="aiAction('engaging')">&#128171; Engaging</button>
+                    <button class="ai-quick-btn" onclick="aiAction('humorous')">&#128514; Humorous</button>
+                </div>
+
+                <div id="aiResult" class="ai-result" style="display:none;">
+                    <div class="section-title">Result</div>
+                    <div class="ai-result-text" id="aiResultText"></div>
+                    <button class="ai-btn small" onclick="copyAiResult()">&#128203; Copy</button>
+                </div>
+
+                <div id="aiLoading" class="ai-loading" style="display:none;">
+                    <div class="spinner"></div> Generating...
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="popup-footer">
+                <a href="#" id="dashboardLink" onclick="openDashboard()">Open Dashboard</a>
                 <button id="logoutBtn" class="btn-link">Disconnect</button>
             </div>
         </div>

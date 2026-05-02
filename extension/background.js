@@ -1,7 +1,7 @@
 const API_BASE = 'https://rwz9r5zqtw.us-east-1.awsapprunner.com';
 const SYNC_ALARM = 'superlinkedin-sync';
 
-let pendingData = { followers: null, posts: [] };
+let pendingData = { followers: null, posts: [], profile: null };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'ANALYTICS_DATA') {
@@ -10,11 +10,12 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     if (msg.type === 'GET_STATUS') {
-        chrome.storage.local.get(['authToken', 'lastSync', 'userName'], (result) => {
+        chrome.storage.local.get(['authToken', 'lastSync', 'userName', 'plan'], (result) => {
             sendResponse({
                 authenticated: !!result.authToken,
                 lastSync: result.lastSync || null,
                 userName: result.userName || null,
+                plan: result.plan || 'Pro',
             });
         });
         return true;
@@ -26,7 +27,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     if (msg.type === 'LOGOUT') {
-        chrome.storage.local.remove(['authToken', 'lastSync', 'userName']);
+        chrome.storage.local.remove(['authToken', 'lastSync', 'userName', 'plan']);
         sendResponse({ ok: true });
     }
 
@@ -34,11 +35,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         syncToServer().then(sendResponse);
         return true;
     }
+
+    if (msg.type === 'GET_ANALYTICS') {
+        getAnalyticsSummary().then(sendResponse);
+        return true;
+    }
 });
 
 function mergeData(payload) {
     if (payload.followers !== undefined && payload.followers !== null) {
         pendingData.followers = payload.followers;
+    }
+    if (payload.profile) {
+        pendingData.profile = payload.profile;
     }
     if (payload.posts && payload.posts.length > 0) {
         const existingTexts = new Set(pendingData.posts.map(p => p.text));
@@ -48,8 +57,8 @@ function mergeData(payload) {
                 existingTexts.add(p.text);
             }
         });
-        if (pendingData.posts.length > 50) {
-            pendingData.posts = pendingData.posts.slice(-50);
+        if (pendingData.posts.length > 100) {
+            pendingData.posts = pendingData.posts.slice(-100);
         }
     }
 }
@@ -66,6 +75,7 @@ async function login(email, linkedinId) {
             await chrome.storage.local.set({
                 authToken: data.token,
                 userName: data.name || email,
+                plan: data.plan || 'Pro',
             });
             return { ok: true, name: data.name };
         }
@@ -82,6 +92,7 @@ async function syncToServer() {
     const dataToSend = {
         followers: pendingData.followers,
         posts: pendingData.posts.slice(),
+        profile: pendingData.profile,
     };
 
     if (dataToSend.followers === null && dataToSend.posts.length === 0) {
@@ -101,7 +112,7 @@ async function syncToServer() {
         const result = await res.json();
 
         if (res.ok) {
-            pendingData = { followers: null, posts: [] };
+            pendingData = { followers: null, posts: [], profile: null };
             const now = new Date().toISOString();
             await chrome.storage.local.set({ lastSync: now });
             return { ok: true, syncedAt: now };
@@ -114,6 +125,22 @@ async function syncToServer() {
 
         return { ok: false, error: result.error || 'Sync failed' };
     } catch (err) {
+        return { ok: false, error: 'Could not connect to server' };
+    }
+}
+
+async function getAnalyticsSummary() {
+    const { authToken } = await chrome.storage.local.get('authToken');
+    if (!authToken) return { ok: false, error: 'Not authenticated' };
+
+    try {
+        const res = await fetch(`${API_BASE}/api/analytics/summary`, {
+            headers: { 'Authorization': `Bearer ${authToken}` },
+        });
+        if (!res.ok) return { ok: false, error: 'Failed to fetch' };
+        const data = await res.json();
+        return { ok: true, data };
+    } catch {
         return { ok: false, error: 'Could not connect to server' };
     }
 }
