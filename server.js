@@ -9,6 +9,13 @@ const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, ScanComma
 
 const PDFDocument = require('pdfkit');
 
+process.on('uncaughtException', (err) => {
+    console.error('[FATAL] Uncaught exception:', err.message, err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[FATAL] Unhandled rejection:', reason);
+});
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -117,13 +124,18 @@ const LINKEDIN = {
 
 const DynamoDBStore = require('connect-dynamodb')({ session });
 
+const sessionStore = new DynamoDBStore({
+    table: process.env.DYNAMODB_SESSIONS_TABLE || 'superlinkedin-sessions',
+    AWSConfigJSON: { region: process.env.AWS_REGION || 'us-east-1' },
+    readCapacityUnits: 5,
+    writeCapacityUnits: 5,
+});
+sessionStore.on('error', (err) => {
+    console.error('[SessionStore] DynamoDB session store error:', err.message);
+});
+
 app.use(session({
-    store: new DynamoDBStore({
-        table: process.env.DYNAMODB_SESSIONS_TABLE || 'superlinkedin-sessions',
-        AWSConfigJSON: { region: process.env.AWS_REGION || 'us-east-1' },
-        readCapacityUnits: 5,
-        writeCapacityUnits: 5,
-    }),
+    store: sessionStore,
     secret: process.env.SESSION_SECRET || 'fallback-secret',
     resave: false,
     saveUninitialized: false,
