@@ -122,20 +122,25 @@ const LINKEDIN = {
     scope: 'openid profile email w_member_social',
 };
 
-const DynamoDBStore = require('connect-dynamodb')({ session });
+let sessionStore;
+try {
+    const DynamoDBStore = require('connect-dynamodb')({ session });
+    sessionStore = new DynamoDBStore({
+        table: process.env.DYNAMODB_SESSIONS_TABLE || 'superlinkedin-sessions',
+        AWSConfigJSON: { region: process.env.AWS_REGION || 'us-east-1' },
+        readCapacityUnits: 5,
+        writeCapacityUnits: 5,
+    });
+    sessionStore.on('error', (err) => {
+        console.error('[SessionStore] DynamoDB session store error:', err.message);
+    });
+    console.log('[SessionStore] Using DynamoDB session store');
+} catch (err) {
+    console.error('[SessionStore] Failed to create DynamoDB store, falling back to in-memory:', err.message);
+    sessionStore = undefined;
+}
 
-const sessionStore = new DynamoDBStore({
-    table: process.env.DYNAMODB_SESSIONS_TABLE || 'superlinkedin-sessions',
-    AWSConfigJSON: { region: process.env.AWS_REGION || 'us-east-1' },
-    readCapacityUnits: 5,
-    writeCapacityUnits: 5,
-});
-sessionStore.on('error', (err) => {
-    console.error('[SessionStore] DynamoDB session store error:', err.message);
-});
-
-app.use(session({
-    store: sessionStore,
+const sessionConfig = {
     secret: process.env.SESSION_SECRET || 'fallback-secret',
     resave: false,
     saveUninitialized: false,
@@ -145,7 +150,10 @@ app.use(session({
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
     },
-}));
+};
+if (sessionStore) sessionConfig.store = sessionStore;
+
+app.use(session(sessionConfig));
 
 const cors = require('cors');
 app.use(cors({ origin: true, credentials: true }));
@@ -2125,12 +2133,17 @@ async function processScheduledPosts() {
     }
 }
 
-setInterval(processScheduledPosts, 60 * 1000);
+setInterval(() => {
+    processScheduledPosts().catch(err => {
+        console.error('[Scheduler] Interval error:', err.message);
+    });
+}, 60 * 1000);
 
 // ---------- START SERVER ----------
 
 app.listen(PORT, () => {
-    console.log(`\n  SuperLinkedIn server running at http://localhost:${PORT}\n`);
+    console.log(`\n  SuperLinkedIn server running at http://localhost:${PORT}`);
+    console.log(`  Node ${process.version} | PID ${process.pid} | ENV ${process.env.NODE_ENV || 'development'}\n`);
 
     if (LINKEDIN.clientId === 'your_client_id_here') {
         console.log('  ⚠  WARNING: LinkedIn Client ID not configured!');
@@ -2138,5 +2151,7 @@ app.listen(PORT, () => {
         console.log('  ⚠  Get them from https://www.linkedin.com/developers/apps\n');
     }
 
-    processScheduledPosts();
+    processScheduledPosts().catch(err => {
+        console.error('[Scheduler] Initial run error:', err.message);
+    });
 });
