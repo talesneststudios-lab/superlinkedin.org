@@ -6591,6 +6591,8 @@
         // ---- Unicode Bold / Italic for LinkedIn ----
         const UNICODE_BOLD = {};
         const UNICODE_ITALIC = {};
+        const UNICODE_BOLD_REV = {};
+        const UNICODE_ITALIC_REV = {};
         (function buildMaps() {
             const az = 'abcdefghijklmnopqrstuvwxyz';
             const AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -6604,9 +6606,14 @@
             const iL = [...italicLower], iU = [...italicUpper];
             for (let i = 0; i < 26; i++) {
                 UNICODE_BOLD[az[i]] = bL[i]; UNICODE_BOLD[AZ[i]] = bU[i];
+                UNICODE_BOLD_REV[bL[i]] = az[i]; UNICODE_BOLD_REV[bU[i]] = AZ[i];
                 UNICODE_ITALIC[az[i]] = iL[i]; UNICODE_ITALIC[AZ[i]] = iU[i];
+                UNICODE_ITALIC_REV[iL[i]] = az[i]; UNICODE_ITALIC_REV[iU[i]] = AZ[i];
             }
-            for (let i = 0; i < 10; i++) UNICODE_BOLD[digits[i]] = bD[i];
+            for (let i = 0; i < 10; i++) {
+                UNICODE_BOLD[digits[i]] = bD[i];
+                UNICODE_BOLD_REV[bD[i]] = digits[i];
+            }
         })();
 
         function unicodeFormat(style, textareaId) {
@@ -6618,7 +6625,18 @@
             }
             const selected = ta.value.substring(start, end);
             const map = style === 'bold' ? UNICODE_BOLD : UNICODE_ITALIC;
-            const converted = [...selected].map(c => map[c] || c).join('');
+            const revMap = style === 'bold' ? UNICODE_BOLD_REV : UNICODE_ITALIC_REV;
+
+            const chars = [...selected];
+            const isFormatted = chars.some(c => revMap[c]);
+
+            let converted;
+            if (isFormatted) {
+                converted = chars.map(c => revMap[c] || c).join('');
+            } else {
+                converted = chars.map(c => map[c] || c).join('');
+            }
+
             ta.value = ta.value.substring(0, start) + converted + ta.value.substring(end);
             ta.selectionStart = start;
             ta.selectionEnd = start + converted.length;
