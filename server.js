@@ -5,7 +5,7 @@ const crypto = require('crypto');
 const path = require('path');
 const Stripe = require('stripe');
 const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
-const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, ScanCommand } = require('@aws-sdk/lib-dynamodb');
+const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 
 const PDFDocument = require('pdfkit');
 
@@ -676,6 +676,63 @@ app.post('/api/subscription/cancel', async (req, res) => {
 
     console.log(`Subscription cancelled for primary account ${primaryId}`);
     res.json({ ok: true });
+});
+
+app.post('/api/account/delete', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    const primaryId = getPrimaryAccountId(req.session);
+    const primaryUser = await dbGetUser(primaryId);
+    if (!primaryUser) return res.status(404).json({ error: 'Account not found' });
+
+    try {
+        // Cancel Stripe subscription if active
+        if (stripe && primaryUser.email) {
+            try {
+                const customers = await stripe.customers.list({ email: primaryUser.email, limit: 1 });
+                if (customers.data.length > 0) {
+                    const customer = customers.data[0];
+                    const subscriptions = await stripe.subscriptions.list({ customer: customer.id, status: 'active', limit: 10 });
+                    for (const sub of subscriptions.data) {
+                        await stripe.subscriptions.cancel(sub.id);
+                        console.log(`[DeleteAccount] Cancelled Stripe subscription ${sub.id} for ${primaryId}`);
+                    }
+                    const trialSubs = await stripe.subscriptions.list({ customer: customer.id, status: 'trialing', limit: 10 });
+                    for (const sub of trialSubs.data) {
+                        await stripe.subscriptions.cancel(sub.id);
+                        console.log(`[DeleteAccount] Cancelled trial subscription ${sub.id} for ${primaryId}`);
+                    }
+                }
+            } catch (stripeErr) {
+                console.error('[DeleteAccount] Stripe cancellation error:', stripeErr.message);
+            }
+        }
+
+        // Delete linked profile records
+        const linkedProfiles = primaryUser.linkedProfiles || [];
+        for (const profile of linkedProfiles) {
+            if (profile.linkedinId && profile.linkedinId !== primaryId) {
+                try {
+                    await ddb.send(new DeleteCommand({ TableName: DYNAMO_TABLE, Key: { linkedinId: profile.linkedinId } }));
+                    console.log(`[DeleteAccount] Deleted linked profile ${profile.linkedinId}`);
+                } catch (e) {
+                    console.error(`[DeleteAccount] Failed to delete profile ${profile.linkedinId}:`, e.message);
+                }
+            }
+        }
+
+        // Delete the primary account
+        await ddb.send(new DeleteCommand({ TableName: DYNAMO_TABLE, Key: { linkedinId: primaryId } }));
+        console.log(`[DeleteAccount] Deleted primary account ${primaryId} (${primaryUser.email})`);
+
+        // Destroy session
+        req.session.destroy(() => {
+            res.json({ ok: true });
+        });
+    } catch (err) {
+        console.error('[DeleteAccount] Error:', err.message);
+        res.status(500).json({ error: 'Failed to delete account. Please contact support.' });
+    }
 });
 
 // ---------- MULTI-PROFILE MANAGEMENT ----------
