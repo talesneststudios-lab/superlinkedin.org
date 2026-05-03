@@ -135,55 +135,102 @@
         const stats = {};
         const bodyText = document.body.innerText || '';
 
-        // Strategy 1: Scan all artdeco-card containers for stat+label pairs
-        document.querySelectorAll('.artdeco-card, [class*="analytics"], [class*="dashboard"]').forEach(card => {
+        // Strategy 1: DOM containers - look in artdeco-card sections for number+label pairs
+        document.querySelectorAll('.artdeco-card, [class*="analytics"], [class*="dashboard"], [class*="discovery"], [class*="engagement"], section, .scaffold-layout__main').forEach(card => {
             const text = card.textContent || '';
-            const numbers = text.match(/(\d[\d,.]*)\s*(Post impression|Impression|Follower|Profile viewer|Search appearance)/gi);
-            if (numbers) {
-                numbers.forEach(match => {
+            const pairs = text.match(/(\d[\d,.]*[KMB]?)\s*(Post impression|Impression|Follower|Profile viewer|Search appearance|Members?\s+reached|Social engagement)/gi);
+            if (pairs) {
+                pairs.forEach(match => {
                     const num = parseNumber(match);
                     const lower = match.toLowerCase();
-                    if (lower.includes('impression') && num > 0) stats.postImpressions = num;
-                    if (lower.includes('follower') && num > 0) stats.followers = num;
-                    if (lower.includes('profile viewer') && num > 0) stats.profileViews = num;
-                    if (lower.includes('search appear') && num > 0) stats.searchAppearances = num;
+                    if (lower.includes('impression') && num > 0 && !stats.postImpressions) stats.postImpressions = num;
+                    if (lower.includes('follower') && num > 0 && !stats.followers) stats.followers = num;
+                    if (lower.includes('profile viewer') && num > 0 && !stats.profileViews) stats.profileViews = num;
+                    if (lower.includes('search appear') && num > 0 && !stats.searchAppearances) stats.searchAppearances = num;
+                    if (lower.includes('member') && lower.includes('reached') && num > 0 && !stats.membersReached) stats.membersReached = num;
+                    if (lower.includes('social engagement') && num > 0 && !stats.socialEngagements) stats.socialEngagements = num;
                 });
             }
         });
 
-        // Strategy 2: Look for bold numbers next to descriptive text in the page
-        document.querySelectorAll('.t-24, .t-bold, h2, h3, [class*="stat"], [class*="metric"]').forEach(el => {
+        // Strategy 2: Bold/large numbers near descriptive text
+        document.querySelectorAll('.t-24, .t-20, .t-bold, .text-heading-xlarge, .text-heading-large, h2, h3, [class*="stat"], [class*="metric"], [class*="count"]').forEach(el => {
             const num = parseNumber(el.textContent);
             if (num <= 0) return;
-            const parent = el.parentElement;
+            const parent = el.closest('div, section, li') || el.parentElement;
             if (!parent) return;
-            const context = parent.textContent.toLowerCase();
-            if (context.includes('post impression') && !stats.postImpressions) stats.postImpressions = num;
+            const context = (parent.textContent || '').toLowerCase();
+            if ((context.includes('impression') || context.includes('discovery')) && !stats.postImpressions) stats.postImpressions = num;
             if (context.includes('follower') && !stats.followers) stats.followers = num;
             if (context.includes('profile viewer') && !stats.profileViews) stats.profileViews = num;
             if (context.includes('search appear') && !stats.searchAppearances) stats.searchAppearances = num;
             if (context.includes('members reached') && !stats.membersReached) stats.membersReached = num;
+            if (context.includes('social engagement') && !stats.socialEngagements) stats.socialEngagements = num;
+            if (context.includes('reaction') && !stats.reactions) stats.reactions = num;
         });
 
-        // Strategy 3: Regex on full page text as fallback
-        const patterns = [
+        // Strategy 3: Regex on full page text - number BEFORE label
+        const forwardPatterns = [
             { key: 'postImpressions', re: /(\d[\d,.]*[KMB]?)\s*(?:Post )?[Ii]mpressions?/i },
             { key: 'followers', re: /(\d[\d,.]*[KMB]?)\s*(?:Total )?[Ff]ollowers?/i },
             { key: 'profileViews', re: /(\d[\d,.]*[KMB]?)\s*[Pp]rofile viewers?/i },
             { key: 'searchAppearances', re: /(\d[\d,.]*[KMB]?)\s*[Ss]earch appear/i },
-            { key: 'membersReached', re: /(\d[\d,.]*[KMB]?)\s*[Mm]embers? reached/i },
+            { key: 'membersReached', re: /(\d[\d,.]*[KMB]?)\s*[Mm]embers?\s+reached/i },
+            { key: 'socialEngagements', re: /(\d[\d,.]*[KMB]?)\s*[Ss]ocial engagements?/i },
+            { key: 'reactions', re: /[Rr]eactions?\s*(\d[\d,.]*[KMB]?)/i },
         ];
-        patterns.forEach(({ key, re }) => {
+        forwardPatterns.forEach(({ key, re }) => {
             if (!stats[key]) {
                 const m = bodyText.match(re);
-                if (m) stats[key] = parseNumber(m[1]);
+                if (m) {
+                    const v = parseNumber(m[1]);
+                    if (v > 0) stats[key] = v;
+                }
             }
         });
+
+        // Strategy 4: Label BEFORE number (LinkedIn sometimes shows "Impressions\n30")
+        const reversePatterns = [
+            { key: 'postImpressions', re: /[Ii]mpressions?\s*[:\-]?\s*(\d[\d,.]*[KMB]?)/i },
+            { key: 'followers', re: /[Ff]ollowers?\s*[:\-]?\s*(\d[\d,.]*[KMB]?)/i },
+            { key: 'membersReached', re: /[Mm]embers?\s+reached\s*[:\-]?\s*(\d[\d,.]*[KMB]?)/i },
+            { key: 'socialEngagements', re: /[Ss]ocial engagements?\s*[:\-]?\s*(\d[\d,.]*[KMB]?)/i },
+        ];
+        reversePatterns.forEach(({ key, re }) => {
+            if (!stats[key]) {
+                const m = bodyText.match(re);
+                if (m) {
+                    const v = parseNumber(m[1]);
+                    if (v > 0) stats[key] = v;
+                }
+            }
+        });
+
+        // Strategy 5: Scrape top performing posts section
+        const topPosts = [];
+        const topPostPattern = /(\d[\d,.]*[KMB]?)\s*impressions?\s*[•·]\s*(\d[\d,.]*[KMB]?)\s*engagements?/gi;
+        let tpMatch;
+        while ((tpMatch = topPostPattern.exec(bodyText)) !== null) {
+            topPosts.push({
+                impressions: parseNumber(tpMatch[1]),
+                engagements: parseNumber(tpMatch[2]),
+            });
+        }
+        if (topPosts.length > 0) stats.topPerformingPosts = topPosts;
+
+        // Use reactions as social engagements if we found reactions but not socialEngagements
+        if (!stats.socialEngagements && stats.reactions) {
+            stats.socialEngagements = stats.reactions;
+        }
+
+        console.log('[SuperLinkedIn] Dashboard scrape result:', JSON.stringify(stats));
+        console.log('[SuperLinkedIn] Page text sample (first 500 chars):', bodyText.substring(0, 500));
 
         return Object.keys(stats).length > 0 ? stats : null;
     }
 
-    function runScrape() {
+    function runScrape(retryCount) {
+        retryCount = retryCount || 0;
         const url = window.location.href;
         const data = { url, timestamp: new Date().toISOString() };
 
@@ -203,9 +250,19 @@
             }
         }
 
-        if (url.includes('/dashboard') || url.includes('/analytics') || url.includes('/creator')) {
+        const isAnalyticsPage = url.includes('/dashboard') || url.includes('/analytics') || url.includes('/creator');
+        if (isAnalyticsPage) {
             const dashboardStats = scrapeAnalyticsDashboard();
-            if (dashboardStats) data.dashboardStats = dashboardStats;
+            if (dashboardStats) {
+                data.dashboardStats = dashboardStats;
+                if (dashboardStats.followers) sidebarData.followers = dashboardStats.followers;
+                if (dashboardStats.postImpressions) sidebarData.totalImpressions = dashboardStats.postImpressions;
+                if (dashboardStats.socialEngagements) sidebarData.totalLikes = dashboardStats.socialEngagements;
+            } else if (retryCount < 3) {
+                console.log('[SuperLinkedIn] Analytics page detected but no data found, retry', retryCount + 1, 'of 3 in 5s...');
+                setTimeout(() => runScrape(retryCount + 1), 5000);
+                return;
+            }
         }
 
         if (url.includes('/feed') || url.includes('/in/') || url.includes('/posts/')) {

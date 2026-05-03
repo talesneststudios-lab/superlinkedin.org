@@ -2191,103 +2191,210 @@ app.post('/api/carousel/publish', async (req, res) => {
             doc.on('error', reject);
         });
 
-        // Step 1: Register upload
-        const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-                registerUploadRequest: {
-                    recipes: ['urn:li:digitalmediaRecipe:feedshare-document'],
-                    owner: personUrn,
-                    serviceRelationships: [{
-                        relationshipType: 'OWNER',
-                        identifier: 'urn:li:userGeneratedContent',
-                    }],
+        console.log(`[Carousel] PDF generated, size: ${pdfBuffer.length} bytes. Attempting upload for ${linkedinId}`);
+
+        let documentUrn = null;
+
+        // --- Method 1: New REST Documents API ---
+        try {
+            const initRes = await fetch('https://api.linkedin.com/rest/documents?action=initializeUpload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'LinkedIn-Version': '202401',
                 },
-            }),
-        });
+                body: JSON.stringify({
+                    initializeUploadRequest: {
+                        owner: personUrn,
+                    },
+                }),
+            });
 
-        if (!registerRes.ok) {
-            const errText = await registerRes.text();
-            console.error('LinkedIn register upload failed:', errText);
-            return res.status(500).json({ error: 'Failed to register upload with LinkedIn.' });
+            if (initRes.ok) {
+                const initData = await initRes.json();
+                const uploadUrl = initData.value?.uploadUrl;
+                documentUrn = initData.value?.document;
+
+                if (uploadUrl && documentUrn) {
+                    const upRes = await fetch(uploadUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/pdf',
+                        },
+                        body: pdfBuffer,
+                    });
+
+                    if (!upRes.ok) {
+                        console.error('[Carousel] REST Documents upload PUT failed:', upRes.status, await upRes.text());
+                        documentUrn = null;
+                    } else {
+                        console.log('[Carousel] REST Documents upload succeeded, URN:', documentUrn);
+                    }
+                } else {
+                    console.error('[Carousel] REST Documents init response missing uploadUrl or document:', JSON.stringify(initData));
+                    documentUrn = null;
+                }
+            } else {
+                const errBody = await initRes.text();
+                console.error('[Carousel] REST Documents API failed:', initRes.status, errBody);
+            }
+        } catch (docErr) {
+            console.error('[Carousel] REST Documents API exception:', docErr.message);
         }
 
-        const registerData = await registerRes.json();
-        const uploadUrl = registerData.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
-        const asset = registerData.value?.asset;
-
-        if (!uploadUrl || !asset) {
-            return res.status(500).json({ error: 'LinkedIn upload registration returned invalid data.' });
-        }
-
-        // Step 2: Upload PDF
-        const uploadRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/pdf',
-            },
-            body: pdfBuffer,
-        });
-
-        if (!uploadRes.ok) {
-            console.error('LinkedIn PDF upload failed:', uploadRes.status);
-            return res.status(500).json({ error: 'Failed to upload PDF to LinkedIn.' });
-        }
-
-        // Step 3: Create post with document
-        const postRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-Restli-Protocol-Version': '2.0.0',
-            },
-            body: JSON.stringify({
-                author: personUrn,
-                lifecycleState: 'PUBLISHED',
-                specificContent: {
-                    'com.linkedin.ugc.ShareContent': {
-                        shareCommentary: { text: text.trim() },
-                        shareMediaCategory: 'ARTICLE',
-                        media: [{
-                            status: 'READY',
-                            media: asset,
-                            title: { text: title || 'Carousel Post' },
+        // --- Method 2: Legacy v2 Assets API (fallback) ---
+        if (!documentUrn) {
+            console.log('[Carousel] Falling back to legacy v2 assets API...');
+            const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                },
+                body: JSON.stringify({
+                    registerUploadRequest: {
+                        recipes: ['urn:li:digitalmediaRecipe:feedshare-document'],
+                        owner: personUrn,
+                        serviceRelationships: [{
+                            relationshipType: 'OWNER',
+                            identifier: 'urn:li:userGeneratedContent',
                         }],
                     },
-                },
-                visibility: {
-                    'com.linkedin.ugc.MemberNetworkVisibility': visibility,
-                },
-            }),
-        });
+                }),
+            });
 
-        if (postRes.ok) {
-            const postData = await postRes.json();
-            const postId = postData.id;
-            const postUrl = postId
-                ? `https://www.linkedin.com/feed/update/${postId}/`
-                : 'https://www.linkedin.com/feed/';
+            if (registerRes.ok) {
+                const registerData = await registerRes.json();
+                const uploadUrl = registerData.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
+                const asset = registerData.value?.asset;
 
-            await consumeCredit(req.session, 1);
-            console.log(`Carousel published to LinkedIn by ${req.session.user.name}: ${postId}`);
-            res.json({ success: true, postId, postUrl });
-        } else {
-            const errData = await postRes.text();
-            console.error('LinkedIn carousel post failed:', postRes.status, errData);
+                if (uploadUrl && asset) {
+                    const uploadRes = await fetch(uploadUrl, {
+                        method: 'PUT',
+                        headers: {
+                            'Authorization': `Bearer ${accessToken}`,
+                            'Content-Type': 'application/pdf',
+                        },
+                        body: pdfBuffer,
+                    });
 
-            if (postRes.status === 401) {
-                return res.status(401).json({ error: 'LinkedIn access token expired. Please sign out and sign in again.' });
+                    if (uploadRes.ok) {
+                        documentUrn = asset;
+                        console.log('[Carousel] Legacy v2 upload succeeded, asset:', asset);
+                    } else {
+                        console.error('[Carousel] Legacy v2 upload PUT failed:', uploadRes.status);
+                    }
+                }
+            } else {
+                const errText = await registerRes.text();
+                console.error('[Carousel] Legacy v2 register failed:', registerRes.status, errText);
             }
-            res.status(postRes.status).json({ error: 'Failed to publish carousel to LinkedIn.', details: errData });
         }
+
+        if (!documentUrn) {
+            return res.status(500).json({ error: 'Could not upload document to LinkedIn. Your app may need the "w_member_social" scope or the document sharing permission. Please try downloading the PDF and sharing it manually.' });
+        }
+
+        // --- Create post ---
+        let postId = null;
+        let postUrl = null;
+
+        // Try new REST Posts API first
+        const isDocumentUrn = documentUrn.startsWith('urn:li:document:');
+        if (isDocumentUrn) {
+            const postRes = await fetch('https://api.linkedin.com/rest/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'LinkedIn-Version': '202401',
+                },
+                body: JSON.stringify({
+                    author: personUrn,
+                    commentary: text.trim(),
+                    visibility: visibility === 'CONNECTIONS' ? 'CONNECTIONS' : 'PUBLIC',
+                    distribution: {
+                        feedDistribution: 'MAIN_FEED',
+                        targetEntities: [],
+                        thirdPartyDistributionChannels: [],
+                    },
+                    content: {
+                        media: {
+                            title: title || 'Carousel Post',
+                            id: documentUrn,
+                        },
+                    },
+                    lifecycleState: 'PUBLISHED',
+                }),
+            });
+
+            if (postRes.ok || postRes.status === 201) {
+                const loc = postRes.headers.get('x-restli-id') || postRes.headers.get('x-linkedin-id');
+                if (loc) {
+                    postId = loc;
+                } else {
+                    try { const d = await postRes.json(); postId = d.id; } catch {}
+                }
+            } else {
+                const errData = await postRes.text();
+                console.error('[Carousel] REST Posts API failed:', postRes.status, errData);
+            }
+        }
+
+        // Fallback to legacy UGC Posts API
+        if (!postId) {
+            const postRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'X-Restli-Protocol-Version': '2.0.0',
+                },
+                body: JSON.stringify({
+                    author: personUrn,
+                    lifecycleState: 'PUBLISHED',
+                    specificContent: {
+                        'com.linkedin.ugc.ShareContent': {
+                            shareCommentary: { text: text.trim() },
+                            shareMediaCategory: 'ARTICLE',
+                            media: [{
+                                status: 'READY',
+                                media: documentUrn,
+                                title: { text: title || 'Carousel Post' },
+                            }],
+                        },
+                    },
+                    visibility: {
+                        'com.linkedin.ugc.MemberNetworkVisibility': visibility,
+                    },
+                }),
+            });
+
+            if (postRes.ok) {
+                const postData = await postRes.json();
+                postId = postData.id;
+            } else {
+                const errData = await postRes.text();
+                console.error('[Carousel] Legacy UGC post failed:', postRes.status, errData);
+
+                if (postRes.status === 401) {
+                    return res.status(401).json({ error: 'LinkedIn access token expired. Please sign out and sign in again.' });
+                }
+                return res.status(postRes.status).json({ error: 'Failed to publish carousel to LinkedIn.', details: errData });
+            }
+        }
+
+        postUrl = postId
+            ? `https://www.linkedin.com/feed/update/${postId}/`
+            : 'https://www.linkedin.com/feed/';
+
+        await consumeCredit(req.session, 1);
+        console.log(`[Carousel] Published to LinkedIn by ${req.session.user.name}: ${postId}`);
+        res.json({ success: true, postId, postUrl });
     } catch (err) {
-        console.error('Carousel publish error:', err);
+        console.error('[Carousel] Publish error:', err);
         res.status(500).json({ error: 'Could not publish carousel. Please try again.' });
     }
 });
@@ -2426,6 +2533,8 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         updates.analyticsPostMetrics = existing;
     }
 
+    console.log('[Sync] Incoming data for', linkedinId, '- followers:', followers, 'posts:', (posts || []).length, 'dashboardStats:', JSON.stringify(dashboardStats || null));
+
     if (dashboardStats) {
         const user = await dbGetUser(linkedinId);
         const existing = (user && user.analyticsDashboard) || {};
@@ -2445,10 +2554,10 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
 
     updates.analyticsLastSync = now;
 
-    // Aggregate engagement stats
+    // Aggregate engagement stats from post-level scraping
     if (updates.analyticsPostMetrics || posts) {
-        const user = await dbGetUser(linkedinId);
-        const allPosts = updates.analyticsPostMetrics || (user && user.analyticsPostMetrics) || [];
+        const user2 = await dbGetUser(linkedinId);
+        const allPosts = updates.analyticsPostMetrics || (user2 && user2.analyticsPostMetrics) || [];
         let totalLikes = 0, totalComments = 0, totalReposts = 0, totalImpressions = 0;
         allPosts.forEach(p => {
             totalLikes += p.likes || 0;
@@ -2456,12 +2565,25 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
             totalReposts += p.reposts || 0;
             totalImpressions += p.impressions || 0;
         });
+
+        const prevEng = updates.analyticsEngagement || (user2 && user2.analyticsEngagement) || {};
+        const dashboardImpressions = (dashboardStats && dashboardStats.postImpressions !== undefined)
+            ? dashboardStats.postImpressions
+            : prevEng.impressions || 0;
+        const dashboardReactions = (dashboardStats && dashboardStats.socialEngagements !== undefined)
+            ? dashboardStats.socialEngagements
+            : null;
+        const dashboardMembersReached = (dashboardStats && dashboardStats.membersReached !== undefined)
+            ? dashboardStats.membersReached
+            : null;
+
         updates.analyticsEngagement = {
-            likes: totalLikes,
-            comments: totalComments,
-            reposts: totalReposts,
-            impressions: totalImpressions,
+            likes: dashboardReactions !== null ? dashboardReactions : (totalLikes || prevEng.likes || 0),
+            comments: totalComments || prevEng.comments || 0,
+            reposts: totalReposts || prevEng.reposts || 0,
+            impressions: Math.max(dashboardImpressions, totalImpressions),
             totalPosts: allPosts.length,
+            membersReached: dashboardMembersReached !== null ? dashboardMembersReached : (prevEng.membersReached || 0),
         };
     }
 
@@ -2506,24 +2628,31 @@ app.get('/api/analytics/summary', authExtension, async (req, res) => {
 
     const posts = user.analyticsPostMetrics || [];
     const eng = user.analyticsEngagement || {};
+    const dashboard = user.analyticsDashboard || {};
+
     const topPosts = [...posts]
         .sort((a, b) => ((b.likes || 0) + (b.comments || 0) + (b.reposts || 0))
                        - ((a.likes || 0) + (a.comments || 0) + (a.reposts || 0)))
         .slice(0, 5);
 
-    const totalEng = (eng.likes || 0) + (eng.comments || 0) + (eng.reposts || 0);
-    const avgEngagement = posts.length > 0
-        ? (totalEng / posts.length / Math.max((eng.impressions || 0) / posts.length, 1) * 100)
+    const totalImpressions = dashboard.postImpressions || eng.impressions || 0;
+    const totalLikes = eng.likes || dashboard.socialEngagements || 0;
+    const totalComments = eng.comments || 0;
+    const totalReposts = eng.reposts || 0;
+    const totalEng = totalLikes + totalComments + totalReposts;
+    const avgEngagement = totalImpressions > 0
+        ? (totalEng / Math.max(totalImpressions, 1) * 100)
         : 0;
 
     res.json({
-        followers: user.analyticsFollowers || 0,
-        totalPosts: posts.length,
+        followers: dashboard.followers || user.analyticsFollowers || 0,
+        totalPosts: posts.length || (user.queueItems || []).filter(q => q.status === 'posted').length || 0,
         avgEngagement: Math.round(avgEngagement * 10) / 10,
-        totalImpressions: eng.impressions || 0,
-        totalLikes: eng.likes || 0,
-        totalComments: eng.comments || 0,
-        totalReposts: eng.reposts || 0,
+        totalImpressions,
+        totalLikes,
+        totalComments,
+        totalReposts,
+        membersReached: dashboard.membersReached || eng.membersReached || 0,
         topPosts,
         followerHistory: user.analyticsFollowersHistory || [],
         plan: user.planTier || user.plan || 'pro',
