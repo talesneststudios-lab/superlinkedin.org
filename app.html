@@ -3240,7 +3240,7 @@
                     <a class="sidebar-link" href="/playbook" target="_blank" style="font-size:0.72rem;padding:4px 0;">&#128214; Playbook</a>
                     <a class="sidebar-link" href="mailto:info@superlinkedin.org?subject=SuperLinkedIn%20Support%20Request" style="font-size:0.72rem;padding:4px 0;">&#128172; Get Support</a>
                 </div>
-                <a class="sidebar-link">&#127873; Earn 40% Referral</a>
+                <a class="sidebar-link" onclick="openReferralPopup()" style="cursor:pointer;">&#127873; Earn 40% Referral</a>
             </div>
         </div>
     </aside>
@@ -4506,6 +4506,43 @@
     </div>
 
     <!-- DELETE ACCOUNT MODAL -->
+    <!-- REFERRAL POPUP -->
+    <div class="modal-overlay hidden" id="referralModal" onclick="if(event.target===this)closeReferralPopup()">
+        <div class="modal" style="max-width:480px;">
+            <button class="modal-close" onclick="closeReferralPopup()">&times;</button>
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="width:56px;height:56px;border-radius:50%;background:#fff7ed;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:1.5rem;">&#127873;</div>
+                <h2 style="font-size:1.15rem;font-weight:800;margin-bottom:6px;">Earn 40% Off Your Next Bill</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;">Share your referral link. When someone signs up and subscribes, you get <strong style="color:var(--orange);">40% off</strong> your next month's bill.</p>
+            </div>
+            <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:16px;">
+                <label style="font-size:0.72rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-muted);margin-bottom:6px;display:block;">Your Referral Link</label>
+                <div style="display:flex;gap:8px;">
+                    <input type="text" id="referralLinkInput" readonly style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:0.85rem;background:var(--bg);color:var(--text-primary);font-family:monospace;">
+                    <button onclick="copyReferralLink()" id="copyRefBtn" style="padding:10px 18px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:0.82rem;cursor:pointer;white-space:nowrap;">Copy</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:12px;margin-bottom:16px;">
+                <div style="flex:1;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;">
+                    <div style="font-size:1.3rem;font-weight:800;color:var(--text-primary);" id="refTotalCount">0</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;">People Referred</div>
+                </div>
+                <div style="flex:1;text-align:center;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px;">
+                    <div style="font-size:1.3rem;font-weight:800;color:var(--orange);" id="refDiscountsCount">0</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);font-weight:600;">Discounts Earned</div>
+                </div>
+            </div>
+            <div id="referralList" style="max-height:150px;overflow-y:auto;"></div>
+            <div style="margin-top:16px;text-align:center;">
+                <p style="font-size:0.75rem;color:var(--text-muted);line-height:1.5;">Share via:
+                    <a href="#" onclick="shareReferral('twitter');return false;" style="color:var(--accent);font-weight:600;margin:0 4px;">Twitter</a> |
+                    <a href="#" onclick="shareReferral('linkedin');return false;" style="color:var(--accent);font-weight:600;margin:0 4px;">LinkedIn</a> |
+                    <a href="#" onclick="shareReferral('email');return false;" style="color:var(--accent);font-weight:600;margin:0 4px;">Email</a>
+                </p>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay hidden" id="deleteAccountModal" onclick="if(event.target===this)closeDeleteAccountModal()">
         <div class="modal" style="max-width:440px;">
             <button class="modal-close" onclick="closeDeleteAccountModal()">&times;</button>
@@ -5097,6 +5134,57 @@
             } catch {
                 showNotify('Error', 'Could not connect to server.', 'error');
             }
+        }
+
+        async function openReferralPopup() {
+            document.getElementById('referralModal').classList.remove('hidden');
+            try {
+                const res = await fetch('/api/referral');
+                if (!res.ok) throw new Error();
+                const data = await res.json();
+                document.getElementById('referralLinkInput').value = data.link;
+                document.getElementById('refTotalCount').textContent = data.totalReferred || 0;
+                document.getElementById('refDiscountsCount').textContent = data.discountsEarned || 0;
+                const list = document.getElementById('referralList');
+                if (data.referrals && data.referrals.length > 0) {
+                    list.innerHTML = data.referrals.map(r =>
+                        `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.82rem;">
+                            <span style="color:var(--text-primary);">${r.name}</span>
+                            <span style="display:flex;align-items:center;gap:6px;">
+                                <span style="color:var(--text-muted);font-size:0.72rem;">${new Date(r.date).toLocaleDateString()}</span>
+                                ${r.paid ? '<span style="background:#dcfce7;color:#16a34a;padding:2px 8px;border-radius:4px;font-size:0.68rem;font-weight:700;">Paid</span>' : '<span style="background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:4px;font-size:0.68rem;font-weight:700;">Pending</span>'}
+                            </span>
+                        </div>`
+                    ).join('');
+                } else {
+                    list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:0.8rem;padding:12px;">No referrals yet. Share your link to get started!</div>';
+                }
+            } catch {
+                document.getElementById('referralLinkInput').value = 'Error loading referral link';
+            }
+        }
+
+        function closeReferralPopup() {
+            document.getElementById('referralModal').classList.add('hidden');
+        }
+
+        function copyReferralLink() {
+            const input = document.getElementById('referralLinkInput');
+            navigator.clipboard.writeText(input.value).then(() => {
+                const btn = document.getElementById('copyRefBtn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+
+        function shareReferral(platform) {
+            const link = document.getElementById('referralLinkInput').value;
+            const text = 'I use SuperLinkedIn to grow my LinkedIn presence. Try it out!';
+            let url = '';
+            if (platform === 'twitter') url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(link)}`;
+            if (platform === 'linkedin') url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`;
+            if (platform === 'email') url = `mailto:?subject=${encodeURIComponent('Try SuperLinkedIn')}&body=${encodeURIComponent(text + '\n\n' + link)}`;
+            if (url) window.open(url, '_blank');
         }
 
         function showDeleteAccountModal() {

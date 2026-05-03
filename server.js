@@ -310,6 +310,49 @@ async function getPrimaryUser(session) {
     return await dbGetUser(primaryId);
 }
 
+// ---------- REFERRAL ----------
+
+function generateReferralCode(linkedinId) {
+    return crypto.createHash('md5').update(linkedinId).digest('hex').substring(0, 8).toUpperCase();
+}
+
+app.use((req, res, next) => {
+    if (req.query.ref && !req.session.referralCode) {
+        req.session.referralCode = req.query.ref;
+        console.log(`[Referral] Captured ref code: ${req.query.ref}`);
+    }
+    next();
+});
+
+app.get('/api/referral', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    const linkedinId = req.session.user.linkedinId;
+    const user = await dbGetUser(linkedinId);
+    let code = user?.referralCode;
+
+    if (!code) {
+        code = generateReferralCode(linkedinId);
+        await dbUpdateFields(linkedinId, { referralCode: code });
+    }
+
+    const referralLink = `${process.env.BASE_URL || 'https://www.superlinkedin.org'}/?ref=${code}`;
+    const referrals = user?.referrals || [];
+    const discountsEarned = referrals.filter(r => r.paid).length;
+
+    res.json({
+        code,
+        link: referralLink,
+        totalReferred: referrals.length,
+        discountsEarned,
+        referrals: referrals.slice(-10).map(r => ({
+            name: r.name || 'Anonymous',
+            date: r.date,
+            paid: r.paid || false,
+        })),
+    });
+});
+
 // ---------- AUTH ROUTES ----------
 
 // Step 1: Redirect user to LinkedIn authorization page
@@ -497,15 +540,21 @@ app.get('/auth/linkedin/callback', async (req, res) => {
         };
 
         if (!dbUser.linkedinId) {
-            await dbSaveUser({
+            const newUser = {
                 linkedinId: profile.sub,
                 name: profile.name,
                 email: profile.email,
                 picture: profile.picture,
                 accessToken: accessToken,
                 paid: false,
+                referralCode: generateReferralCode(profile.sub),
                 createdAt: new Date().toISOString(),
-            });
+            };
+            if (req.session.referralCode) {
+                newUser.referredBy = req.session.referralCode;
+                console.log(`[Referral] New user ${profile.name} referred by code: ${req.session.referralCode}`);
+            }
+            await dbSaveUser(newUser);
         } else {
             await dbUpdateFields(profile.sub, {
                 name: profile.name,
@@ -661,6 +710,47 @@ app.post('/api/checkout/confirm', async (req, res) => {
         req.session.user.linkedProfiles = initialProfiles;
         req.session.primaryAccountId = linkedinId;
         req.session.activeProfileId = linkedinId;
+
+        // Process referral: reward the referrer with a 40% discount
+        const paidUser = await dbGetUser(linkedinId);
+        if (paidUser && paidUser.referredBy && stripe) {
+            try {
+                const refResult = await ddb.send(new ScanCommand({
+                    TableName: DYNAMO_TABLE,
+                    FilterExpression: 'referralCode = :code',
+                    ExpressionAttributeValues: { ':code': paidUser.referredBy },
+                }));
+                const referrer = refResult.Items && refResult.Items[0];
+                if (referrer) {
+                    const referrals = referrer.referrals || [];
+                    referrals.push({ name: req.session.user.name, date: new Date().toISOString(), paid: true, linkedinId });
+                    await dbUpdateFields(referrer.linkedinId, { referrals, pendingReferralDiscount: true });
+
+                    // Apply 40% coupon to referrer's next Stripe invoice
+                    const customers = await stripe.customers.list({ email: referrer.email, limit: 1 });
+                    if (customers.data.length) {
+                        let coupon;
+                        try {
+                            coupon = await stripe.coupons.retrieve('REFERRAL40');
+                        } catch {
+                            coupon = await stripe.coupons.create({
+                                id: 'REFERRAL40',
+                                percent_off: 40,
+                                duration: 'once',
+                                name: 'Referral Reward - 40% Off',
+                            });
+                        }
+                        const subs = await stripe.subscriptions.list({ customer: customers.data[0].id, status: 'active', limit: 1 });
+                        if (subs.data.length) {
+                            await stripe.subscriptions.update(subs.data[0].id, { coupon: coupon.id });
+                            console.log(`[Referral] Applied 40% discount to referrer ${referrer.name} (${referrer.email})`);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('[Referral] Error processing referral reward:', err.message);
+            }
+        }
     }
     res.json({ ok: true });
 });
