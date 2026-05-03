@@ -45,7 +45,6 @@ async function dbFindByEmail(email) {
             TableName: DYNAMO_TABLE,
             FilterExpression: 'email = :email',
             ExpressionAttributeValues: { ':email': email },
-            Limit: 1,
         }));
         return (result.Items && result.Items[0]) || null;
     } catch (err) {
@@ -2080,23 +2079,22 @@ app.post('/api/extension/auth', async (req, res) => {
     }
 
     if (!user) {
-        return res.status(404).json({ error: 'No account found. Please sign in to SuperLinkedIn first.' });
+        console.log(`[Extension Auth] No user found for email=${email}, linkedinId=${linkedinId}`);
+        return res.status(404).json({ error: 'No account found. Make sure the email matches your SuperLinkedIn account.' });
     }
 
-    // Generate a token (hash of linkedinId + a secret)
     const secret = process.env.SESSION_SECRET || 'fallback';
     const token = crypto.createHmac('sha256', secret)
         .update(user.linkedinId)
         .digest('hex');
 
-    // Store the token mapping
     await dbUpdateFields(user.linkedinId, { extensionToken: token });
 
-    // Cache token -> linkedinId for fast lookups
     if (!global._tokenCache) global._tokenCache = {};
     global._tokenCache[token] = user.linkedinId;
 
-    res.json({ token, name: user.name });
+    console.log(`[Extension Auth] Success for ${user.name} (${user.linkedinId})`);
+    res.json({ token, name: user.name, plan: user.planTier || user.plan || 'Pro' });
 });
 
 // Middleware to authenticate extension requests via Bearer token
