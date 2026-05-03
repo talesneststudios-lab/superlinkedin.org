@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "SuperLinkedIn",
   "description": "Super insights for your LinkedIn activities and engagements — analytics dashboard, AI post writer, engagement tracking, post scheduler, and growth tools right in your feed.",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "permissions": ["storage", "activeTab", "alarms"],
   "host_permissions": ["https://www.linkedin.com/*"],
   "background": {

@@ -133,30 +133,50 @@
 
     function scrapeAnalyticsDashboard() {
         const stats = {};
+        const bodyText = document.body.innerText || '';
 
-        // Profile views
-        const viewsEls = document.querySelectorAll('.analytics-card, .pv-recent-activity-section, [data-test-id="analytics"]');
-        document.querySelectorAll('.t-bold, .t-24, .t-black--light').forEach(el => {
-            const label = el.closest('.artdeco-card, .pv-recent-activity-section__container, .analytics-section');
-            if (!label) return;
-            const text = label.textContent || '';
-            const num = parseNumber(el.textContent);
-            if (/profile view/i.test(text) && num > 0) stats.profileViews = num;
-            if (/search appear/i.test(text) && num > 0) stats.searchAppearances = num;
-            if (/post impression/i.test(text) && num > 0) stats.postImpressions = num;
+        // Strategy 1: Scan all artdeco-card containers for stat+label pairs
+        document.querySelectorAll('.artdeco-card, [class*="analytics"], [class*="dashboard"]').forEach(card => {
+            const text = card.textContent || '';
+            const numbers = text.match(/(\d[\d,.]*)\s*(Post impression|Impression|Follower|Profile viewer|Search appearance)/gi);
+            if (numbers) {
+                numbers.forEach(match => {
+                    const num = parseNumber(match);
+                    const lower = match.toLowerCase();
+                    if (lower.includes('impression') && num > 0) stats.postImpressions = num;
+                    if (lower.includes('follower') && num > 0) stats.followers = num;
+                    if (lower.includes('profile viewer') && num > 0) stats.profileViews = num;
+                    if (lower.includes('search appear') && num > 0) stats.searchAppearances = num;
+                });
+            }
         });
 
-        // Try to get analytics from the dedicated analytics page
-        document.querySelectorAll('.analytics-highlight-card, .dashboard-analytics-card').forEach(card => {
-            const val = card.querySelector('.t-24, .t-bold, .artdeco-entity-lockup__title');
-            const lbl = card.querySelector('.t-14, .t-normal, .artdeco-entity-lockup__subtitle');
-            if (val && lbl) {
-                const num = parseNumber(val.textContent);
-                const labelText = lbl.textContent.toLowerCase();
-                if (labelText.includes('profile view') && num > 0) stats.profileViews = num;
-                if (labelText.includes('post impression') && num > 0) stats.postImpressions = num;
-                if (labelText.includes('search') && num > 0) stats.searchAppearances = num;
-                if (labelText.includes('follower') && num > 0) stats.followers = num;
+        // Strategy 2: Look for bold numbers next to descriptive text in the page
+        document.querySelectorAll('.t-24, .t-bold, h2, h3, [class*="stat"], [class*="metric"]').forEach(el => {
+            const num = parseNumber(el.textContent);
+            if (num <= 0) return;
+            const parent = el.parentElement;
+            if (!parent) return;
+            const context = parent.textContent.toLowerCase();
+            if (context.includes('post impression') && !stats.postImpressions) stats.postImpressions = num;
+            if (context.includes('follower') && !stats.followers) stats.followers = num;
+            if (context.includes('profile viewer') && !stats.profileViews) stats.profileViews = num;
+            if (context.includes('search appear') && !stats.searchAppearances) stats.searchAppearances = num;
+            if (context.includes('members reached') && !stats.membersReached) stats.membersReached = num;
+        });
+
+        // Strategy 3: Regex on full page text as fallback
+        const patterns = [
+            { key: 'postImpressions', re: /(\d[\d,.]*[KMB]?)\s*(?:Post )?[Ii]mpressions?/i },
+            { key: 'followers', re: /(\d[\d,.]*[KMB]?)\s*(?:Total )?[Ff]ollowers?/i },
+            { key: 'profileViews', re: /(\d[\d,.]*[KMB]?)\s*[Pp]rofile viewers?/i },
+            { key: 'searchAppearances', re: /(\d[\d,.]*[KMB]?)\s*[Ss]earch appear/i },
+            { key: 'membersReached', re: /(\d[\d,.]*[KMB]?)\s*[Mm]embers? reached/i },
+        ];
+        patterns.forEach(({ key, re }) => {
+            if (!stats[key]) {
+                const m = bodyText.match(re);
+                if (m) stats[key] = parseNumber(m[1]);
             }
         });
 
@@ -183,7 +203,7 @@
             }
         }
 
-        if (url.includes('/dashboard/')) {
+        if (url.includes('/dashboard') || url.includes('/analytics') || url.includes('/creator')) {
             const dashboardStats = scrapeAnalyticsDashboard();
             if (dashboardStats) data.dashboardStats = dashboardStats;
         }
