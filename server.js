@@ -2926,6 +2926,396 @@ app.get('/api/auth/status', (req, res) => {
     res.json({ authenticated: !!req.session.user });
 });
 
+// ---------- VIRAL LIBRARY ----------
+
+const VIRAL_POSTS = (() => {
+    try { return require('./viral-posts.json'); } catch { return []; }
+})();
+
+app.get('/api/viral-library', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'viral_library'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra to access the Viral Library.' });
+
+    const { q, category, type, minLikes, page } = req.query;
+    let results = [...VIRAL_POSTS];
+    if (q) { const lq = q.toLowerCase(); results = results.filter(p => p.text.toLowerCase().includes(lq) || p.author.toLowerCase().includes(lq)); }
+    if (category) results = results.filter(p => p.category === category);
+    if (type) results = results.filter(p => p.type === type);
+    if (minLikes) results = results.filter(p => p.likes >= parseInt(minLikes));
+    results.sort((a, b) => b.likes - a.likes);
+    const pg = parseInt(page) || 1;
+    const perPage = 20;
+    const total = results.length;
+    const paged = results.slice((pg - 1) * perPage, pg * perPage);
+    res.json({ posts: paged, total, page: pg, pages: Math.ceil(total / perPage) });
+});
+
+// ---------- ENGAGE ENGINE ----------
+
+app.get('/api/engage/discover', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'engage_engine'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const feedData = (user && user.engageFeed) || [];
+    const postMetrics = (user && user.analyticsPostMetrics) || [];
+    const discover = feedData.length > 0 ? feedData : postMetrics.slice(0, 20).map(p => ({
+        text: p.text, likes: p.likes || 0, comments: p.comments || 0, reposts: p.reposts || 0,
+        impressions: p.impressions || 0, author: 'Your network', date: p.date || null,
+    }));
+    res.json({ posts: discover });
+});
+
+app.get('/api/engage/mentions', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'engage_engine'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    res.json({ mentions: (user && user.engageMentions) || [] });
+});
+
+app.get('/api/engage/replies', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'engage_engine'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    res.json({ replies: (user && user.engageReplies) || [] });
+});
+
+app.post('/api/engage/ai-reply', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'engage_engine'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
+    const credits = await getCreditsForSession(req.session);
+    if (credits.remaining < 1) return res.json({ error: 'No AI credits remaining.' });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') return res.json({ error: 'OpenAI API key not configured.' });
+    const { postText, style } = req.body;
+    if (!postText) return res.status(400).json({ error: 'postText is required.' });
+    try {
+        const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: 'gpt-4o-mini', max_tokens: 200, messages: [
+                { role: 'system', content: `You write short, thoughtful LinkedIn comments. Style: ${style || 'supportive'}. Keep it under 100 words. Be authentic, not generic.` },
+                { role: 'user', content: `Write a reply to this LinkedIn post:\n\n${postText}` },
+            ]}),
+        });
+        const data = await aiRes.json();
+        await consumeCredit(req.session, 1);
+        res.json({ reply: data.choices?.[0]?.message?.content || '' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Engage Lists CRUD
+app.get('/api/engage/lists', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'engage_engine'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    res.json({ lists: (user && user.engageLists) || [] });
+});
+
+app.post('/api/engage/lists', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'engage_engine'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
+    const { name, members } = req.body;
+    if (!name) return res.status(400).json({ error: 'List name is required.' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const lists = (user && user.engageLists) || [];
+    lists.push({ id: Date.now().toString(36), name, members: members || [], createdAt: new Date().toISOString() });
+    await dbUpdateFields(req.session.user.linkedinId, { engageLists: lists });
+    res.json({ lists });
+});
+
+app.delete('/api/engage/lists/:id', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    let lists = (user && user.engageLists) || [];
+    lists = lists.filter(l => l.id !== req.params.id);
+    await dbUpdateFields(req.session.user.linkedinId, { engageLists: lists });
+    res.json({ lists });
+});
+
+app.put('/api/engage/lists/:id', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const lists = (user && user.engageLists) || [];
+    const list = lists.find(l => l.id === req.params.id);
+    if (!list) return res.status(404).json({ error: 'List not found.' });
+    if (req.body.name) list.name = req.body.name;
+    if (req.body.members) list.members = req.body.members;
+    await dbUpdateFields(req.session.user.linkedinId, { engageLists: lists });
+    res.json({ lists });
+});
+
+// ---------- AUTO-ENGAGE ----------
+
+app.get('/api/auto-engage/rules', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'auto_repost'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    res.json({ rules: (user && user.autoEngageRules) || [] });
+});
+
+app.post('/api/auto-engage/rules', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'auto_repost'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
+    const { type, source, minEngagement, maxPerDay, style, active } = req.body;
+    if (!type) return res.status(400).json({ error: 'Rule type is required.' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const rules = (user && user.autoEngageRules) || [];
+    rules.push({ id: Date.now().toString(36), type, source: source || '', minEngagement: minEngagement || 50, maxPerDay: maxPerDay || 5, style: style || 'supportive', active: active !== false, createdAt: new Date().toISOString() });
+    await dbUpdateFields(req.session.user.linkedinId, { autoEngageRules: rules });
+    res.json({ rules });
+});
+
+app.put('/api/auto-engage/rules/:id', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const rules = (user && user.autoEngageRules) || [];
+    const rule = rules.find(r => r.id === req.params.id);
+    if (!rule) return res.status(404).json({ error: 'Rule not found.' });
+    Object.assign(rule, req.body, { id: rule.id, createdAt: rule.createdAt });
+    await dbUpdateFields(req.session.user.linkedinId, { autoEngageRules: rules });
+    res.json({ rules });
+});
+
+app.delete('/api/auto-engage/rules/:id', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    let rules = (user && user.autoEngageRules) || [];
+    rules = rules.filter(r => r.id !== req.params.id);
+    await dbUpdateFields(req.session.user.linkedinId, { autoEngageRules: rules });
+    res.json({ rules });
+});
+
+// ---------- TEAM COLLABORATION ----------
+
+app.get('/api/team/members', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'team'))) return res.status(403).json({ error: 'Upgrade to Ultra to access Team features.' });
+    const primaryId = getPrimaryAccountId(req.session);
+    const user = await dbGetUser(primaryId);
+    res.json({ members: (user && user.teamMembers) || [] });
+});
+
+app.post('/api/team/invite', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'team'))) return res.status(403).json({ error: 'Upgrade to Ultra.' });
+    const { email, role } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required.' });
+    const primaryId = getPrimaryAccountId(req.session);
+    const user = await dbGetUser(primaryId);
+    const members = (user && user.teamMembers) || [];
+    if (members.some(m => m.email === email)) return res.status(400).json({ error: 'Member already invited.' });
+    const inviteCode = crypto.randomBytes(16).toString('hex');
+    members.push({ email, role: role || 'editor', status: 'invited', inviteCode, invitedAt: new Date().toISOString() });
+    await dbUpdateFields(primaryId, { teamMembers: members });
+    const inviteLink = `${process.env.BASE_URL || 'https://www.superlinkedin.org'}/app?invite=${inviteCode}`;
+    res.json({ members, inviteLink });
+});
+
+app.delete('/api/team/members/:email', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const primaryId = getPrimaryAccountId(req.session);
+    const user = await dbGetUser(primaryId);
+    let members = (user && user.teamMembers) || [];
+    members = members.filter(m => m.email !== req.params.email);
+    await dbUpdateFields(primaryId, { teamMembers: members });
+    res.json({ members });
+});
+
+app.put('/api/team/members/:email', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const primaryId = getPrimaryAccountId(req.session);
+    const user = await dbGetUser(primaryId);
+    const members = (user && user.teamMembers) || [];
+    const member = members.find(m => m.email === req.params.email);
+    if (!member) return res.status(404).json({ error: 'Member not found.' });
+    if (req.body.role) member.role = req.body.role;
+    await dbUpdateFields(primaryId, { teamMembers: members });
+    res.json({ members });
+});
+
+app.get('/api/team/queue', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'team'))) return res.status(403).json({ error: 'Upgrade to Ultra.' });
+    const primaryId = getPrimaryAccountId(req.session);
+    const user = await dbGetUser(primaryId);
+    const linkedProfiles = (user && user.linkedProfiles) || [];
+    const sharedQueue = [];
+    for (const p of linkedProfiles) {
+        const pUser = await dbGetUser(p.linkedinId);
+        if (pUser && pUser.queue) {
+            pUser.queue.forEach(item => sharedQueue.push({ ...item, authorName: pUser.name || p.name, authorPicture: pUser.picture || p.picture }));
+        }
+    }
+    sharedQueue.sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+    res.json({ queue: sharedQueue });
+});
+
+app.post('/api/team/approve/:index', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const { linkedinId, action } = req.body;
+    if (!linkedinId) return res.status(400).json({ error: 'linkedinId required.' });
+    const user = await dbGetUser(linkedinId);
+    if (!user || !user.queue) return res.status(404).json({ error: 'Queue not found.' });
+    const idx = parseInt(req.params.index);
+    if (idx < 0 || idx >= user.queue.length) return res.status(400).json({ error: 'Invalid index.' });
+    if (action === 'approve') user.queue[idx].status = 'scheduled';
+    else if (action === 'reject') user.queue[idx].status = 'rejected';
+    await dbUpdateFields(linkedinId, { queue: user.queue });
+    res.json({ ok: true });
+});
+
+// ---------- WHITE-LABEL REPORTS ----------
+
+app.get('/api/reports/branding', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'white_label'))) return res.status(403).json({ error: 'Upgrade to Ultra.' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    res.json({ branding: (user && user.reportBranding) || { companyName: '', logoUrl: '', brandColor: '#0A66C2', reportTitle: 'LinkedIn Performance Report' } });
+});
+
+app.put('/api/reports/branding', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'white_label'))) return res.status(403).json({ error: 'Upgrade to Ultra.' });
+    const { companyName, logoUrl, brandColor, reportTitle } = req.body;
+    const branding = { companyName: companyName || '', logoUrl: logoUrl || '', brandColor: brandColor || '#0A66C2', reportTitle: reportTitle || 'LinkedIn Performance Report' };
+    await dbUpdateFields(req.session.user.linkedinId, { reportBranding: branding });
+    res.json({ branding });
+});
+
+app.get('/api/reports/generate', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'white_label'))) return res.status(403).json({ error: 'Upgrade to Ultra.' });
+    const PDFDocument = require('pdfkit');
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const branding = (user && user.reportBranding) || {};
+    const engagement = (user && user.analyticsEngagement) || {};
+    const dashboard = (user && user.analyticsDashboard) || {};
+    const postMetrics = (user && user.analyticsPostMetrics) || [];
+    const followers = dashboard.followers || user.analyticsFollowers || 0;
+    const impressions = dashboard.postImpressions || engagement.impressions || 0;
+    const color = branding.brandColor || '#0A66C2';
+
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="report-${Date.now()}.pdf"`);
+    doc.pipe(res);
+
+    doc.fontSize(24).fillColor(color).text(branding.reportTitle || 'LinkedIn Performance Report', { align: 'center' });
+    doc.moveDown(0.5);
+    if (branding.companyName) doc.fontSize(14).fillColor('#555').text(branding.companyName, { align: 'center' });
+    doc.fontSize(10).fillColor('#999').text(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`, { align: 'center' });
+    doc.moveDown(2);
+
+    doc.fontSize(16).fillColor(color).text('Overview');
+    doc.moveDown(0.5);
+    doc.fontSize(11).fillColor('#333');
+    doc.text(`Followers: ${followers.toLocaleString()}`);
+    doc.text(`Total Impressions: ${impressions.toLocaleString()}`);
+    doc.text(`Social Engagements: ${(dashboard.socialEngagements || engagement.likes || 0).toLocaleString()}`);
+    doc.text(`Members Reached: ${(dashboard.membersReached || 0).toLocaleString()}`);
+    doc.text(`Profile Views: ${(dashboard.profileViews || 0).toLocaleString()}`);
+    doc.moveDown(1.5);
+
+    if (postMetrics.length > 0) {
+        doc.fontSize(16).fillColor(color).text('Top Performing Posts');
+        doc.moveDown(0.5);
+        const sorted = [...postMetrics].sort((a, b) => (b.impressions || 0) - (a.impressions || 0));
+        sorted.slice(0, 10).forEach((p, i) => {
+            doc.fontSize(10).fillColor('#333').text(`${i + 1}. ${(p.text || '').substring(0, 120)}...`);
+            doc.fontSize(9).fillColor('#888').text(`   ${(p.impressions || 0).toLocaleString()} impressions | ${(p.likes || 0)} likes | ${(p.comments || 0)} comments`);
+            doc.moveDown(0.3);
+        });
+    }
+
+    doc.end();
+});
+
+// ---------- API ACCESS (v1) ----------
+
+async function apiKeyAuth(req, res, next) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) return res.status(401).json({ error: 'Missing API key.' });
+    const key = authHeader.slice(7);
+    const keyHash = crypto.createHash('sha256').update(key).digest('hex');
+    const result = await ddb.send(new ScanCommand({ TableName: DYNAMO_TABLE }));
+    const users = result.Items || [];
+    for (const u of users) {
+        if (u.apiKeys && Array.isArray(u.apiKeys)) {
+            const match = u.apiKeys.find(k => k.keyHash === keyHash);
+            if (match) {
+                if (!(await hasFeatureForUser(u, 'api_access'))) return res.status(403).json({ error: 'API access requires Ultra plan.' });
+                match.lastUsedAt = new Date().toISOString();
+                await dbUpdateFields(u.linkedinId, { apiKeys: u.apiKeys });
+                req.apiUser = u;
+                return next();
+            }
+        }
+    }
+    return res.status(401).json({ error: 'Invalid API key.' });
+}
+
+function hasFeatureForUser(user, feature) {
+    const tier = user.planTier || 'pro';
+    const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
+    return (limits.features || []).includes(feature);
+}
+
+app.post('/api/apikeys', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'api_access'))) return res.status(403).json({ error: 'Upgrade to Ultra for API access.' });
+    const { name } = req.body;
+    const rawKey = `sl_${crypto.randomBytes(32).toString('hex')}`;
+    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const apiKeys = (user && user.apiKeys) || [];
+    apiKeys.push({ id: Date.now().toString(36), name: name || 'Default', keyHash, createdAt: new Date().toISOString(), lastUsedAt: null });
+    await dbUpdateFields(req.session.user.linkedinId, { apiKeys });
+    res.json({ key: rawKey, apiKeys: apiKeys.map(k => ({ id: k.id, name: k.name, createdAt: k.createdAt, lastUsedAt: k.lastUsedAt })) });
+});
+
+app.delete('/api/apikeys/:id', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    let apiKeys = (user && user.apiKeys) || [];
+    apiKeys = apiKeys.filter(k => k.id !== req.params.id);
+    await dbUpdateFields(req.session.user.linkedinId, { apiKeys });
+    res.json({ apiKeys: apiKeys.map(k => ({ id: k.id, name: k.name, createdAt: k.createdAt, lastUsedAt: k.lastUsedAt })) });
+});
+
+app.get('/api/v1/me', apiKeyAuth, (req, res) => {
+    const u = req.apiUser;
+    res.json({ linkedinId: u.linkedinId, name: u.name, email: u.email, plan: u.planTier, followers: u.analyticsFollowers || 0 });
+});
+
+app.get('/api/v1/queue', apiKeyAuth, (req, res) => {
+    res.json({ queue: (req.apiUser.queue || []).map(q => ({ text: q.text, status: q.status, scheduledFor: q.scheduledFor, postedAt: q.postedAt })) });
+});
+
+app.post('/api/v1/posts', apiKeyAuth, async (req, res) => {
+    const { text, scheduledFor } = req.body;
+    if (!text) return res.status(400).json({ error: 'text is required.' });
+    const user = req.apiUser;
+    const queue = user.queue || [];
+    const now = new Date();
+    const item = { text, status: scheduledFor ? 'scheduled' : 'draft', date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) };
+    if (scheduledFor) item.scheduledFor = scheduledFor;
+    queue.push(item);
+    await dbUpdateFields(user.linkedinId, { queue });
+    res.json({ ok: true, item });
+});
+
+app.get('/api/v1/analytics', apiKeyAuth, (req, res) => {
+    const u = req.apiUser;
+    const dashboard = u.analyticsDashboard || {};
+    const engagement = u.analyticsEngagement || {};
+    res.json({
+        followers: dashboard.followers || u.analyticsFollowers || 0,
+        impressions: dashboard.postImpressions || engagement.impressions || 0,
+        engagements: dashboard.socialEngagements || engagement.likes || 0,
+        membersReached: dashboard.membersReached || 0,
+        profileViews: dashboard.profileViews || 0,
+    });
+});
+
 // ---------- POST SCHEDULER ----------
 
 async function publishToLinkedIn(accessToken, linkedinId, text, audience) {

@@ -470,6 +470,75 @@
             display: flex; align-items: center; gap: 4px;
             font-size: 0.7rem; color: rgba(255,255,255,0.5);
         }
+        .nav-lock-icon {
+            font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-left: auto;
+        }
+        .nav-lock-icon.hidden { display: none; }
+
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: var(--text-muted);
+        }
+        .empty-state p { font-size: 0.88rem; line-height: 1.6; max-width: 400px; margin: 0 auto; }
+
+        .feed-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px; transition: box-shadow 0.15s;
+        }
+        .feed-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .feed-card-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 0.78rem; color: var(--text-muted); }
+        .feed-card-text { font-size: 0.88rem; line-height: 1.6; color: var(--text-primary); margin-bottom: 12px;
+            display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+        .feed-card-stats { display: flex; gap: 16px; font-size: 0.75rem; color: var(--text-muted); }
+        .feed-card-stats span { display: flex; align-items: center; gap: 4px; }
+        .feed-card-actions { display: flex; gap: 8px; margin-top: 10px; }
+        .feed-card-btn {
+            padding: 6px 14px; border-radius: 8px; font-family: inherit; font-size: 0.78rem;
+            font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent;
+            color: var(--text-secondary); transition: 0.15s;
+        }
+        .feed-card-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .feed-card-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .feed-card-btn.primary:hover { opacity: 0.9; }
+
+        .list-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
+            padding: 16px; display: flex; justify-content: space-between; align-items: center;
+        }
+        .list-card-info h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 4px; }
+        .list-card-info p { font-size: 0.78rem; color: var(--text-muted); }
+
+        .rule-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 16px;
+        }
+        .rule-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .rule-card-header h4 { font-size: 0.9rem; font-weight: 700; }
+        .rule-card-details { font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; }
+        .rule-badge {
+            display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 0.7rem;
+            font-weight: 700; text-transform: uppercase;
+        }
+        .rule-badge.active { background: rgba(22,163,74,0.1); color: #16a34a; }
+        .rule-badge.paused { background: rgba(156,163,175,0.15); color: #9ca3af; }
+
+        .team-card {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+        .team-card-info { display: flex; align-items: center; gap: 12px; }
+        .team-avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.8rem;
+        }
+        .team-role-badge {
+            display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 0.68rem;
+            font-weight: 700; text-transform: uppercase; background: rgba(10,102,194,0.1); color: var(--accent);
+        }
+
+        .vl-category-tag {
+            display: inline-block; padding: 2px 8px; border-radius: 8px; font-size: 0.68rem;
+            font-weight: 600; text-transform: capitalize; background: rgba(10,102,194,0.08); color: var(--accent);
+        }
 
         .sidebar-user-avatar {
             width: 32px; height: 32px;
@@ -510,6 +579,7 @@
             margin-left: 240px;
             flex: 1;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .main-header {
@@ -1754,6 +1824,7 @@
             padding: 12px 16px;
             background: var(--queue-slot-bg, #FFF7F0);
             border: 1px solid var(--queue-slot-border, #FDE8D5);
+            max-width: 100%;
             border-radius: 10px;
             margin-bottom: 6px;
             cursor: pointer;
@@ -1778,6 +1849,7 @@
         }
         .queue-slot-content {
             flex: 1;
+            min-width: 0;
             font-size: 0.82rem;
             color: var(--text-muted);
             overflow: hidden;
@@ -3193,6 +3265,9 @@
             <a class="nav-item nav-sub-item" data-page="inspiration" onclick="showPage('inspiration')">
                 <span class="nav-icon">&#128161;</span> <span>Inspiration</span>
             </a>
+            <a class="nav-item nav-sub-item" data-page="virallibrary" onclick="navGated('viral_library','virallibrary')">
+                <span class="nav-icon">&#128293;</span> <span>Viral Library</span> <span class="nav-lock-icon" data-gate="viral_library">&#128274;</span>
+            </a>
             <a class="nav-item nav-sub-item" data-page="create" onclick="showPage('create')">
                 <span class="nav-icon">&#129302;</span> <span>AI Writer</span>
             </a>
@@ -3201,22 +3276,38 @@
             </a>
 
             <div class="nav-section">Engage</div>
-            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer('discover')">
-                <span class="nav-icon">&#128269;</span> <span>Discover</span>
+            <a class="nav-item nav-sub-item" data-page="discover" onclick="navGated('engage_engine','discover')">
+                <span class="nav-icon">&#128269;</span> <span>Discover</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer('mentions')">
-                <span class="nav-icon">&#128172;</span> <span>Mentions</span>
+            <a class="nav-item nav-sub-item" data-page="mentions" onclick="navGated('engage_engine','mentions')">
+                <span class="nav-icon">&#128172;</span> <span>Mentions</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer('lists')">
-                <span class="nav-icon">&#128203;</span> <span>Lists</span>
+            <a class="nav-item nav-sub-item" data-page="engagelists" onclick="navGated('engage_engine','engagelists')">
+                <span class="nav-icon">&#128203;</span> <span>Lists</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer('replies')">
-                <span class="nav-icon">&#128172;</span> <span>Replies</span>
+            <a class="nav-item nav-sub-item" data-page="engagereplies" onclick="navGated('engage_engine','engagereplies')">
+                <span class="nav-icon">&#128172;</span> <span>Replies</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
+            </a>
+            <a class="nav-item nav-sub-item" data-page="autoengage" onclick="navGated('auto_repost','autoengage')">
+                <span class="nav-icon">&#9889;</span> <span>Auto-Engage</span> <span class="nav-lock-icon" data-gate="auto_repost">&#128274;</span>
             </a>
 
             <div class="nav-section">CRM</div>
             <a class="nav-item nav-sub-item" onclick="showDMsDisclaimer()">
                 <span class="nav-icon">&#9993;</span> <span>DMs</span>
+            </a>
+
+            <div class="nav-section">Team</div>
+            <a class="nav-item nav-sub-item" data-page="teammembers" onclick="navGated('team','teammembers')">
+                <span class="nav-icon">&#128101;</span> <span>Members</span> <span class="nav-lock-icon" data-gate="team">&#128274;</span>
+            </a>
+            <a class="nav-item nav-sub-item" data-page="sharedqueue" onclick="navGated('team','sharedqueue')">
+                <span class="nav-icon">&#128196;</span> <span>Shared Queue</span> <span class="nav-lock-icon" data-gate="team">&#128274;</span>
+            </a>
+
+            <div class="nav-section">Reports</div>
+            <a class="nav-item nav-sub-item" data-page="reports" onclick="navGated('white_label','reports')">
+                <span class="nav-icon">&#128202;</span> <span>White-Label</span> <span class="nav-lock-icon" data-gate="white_label">&#128274;</span>
             </a>
         </nav>
 
@@ -3743,6 +3834,7 @@
                         <button class="settings-tab active" onclick="switchSettingsTab('general',this)" style="padding:10px 20px;background:none;border:none;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;">General</button>
                         <button class="settings-tab" onclick="switchSettingsTab('team',this)" style="padding:10px 20px;background:none;border:none;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;">Team & Permissions</button>
                         <button class="settings-tab" onclick="switchSettingsTab('plans',this)" style="padding:10px 20px;background:none;border:none;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;">Plans</button>
+                        <button class="settings-tab" onclick="switchSettingsTab('api',this)" style="padding:10px 20px;background:none;border:none;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;">API</button>
                     </div>
 
                     <!-- General Tab -->
@@ -3962,6 +4054,36 @@
                                     </div>
                                 </div>
                                 <p style="font-size:0.82rem;line-height:1.6;color:var(--text-secondary);">A week ago, I decided to subscribe to LinkedIn Premium and a SuperLinkedIn yearly subscription.<br><br>One week later, the results are way above my expectations! &#128640;<br><br>From literally zero everywhere to:<br>&gt; 52 followers (32 verified!)<br>&gt; Almost 24k impressions<br>&gt; 1k+ profile views</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- API Tab -->
+                    <div class="settings-panel" id="settingsApi" style="display:none;">
+                        <div class="card" style="padding:24px;margin-bottom:16px;">
+                            <h3 style="font-size:1rem;font-weight:800;margin-bottom:6px;">API Access</h3>
+                            <p style="font-size:0.85rem;color:var(--text-muted);margin-bottom:16px;">Generate API keys to access SuperLinkedIn programmatically. Available on Ultra plan only.</p>
+                            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+                                <input id="apiKeyName" type="text" placeholder="Key name (e.g. Production)" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                                <button onclick="createApiKey()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">Generate Key</button>
+                            </div>
+                            <div id="apiKeysList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                            <div id="apiKeysEmpty" style="text-align:center;padding:30px;color:var(--text-muted);font-size:0.85rem;">No API keys yet. Generate one above.</div>
+                        </div>
+                        <div class="card" style="padding:24px;">
+                            <h3 style="font-size:1rem;font-weight:800;margin-bottom:12px;">API Documentation</h3>
+                            <div style="font-size:0.82rem;color:var(--text-secondary);line-height:1.8;">
+                                <p style="margin-bottom:8px;">Base URL: <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">https://www.superlinkedin.org/api/v1</code></p>
+                                <p style="margin-bottom:8px;">Auth: <code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">Authorization: Bearer YOUR_API_KEY</code></p>
+                                <div style="margin-top:12px;">
+                                    <strong>Endpoints:</strong>
+                                    <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+                                        <div><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">GET /api/v1/me</code> — Your profile info</div>
+                                        <div><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">GET /api/v1/queue</code> — List your queue</div>
+                                        <div><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">POST /api/v1/posts</code> — Create/schedule a post <span style="color:var(--text-muted);">(body: { text, scheduledFor? })</span></div>
+                                        <div><code style="background:var(--bg-secondary);padding:2px 6px;border-radius:4px;">GET /api/v1/analytics</code> — Analytics summary</div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -4265,6 +4387,188 @@
                     </div>
                 </div>
             </div>
+
+            <!-- VIRAL LIBRARY PAGE -->
+            <div class="page" id="page-virallibrary">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">Viral Posts Library</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Browse 50+ high-performing LinkedIn post templates. Use them as inspiration for your own content.</p>
+                    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+                        <input id="vlSearch" type="text" placeholder="Search posts..." oninput="loadViralLibrary()" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                        <select id="vlCategory" onchange="loadViralLibrary()" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                            <option value="">All Categories</option>
+                            <option value="leadership">Leadership</option>
+                            <option value="marketing">Marketing</option>
+                            <option value="tech">Tech</option>
+                            <option value="sales">Sales</option>
+                            <option value="career">Career</option>
+                            <option value="startup">Startup</option>
+                            <option value="motivation">Motivation</option>
+                        </select>
+                        <select id="vlType" onchange="loadViralLibrary()" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                            <option value="">All Types</option>
+                            <option value="listicle">Listicle</option>
+                            <option value="story">Story</option>
+                            <option value="hot-take">Hot Take</option>
+                            <option value="question">Question</option>
+                        </select>
+                    </div>
+                    <div id="vlResults" style="display:flex;flex-direction:column;gap:12px;"></div>
+                    <div id="vlPagination" style="display:flex;justify-content:center;gap:8px;margin-top:16px;"></div>
+                </div>
+            </div>
+
+            <!-- DISCOVER PAGE -->
+            <div class="page" id="page-discover">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">Discover</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Trending posts from your network. Engage to grow your visibility.</p>
+                    <div id="discoverFeed" style="display:flex;flex-direction:column;gap:12px;"></div>
+                    <div id="discoverEmpty" class="empty-state" style="display:none;">
+                        <div style="font-size:2rem;margin-bottom:10px;">&#128269;</div>
+                        <p>Install the SuperLinkedIn Chrome extension to populate your discover feed with trending posts from your LinkedIn network.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MENTIONS PAGE -->
+            <div class="page" id="page-mentions">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">Mentions</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Posts and comments where you were mentioned.</p>
+                    <div id="mentionsList" style="display:flex;flex-direction:column;gap:12px;"></div>
+                    <div id="mentionsEmpty" class="empty-state">
+                        <div style="font-size:2rem;margin-bottom:10px;">&#128172;</div>
+                        <p>No mentions found yet. As people tag you in posts and comments, they'll appear here.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENGAGE LISTS PAGE -->
+            <div class="page" id="page-engagelists">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">Engagement Lists</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;">Create custom lists of connections to track and engage with.</p>
+                    <div style="margin-bottom:16px;">
+                        <button onclick="showCreateListModal()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">+ Create List</button>
+                    </div>
+                    <div id="engageListsContainer" style="display:flex;flex-direction:column;gap:12px;"></div>
+                    <div id="engageListsEmpty" class="empty-state">
+                        <div style="font-size:2rem;margin-bottom:10px;">&#128203;</div>
+                        <p>No lists yet. Create your first engagement list to start tracking connections.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENGAGE REPLIES PAGE -->
+            <div class="page" id="page-engagereplies">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">Replies</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Comments and replies on your posts.</p>
+                    <div id="engageRepliesList" style="display:flex;flex-direction:column;gap:12px;"></div>
+                    <div id="engageRepliesEmpty" class="empty-state">
+                        <div style="font-size:2rem;margin-bottom:10px;">&#128172;</div>
+                        <p>No replies found yet. Replies to your posts will appear here once synced via the Chrome extension.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AUTO-ENGAGE PAGE -->
+            <div class="page" id="page-autoengage">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">Auto-Engage</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;">Set up automated rules to repost and comment on posts from your network.</p>
+                    <div style="margin-bottom:16px;">
+                        <button onclick="showCreateRuleModal()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">+ Create Rule</button>
+                    </div>
+                    <div id="autoEngageRules" style="display:flex;flex-direction:column;gap:12px;"></div>
+                    <div id="autoEngageEmpty" class="empty-state">
+                        <div style="font-size:2rem;margin-bottom:10px;">&#9889;</div>
+                        <p>No auto-engage rules yet. Create rules to automatically interact with relevant posts.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TEAM MEMBERS PAGE -->
+            <div class="page" id="page-teammembers">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">Team Members</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;">Invite team members to collaborate on content creation and scheduling.</p>
+                    <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;">
+                        <input id="teamInviteEmail" type="email" placeholder="Email address" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                        <select id="teamInviteRole" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                            <option value="editor">Editor</option>
+                            <option value="viewer">Viewer</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <button onclick="inviteTeamMember()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">Invite</button>
+                    </div>
+                    <div id="teamMembersList" style="display:flex;flex-direction:column;gap:10px;"></div>
+                    <div id="teamEmpty" class="empty-state">
+                        <div style="font-size:2rem;margin-bottom:10px;">&#128101;</div>
+                        <p>No team members yet. Invite colleagues to start collaborating.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SHARED QUEUE PAGE -->
+            <div class="page" id="page-sharedqueue">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">Shared Queue</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">View and manage posts across all team members.</p>
+                    <div id="sharedQueueList" style="display:flex;flex-direction:column;gap:12px;"></div>
+                    <div id="sharedQueueEmpty" class="empty-state">
+                        <div style="font-size:2rem;margin-bottom:10px;">&#128196;</div>
+                        <p>No posts in the shared queue yet.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WHITE-LABEL REPORTS PAGE -->
+            <div class="page" id="page-reports">
+                <div style="max-width:960px;margin:0 auto;">
+                    <h2 style="margin-bottom:6px;">White-Label Reports</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Generate branded PDF reports for your LinkedIn performance.</p>
+                    <div class="card" style="padding:20px;margin-bottom:20px;">
+                        <h3 style="font-size:0.95rem;font-weight:800;margin-bottom:16px;">Branding Settings</h3>
+                        <div style="display:flex;flex-direction:column;gap:12px;">
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                <div style="flex:1;min-width:200px;">
+                                    <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Company Name</label>
+                                    <input id="reportCompanyName" type="text" placeholder="Your Company" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                                </div>
+                                <div style="flex:1;min-width:200px;">
+                                    <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Report Title</label>
+                                    <input id="reportTitle" type="text" placeholder="LinkedIn Performance Report" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                                <div style="flex:1;min-width:200px;">
+                                    <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Logo URL</label>
+                                    <input id="reportLogoUrl" type="text" placeholder="https://..." style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                                </div>
+                                <div style="min-width:120px;">
+                                    <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Brand Color</label>
+                                    <input id="reportBrandColor" type="color" value="#0A66C2" style="width:60px;height:38px;border:1px solid var(--border);border-radius:8px;cursor:pointer;">
+                                </div>
+                            </div>
+                            <button onclick="saveReportBranding()" style="align-self:flex-start;padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">Save Settings</button>
+                        </div>
+                    </div>
+                    <div class="card" style="padding:20px;">
+                        <h3 style="font-size:0.95rem;font-weight:800;margin-bottom:16px;">Generate Report</h3>
+                        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+                            <select id="reportRange" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
+                                <option value="7">Last 7 days</option>
+                                <option value="30" selected>Last 30 days</option>
+                                <option value="90">Last 90 days</option>
+                            </select>
+                            <button onclick="generateReport()" style="padding:10px 24px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">&#128196; Download PDF Report</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -4818,6 +5122,458 @@
             document.getElementById('dmsDisclaimerModal').classList.remove('hidden');
         }
 
+        let _userFeatures = [];
+
+        async function loadUserFeatures() {
+            try {
+                const res = await fetch('/api/credits');
+                if (res.ok) {
+                    const data = await res.json();
+                    _userFeatures = data.features || [];
+                    updateNavLocks();
+                }
+            } catch {}
+        }
+
+        function updateNavLocks() {
+            document.querySelectorAll('.nav-lock-icon[data-gate]').forEach(el => {
+                el.classList.toggle('hidden', _userFeatures.includes(el.dataset.gate));
+            });
+        }
+
+        function navGated(feature, page) {
+            if (_userFeatures.includes(feature)) {
+                showPage(page);
+            } else {
+                showNotify('Upgrade Required', `This feature requires an upgraded plan. Visit Account Settings > Plans to upgrade.`, 'warning');
+            }
+        }
+
+        // ===== VIRAL LIBRARY =====
+        let _vlPage = 1;
+        async function loadViralLibrary() {
+            const q = (document.getElementById('vlSearch')?.value || '').trim();
+            const category = document.getElementById('vlCategory')?.value || '';
+            const type = document.getElementById('vlType')?.value || '';
+            const params = new URLSearchParams({ page: _vlPage });
+            if (q) params.set('q', q);
+            if (category) params.set('category', category);
+            if (type) params.set('type', type);
+            try {
+                const res = await fetch('/api/viral-library?' + params);
+                if (!res.ok) return;
+                const data = await res.json();
+                const container = document.getElementById('vlResults');
+                if (!data.posts || data.posts.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><p>No posts match your filters. Try adjusting your search.</p></div>';
+                    document.getElementById('vlPagination').innerHTML = '';
+                    return;
+                }
+                container.innerHTML = data.posts.map(p => `
+                    <div class="feed-card">
+                        <div class="feed-card-meta">
+                            <span class="vl-category-tag">${p.category}</span>
+                            <span class="vl-category-tag" style="background:rgba(245,158,11,0.1);color:#f59e0b;">${p.type}</span>
+                            <span style="margin-left:auto;">${p.author}</span>
+                        </div>
+                        <div class="feed-card-text">${p.text.replace(/\n/g, '<br>')}</div>
+                        <div class="feed-card-stats">
+                            <span>&#10084; ${p.likes.toLocaleString()}</span>
+                            <span>&#128172; ${p.comments.toLocaleString()}</span>
+                            <span>&#128257; ${p.reposts.toLocaleString()}</span>
+                        </div>
+                        <div class="feed-card-actions">
+                            <button class="feed-card-btn primary" onclick="useAsTemplate(${p.id})">Use as Template</button>
+                        </div>
+                    </div>
+                `).join('');
+                const pagEl = document.getElementById('vlPagination');
+                if (data.pages > 1) {
+                    let html = '';
+                    for (let i = 1; i <= data.pages; i++) {
+                        html += `<button onclick="_vlPage=${i};loadViralLibrary()" style="padding:6px 12px;border:1px solid ${i===data.page?'var(--accent)':'var(--border)'};border-radius:8px;background:${i===data.page?'var(--accent)':'transparent'};color:${i===data.page?'#fff':'var(--text-secondary)'};font-family:inherit;cursor:pointer;">${i}</button>`;
+                    }
+                    pagEl.innerHTML = html;
+                } else { pagEl.innerHTML = ''; }
+            } catch {}
+        }
+
+        function useAsTemplate(id) {
+            fetch('/api/viral-library').then(r => r.json()).then(data => {
+                const post = data.posts.find(p => p.id === id);
+                if (post) {
+                    const ta = document.getElementById('composeTextarea');
+                    if (ta) { ta.value = post.text; updateComposeCharCount(); }
+                    toggleCompose();
+                    showNotify('Template Loaded', 'Post text copied to composer. Edit it to make it your own!', 'success');
+                }
+            }).catch(() => {});
+        }
+
+        // ===== DISCOVER =====
+        async function loadDiscover() {
+            try {
+                const res = await fetch('/api/engage/discover');
+                if (!res.ok) return;
+                const data = await res.json();
+                const feed = document.getElementById('discoverFeed');
+                const empty = document.getElementById('discoverEmpty');
+                if (!data.posts || data.posts.length === 0) {
+                    feed.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                feed.innerHTML = data.posts.map(p => `
+                    <div class="feed-card">
+                        <div class="feed-card-meta"><span>${p.author || 'LinkedIn User'}</span></div>
+                        <div class="feed-card-text">${(p.text || '').replace(/\n/g, '<br>')}</div>
+                        <div class="feed-card-stats">
+                            <span>&#10084; ${(p.likes || 0).toLocaleString()}</span>
+                            <span>&#128172; ${(p.comments || 0).toLocaleString()}</span>
+                            <span>&#128064; ${(p.impressions || 0).toLocaleString()}</span>
+                        </div>
+                        <div class="feed-card-actions">
+                            <button class="feed-card-btn" onclick="aiReplyTo('${(p.text||'').substring(0,200).replace(/'/g,"\\'")}')">AI Reply</button>
+                            <button class="feed-card-btn primary" onclick="useAsTemplate(0);document.getElementById('composeTextarea').value='Inspired by: ${(p.text||'').substring(0,80).replace(/'/g,"\\'")}...\\n\\n'">Engage</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+
+        async function aiReplyTo(postText) {
+            showNotify('Generating Reply...', 'AI is crafting a thoughtful reply.', 'info');
+            try {
+                const res = await fetch('/api/engage/ai-reply', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ postText, style: 'supportive' }),
+                });
+                const data = await res.json();
+                if (data.reply) {
+                    const ta = document.getElementById('composeTextarea');
+                    if (ta) { ta.value = data.reply; updateComposeCharCount(); }
+                    toggleCompose();
+                    showNotify('Reply Generated', 'AI reply copied to composer. Review and post!', 'success');
+                } else { showNotify('Error', data.error || 'Could not generate reply.', 'error'); }
+            } catch { showNotify('Error', 'Failed to generate reply.', 'error'); }
+        }
+
+        // ===== MENTIONS =====
+        async function loadMentions() {
+            try {
+                const res = await fetch('/api/engage/mentions');
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = document.getElementById('mentionsList');
+                const empty = document.getElementById('mentionsEmpty');
+                if (!data.mentions || data.mentions.length === 0) {
+                    list.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                list.innerHTML = data.mentions.map(m => `
+                    <div class="feed-card">
+                        <div class="feed-card-meta"><span>${m.author || 'LinkedIn User'}</span><span>${m.date || ''}</span></div>
+                        <div class="feed-card-text">${(m.text || '').replace(/\n/g, '<br>')}</div>
+                        <div class="feed-card-actions">
+                            <button class="feed-card-btn" onclick="aiReplyTo('${(m.text||'').substring(0,200).replace(/'/g,"\\'")}')">AI Reply</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+
+        // ===== ENGAGE LISTS =====
+        async function loadEngageLists() {
+            try {
+                const res = await fetch('/api/engage/lists');
+                if (!res.ok) return;
+                const data = await res.json();
+                const container = document.getElementById('engageListsContainer');
+                const empty = document.getElementById('engageListsEmpty');
+                if (!data.lists || data.lists.length === 0) {
+                    container.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                container.innerHTML = data.lists.map(l => `
+                    <div class="list-card">
+                        <div class="list-card-info">
+                            <h4>&#128203; ${l.name}</h4>
+                            <p>${(l.members || []).length} members &middot; Created ${new Date(l.createdAt).toLocaleDateString()}</p>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button class="feed-card-btn" onclick="deleteEngageList('${l.id}')">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+
+        function showCreateListModal() {
+            const name = prompt('List name:');
+            if (!name) return;
+            fetch('/api/engage/lists', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
+                .then(r => r.json()).then(() => { loadEngageLists(); showNotify('List Created', 'Your engagement list has been created.', 'success'); })
+                .catch(() => showNotify('Error', 'Failed to create list.', 'error'));
+        }
+
+        function deleteEngageList(id) {
+            fetch('/api/engage/lists/' + id, { method: 'DELETE' })
+                .then(r => r.json()).then(() => { loadEngageLists(); showNotify('List Deleted', 'Engagement list removed.', 'success'); })
+                .catch(() => {});
+        }
+
+        // ===== ENGAGE REPLIES =====
+        async function loadEngageReplies() {
+            try {
+                const res = await fetch('/api/engage/replies');
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = document.getElementById('engageRepliesList');
+                const empty = document.getElementById('engageRepliesEmpty');
+                if (!data.replies || data.replies.length === 0) {
+                    list.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                list.innerHTML = data.replies.map(r => `
+                    <div class="feed-card">
+                        <div class="feed-card-meta"><span>${r.author || 'LinkedIn User'}</span><span>${r.date || ''}</span></div>
+                        <div class="feed-card-text">${(r.text || '').replace(/\n/g, '<br>')}</div>
+                        <div class="feed-card-actions">
+                            <button class="feed-card-btn" onclick="aiReplyTo('${(r.text||'').substring(0,200).replace(/'/g,"\\'")}')">AI Reply</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+
+        // ===== AUTO-ENGAGE =====
+        async function loadAutoEngage() {
+            try {
+                const res = await fetch('/api/auto-engage/rules');
+                if (!res.ok) return;
+                const data = await res.json();
+                const container = document.getElementById('autoEngageRules');
+                const empty = document.getElementById('autoEngageEmpty');
+                if (!data.rules || data.rules.length === 0) {
+                    container.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                container.innerHTML = data.rules.map(r => `
+                    <div class="rule-card">
+                        <div class="rule-card-header">
+                            <h4>${r.type === 'repost' ? '&#128257; Auto-Repost' : '&#128172; Auto-Comment'} Rule</h4>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <span class="rule-badge ${r.active ? 'active' : 'paused'}">${r.active ? 'Active' : 'Paused'}</span>
+                                <button class="feed-card-btn" onclick="toggleRule('${r.id}',${!r.active})">${r.active ? 'Pause' : 'Activate'}</button>
+                                <button class="feed-card-btn" onclick="deleteRule('${r.id}')">Delete</button>
+                            </div>
+                        </div>
+                        <div class="rule-card-details">
+                            Source: ${r.source || 'All network'} &middot;
+                            Min engagement: ${r.minEngagement} likes &middot;
+                            Max/day: ${r.maxPerDay} &middot;
+                            Style: ${r.style || 'supportive'}
+                        </div>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+
+        function showCreateRuleModal() {
+            const type = prompt('Rule type: "repost" or "comment"');
+            if (!type || !['repost', 'comment'].includes(type)) { showNotify('Invalid', 'Enter "repost" or "comment".', 'warning'); return; }
+            const source = prompt('Source (creator name, hashtag, or leave blank for all):') || '';
+            const minEngagement = parseInt(prompt('Min likes to trigger (default 50):')) || 50;
+            const maxPerDay = parseInt(prompt('Max actions per day (default 5):')) || 5;
+            const style = type === 'comment' ? (prompt('Comment style (supportive/insightful/question):') || 'supportive') : '';
+            fetch('/api/auto-engage/rules', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, source, minEngagement, maxPerDay, style }) })
+                .then(r => r.json()).then(() => { loadAutoEngage(); showNotify('Rule Created', 'Auto-engage rule has been created.', 'success'); })
+                .catch(() => showNotify('Error', 'Failed to create rule.', 'error'));
+        }
+
+        function toggleRule(id, active) {
+            fetch('/api/auto-engage/rules/' + id, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ active }) })
+                .then(r => r.json()).then(() => loadAutoEngage()).catch(() => {});
+        }
+
+        function deleteRule(id) {
+            fetch('/api/auto-engage/rules/' + id, { method: 'DELETE' })
+                .then(r => r.json()).then(() => { loadAutoEngage(); showNotify('Rule Deleted', 'Auto-engage rule removed.', 'success'); })
+                .catch(() => {});
+        }
+
+        // ===== TEAM MEMBERS =====
+        async function loadTeamMembers() {
+            try {
+                const res = await fetch('/api/team/members');
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = document.getElementById('teamMembersList');
+                const empty = document.getElementById('teamEmpty');
+                if (!data.members || data.members.length === 0) {
+                    list.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                list.innerHTML = data.members.map(m => `
+                    <div class="team-card">
+                        <div class="team-card-info">
+                            <div class="team-avatar">${(m.name || m.email).charAt(0).toUpperCase()}</div>
+                            <div>
+                                <div style="font-weight:700;font-size:0.88rem;">${m.name || m.email}</div>
+                                <div style="font-size:0.78rem;color:var(--text-muted);">${m.email} &middot; <span class="team-role-badge">${m.role}</span> &middot; ${m.status}</div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <select onchange="changeTeamRole('${m.email}',this.value)" style="padding:4px 8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.78rem;background:var(--bg-card);color:var(--text-primary);">
+                                <option ${m.role==='editor'?'selected':''}>editor</option>
+                                <option ${m.role==='viewer'?'selected':''}>viewer</option>
+                                <option ${m.role==='admin'?'selected':''}>admin</option>
+                            </select>
+                            <button class="feed-card-btn" onclick="removeTeamMember('${m.email}')">Remove</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+
+        async function inviteTeamMember() {
+            const email = document.getElementById('teamInviteEmail').value.trim();
+            const role = document.getElementById('teamInviteRole').value;
+            if (!email) { showNotify('Missing Email', 'Enter an email address.', 'warning'); return; }
+            try {
+                const res = await fetch('/api/team/invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, role }) });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('teamInviteEmail').value = '';
+                    loadTeamMembers();
+                    showNotify('Invitation Sent', `Invite link: ${data.inviteLink}`, 'success');
+                } else { showNotify('Error', data.error || 'Failed to invite.', 'error'); }
+            } catch { showNotify('Error', 'Failed to invite member.', 'error'); }
+        }
+
+        function changeTeamRole(email, role) {
+            fetch('/api/team/members/' + encodeURIComponent(email), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ role }) })
+                .then(r => r.json()).then(() => loadTeamMembers()).catch(() => {});
+        }
+
+        function removeTeamMember(email) {
+            fetch('/api/team/members/' + encodeURIComponent(email), { method: 'DELETE' })
+                .then(r => r.json()).then(() => { loadTeamMembers(); showNotify('Removed', 'Team member removed.', 'success'); })
+                .catch(() => {});
+        }
+
+        // ===== SHARED QUEUE =====
+        async function loadSharedQueue() {
+            try {
+                const res = await fetch('/api/team/queue');
+                if (!res.ok) return;
+                const data = await res.json();
+                const list = document.getElementById('sharedQueueList');
+                const empty = document.getElementById('sharedQueueEmpty');
+                if (!data.queue || data.queue.length === 0) {
+                    list.innerHTML = '';
+                    empty.style.display = 'block';
+                    return;
+                }
+                empty.style.display = 'none';
+                list.innerHTML = data.queue.map((q, i) => `
+                    <div class="feed-card">
+                        <div class="feed-card-meta">
+                            <span style="font-weight:600;">${q.authorName || 'Team Member'}</span>
+                            <span class="rule-badge ${q.status === 'posted' ? 'active' : 'paused'}">${q.status}</span>
+                            <span style="margin-left:auto;">${q.date || ''}</span>
+                        </div>
+                        <div class="feed-card-text">${(q.text || '').replace(/\n/g, '<br>')}</div>
+                    </div>
+                `).join('');
+            } catch {}
+        }
+
+        // ===== WHITE-LABEL REPORTS =====
+        async function loadReports() {
+            try {
+                const res = await fetch('/api/reports/branding');
+                if (!res.ok) return;
+                const data = await res.json();
+                const b = data.branding || {};
+                document.getElementById('reportCompanyName').value = b.companyName || '';
+                document.getElementById('reportTitle').value = b.reportTitle || '';
+                document.getElementById('reportLogoUrl').value = b.logoUrl || '';
+                document.getElementById('reportBrandColor').value = b.brandColor || '#0A66C2';
+            } catch {}
+        }
+
+        async function saveReportBranding() {
+            const branding = {
+                companyName: document.getElementById('reportCompanyName').value,
+                reportTitle: document.getElementById('reportTitle').value,
+                logoUrl: document.getElementById('reportLogoUrl').value,
+                brandColor: document.getElementById('reportBrandColor').value,
+            };
+            try {
+                await fetch('/api/reports/branding', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(branding) });
+                showNotify('Saved', 'Report branding settings saved.', 'success');
+            } catch { showNotify('Error', 'Failed to save settings.', 'error'); }
+        }
+
+        function generateReport() {
+            const range = document.getElementById('reportRange').value;
+            window.open('/api/reports/generate?range=' + range, '_blank');
+        }
+
+        // ===== API KEYS =====
+        async function createApiKey() {
+            const name = document.getElementById('apiKeyName').value.trim() || 'Default';
+            try {
+                const res = await fetch('/api/apikeys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+                const data = await res.json();
+                if (res.ok && data.key) {
+                    document.getElementById('apiKeyName').value = '';
+                    showNotify('API Key Created', `Your key (copy now, shown once only):\n${data.key}`, 'success');
+                    renderApiKeys(data.apiKeys);
+                } else { showNotify('Error', data.error || 'Failed to create key.', 'error'); }
+            } catch { showNotify('Error', 'Failed to create API key.', 'error'); }
+        }
+
+        function renderApiKeys(keys) {
+            const list = document.getElementById('apiKeysList');
+            const empty = document.getElementById('apiKeysEmpty');
+            if (!keys || keys.length === 0) { list.innerHTML = ''; empty.style.display = 'block'; return; }
+            empty.style.display = 'none';
+            list.innerHTML = keys.map(k => `
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:12px;border:1px solid var(--border);border-radius:8px;">
+                    <div>
+                        <div style="font-weight:700;font-size:0.88rem;">${k.name}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">Created: ${new Date(k.createdAt).toLocaleDateString()} ${k.lastUsedAt ? '&middot; Last used: ' + new Date(k.lastUsedAt).toLocaleDateString() : '&middot; Never used'}</div>
+                    </div>
+                    <button class="feed-card-btn" onclick="revokeApiKey('${k.id}')">Revoke</button>
+                </div>
+            `).join('');
+        }
+
+        function revokeApiKey(id) {
+            fetch('/api/apikeys/' + id, { method: 'DELETE' })
+                .then(r => r.json()).then(data => { renderApiKeys(data.apiKeys); showNotify('Key Revoked', 'API key has been revoked.', 'success'); })
+                .catch(() => {});
+        }
+
+        async function loadApiKeys() {
+            try {
+                const res = await fetch('/api/apikeys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _list: true }) });
+            } catch {}
+        }
+
         let profilesData = { profiles: [], activeProfileId: null, primaryAccountId: null, maxProfiles: 3, planTier: 'pro' };
 
         async function loadProfiles() {
@@ -5262,6 +6018,7 @@
                     document.getElementById('modalTitle').textContent = `We wrote these for you, ${currentUser.name.split(' ')[0]}!`;
                 }
                 loadProfiles();
+                loadUserFeatures();
                 checkPaymentStatus();
             } catch {}
         }
@@ -5461,7 +6218,7 @@
         }
 
         // Page navigation
-        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', inspiration: 'Inspiration', context: 'Context', settings: 'Account Settings' };
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', inspiration: 'Inspiration', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', discover: 'Discover', mentions: 'Mentions', engagelists: 'Lists', engagereplies: 'Replies', autoengage: 'Auto-Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports' };
 
         function showPage(page, updateHash) {
             if (!document.getElementById('page-' + page)) page = 'home';
@@ -5479,6 +6236,15 @@
             if (page === 'analytics') renderAnalytics();
             if (page === 'context') loadContextPage();
             if (page === 'settings') loadSettingsPage();
+            if (page === 'virallibrary') loadViralLibrary();
+            if (page === 'discover') loadDiscover();
+            if (page === 'mentions') loadMentions();
+            if (page === 'engagelists') loadEngageLists();
+            if (page === 'engagereplies') loadEngageReplies();
+            if (page === 'autoengage') loadAutoEngage();
+            if (page === 'teammembers') loadTeamMembers();
+            if (page === 'sharedqueue') loadSharedQueue();
+            if (page === 'reports') loadReports();
         }
 
         function getPageFromHash() {
