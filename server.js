@@ -157,6 +157,112 @@ app.use(session(sessionConfig));
 
 const cors = require('cors');
 app.use(cors({ origin: true, credentials: true }));
+
+// Stripe webhook needs raw body — must be before express.json()
+app.post('/api/stripe/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    if (!stripe || !webhookSecret) {
+        console.error('[Webhook] Stripe or webhook secret not configured');
+        return res.status(400).send('Webhook not configured');
+    }
+
+    let event;
+    try {
+        const sig = req.headers['stripe-signature'];
+        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
+    } catch (err) {
+        console.error('[Webhook] Signature verification failed:', err.message);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
+
+    console.log(`[Webhook] Received event: ${event.type}`);
+
+    try {
+        if (event.type === 'invoice.payment_failed') {
+            const invoice = event.data.object;
+            const customerEmail = invoice.customer_email;
+            const subscriptionId = invoice.subscription;
+
+            console.log(`[Webhook] Payment failed for ${customerEmail}, subscription ${subscriptionId}`);
+
+            // Find user by email and revoke access
+            const user = await dbFindByEmail(customerEmail);
+            if (user) {
+                await dbUpdateFields(user.linkedinId, {
+                    paid: false,
+                    paymentFailed: true,
+                    paymentFailedAt: new Date().toISOString(),
+                    paymentFailedReason: invoice.status_transitions?.finalized_at ? 'payment_failed' : 'unknown',
+                });
+                console.log(`[Webhook] Access revoked for user ${user.linkedinId} (${customerEmail})`);
+            }
+        }
+
+        if (event.type === 'customer.subscription.deleted') {
+            const subscription = event.data.object;
+            const customerEmail = subscription.metadata?.email || '';
+            const linkedinId = subscription.metadata?.linkedinId || '';
+
+            console.log(`[Webhook] Subscription deleted for ${linkedinId || customerEmail}`);
+
+            let user = linkedinId ? await dbGetUser(linkedinId) : null;
+            if (!user && customerEmail) user = await dbFindByEmail(customerEmail);
+
+            if (user) {
+                await dbUpdateFields(user.linkedinId, {
+                    paid: false,
+                    subscriptionCancelled: true,
+                    subscriptionEndedAt: new Date().toISOString(),
+                });
+                console.log(`[Webhook] Subscription ended for user ${user.linkedinId}`);
+            }
+        }
+
+        if (event.type === 'invoice.paid') {
+            const invoice = event.data.object;
+            const customerEmail = invoice.customer_email;
+
+            console.log(`[Webhook] Payment succeeded for ${customerEmail}`);
+
+            const user = await dbFindByEmail(customerEmail);
+            if (user) {
+                await dbUpdateFields(user.linkedinId, {
+                    paid: true,
+                    paymentFailed: false,
+                    paymentFailedAt: null,
+                    lastPaymentAt: new Date().toISOString(),
+                });
+                console.log(`[Webhook] Access restored for user ${user.linkedinId}`);
+            }
+        }
+
+        if (event.type === 'customer.subscription.updated') {
+            const subscription = event.data.object;
+            const customerEmail = subscription.metadata?.email || '';
+            const linkedinId = subscription.metadata?.linkedinId || '';
+
+            if (subscription.status === 'past_due' || subscription.status === 'unpaid') {
+                console.log(`[Webhook] Subscription ${subscription.status} for ${linkedinId || customerEmail}`);
+                let user = linkedinId ? await dbGetUser(linkedinId) : null;
+                if (!user && customerEmail) user = await dbFindByEmail(customerEmail);
+
+                if (user) {
+                    await dbUpdateFields(user.linkedinId, {
+                        paid: false,
+                        paymentFailed: true,
+                        subscriptionStatus: subscription.status,
+                    });
+                    console.log(`[Webhook] Access revoked (${subscription.status}) for ${user.linkedinId}`);
+                }
+            }
+        }
+    } catch (err) {
+        console.error('[Webhook] Error processing event:', err.message);
+    }
+
+    res.json({ received: true });
+});
+
 app.use(express.json());
 
 app.use((req, res, next) => {
@@ -494,6 +600,11 @@ app.post('/api/checkout', async (req, res) => {
             }],
             subscription_data: {
                 trial_period_days: planConfig.trial,
+                metadata: {
+                    linkedinId: req.session.user.linkedinId,
+                    email: req.session.user.email,
+                    plan: plan,
+                },
             },
             customer_email: req.session.user.email,
             metadata: {
@@ -2155,6 +2266,14 @@ app.get('/api/me', async (req, res) => {
     safeUser.planTier = planTier;
     safeUser.activeProfileId = activeId;
     safeUser.primaryAccountId = primaryId;
+
+    // Include payment failure info
+    const primaryUser = primaryId ? await dbGetUser(primaryId) : dbUser;
+    if (primaryUser) {
+        safeUser.paymentFailed = primaryUser.paymentFailed || false;
+        safeUser.subscriptionStatus = primaryUser.subscriptionStatus || null;
+    }
+
     res.json(safeUser);
 });
 

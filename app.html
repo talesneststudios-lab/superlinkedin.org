@@ -4979,7 +4979,25 @@
                     document.getElementById('modalTitle').textContent = `We wrote these for you, ${currentUser.name.split(' ')[0]}!`;
                 }
                 loadProfiles();
+                checkPaymentStatus();
             } catch {}
+        }
+
+        function checkPaymentStatus() {
+            if (!currentUser) return;
+            let paymentBanner = document.getElementById('paymentFailedBanner');
+            if (currentUser.paymentFailed) {
+                if (!paymentBanner) {
+                    paymentBanner = document.createElement('div');
+                    paymentBanner.id = 'paymentFailedBanner';
+                    paymentBanner.style.cssText = 'background:linear-gradient(135deg,#dc2626,#991b1b);color:#fff;padding:12px 20px;text-align:center;font-size:0.85rem;font-weight:600;display:flex;align-items:center;justify-content:center;gap:12px;position:sticky;top:0;z-index:100;';
+                    document.querySelector('.main-content')?.prepend(paymentBanner);
+                }
+                paymentBanner.innerHTML = `&#9888; Your payment failed. Please update your billing information to continue using SuperLinkedIn. <a href="#" onclick="showPage('settings');document.querySelectorAll('.settings-tab').forEach((t,i)=>{if(i===2)switchSettingsTab('plans',t)});return false;" style="color:#fff;background:rgba(255,255,255,0.2);padding:4px 14px;border-radius:6px;text-decoration:none;margin-left:4px;font-weight:700;">Update Payment</a>`;
+                paymentBanner.style.display = 'flex';
+            } else if (paymentBanner) {
+                paymentBanner.style.display = 'none';
+            }
         }
 
         // Load queue
