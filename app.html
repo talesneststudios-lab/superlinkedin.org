@@ -7573,7 +7573,11 @@
                     return;
                 }
 
-                if (data.success) {
+                if (data.success && data.fallback) {
+                    showNotify('Caption Posted', data.message || 'Your caption was posted. Please download the PDF and add it to your post via LinkedIn.', 'info');
+                    downloadCarouselPDF();
+                    updateCreditsPopup();
+                } else if (data.success) {
                     showNotify('Published!', 'Carousel posted to LinkedIn!', 'success');
                     updateCreditsPopup();
                 }

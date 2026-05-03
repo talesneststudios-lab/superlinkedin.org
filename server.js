@@ -2294,7 +2294,52 @@ app.post('/api/carousel/publish', async (req, res) => {
         }
 
         if (!documentUrn) {
-            return res.status(500).json({ error: 'Could not upload document to LinkedIn. Your app may need the "w_member_social" scope or the document sharing permission. Please try downloading the PDF and sharing it manually.' });
+            console.log('[Carousel] Document upload failed, falling back to text-only post for', linkedinId);
+
+            // Fall back: publish as a text-only post and tell client to download the PDF
+            const fallbackText = text.trim() + '\n\n[Carousel PDF attached separately]';
+            const fbRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${accessToken}`,
+                    'X-Restli-Protocol-Version': '2.0.0',
+                },
+                body: JSON.stringify({
+                    author: personUrn,
+                    lifecycleState: 'PUBLISHED',
+                    specificContent: {
+                        'com.linkedin.ugc.ShareContent': {
+                            shareCommentary: { text: fallbackText },
+                            shareMediaCategory: 'NONE',
+                        },
+                    },
+                    visibility: {
+                        'com.linkedin.ugc.MemberNetworkVisibility': visibility,
+                    },
+                }),
+            });
+
+            if (fbRes.ok) {
+                const fbData = await fbRes.json();
+                const fbPostId = fbData.id;
+                const fbPostUrl = fbPostId
+                    ? `https://www.linkedin.com/feed/update/${fbPostId}/`
+                    : 'https://www.linkedin.com/feed/';
+                await consumeCredit(req.session, 1);
+                console.log(`[Carousel] Fallback text post published: ${fbPostId}`);
+                return res.json({
+                    success: true,
+                    postId: fbPostId,
+                    postUrl: fbPostUrl,
+                    fallback: true,
+                    message: 'LinkedIn does not allow automatic document uploads for your app. Your caption was posted as text. Please download the PDF and add it to your post manually via LinkedIn\'s Edit Post > Add Document feature.',
+                });
+            } else {
+                const fbErr = await fbRes.text();
+                console.error('[Carousel] Fallback text post also failed:', fbRes.status, fbErr);
+                return res.status(500).json({ error: 'Could not publish to LinkedIn. Please download the PDF and share it manually.' });
+            }
         }
 
         // --- Create post ---
