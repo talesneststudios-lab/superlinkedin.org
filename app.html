@@ -1402,6 +1402,50 @@
             justify-content: center;
             color: #fff;
             font-size: 0.5rem;
+        }
+        .popular-cat-btn {
+            padding: 5px 12px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-family: inherit;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .popular-cat-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .popular-cat-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+        .popular-creators-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            max-height: 240px;
+            overflow-y: auto;
+        }
+        .popular-creator-card {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.78rem;
+        }
+        .popular-creator-card:hover { border-color: var(--accent); background: rgba(10,102,194,0.06); }
+        .popular-creator-card.added { opacity: 0.5; pointer-events: none; }
+        .popular-creator-card .pc-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg, #0A66C2, #70B5F9);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 0.55rem; font-weight: 700; flex-shrink: 0;
+        }
+        .popular-creator-card .pc-info { overflow: hidden; }
+        .popular-creator-card .pc-name { font-weight: 700; font-size: 0.78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .popular-creator-card .pc-desc { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
             font-weight: 800;
         }
         .ctx-creator-remove {
@@ -3586,11 +3630,29 @@
                     <div class="ctx-section-sub">Shapes how your AI-generated posts are written.</div>
                     <div style="font-size:0.82rem;font-weight:700;color:var(--text-secondary);margin-bottom:8px;">Favorite Creators</div>
                     <div class="ctx-creators-search">
-                        <input type="text" id="ctxCreatorInput" placeholder="Search & add usernames...">
+                        <input type="text" id="ctxCreatorInput" placeholder="Name or LinkedIn URL (e.g. linkedin.com/in/username)">
                         <button onclick="addCtxCreator()">Add</button>
                     </div>
                     <div class="ctx-selected-label">Selected Creators (<span id="ctxCreatorCount">0</span>)</div>
                     <div class="ctx-creators-list" id="ctxCreatorsList"></div>
+
+                    <div style="margin-top:14px;">
+                        <div style="font-size:0.78rem;font-weight:700;color:var(--text-muted);margin-bottom:8px;cursor:pointer;display:flex;align-items:center;gap:6px;" onclick="togglePopularCreators()">
+                            <span id="popularCreatorsArrow" style="transition:transform 0.2s;">&#9654;</span> Popular Creators by Category
+                        </div>
+                        <div id="popularCreatorsPanel" style="display:none;">
+                            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">
+                                <button class="popular-cat-btn active" onclick="showCreatorCategory('all',this)">All</button>
+                                <button class="popular-cat-btn" onclick="showCreatorCategory('leadership',this)">Leadership</button>
+                                <button class="popular-cat-btn" onclick="showCreatorCategory('marketing',this)">Marketing</button>
+                                <button class="popular-cat-btn" onclick="showCreatorCategory('tech',this)">Tech</button>
+                                <button class="popular-cat-btn" onclick="showCreatorCategory('sales',this)">Sales</button>
+                                <button class="popular-cat-btn" onclick="showCreatorCategory('career',this)">Career</button>
+                                <button class="popular-cat-btn" onclick="showCreatorCategory('startup',this)">Startups</button>
+                            </div>
+                            <div id="popularCreatorsList" class="popular-creators-grid"></div>
+                        </div>
+                    </div>
 
                     <div class="ctx-toggle-row">
                         <div>
@@ -7235,24 +7297,43 @@
             }
             list.innerHTML = ctxCreators.map((c, i) => {
                 const name = typeof c === 'string' ? c : (c.name || c.url || '');
+                const url = typeof c === 'object' ? (c.url || '') : '';
                 const initials = name.split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0, 2);
+                const nameHtml = url
+                    ? `<a href="${url}" target="_blank" style="color:inherit;text-decoration:none;" title="${url}">${name}</a>`
+                    : name;
                 return `<div class="ctx-creator-chip">
                     <div class="ctx-creator-avatar">${initials}</div>
-                    <span>${name}</span>
+                    <span>${nameHtml}</span>
                     <button class="ctx-creator-remove" onclick="removeCtxCreator(${i})">&times;</button>
                 </div>`;
             }).join('');
         }
 
-        async function addCtxCreator() {
+        function parseLinkedInInput(val) {
+            const urlMatch = val.match(/linkedin\.com\/in\/([a-zA-Z0-9\-_%]+)/i);
+            if (urlMatch) {
+                const slug = decodeURIComponent(urlMatch[1]).replace(/-/g, ' ');
+                const name = slug.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+                const url = 'https://www.linkedin.com/in/' + urlMatch[1] + '/';
+                return { name, url };
+            }
+            return { name: val, url: '' };
+        }
+
+        async function addCtxCreator(nameOverride, urlOverride) {
             const input = document.getElementById('ctxCreatorInput');
-            const val = input.value.trim();
-            if (!val) return;
-            const existing = ctxCreators.map(c => typeof c === 'string' ? c : c.name);
-            if (existing.includes(val)) return;
-            ctxCreators.push({ name: val, url: '' });
-            input.value = '';
+            const raw = nameOverride || input.value.trim();
+            if (!raw) return;
+
+            const parsed = urlOverride ? { name: nameOverride, url: urlOverride } : parseLinkedInInput(raw);
+            const existing = ctxCreators.map(c => typeof c === 'string' ? c : (c.name || ''));
+            if (existing.includes(parsed.name)) return;
+
+            ctxCreators.push(parsed);
+            if (!nameOverride) input.value = '';
             renderCtxCreators();
+            renderPopularCreators();
             await fetch('/api/onboarding/creators', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -7260,9 +7341,77 @@
             });
         }
 
+        const POPULAR_CREATORS = [
+            { name: 'Simon Sinek', desc: 'Leadership & Motivation', cat: 'leadership', url: 'https://www.linkedin.com/in/simonsinek/' },
+            { name: 'Gary Vaynerchuk', desc: 'Entrepreneurship & Marketing', cat: 'marketing', url: 'https://www.linkedin.com/in/garyvaynerchuk/' },
+            { name: 'Satya Nadella', desc: 'CEO of Microsoft', cat: 'tech', url: 'https://www.linkedin.com/in/satyanadella/' },
+            { name: 'Melanie Perkins', desc: 'CEO of Canva', cat: 'startup', url: 'https://www.linkedin.com/in/melanieperkins/' },
+            { name: 'Adam Grant', desc: 'Organizational Psychologist', cat: 'leadership', url: 'https://www.linkedin.com/in/adammgrant/' },
+            { name: 'Neil Patel', desc: 'Digital Marketing Expert', cat: 'marketing', url: 'https://www.linkedin.com/in/neilkpatel/' },
+            { name: 'Justin Welsh', desc: 'Solopreneur & Creator', cat: 'startup', url: 'https://www.linkedin.com/in/justinwelsh/' },
+            { name: 'Lara Acosta', desc: 'LinkedIn Growth & Personal Branding', cat: 'marketing', url: 'https://www.linkedin.com/in/laraacostalink/' },
+            { name: 'Sahil Bloom', desc: 'Entrepreneur & Writer', cat: 'startup', url: 'https://www.linkedin.com/in/sahilbloom/' },
+            { name: 'Brigette Hyacinth', desc: 'Leadership & Management', cat: 'leadership', url: 'https://www.linkedin.com/in/brigettehyacinth/' },
+            { name: 'Jeff Weiner', desc: 'Former LinkedIn CEO', cat: 'tech', url: 'https://www.linkedin.com/in/jeffweiner08/' },
+            { name: 'Jill Konrath', desc: 'B2B Sales Strategist', cat: 'sales', url: 'https://www.linkedin.com/in/jillkonrath/' },
+            { name: 'Daniel Pink', desc: 'Author & Career Expert', cat: 'career', url: 'https://www.linkedin.com/in/danielpink/' },
+            { name: 'Rand Fishkin', desc: 'SEO & Marketing Founder', cat: 'marketing', url: 'https://www.linkedin.com/in/randfishkin/' },
+            { name: 'Tim Ferriss', desc: 'Author & Investor', cat: 'startup', url: 'https://www.linkedin.com/in/timferriss/' },
+            { name: 'Brené Brown', desc: 'Leadership & Vulnerability', cat: 'leadership', url: 'https://www.linkedin.com/in/brenebrown/' },
+            { name: 'Dharmesh Shah', desc: 'CTO of HubSpot', cat: 'tech', url: 'https://www.linkedin.com/in/dharmesh/' },
+            { name: 'Grant Cardone', desc: 'Sales Training & Real Estate', cat: 'sales', url: 'https://www.linkedin.com/in/grantcardone/' },
+            { name: 'Carla Harris', desc: 'Career Strategy & Leadership', cat: 'career', url: 'https://www.linkedin.com/in/carlaannharris/' },
+            { name: 'Alex Hormozi', desc: 'Business Growth & Acquisitions', cat: 'startup', url: 'https://www.linkedin.com/in/alexhormozi/' },
+            { name: 'Marcus Sheridan', desc: 'Content Marketing & Sales', cat: 'sales', url: 'https://www.linkedin.com/in/marcussheridan/' },
+            { name: 'Jenny Li Fowler', desc: 'Social Media Strategy', cat: 'marketing', url: 'https://www.linkedin.com/in/jennylifowler/' },
+            { name: 'Sander van Dijk', desc: 'Motion Design & Tech', cat: 'tech', url: 'https://www.linkedin.com/in/sandervandijk/' },
+            { name: 'J.T. O\'Donnell', desc: 'Career Coaching & Job Search', cat: 'career', url: 'https://www.linkedin.com/in/jtodonnell/' },
+        ];
+
+        let currentCreatorCat = 'all';
+
+        function togglePopularCreators() {
+            const panel = document.getElementById('popularCreatorsPanel');
+            const arrow = document.getElementById('popularCreatorsArrow');
+            const isOpen = panel.style.display !== 'none';
+            panel.style.display = isOpen ? 'none' : 'block';
+            arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+            if (!isOpen) renderPopularCreators();
+        }
+
+        function showCreatorCategory(cat, btn) {
+            currentCreatorCat = cat;
+            document.querySelectorAll('.popular-cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderPopularCreators();
+        }
+
+        function renderPopularCreators() {
+            const list = document.getElementById('popularCreatorsList');
+            if (!list) return;
+            const existingNames = ctxCreators.map(c => typeof c === 'string' ? c : (c.name || '')).map(n => n.toLowerCase());
+            const filtered = currentCreatorCat === 'all'
+                ? POPULAR_CREATORS
+                : POPULAR_CREATORS.filter(c => c.cat === currentCreatorCat);
+
+            list.innerHTML = filtered.map(c => {
+                const initials = c.name.split(' ').map(w => w[0] || '').join('').toUpperCase().slice(0, 2);
+                const isAdded = existingNames.includes(c.name.toLowerCase());
+                return `<div class="popular-creator-card${isAdded ? ' added' : ''}" onclick="${isAdded ? '' : `addCtxCreator('${c.name.replace(/'/g, "\\'")}','${c.url}')`}">
+                    <div class="pc-avatar">${initials}</div>
+                    <div class="pc-info">
+                        <div class="pc-name">${c.name}</div>
+                        <div class="pc-desc">${c.desc}</div>
+                    </div>
+                    ${isAdded ? '<span style="margin-left:auto;font-size:0.7rem;color:var(--accent);">&#10003;</span>' : '<span style="margin-left:auto;font-size:0.85rem;color:var(--accent);">+</span>'}
+                </div>`;
+            }).join('');
+        }
+
         async function removeCtxCreator(i) {
             ctxCreators.splice(i, 1);
             renderCtxCreators();
+            renderPopularCreators();
             await fetch('/api/onboarding/creators', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
