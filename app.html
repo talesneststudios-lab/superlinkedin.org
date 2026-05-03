@@ -634,7 +634,7 @@
         .dm-label-picker {
             position: absolute; top: 100%; right: 14px; background: var(--bg-card);
             border: 1px solid var(--border); border-radius: 8px; padding: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 10; display: flex; flex-direction: column; gap: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 20; display: flex; flex-direction: column; gap: 6px;
         }
         .dm-label-picker label {
             display: flex; align-items: center; gap: 6px; font-size: 0.82rem; cursor: pointer;
@@ -684,7 +684,7 @@
         .dm-ai-menu {
             position: absolute; bottom: 100%; right: 0; margin-bottom: 6px;
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-            padding: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 10; min-width: 170px;
+            padding: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 20; min-width: 170px;
         }
         .dm-ai-menu button {
             display: block; width: 100%; padding: 8px 12px; border: none; background: none;
@@ -2748,7 +2748,11 @@
         .sched-account-vis {
             padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px;
             font-family: inherit; font-size: 0.78rem; background: var(--bg-white);
-            color: var(--text-primary); cursor: default;
+            color: var(--text-primary); cursor: pointer; transition: all 0.2s;
+            user-select: none;
+        }
+        .sched-account-vis:hover {
+            border-color: var(--accent); color: var(--accent);
         }
 
         .sched-confirm-btn {
@@ -4940,7 +4944,7 @@
                     <div class="sched-account-name" id="schedAccountName">You</div>
                     <div class="sched-account-handle" id="schedAccountHandle">@user</div>
                 </div>
-                <span class="sched-account-vis">&#127760; Everyone</span>
+                <span class="sched-account-vis" id="schedAudienceBtn" onclick="toggleSchedAudience()" title="Click to change">&#127760; Everyone</span>
             </div>
 
             <button class="sched-confirm-btn" id="schedConfirmBtn" onclick="confirmSchedule()" disabled>Schedule post</button>
@@ -6038,6 +6042,7 @@
         }
 
         function toggleDmLabelPicker() {
+            document.getElementById('dmAiMenu').classList.add('hidden');
             document.getElementById('dmLabelPicker').classList.toggle('hidden');
         }
 
@@ -6059,6 +6064,7 @@
         }
 
         function toggleDmAiMenu() {
+            document.getElementById('dmLabelPicker').classList.add('hidden');
             document.getElementById('dmAiMenu').classList.toggle('hidden');
         }
 
@@ -7980,6 +7986,19 @@
             document.getElementById('schedSlotsPanel').classList.remove('open');
         }
 
+        let _schedAudience = 'everyone';
+
+        function toggleSchedAudience() {
+            const btn = document.getElementById('schedAudienceBtn');
+            if (_schedAudience === 'everyone') {
+                _schedAudience = 'connections';
+                btn.innerHTML = '&#128101; Connections';
+            } else {
+                _schedAudience = 'everyone';
+                btn.innerHTML = '&#127760; Everyone';
+            }
+        }
+
         async function confirmSchedule() {
             if (!_schedPickedDate || !_schedPostText) return;
 
@@ -7996,6 +8015,7 @@
                         text: _schedPostText,
                         status: 'scheduled',
                         scheduledFor: _schedPickedDate.toISOString(),
+                        audience: _schedAudience,
                     }),
                 });
                 const data = await res.json();
