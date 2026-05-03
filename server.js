@@ -665,6 +665,30 @@ app.post('/api/checkout/confirm', async (req, res) => {
     res.json({ ok: true });
 });
 
+app.post('/api/billing-portal', async (req, res) => {
+    if (!stripe) return res.status(500).json({ error: 'Stripe is not configured' });
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    try {
+        const email = req.session.user.email;
+        const customers = await stripe.customers.list({ email, limit: 1 });
+
+        if (!customers.data.length) {
+            return res.status(404).json({ error: 'No Stripe customer found. Please contact support.' });
+        }
+
+        const session = await stripe.billingPortal.sessions.create({
+            customer: customers.data[0].id,
+            return_url: `${process.env.BASE_URL}/app#settings`,
+        });
+
+        res.json({ url: session.url });
+    } catch (err) {
+        console.error('Stripe billing portal error:', err);
+        res.status(500).json({ error: 'Failed to open billing portal.' });
+    }
+});
+
 // ---------- SUBSCRIPTION MANAGEMENT ----------
 
 app.post('/api/subscription/cancel', async (req, res) => {
