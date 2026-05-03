@@ -8,6 +8,8 @@ const { DynamoDBClient } = require('@aws-sdk/client-dynamodb');
 const { DynamoDBDocumentClient, GetCommand, PutCommand, UpdateCommand, ScanCommand, DeleteCommand } = require('@aws-sdk/lib-dynamodb');
 
 const PDFDocument = require('pdfkit');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 process.on('uncaughtException', (err) => {
     console.error('[FATAL] Uncaught exception:', err.message, err.stack);
@@ -1232,6 +1234,120 @@ app.post('/api/publish', async (req, res) => {
     }
 });
 
+// ---------- PUBLISH WITH IMAGE ----------
+
+app.post('/api/publish-with-image', upload.single('image'), async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    const { text, audience } = req.body;
+    if (!text || !text.trim()) {
+        return res.status(400).json({ error: 'Post text is required' });
+    }
+    if (!req.file) {
+        return res.status(400).json({ error: 'Image file is required' });
+    }
+
+    const accessToken = req.session.user.accessToken;
+    if (!accessToken) {
+        return res.status(401).json({ error: 'No LinkedIn access token. Please sign in again.' });
+    }
+
+    const linkedinId = req.session.user.linkedinId;
+    const personUrn = `urn:li:person:${linkedinId}`;
+    const visibility = audience === 'connections' ? 'CONNECTIONS' : 'PUBLIC';
+
+    try {
+        const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({
+                registerUploadRequest: {
+                    recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                    owner: personUrn,
+                    serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
+                },
+            }),
+        });
+
+        if (!registerRes.ok) {
+            const errText = await registerRes.text();
+            console.error('LinkedIn register image upload failed:', errText);
+            return res.status(500).json({ error: 'Failed to register image upload with LinkedIn.' });
+        }
+
+        const registerData = await registerRes.json();
+        const uploadUrl = registerData.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
+        const asset = registerData.value?.asset;
+
+        if (!uploadUrl || !asset) {
+            return res.status(500).json({ error: 'LinkedIn upload registration returned invalid data.' });
+        }
+
+        const uploadRes = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': req.file.mimetype,
+            },
+            body: req.file.buffer,
+        });
+
+        if (!uploadRes.ok) {
+            console.error('LinkedIn image upload failed:', uploadRes.status);
+            return res.status(500).json({ error: 'Failed to upload image to LinkedIn.' });
+        }
+
+        const postRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${accessToken}`,
+                'X-Restli-Protocol-Version': '2.0.0',
+            },
+            body: JSON.stringify({
+                author: personUrn,
+                lifecycleState: 'PUBLISHED',
+                specificContent: {
+                    'com.linkedin.ugc.ShareContent': {
+                        shareCommentary: { text: text.trim() },
+                        shareMediaCategory: 'IMAGE',
+                        media: [{
+                            status: 'READY',
+                            media: asset,
+                        }],
+                    },
+                },
+                visibility: {
+                    'com.linkedin.ugc.MemberNetworkVisibility': visibility,
+                },
+            }),
+        });
+
+        if (postRes.ok) {
+            const data = await postRes.json();
+            const postId = data.id;
+            const postUrl = postId ? `https://www.linkedin.com/feed/update/${postId}/` : 'https://www.linkedin.com/feed/';
+            console.log(`Image post published to LinkedIn by ${req.session.user.name}: ${postId}`);
+            res.json({ success: true, postId, postUrl });
+        } else {
+            const errData = await postRes.text();
+            console.error('LinkedIn image post failed:', postRes.status, errData);
+            if (postRes.status === 401) {
+                return res.status(401).json({ error: 'LinkedIn access token expired. Please sign out and sign in again.' });
+            }
+            res.status(postRes.status).json({ error: 'Failed to publish image post to LinkedIn.' });
+        }
+    } catch (err) {
+        console.error('LinkedIn image publish error:', err);
+        res.status(500).json({ error: 'Could not connect to LinkedIn. Please try again.' });
+    }
+});
+
 // ---------- AI & QUEUE ----------
 
 app.post('/api/ai/generate-posts', async (req, res) => {
@@ -1703,9 +1819,15 @@ app.post('/api/queue', async (req, res) => {
 
 // ---------- CAROUSEL ----------
 
-function hasFeature(session, feature) {
+async function hasFeature(session, feature) {
     const primaryId = getPrimaryAccountId(session);
-    const tier = session.user?.planTier || 'pro';
+    let tier = session.user?.planTier || 'pro';
+
+    if (primaryId) {
+        const primary = await dbGetUser(primaryId);
+        if (primary && primary.planTier) tier = primary.planTier;
+    }
+
     const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
     return (limits.features || []).includes(feature);
 }
@@ -1713,7 +1835,7 @@ function hasFeature(session, feature) {
 app.post('/api/ai/generate-carousel', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
 
-    if (!hasFeature(req.session, 'carousel')) {
+    if (!(await hasFeature(req.session, 'carousel'))) {
         return res.status(403).json({ error: 'Carousel is available on Advanced and Ultra plans. Upgrade to access this feature.' });
     }
 
@@ -1884,7 +2006,7 @@ function renderCarouselPDF(slides, brandColor, title, userName) {
 app.post('/api/carousel/generate-pdf', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
 
-    if (!hasFeature(req.session, 'carousel')) {
+    if (!(await hasFeature(req.session, 'carousel'))) {
         return res.status(403).json({ error: 'Carousel is available on Advanced and Ultra plans.' });
     }
 
@@ -1918,7 +2040,7 @@ app.post('/api/carousel/generate-pdf', async (req, res) => {
 app.post('/api/carousel/publish', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
 
-    if (!hasFeature(req.session, 'carousel')) {
+    if (!(await hasFeature(req.session, 'carousel'))) {
         return res.status(403).json({ error: 'Carousel is available on Advanced and Ultra plans.' });
     }
 

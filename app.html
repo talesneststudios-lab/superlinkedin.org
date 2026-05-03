@@ -4315,12 +4315,20 @@
             </div>
             <textarea class="compose-textarea" id="composeTextarea" placeholder="What's happening?" oninput="updateComposeCharCount()"></textarea>
             <div class="compose-char-count" id="composeCharCount">0 characters</div>
+            <div id="composeAttachmentPreview" style="display:none;padding:8px 16px;">
+                <div style="position:relative;display:inline-block;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
+                    <img id="composeAttachmentImg" style="max-width:100%;max-height:200px;display:block;border-radius:10px;">
+                    <button onclick="removeComposeAttachment()" style="position:absolute;top:4px;right:4px;background:rgba(0,0,0,0.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;">&times;</button>
+                </div>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;" id="composeAttachmentName"></div>
+            </div>
             <div class="compose-generating hidden" id="composeGenerating">
                 <div class="spinner"></div>
                 Generating with AI...
             </div>
             <div class="compose-toolbar">
-                <button class="compose-tool-btn" title="Add image URL" onclick="insertMediaLink('composeTextarea')">&#128247;</button>
+                <button class="compose-tool-btn" title="Attach image" onclick="document.getElementById('composeFileInput').click()">&#128247;</button>
+                <input type="file" id="composeFileInput" accept="image/*" style="display:none;" onchange="handleComposeAttachment(this)">
                 <button class="compose-tool-btn" title="Emoji" onclick="toggleEmojiPicker(this,'composeTextarea')">&#128522;</button>
                 <button class="compose-tool-btn" title="Bold" onclick="unicodeFormat('bold','composeTextarea')"><b>B</b></button>
                 <button class="compose-tool-btn" title="Italic" onclick="unicodeFormat('italic','composeTextarea')"><i>I</i></button>
@@ -6667,18 +6675,36 @@
             }
         });
 
-        // ---- Media / Link Inserter ----
-        function insertMediaLink(textareaId) {
-            const ta = document.getElementById(textareaId);
-            const url = prompt('Paste a URL to include in your post:');
-            if (url && url.trim()) {
-                const pos = ta.selectionStart;
-                const insert = '\n' + url.trim() + '\n';
-                ta.value = ta.value.substring(0, pos) + insert + ta.value.substring(ta.selectionEnd);
-                ta.selectionStart = ta.selectionEnd = pos + insert.length;
-                ta.focus();
-                updateComposeCharCount();
+        // ---- Image Attachment ----
+        let composeAttachmentFile = null;
+
+        function handleComposeAttachment(input) {
+            const file = input.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('image/')) {
+                showNotify('Invalid file', 'Please select an image file (JPG, PNG, GIF).', 'error');
+                input.value = '';
+                return;
             }
+            if (file.size > 10 * 1024 * 1024) {
+                showNotify('File too large', 'Image must be under 10 MB.', 'error');
+                input.value = '';
+                return;
+            }
+            composeAttachmentFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('composeAttachmentImg').src = e.target.result;
+                document.getElementById('composeAttachmentName').textContent = file.name + ' (' + (file.size / 1024).toFixed(0) + ' KB)';
+                document.getElementById('composeAttachmentPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeComposeAttachment() {
+            composeAttachmentFile = null;
+            document.getElementById('composeAttachmentPreview').style.display = 'none';
+            document.getElementById('composeFileInput').value = '';
         }
 
         function toggleAdvanced(el) {
@@ -6779,18 +6805,28 @@
             closePublishModal();
 
             try {
-                const res = await fetch('/api/publish', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text, audience }),
-                });
-                const data = await res.json();
+                let res, data;
+                if (composeAttachmentFile) {
+                    const formData = new FormData();
+                    formData.append('text', text);
+                    formData.append('audience', audience);
+                    formData.append('image', composeAttachmentFile);
+                    res = await fetch('/api/publish-with-image', { method: 'POST', body: formData });
+                } else {
+                    res = await fetch('/api/publish', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ text, audience }),
+                    });
+                }
+                data = await res.json();
 
                 if (res.ok && data.success) {
                     lastPublishedUrl = data.postUrl || 'https://www.linkedin.com/feed/';
                     await addToQueue(text, 'posted');
                     document.getElementById('composeTextarea').value = '';
                     updateComposeCharCount();
+                    removeComposeAttachment();
                     renderComposeSent();
                     updateCreditsPopup();
                     showCongratsModal(isFirstPost);
@@ -6801,6 +6837,7 @@
                         await addToQueue(text, 'draft');
                         document.getElementById('composeTextarea').value = '';
                         updateComposeCharCount();
+                        removeComposeAttachment();
                     }
                 }
             } catch {
@@ -6809,6 +6846,7 @@
                     await addToQueue(text, 'draft');
                     document.getElementById('composeTextarea').value = '';
                     updateComposeCharCount();
+                    removeComposeAttachment();
                 }
             }
         }
