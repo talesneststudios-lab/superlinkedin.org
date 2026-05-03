@@ -2889,6 +2889,39 @@
 
         .compose-tool-btn.ai-btn:hover { opacity: 0.88; }
 
+        .emoji-picker-popup {
+            display: none; position: absolute; bottom: 42px; left: 0;
+            width: 280px; max-height: 240px; overflow-y: auto;
+            background: var(--bg-white); border: 1px solid var(--border);
+            border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            padding: 10px; z-index: 200; flex-wrap: wrap;
+        }
+        .emoji-picker-popup.open { display: flex; }
+        .emoji-picker-popup span {
+            font-size: 1.4rem; cursor: pointer; padding: 4px;
+            border-radius: 6px; transition: background 0.12s;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 36px; height: 36px;
+        }
+        .emoji-picker-popup span:hover { background: var(--accent-light); }
+        .media-link-popup {
+            display: none; position: absolute; bottom: 42px; left: 0;
+            width: 300px; background: var(--bg-white); border: 1px solid var(--border);
+            border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.18);
+            padding: 14px; z-index: 200;
+        }
+        .media-link-popup.open { display: block; }
+        .media-link-popup input {
+            width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+            border-radius: 8px; font-size: 0.85rem; background: var(--bg);
+            color: var(--text-primary); margin-bottom: 8px;
+        }
+        .media-link-popup button {
+            padding: 6px 14px; border-radius: 8px; border: none;
+            background: var(--orange); color: #fff; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer;
+        }
+
         .compose-footer {
             padding: 12px 16px;
             border-top: 1px solid var(--border);
@@ -4287,10 +4320,10 @@
                 Generating with AI...
             </div>
             <div class="compose-toolbar">
-                <button class="compose-tool-btn" title="Media">&#128247;</button>
-                <button class="compose-tool-btn" title="Emoji">&#128522;</button>
-                <button class="compose-tool-btn" title="Bold"><b>B</b></button>
-                <button class="compose-tool-btn" title="Italic"><i>I</i></button>
+                <button class="compose-tool-btn" title="Add image URL" onclick="insertMediaLink('composeTextarea')">&#128247;</button>
+                <button class="compose-tool-btn" title="Emoji" onclick="toggleEmojiPicker(this,'composeTextarea')">&#128522;</button>
+                <button class="compose-tool-btn" title="Bold" onclick="unicodeFormat('bold','composeTextarea')"><b>B</b></button>
+                <button class="compose-tool-btn" title="Italic" onclick="unicodeFormat('italic','composeTextarea')"><i>I</i></button>
                 <div class="ai-improve-wrap">
                     <button class="ai-improve-btn" onclick="toggleAiMenu('composeAiMenu', this)" title="Improve writing with AI">&#10024;</button>
                     <div class="ai-improve-menu menu-up" id="composeAiMenu">
@@ -6542,6 +6575,107 @@
         function updateComposeCharCount() {
             const text = document.getElementById('composeTextarea').value;
             document.getElementById('composeCharCount').textContent = text.length + ' characters';
+        }
+
+        // ---- Unicode Bold / Italic for LinkedIn ----
+        const UNICODE_BOLD = {};
+        const UNICODE_ITALIC = {};
+        (function buildMaps() {
+            const az = 'abcdefghijklmnopqrstuvwxyz';
+            const AZ = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const digits = '0123456789';
+            const boldLower  = '\u{1D5EE}\u{1D5EF}\u{1D5F0}\u{1D5F1}\u{1D5F2}\u{1D5F3}\u{1D5F4}\u{1D5F5}\u{1D5F6}\u{1D5F7}\u{1D5F8}\u{1D5F9}\u{1D5FA}\u{1D5FB}\u{1D5FC}\u{1D5FD}\u{1D5FE}\u{1D5FF}\u{1D600}\u{1D601}\u{1D602}\u{1D603}\u{1D604}\u{1D605}\u{1D606}\u{1D607}';
+            const boldUpper  = '\u{1D5D4}\u{1D5D5}\u{1D5D6}\u{1D5D7}\u{1D5D8}\u{1D5D9}\u{1D5DA}\u{1D5DB}\u{1D5DC}\u{1D5DD}\u{1D5DE}\u{1D5DF}\u{1D5E0}\u{1D5E1}\u{1D5E2}\u{1D5E3}\u{1D5E4}\u{1D5E5}\u{1D5E6}\u{1D5E7}\u{1D5E8}\u{1D5E9}\u{1D5EA}\u{1D5EB}\u{1D5EC}\u{1D5ED}';
+            const boldDigits = '\u{1D7EC}\u{1D7ED}\u{1D7EE}\u{1D7EF}\u{1D7F0}\u{1D7F1}\u{1D7F2}\u{1D7F3}\u{1D7F4}\u{1D7F5}';
+            const italicLower = '\u{1D622}\u{1D623}\u{1D624}\u{1D625}\u{1D626}\u{1D627}\u{1D628}\u{1D629}\u{1D62A}\u{1D62B}\u{1D62C}\u{1D62D}\u{1D62E}\u{1D62F}\u{1D630}\u{1D631}\u{1D632}\u{1D633}\u{1D634}\u{1D635}\u{1D636}\u{1D637}\u{1D638}\u{1D639}\u{1D63A}\u{1D63B}';
+            const italicUpper = '\u{1D608}\u{1D609}\u{1D60A}\u{1D60B}\u{1D60C}\u{1D60D}\u{1D60E}\u{1D60F}\u{1D610}\u{1D611}\u{1D612}\u{1D613}\u{1D614}\u{1D615}\u{1D616}\u{1D617}\u{1D618}\u{1D619}\u{1D61A}\u{1D61B}\u{1D61C}\u{1D61D}\u{1D61E}\u{1D61F}\u{1D620}\u{1D621}';
+            const bL = [...boldLower], bU = [...boldUpper], bD = [...boldDigits];
+            const iL = [...italicLower], iU = [...italicUpper];
+            for (let i = 0; i < 26; i++) {
+                UNICODE_BOLD[az[i]] = bL[i]; UNICODE_BOLD[AZ[i]] = bU[i];
+                UNICODE_ITALIC[az[i]] = iL[i]; UNICODE_ITALIC[AZ[i]] = iU[i];
+            }
+            for (let i = 0; i < 10; i++) UNICODE_BOLD[digits[i]] = bD[i];
+        })();
+
+        function unicodeFormat(style, textareaId) {
+            const ta = document.getElementById(textareaId);
+            const start = ta.selectionStart, end = ta.selectionEnd;
+            if (start === end) {
+                showNotify('Select text', 'Highlight some text first, then click ' + style + '.', 'info');
+                return;
+            }
+            const selected = ta.value.substring(start, end);
+            const map = style === 'bold' ? UNICODE_BOLD : UNICODE_ITALIC;
+            const converted = [...selected].map(c => map[c] || c).join('');
+            ta.value = ta.value.substring(0, start) + converted + ta.value.substring(end);
+            ta.selectionStart = start;
+            ta.selectionEnd = start + converted.length;
+            ta.focus();
+            updateComposeCharCount();
+        }
+
+        // ---- Emoji Picker ----
+        const EMOJI_LIST = [
+            '😀','😃','😄','😁','😅','😂','🤣','😊','😇','🙂','😉','😌','😍','🥰','😘',
+            '😗','😙','😚','😋','😛','😜','🤪','😝','🤑','🤗','🤭','🤫','🤔','🤐','🤨',
+            '😐','😑','😶','😏','😒','🙄','😬','🤥','😌','😔','😪','🤤','😴','😷','🤒',
+            '🤕','🤢','🤮','🥵','🥶','🥴','😵','🤯','🤠','🥳','😎','🤓','🧐','😕','😟',
+            '🙁','😮','😯','😲','😳','🥺','😦','😧','😨','😰','😥','😢','😭','😱','😖',
+            '😣','😞','😓','😩','😫','🥱','😤','😡','😠','🤬','😈','👿','💀','☠️','💩',
+            '👍','👎','👏','🙌','🤝','💪','🔥','⭐','✨','💡','❤️','🧡','💛','💚','💙',
+            '💜','🖤','💯','✅','❌','⚡','🎯','🚀','📈','📉','💰','🏆','🎉','📣','💬',
+            '💭','👀','🤷','🤦','👋','✌️','🤞','👊','🙏','📌','🔗','💻','📱','🌍','🕐',
+        ];
+        let activeEmojiPicker = null;
+
+        function toggleEmojiPicker(btn, textareaId) {
+            const existing = btn.parentElement.querySelector('.emoji-picker-popup');
+            if (existing) {
+                existing.classList.toggle('open');
+                activeEmojiPicker = existing.classList.contains('open') ? existing : null;
+                return;
+            }
+            const picker = document.createElement('div');
+            picker.className = 'emoji-picker-popup open';
+            picker.style.position = 'absolute';
+            btn.parentElement.style.position = 'relative';
+            EMOJI_LIST.forEach(em => {
+                const s = document.createElement('span');
+                s.textContent = em;
+                s.onclick = () => {
+                    const ta = document.getElementById(textareaId);
+                    const pos = ta.selectionStart;
+                    ta.value = ta.value.substring(0, pos) + em + ta.value.substring(ta.selectionEnd);
+                    ta.selectionStart = ta.selectionEnd = pos + em.length;
+                    ta.focus();
+                    updateComposeCharCount();
+                };
+                picker.appendChild(s);
+            });
+            btn.parentElement.appendChild(picker);
+            activeEmojiPicker = picker;
+        }
+
+        document.addEventListener('click', (e) => {
+            if (activeEmojiPicker && !e.target.closest('.emoji-picker-popup') && !e.target.closest('[title="Emoji"]')) {
+                activeEmojiPicker.classList.remove('open');
+                activeEmojiPicker = null;
+            }
+        });
+
+        // ---- Media / Link Inserter ----
+        function insertMediaLink(textareaId) {
+            const ta = document.getElementById(textareaId);
+            const url = prompt('Paste a URL to include in your post:');
+            if (url && url.trim()) {
+                const pos = ta.selectionStart;
+                const insert = '\n' + url.trim() + '\n';
+                ta.value = ta.value.substring(0, pos) + insert + ta.value.substring(ta.selectionEnd);
+                ta.selectionStart = ta.selectionEnd = pos + insert.length;
+                ta.focus();
+                updateComposeCharCount();
+            }
         }
 
         function toggleAdvanced(el) {
