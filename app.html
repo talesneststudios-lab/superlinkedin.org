@@ -3151,7 +3151,7 @@
             </a>
 
             <div class="nav-section">CRM</div>
-            <a class="nav-item" onclick="showEngageDisclaimer()">
+            <a class="nav-item nav-sub-item" onclick="showDMsDisclaimer()">
                 <span class="nav-icon">&#9993;</span> <span>DMs</span>
             </a>
         </nav>
@@ -4626,6 +4626,25 @@
         </div>
     </div>
 
+    <!-- DMs DISCLAIMER MODAL -->
+    <div class="modal-overlay hidden" id="dmsDisclaimerModal" onclick="if(event.target===this)document.getElementById('dmsDisclaimerModal').classList.add('hidden')">
+        <div class="modal" style="max-width:440px;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:2.5rem;margin-bottom:12px;">&#9993;&#65039;</div>
+                <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;">DMs Coming Soon</h2>
+                <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">The Direct Messages feature is currently under development. Soon you'll be able to:</p>
+            </div>
+            <ul style="font-size:0.82rem;color:var(--text-secondary);line-height:1.7;padding-left:20px;margin-bottom:20px;">
+                <li>View and manage your LinkedIn DMs from SuperLinkedIn</li>
+                <li>Use AI-powered smart replies to respond faster</li>
+                <li>Organize conversations with labels and filters</li>
+                <li>Set up automated follow-up messages</li>
+            </ul>
+            <p style="font-size:0.82rem;color:var(--text-muted);text-align:center;margin-bottom:18px;">We'll notify you as soon as this feature is available.</p>
+            <button onclick="document.getElementById('dmsDisclaimerModal').classList.add('hidden')" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;transition:background 0.2s;">Got It</button>
+        </div>
+    </div>
+
     <!-- CONFETTI CANVAS -->
     <canvas id="confettiCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
 
@@ -4643,6 +4662,10 @@
             engageDisclaimerAccepted = true;
             localStorage.setItem('engageDisclaimerAccepted', 'true');
             document.getElementById('engageDisclaimerModal').classList.add('hidden');
+        }
+
+        function showDMsDisclaimer() {
+            document.getElementById('dmsDisclaimerModal').classList.remove('hidden');
         }
 
         let profilesData = { profiles: [], activeProfileId: null, primaryAccountId: null, maxProfiles: 3, planTier: 'pro' };
