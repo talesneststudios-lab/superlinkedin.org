@@ -1199,9 +1199,8 @@ app.post('/api/publish', async (req, res) => {
         if (response.ok) {
             const data = await response.json();
             const postId = data.id;
-            const activityId = postId ? postId.replace('urn:li:share:', '') : '';
-            const postUrl = activityId
-                ? `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}/`
+            const postUrl = postId
+                ? `https://www.linkedin.com/feed/update/${postId}/`
                 : `https://www.linkedin.com/feed/`;
 
             console.log(`Post published to LinkedIn by ${req.session.user.name}: ${postId}`);
@@ -2034,9 +2033,8 @@ app.post('/api/carousel/publish', async (req, res) => {
         if (postRes.ok) {
             const postData = await postRes.json();
             const postId = postData.id;
-            const activityId = postId ? postId.replace('urn:li:share:', '') : '';
-            const postUrl = activityId
-                ? `https://www.linkedin.com/feed/update/urn:li:activity:${activityId}/`
+            const postUrl = postId
+                ? `https://www.linkedin.com/feed/update/${postId}/`
                 : 'https://www.linkedin.com/feed/';
 
             await consumeCredit(req.session, 1);
