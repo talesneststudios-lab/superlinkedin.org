@@ -2037,77 +2037,113 @@ Return ONLY the JSON array, no markdown, no explanation.`;
 function renderCarouselPDF(slides, brandColor, title, userName) {
     const WIDTH = 1080;
     const HEIGHT = 1080;
-    const MARGIN = 80;
+    const MARGIN = 100;
+    const CW = WIDTH - MARGIN * 2;
     const color = brandColor || '#0A66C2';
 
     const doc = new PDFDocument({ size: [WIDTH, HEIGHT], margin: 0, autoFirstPage: false });
 
+    function measureContentHeight(slide) {
+        let h = 0;
+        if (slide.title) {
+            h += doc.heightOfString(slide.title, { width: CW, fontSize: 56 }) + 40;
+            h += 8 + 40;
+        }
+        if (slide.body) {
+            h += doc.heightOfString(slide.body, { width: CW, fontSize: 32, lineGap: 12 }) + 36;
+        }
+        if (slide.bulletPoints && slide.bulletPoints.length > 0) {
+            slide.bulletPoints.forEach(bp => {
+                h += doc.heightOfString(bp, { width: CW - 50, fontSize: 30, lineGap: 10 }) + 24;
+            });
+        }
+        return h;
+    }
+
     slides.forEach((slide, i) => {
         doc.addPage({ size: [WIDTH, HEIGHT], margin: 0 });
-
-        // Background
-        doc.rect(0, 0, WIDTH, HEIGHT).fill('#FFFFFF');
-
-        // Accent bar
-        doc.rect(0, 0, WIDTH, 12).fill(color);
-
-        // Slide number
-        if (i > 0 && i < slides.length - 1) {
-            doc.fontSize(14).fillColor('#999999')
-               .text(`${i + 1} / ${slides.length}`, WIDTH - MARGIN - 40, HEIGHT - 50, { width: 80, align: 'right' });
-        }
 
         const isFirst = i === 0;
         const isLast = i === slides.length - 1;
 
         if (isFirst) {
-            // Cover slide
-            doc.rect(0, HEIGHT - 200, WIDTH, 200).fill(color);
-            doc.fontSize(52).fillColor(color)
-               .text(slide.title || title || '', MARGIN, 280, { width: WIDTH - MARGIN * 2, align: 'center', lineGap: 8 });
-            doc.fontSize(22).fillColor('#555555')
-               .text(slide.body || '', MARGIN, 500, { width: WIDTH - MARGIN * 2, align: 'center', lineGap: 6 });
-            if (userName) {
-                doc.fontSize(18).fillColor('#FFFFFF')
-                   .text(userName, MARGIN, HEIGHT - 130, { width: WIDTH - MARGIN * 2, align: 'center' });
+            doc.rect(0, 0, WIDTH, HEIGHT).fill('#FFFFFF');
+            doc.rect(0, 0, WIDTH, 20).fill(color);
+            doc.rect(0, HEIGHT - 240, WIDTH, 240).fill(color);
+
+            const titleText = slide.title || title || '';
+            const bodyText = slide.body || '';
+            const titleH = doc.heightOfString(titleText, { width: CW, fontSize: 68, lineGap: 12 });
+            const bodyH = bodyText ? doc.heightOfString(bodyText, { width: CW, fontSize: 34, lineGap: 10 }) : 0;
+            const totalH = titleH + 40 + bodyH;
+            const startY = Math.max(120, (HEIGHT - 240 - totalH) / 2);
+
+            doc.fontSize(68).fillColor(color)
+               .text(titleText, MARGIN, startY, { width: CW, align: 'center', lineGap: 12 });
+            if (bodyText) {
+                doc.fontSize(34).fillColor('#555555')
+                   .text(bodyText, MARGIN, startY + titleH + 40, { width: CW, align: 'center', lineGap: 10 });
             }
-            doc.fontSize(14).fillColor('#FFFFFF').opacity(0.7)
-               .text('Swipe to read more →', MARGIN, HEIGHT - 60, { width: WIDTH - MARGIN * 2, align: 'center' });
+            if (userName) {
+                doc.fontSize(28).fillColor('#FFFFFF')
+                   .text(userName, MARGIN, HEIGHT - 170, { width: CW, align: 'center' });
+            }
+            doc.fontSize(22).fillColor('#FFFFFF').opacity(0.8)
+               .text('Swipe to read more  >', MARGIN, HEIGHT - 80, { width: CW, align: 'center' });
             doc.opacity(1);
         } else if (isLast) {
-            // CTA slide
             doc.rect(0, 0, WIDTH, HEIGHT).fill(color);
-            doc.fontSize(44).fillColor('#FFFFFF')
-               .text(slide.title || 'Thanks for reading!', MARGIN, 320, { width: WIDTH - MARGIN * 2, align: 'center', lineGap: 8 });
-            doc.fontSize(22).fillColor('#FFFFFF').opacity(0.85)
-               .text(slide.body || 'Follow for more content like this.', MARGIN, 500, { width: WIDTH - MARGIN * 2, align: 'center', lineGap: 6 });
+
+            const titleText = slide.title || 'Thanks for reading!';
+            const bodyText = slide.body || 'Follow for more content like this.';
+            const titleH = doc.heightOfString(titleText, { width: CW, fontSize: 64, lineGap: 12 });
+            const bodyH = doc.heightOfString(bodyText, { width: CW, fontSize: 34, lineGap: 10 });
+            const nameH = userName ? 60 : 0;
+            const totalH = titleH + 50 + bodyH + nameH;
+            const startY = (HEIGHT - totalH) / 2;
+
+            doc.fontSize(64).fillColor('#FFFFFF')
+               .text(titleText, MARGIN, startY, { width: CW, align: 'center', lineGap: 12 });
+            doc.fontSize(34).fillColor('#FFFFFF').opacity(0.85)
+               .text(bodyText, MARGIN, startY + titleH + 50, { width: CW, align: 'center', lineGap: 10 });
             doc.opacity(1);
             if (userName) {
-                doc.fontSize(20).fillColor('#FFFFFF')
-                   .text(userName, MARGIN, 650, { width: WIDTH - MARGIN * 2, align: 'center' });
+                doc.fontSize(30).fillColor('#FFFFFF')
+                   .text(userName, MARGIN, startY + titleH + 50 + bodyH + 40, { width: CW, align: 'center' });
             }
         } else {
-            // Content slide
-            let y = 60;
-            doc.fontSize(36).fillColor(color)
-               .text(slide.title || '', MARGIN, y, { width: WIDTH - MARGIN * 2, lineGap: 6 });
-            y += doc.heightOfString(slide.title || '', { width: WIDTH - MARGIN * 2, fontSize: 36 }) + 30;
+            doc.rect(0, 0, WIDTH, HEIGHT).fill('#FFFFFF');
+            doc.rect(0, 0, WIDTH, 20).fill(color);
 
-            doc.rect(MARGIN, y, 60, 4).fill(color);
-            y += 30;
+            doc.fontSize(20).fillColor('#AAAAAA')
+               .text(`${i + 1} / ${slides.length}`, MARGIN, HEIGHT - 60, { width: CW, align: 'right' });
+
+            const contentH = measureContentHeight(slide);
+            let y = Math.max(80, (HEIGHT - contentH) / 2);
+
+            if (slide.title) {
+                doc.fontSize(56).fillColor(color)
+                   .text(slide.title, MARGIN, y, { width: CW, lineGap: 10 });
+                y += doc.heightOfString(slide.title, { width: CW, fontSize: 56 }) + 40;
+
+                doc.rect(MARGIN, y, 80, 6).fill(color);
+                y += 8 + 40;
+            }
 
             if (slide.body) {
-                doc.fontSize(20).fillColor('#333333')
-                   .text(slide.body, MARGIN, y, { width: WIDTH - MARGIN * 2, lineGap: 8 });
-                y += doc.heightOfString(slide.body, { width: WIDTH - MARGIN * 2, fontSize: 20 }) + 24;
+                doc.fontSize(32).fillColor('#333333')
+                   .text(slide.body, MARGIN, y, { width: CW, lineGap: 12 });
+                y += doc.heightOfString(slide.body, { width: CW, fontSize: 32, lineGap: 12 }) + 36;
             }
 
             if (slide.bulletPoints && slide.bulletPoints.length > 0) {
                 slide.bulletPoints.forEach(bp => {
-                    doc.fontSize(20).fillColor(color).text('●', MARGIN, y, { continued: false });
-                    doc.fontSize(19).fillColor('#444444')
-                       .text('  ' + bp, MARGIN + 24, y, { width: WIDTH - MARGIN * 2 - 24, lineGap: 6 });
-                    y += doc.heightOfString('  ' + bp, { width: WIDTH - MARGIN * 2 - 24, fontSize: 19 }) + 16;
+                    doc.save();
+                    doc.circle(MARGIN + 10, y + 14, 7).fill(color);
+                    doc.restore();
+                    doc.fontSize(30).fillColor('#444444')
+                       .text(bp, MARGIN + 50, y, { width: CW - 50, lineGap: 10 });
+                    y += doc.heightOfString(bp, { width: CW - 50, fontSize: 30, lineGap: 10 }) + 24;
                 });
             }
         }
