@@ -1906,12 +1906,18 @@ app.post('/api/queue', async (req, res) => {
     const { action, text, status, index, scheduledFor } = req.body;
 
     if (action === 'add' && text) {
+        const now = new Date();
         const item = {
             text,
             status: status || 'draft',
-            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
+            date: now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }),
         };
         if (scheduledFor) item.scheduledFor = scheduledFor;
+        if (status === 'posted') {
+            item.postedAt = now.toISOString();
+            item.postedAtDay = now.getDay();
+            item.postedAtHour = now.getHours();
+        }
         req.session.user.queue.push(item);
     } else if (action === 'update' && typeof index === 'number' && text) {
         if (req.session.user.queue[index]) {
@@ -2668,6 +2674,27 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         };
     }
 
+    // Rebuild postTimeStats from posted queue items with engagement data
+    {
+        const freshUser = await dbGetUser(linkedinId);
+        const postedItems = ((freshUser && freshUser.queue) || []).filter(q => q.status === 'posted' && q.postedAtDay !== undefined);
+        const postMetrics = updates.analyticsPostMetrics || (freshUser && freshUser.analyticsPostMetrics) || [];
+        if (postedItems.length > 0) {
+            const statsMap = {};
+            postedItems.forEach(item => {
+                const key = `${item.postedAtDay}-${item.postedAtHour}`;
+                if (!statsMap[key]) statsMap[key] = { dayOfWeek: item.postedAtDay, hour: item.postedAtHour, impressions: 0, engagements: 0, count: 0 };
+                statsMap[key].count++;
+                const metric = postMetrics.find(m => m.text && item.text && m.text.substring(0, 80) === item.text.substring(0, 80));
+                if (metric) {
+                    statsMap[key].impressions += (metric.impressions || 0);
+                    statsMap[key].engagements += (metric.likes || 0) + (metric.comments || 0) + (metric.reposts || 0);
+                }
+            });
+            updates.postTimeStats = Object.values(statsMap);
+        }
+    }
+
     await dbUpdateFields(linkedinId, updates);
 
     // Cache the token for future lookups
@@ -2677,6 +2704,101 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
     global._tokenCache[token] = linkedinId;
 
     res.json({ ok: true, syncedAt: now });
+});
+
+// LinkedIn best-practice posting scores by day (0=Sun..6=Sat) and hour
+const GENERAL_SCORES = (() => {
+    const dayWeights = { 0: 25, 1: 60, 2: 85, 3: 90, 4: 80, 5: 55, 6: 20 };
+    const hourWeights = {
+        6: 40, 7: 75, 8: 90, 9: 85, 10: 70, 11: 65,
+        12: 80, 13: 60, 14: 50, 15: 45, 16: 55, 17: 75, 18: 60,
+        19: 35, 20: 20,
+    };
+    const scores = [];
+    for (let d = 0; d < 7; d++) {
+        for (let h = 6; h <= 20; h++) {
+            const score = Math.round((dayWeights[d] || 20) * (hourWeights[h] || 20) / 100);
+            scores.push({ day: d, hour: h, score });
+        }
+    }
+    return scores;
+})();
+
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function scoreLabel(s) {
+    if (s >= 75) return 'Best';
+    if (s >= 55) return 'Great';
+    if (s >= 35) return 'Good';
+    return 'Low';
+}
+
+app.get('/api/best-times', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const postTimeStats = (user && user.postTimeStats) || [];
+    const queue = (user && user.queue) || [];
+    const hasPersonalData = postTimeStats.length >= 5;
+
+    const slotMap = {};
+    GENERAL_SCORES.forEach(gs => {
+        const key = `${gs.day}-${gs.hour}`;
+        slotMap[key] = { day: gs.day, dayName: DAY_NAMES[gs.day], hour: gs.hour, generalScore: gs.score, userScore: 0, userCount: 0 };
+    });
+
+    if (hasPersonalData) {
+        const maxEng = Math.max(...postTimeStats.map(p => (p.engagements || 0) / Math.max(p.count, 1)), 1);
+        postTimeStats.forEach(p => {
+            const key = `${p.dayOfWeek}-${p.hour}`;
+            if (slotMap[key]) {
+                const avgEng = (p.engagements || 0) / Math.max(p.count, 1);
+                slotMap[key].userScore = Math.round((avgEng / maxEng) * 100);
+                slotMap[key].userCount = p.count;
+            }
+        });
+    }
+
+    const scheduledTimes = new Set(
+        queue.filter(q => q.status === 'scheduled' && q.scheduledFor)
+            .map(q => new Date(q.scheduledFor).toISOString().slice(0, 13))
+    );
+
+    const slots = Object.values(slotMap).map(s => {
+        const finalScore = hasPersonalData
+            ? Math.round(0.4 * s.generalScore + 0.6 * s.userScore)
+            : s.generalScore;
+        return {
+            day: s.dayName,
+            dayNum: s.day,
+            hour: s.hour,
+            score: finalScore,
+            label: scoreLabel(finalScore),
+            source: hasPersonalData && s.userCount > 0 ? 'hybrid' : 'general',
+        };
+    }).sort((a, b) => b.score - a.score);
+
+    // Compute next best concrete datetime
+    const now = new Date();
+    const tz = (user && user.timezone) || Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const top5 = slots.slice(0, 5);
+    let nextBest = null;
+    for (let offset = 0; offset < 14 && !nextBest; offset++) {
+        const candidate = new Date(now.getTime() + offset * 86400000);
+        const cDay = candidate.getDay();
+        for (const slot of top5) {
+            if (slot.dayNum === cDay) {
+                const dt = new Date(candidate);
+                dt.setHours(slot.hour, 0, 0, 0);
+                if (dt > now && !scheduledTimes.has(dt.toISOString().slice(0, 13))) {
+                    nextBest = dt.toISOString();
+                    break;
+                }
+            }
+        }
+    }
+
+    res.json({ slots: slots.slice(0, 15), nextBest, hasPersonalData });
 });
 
 // Get analytics data for the dashboard
@@ -2869,6 +2991,8 @@ async function processScheduledPosts() {
                         const postId = await publishToLinkedIn(token, user.linkedinId, item.text, item.audience || 'public');
                         item.status = 'posted';
                         item.postedAt = now.toISOString();
+                        item.postedAtDay = now.getDay();
+                        item.postedAtHour = now.getHours();
                         item.postId = postId;
                         item.postUrl = postId ? `https://www.linkedin.com/feed/update/${postId}/` : null;
                         console.log(`[Scheduler] Successfully published post for ${user.linkedinId}: ${postId}`);

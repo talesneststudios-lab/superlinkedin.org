@@ -2382,12 +2382,29 @@
 
         .sched-next-slot {
             display: flex; align-items: center; justify-content: space-between;
-            padding: 14px 16px; border: 2px solid #dc2626; border-radius: 12px;
-            cursor: pointer; transition: background 0.15s; margin-bottom: 12px;
+            padding: 14px 16px; border: 2px solid var(--accent); border-radius: 12px;
+            cursor: pointer; transition: background 0.15s; margin-bottom: 4px;
         }
-        .sched-next-slot:hover { background: rgba(220,38,38,0.04); }
+        .sched-next-slot:hover { background: rgba(10,102,194,0.06); }
         .sched-next-slot-label { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
-        .sched-next-slot-time { font-weight: 700; font-size: 0.88rem; color: #dc2626; }
+        .sched-next-slot-time { font-weight: 700; font-size: 0.88rem; color: var(--accent); }
+
+        .sched-best-times-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .sched-best-pill {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 12px; border: 1px solid var(--border);
+            border-radius: 20px; cursor: pointer; font-size: 0.78rem;
+            transition: all 0.15s; background: transparent;
+        }
+        .sched-best-pill:hover { border-color: var(--accent); background: rgba(10,102,194,0.06); }
+        .sched-best-pill .bp-score {
+            display: inline-block; padding: 1px 6px; border-radius: 8px;
+            font-size: 0.65rem; font-weight: 700; color: #fff;
+        }
+        .sched-best-pill .bp-score.best { background: #16a34a; }
+        .sched-best-pill .bp-score.great { background: #0A66C2; }
+        .sched-best-pill .bp-score.good { background: #f59e0b; }
+        .sched-best-pill .bp-score.low { background: #9ca3af; }
 
         .sched-divider {
             display: flex; align-items: center; gap: 12px; margin: 16px 0;
@@ -3184,16 +3201,16 @@
             </a>
 
             <div class="nav-section">Engage</div>
-            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer('discover')">
                 <span class="nav-icon">&#128269;</span> <span>Discover</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer('mentions')">
                 <span class="nav-icon">&#128172;</span> <span>Mentions</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer('lists')">
                 <span class="nav-icon">&#128203;</span> <span>Lists</span>
             </a>
-            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer()">
+            <a class="nav-item nav-sub-item" onclick="showEngageDisclaimer('replies')">
                 <span class="nav-icon">&#128172;</span> <span>Replies</span>
             </a>
 
@@ -3513,22 +3530,22 @@
                     <div class="engagement-stats">
                         <div class="engagement-stat-card">
                             <div class="engagement-stat-label">Best day</div>
-                            <div class="engagement-stat-value" style="font-size:1.1rem;">--</div>
-                            <div class="engagement-stat-pct">No data yet</div>
+                            <div class="engagement-stat-value" id="bestDayValue" style="font-size:1.1rem;">--</div>
+                            <div class="engagement-stat-pct" id="bestDayHint">No data yet</div>
                         </div>
                         <div class="engagement-stat-card">
                             <div class="engagement-stat-label">Best time</div>
-                            <div class="engagement-stat-value" style="font-size:1.1rem;">--</div>
-                            <div class="engagement-stat-pct">No data yet</div>
+                            <div class="engagement-stat-value" id="bestTimeValue" style="font-size:1.1rem;">--</div>
+                            <div class="engagement-stat-pct" id="bestTimeHint">No data yet</div>
                         </div>
                         <div class="engagement-stat-card">
                             <div class="engagement-stat-label">Avg impressions</div>
-                            <div class="engagement-stat-value">0</div>
+                            <div class="engagement-stat-value" id="avgImpressionsValue">0</div>
                             <div class="engagement-stat-pct">per post</div>
                         </div>
                         <div class="engagement-stat-card">
                             <div class="engagement-stat-label">Avg engagement</div>
-                            <div class="engagement-stat-value">0%</div>
+                            <div class="engagement-stat-value" id="avgEngagementValue">0%</div>
                             <div class="engagement-stat-pct">per post</div>
                         </div>
                     </div>
@@ -4314,9 +4331,15 @@
             </div>
             <div class="sched-tz" id="schedTzLabel">All times in your timezone</div>
 
-            <div class="sched-next-slot" id="schedNextSlot" onclick="schedUseNextSlot()">
-                <span class="sched-next-slot-label">Use next free slot</span>
+            <div class="sched-next-slot" id="schedNextSlot" onclick="schedUseBestSlot()">
+                <span class="sched-next-slot-label" id="schedRecLabel">&#9733; Recommended time</span>
                 <span class="sched-next-slot-time" id="schedNextSlotTime">...</span>
+            </div>
+            <div id="schedRecSource" style="font-size:0.68rem;color:var(--text-muted);text-align:right;margin:-6px 0 8px;"></div>
+
+            <div id="schedBestTimesPanel" style="margin-bottom:12px;">
+                <div style="font-size:0.75rem;font-weight:700;color:var(--text-muted);margin-bottom:8px;">Best times to post</div>
+                <div id="schedBestTimesList" class="sched-best-times-list"></div>
             </div>
 
             <div class="sched-divider">or pick a time</div>
@@ -4487,6 +4510,29 @@
     </div>
 
     <!-- PUBLISH CONFIRMATION MODAL -->
+    <!-- OPTIMAL TIME SUGGESTION MODAL -->
+    <div class="modal-overlay hidden" id="optimalTimeModal" onclick="if(event.target===this)document.getElementById('optimalTimeModal').classList.add('hidden')">
+        <div class="modal" style="max-width:440px;">
+            <button class="modal-close" onclick="document.getElementById('optimalTimeModal').classList.add('hidden')">&times;</button>
+            <div style="text-align:center;margin-bottom:16px;">
+                <div style="font-size:2.2rem;margin-bottom:10px;">&#9200;</div>
+                <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">Better time to post?</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.5;" id="optimalTimeMsg">Your post may get more engagement at a different time.</p>
+            </div>
+            <div id="optimalTimeSuggestion" style="padding:14px;border:2px solid var(--accent);border-radius:12px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:0.75rem;color:var(--text-muted);font-weight:600;">Recommended</div>
+                    <div style="font-size:1rem;font-weight:800;color:var(--accent);" id="optimalTimeSlot">--</div>
+                </div>
+                <span id="optimalTimeBadge" class="bp-score best" style="padding:3px 10px;font-size:0.72rem;">Best</span>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="scheduleForBestTime()" style="flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.88rem;cursor:pointer;">Schedule for best time</button>
+                <button onclick="document.getElementById('optimalTimeModal').classList.add('hidden');openPublishModal()" style="flex:1;padding:12px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);border-radius:10px;font-family:inherit;font-weight:700;font-size:0.88rem;cursor:pointer;">Publish now</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay hidden" id="publishModal" onclick="if(event.target===this)closePublishModal()">
         <div class="modal publish-modal">
             <button class="modal-close" onclick="closePublishModal()">&times;</button>
@@ -4673,21 +4719,17 @@
         </div>
     </div>
 
-    <!-- ENGAGE DISCLAIMER MODAL -->
-    <div class="modal-overlay hidden" id="engageDisclaimerModal" onclick="if(event.target===this)return">
+    <!-- ENGAGE COMING SOON MODAL -->
+    <div class="modal-overlay hidden" id="engageDisclaimerModal" onclick="if(event.target===this)document.getElementById('engageDisclaimerModal').classList.add('hidden')">
         <div class="modal" style="max-width:440px;">
             <div style="text-align:center;margin-bottom:20px;">
-                <div style="font-size:2.5rem;margin-bottom:12px;">&#9888;&#65039;</div>
-                <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;">Important Disclaimer</h2>
-                <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">SuperLinkedIn's Engage and DM features interact with LinkedIn on your behalf. By continuing, you acknowledge that:</p>
+                <div style="font-size:2.5rem;margin-bottom:12px;" id="engageModalIcon">&#128172;</div>
+                <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;" id="engageModalTitle">Coming Soon</h2>
+                <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;" id="engageModalDesc">This feature is currently under development.</p>
             </div>
-            <ul style="font-size:0.82rem;color:var(--text-secondary);line-height:1.7;padding-left:20px;margin-bottom:20px;">
-                <li>You are responsible for all interactions made through SuperLinkedIn</li>
-                <li>Automated engagement should comply with LinkedIn's Terms of Service</li>
-                <li>SuperLinkedIn is not liable for any account restrictions resulting from usage</li>
-                <li>Use these features responsibly and authentically</li>
-            </ul>
-            <button onclick="acceptEngageDisclaimer()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;transition:background 0.2s;">I Understand</button>
+            <ul style="font-size:0.82rem;color:var(--text-secondary);line-height:1.7;padding-left:20px;margin-bottom:20px;" id="engageModalList"></ul>
+            <p style="font-size:0.82rem;color:var(--text-muted);text-align:center;margin-bottom:18px;">We'll notify you as soon as this feature is available.</p>
+            <button onclick="document.getElementById('engageDisclaimerModal').classList.add('hidden')" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;transition:background 0.2s;">Got It</button>
         </div>
     </div>
 
@@ -4716,17 +4758,60 @@
     <script>
         let currentUser = null;
         let queue = [];
-        let engageDisclaimerAccepted = localStorage.getItem('engageDisclaimerAccepted') === 'true';
+        const ENGAGE_FEATURES = {
+            discover: {
+                icon: '&#128269;',
+                title: 'Discover Coming Soon',
+                desc: 'The Discover feature is currently under development. Soon you\'ll be able to:',
+                items: [
+                    'Find trending posts and topics in your industry',
+                    'Discover new creators and thought leaders to follow',
+                    'Get AI-curated content recommendations',
+                    'Track hashtag performance and trends',
+                ],
+            },
+            mentions: {
+                icon: '&#128172;',
+                title: 'Mentions Coming Soon',
+                desc: 'The Mentions feature is currently under development. Soon you\'ll be able to:',
+                items: [
+                    'See all posts that mention you in one place',
+                    'Get notified instantly when you\'re tagged',
+                    'Reply to mentions directly from SuperLinkedIn',
+                    'Track mention sentiment and engagement',
+                ],
+            },
+            lists: {
+                icon: '&#128203;',
+                title: 'Lists Coming Soon',
+                desc: 'The Lists feature is currently under development. Soon you\'ll be able to:',
+                items: [
+                    'Create custom lists of LinkedIn connections',
+                    'Organize leads, prospects, and collaborators',
+                    'Track engagement from specific list members',
+                    'Set up automated interactions per list',
+                ],
+            },
+            replies: {
+                icon: '&#128172;',
+                title: 'Replies Coming Soon',
+                desc: 'The Replies feature is currently under development. Soon you\'ll be able to:',
+                items: [
+                    'View and manage all replies to your posts',
+                    'Use AI-powered smart replies to respond faster',
+                    'Filter replies by sentiment and engagement',
+                    'Bulk-reply to drive more conversation',
+                ],
+            },
+        };
 
-        function showEngageDisclaimer() {
-            if (engageDisclaimerAccepted) return;
+        function showEngageDisclaimer(feature) {
+            const cfg = ENGAGE_FEATURES[feature] || ENGAGE_FEATURES.discover;
+            document.getElementById('engageModalIcon').innerHTML = cfg.icon;
+            document.getElementById('engageModalTitle').textContent = cfg.title;
+            document.getElementById('engageModalDesc').textContent = cfg.desc;
+            document.getElementById('engageModalList').innerHTML = cfg.items.map(i => `<li>${i}</li>`).join('');
             document.getElementById('engageDisclaimerModal').classList.remove('hidden');
-        }
-
-        function acceptEngageDisclaimer() {
-            engageDisclaimerAccepted = true;
-            localStorage.setItem('engageDisclaimerAccepted', 'true');
-            document.getElementById('engageDisclaimerModal').classList.add('hidden');
         }
 
         function showDMsDisclaimer() {
@@ -6075,6 +6160,35 @@
             if (data.lastSync) {
                 document.getElementById('streakText').textContent = 'Last sync: ' + new Date(data.lastSync).toLocaleString();
             }
+
+            try {
+                const btRes = await fetch('/api/best-times');
+                if (btRes.ok) {
+                    const btData = await btRes.json();
+                    _bestTimesCache = btData;
+                    if (btData.slots && btData.slots.length > 0) {
+                        const topSlot = btData.slots[0];
+                        document.getElementById('bestDayValue').textContent = topSlot.day;
+                        document.getElementById('bestDayHint').textContent = btData.hasPersonalData ? 'From your data' : 'LinkedIn average';
+
+                        const hourSlots = {};
+                        btData.slots.forEach(s => {
+                            if (!hourSlots[s.hour] || s.score > hourSlots[s.hour].score) hourSlots[s.hour] = s;
+                        });
+                        const bestHourSlot = Object.values(hourSlots).sort((a, b) => b.score - a.score)[0];
+                        const hStr = bestHourSlot.hour > 12 ? (bestHourSlot.hour - 12) + ' PM' : (bestHourSlot.hour === 12 ? '12 PM' : bestHourSlot.hour + ' AM');
+                        document.getElementById('bestTimeValue').textContent = hStr;
+                        document.getElementById('bestTimeHint').textContent = btData.hasPersonalData ? 'From your data' : 'LinkedIn average';
+                    }
+
+                    if (postMetrics.length > 0) {
+                        const avgImp = Math.round(totalImpressions / postMetrics.length);
+                        document.getElementById('avgImpressionsValue').textContent = avgImp.toLocaleString();
+                        const avgEng = totalImpressions > 0 ? ((totalEngagements / totalImpressions) * 100).toFixed(1) + '%' : '0%';
+                        document.getElementById('avgEngagementValue').textContent = avgEng;
+                    }
+                }
+            } catch {}
         }
 
         // AI Improve writing
@@ -6141,7 +6255,9 @@
         let _schedSource = '';
         let _schedPickedDate = null;
 
-        function openSchedPopup(source) {
+        let _bestTimesCache = null;
+
+        async function openSchedPopup(source) {
             let text = '';
             if (source === 'compose') {
                 text = document.getElementById('composeTextarea').value.trim();
@@ -6171,6 +6287,7 @@
             }
 
             computeNextFreeSlot();
+            loadBestTimes();
             document.getElementById('schedTimeInput').value = '';
             document.getElementById('schedParsed').textContent = '';
             document.getElementById('schedSlotsPanel').classList.remove('open');
@@ -6178,6 +6295,86 @@
             document.getElementById('schedConfirmBtn').textContent = 'Schedule post';
 
             document.getElementById('schedOverlay').classList.add('open');
+        }
+
+        async function loadBestTimes() {
+            try {
+                const res = await fetch('/api/best-times');
+                if (!res.ok) return;
+                _bestTimesCache = await res.json();
+                renderBestTimesInSchedule(_bestTimesCache);
+            } catch {}
+        }
+
+        function renderBestTimesInSchedule(data) {
+            if (!data) return;
+
+            if (data.nextBest) {
+                const dt = new Date(data.nextBest);
+                const dayName = dt.toLocaleDateString('en-US', { weekday: 'short' });
+                const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                document.getElementById('schedNextSlotTime').textContent = `${dayName}, ${dateStr} at ${timeStr}`;
+                document.getElementById('schedRecLabel').innerHTML = '&#9733; Recommended time';
+            }
+
+            const srcEl = document.getElementById('schedRecSource');
+            srcEl.textContent = data.hasPersonalData ? 'Based on your posting history' : 'Based on LinkedIn best practices';
+
+            const list = document.getElementById('schedBestTimesList');
+            const now = new Date();
+            const topSlots = data.slots.slice(0, 8);
+            list.innerHTML = topSlots.map(s => {
+                const scoreCls = s.label.toLowerCase();
+                const h = s.hour > 12 ? (s.hour - 12) + ' PM' : (s.hour === 12 ? '12 PM' : s.hour + ' AM');
+                const dayShort = s.day.substring(0, 3);
+                return `<div class="sched-best-pill" onclick="pickBestTimeSlot('${s.day}',${s.hour})">
+                    <span class="bp-score ${scoreCls}">${s.label}</span>
+                    <span>${dayShort} ${h}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function pickBestTimeSlot(dayName, hour) {
+            const days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+            const targetDay = days.indexOf(dayName);
+            const now = new Date();
+            let candidate = new Date(now);
+
+            for (let i = 0; i < 7; i++) {
+                candidate = new Date(now.getTime() + i * 86400000);
+                if (candidate.getDay() === targetDay) {
+                    candidate.setHours(hour, 0, 0, 0);
+                    if (candidate > now) break;
+                }
+            }
+            if (candidate <= now) {
+                candidate = new Date(now.getTime() + 7 * 86400000);
+                candidate.setHours(hour, 0, 0, 0);
+                while (candidate.getDay() !== targetDay) {
+                    candidate.setDate(candidate.getDate() + 1);
+                }
+            }
+
+            _schedPickedDate = candidate;
+            const dayStr = candidate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+            const timeStr = candidate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+            document.getElementById('schedParsed').textContent = `${dayStr} at ${timeStr}`;
+            document.getElementById('schedParsed').style.color = 'var(--accent)';
+            document.getElementById('schedConfirmBtn').disabled = false;
+        }
+
+        function schedUseBestSlot() {
+            if (_bestTimesCache && _bestTimesCache.nextBest) {
+                _schedPickedDate = new Date(_bestTimesCache.nextBest);
+                const dayStr = _schedPickedDate.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const timeStr = _schedPickedDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                document.getElementById('schedParsed').textContent = `${dayStr} at ${timeStr}`;
+                document.getElementById('schedParsed').style.color = 'var(--accent)';
+                document.getElementById('schedConfirmBtn').disabled = false;
+            } else {
+                schedUseNextSlot();
+            }
         }
 
         function closeSchedPopup() {
@@ -6967,10 +7164,52 @@
             indicator.classList.add('hidden');
         }
 
-        function publishFromCompose() {
+        async function publishFromCompose() {
             const text = document.getElementById('composeTextarea').value.trim();
             if (!text) { showNotify('Empty Post', 'Write or generate a post first!', 'warning'); return; }
+
+            try {
+                const res = await fetch('/api/best-times');
+                if (res.ok) {
+                    const data = await res.json();
+                    _bestTimesCache = data;
+                    const now = new Date();
+                    const curDay = now.getDay();
+                    const curHour = now.getHours();
+                    const curSlot = data.slots.find(s => s.dayNum === curDay && s.hour === curHour);
+                    const curScore = curSlot ? curSlot.score : 20;
+
+                    if (curScore < 50 && data.nextBest && data.slots.length > 0) {
+                        const topSlot = data.slots[0];
+                        const dt = new Date(data.nextBest);
+                        const dayStr = dt.toLocaleDateString('en-US', { weekday: 'long' });
+                        const timeStr = dt.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+                        const dateStr = dt.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                        document.getElementById('optimalTimeMsg').textContent =
+                            `Your post may get more engagement if published at ${dayStr} ${timeStr}. Posts at this time get significantly more impressions.`;
+                        document.getElementById('optimalTimeSlot').textContent = `${dayStr}, ${dateStr} at ${timeStr}`;
+                        const badge = document.getElementById('optimalTimeBadge');
+                        badge.textContent = topSlot.label;
+                        badge.className = 'bp-score ' + topSlot.label.toLowerCase();
+
+                        document.getElementById('optimalTimeModal').classList.remove('hidden');
+                        return;
+                    }
+                }
+            } catch {}
+
             openPublishModal();
+        }
+
+        function scheduleForBestTime() {
+            document.getElementById('optimalTimeModal').classList.add('hidden');
+            if (_bestTimesCache && _bestTimesCache.nextBest) {
+                _schedPostText = document.getElementById('composeTextarea').value.trim();
+                _schedSource = 'compose';
+                _schedPickedDate = new Date(_bestTimesCache.nextBest);
+                confirmSchedule();
+            }
         }
 
         function openPublishModal() {
