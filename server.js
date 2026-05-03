@@ -2097,7 +2097,6 @@ app.post('/api/extension/auth', async (req, res) => {
     res.json({ token, name: user.name, plan: user.planTier || user.plan || 'Pro' });
 });
 
-// Middleware to authenticate extension requests via Bearer token
 async function authExtension(req, res, next) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -2106,23 +2105,21 @@ async function authExtension(req, res, next) {
 
     const token = authHeader.slice(7);
     const secret = process.env.SESSION_SECRET || 'fallback';
+    if (!global._tokenCache) global._tokenCache = {};
 
-    // Find user whose extensionToken matches
-    // Since we generate token = HMAC(linkedinId), we can check session user first
-    if (req.session.user) {
+    // 1. Check session user
+    if (req.session && req.session.user) {
         const expectedToken = crypto.createHmac('sha256', secret)
             .update(req.session.user.linkedinId)
             .digest('hex');
         if (expectedToken === token) {
             req.extUser = req.session.user;
+            global._tokenCache[token] = req.session.user.linkedinId;
             return next();
         }
     }
 
-    // Fallback: check all known linkedinIds from the token
-    // For efficiency, store a token->linkedinId mapping in a simple in-memory cache
-    if (!global._tokenCache) global._tokenCache = {};
-
+    // 2. Check in-memory cache
     if (global._tokenCache[token]) {
         const user = await dbGetUser(global._tokenCache[token]);
         if (user) {
@@ -2131,7 +2128,24 @@ async function authExtension(req, res, next) {
         }
     }
 
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    // 3. Scan DynamoDB for matching extensionToken (handles server restarts)
+    try {
+        const result = await ddb.send(new ScanCommand({
+            TableName: DYNAMO_TABLE,
+            FilterExpression: 'extensionToken = :token',
+            ExpressionAttributeValues: { ':token': token },
+        }));
+        if (result.Items && result.Items[0]) {
+            const user = result.Items[0];
+            global._tokenCache[token] = user.linkedinId;
+            req.extUser = user;
+            return next();
+        }
+    } catch (err) {
+        console.error('[AuthExtension] DB scan error:', err.message);
+    }
+
+    return res.status(401).json({ error: 'Invalid or expired token. Please reconnect the extension.' });
 }
 
 // Receive scraped analytics data from extension

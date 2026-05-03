@@ -114,6 +114,7 @@ async function syncToServer() {
         });
 
         const result = await res.json();
+        console.log('[SuperLinkedIn] Sync response:', res.status, JSON.stringify(result));
 
         if (res.ok) {
             pendingData = { followers: null, posts: [], profile: null, dashboardStats: null };

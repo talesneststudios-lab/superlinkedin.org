@@ -5795,17 +5795,21 @@
                 if (res.ok) data = await res.json();
             } catch {}
 
-            const followers = data.followers || 0;
+            const dashboard = data.dashboard || {};
+            const followers = dashboard.followers || data.followers || 0;
             const engagement = data.engagement || {};
             const postMetrics = data.postMetrics || [];
-            const totalPosts = postMetrics.length || queue.length;
-            const totalImpressions = engagement.impressions || 0;
+            const postedCount = queue.filter(q => q.status === 'posted').length;
+            const totalPosts = postMetrics.length || postedCount || queue.length;
+            const totalImpressions = dashboard.postImpressions || engagement.impressions || 0;
             const totalEngagements = (engagement.likes || 0) + (engagement.comments || 0) + (engagement.reposts || 0);
+            const profileViews = dashboard.profileViews || data.profileViews || 0;
+            const searchAppearances = dashboard.searchAppearances || data.searchAppearances || 0;
+            const membersReached = dashboard.membersReached || 0;
 
-            // Show extension connect banner if no analytics data yet
             const banner = document.getElementById('analyticsExtBanner');
             if (banner) {
-                banner.style.display = (!data.lastSync && followers === 0 && postMetrics.length === 0) ? 'flex' : 'none';
+                banner.style.display = (!data.lastSync && followers === 0 && totalImpressions === 0) ? 'flex' : 'none';
             }
 
             document.getElementById('aFollowers').textContent = followers.toLocaleString();
@@ -5816,18 +5820,17 @@
             document.getElementById('aLikes').textContent = (engagement.likes || 0).toLocaleString();
             document.getElementById('aReposts').textContent = (engagement.reposts || 0).toLocaleString();
             document.getElementById('aReplies').textContent = (engagement.comments || 0).toLocaleString();
-            document.getElementById('aBookmarks').textContent = (data.profileViews || 0).toLocaleString();
+            document.getElementById('aBookmarks').textContent = profileViews.toLocaleString();
 
-            // Update labels to reflect LinkedIn metrics
             const bookmarkLabel = document.querySelector('#aBookmarks')?.closest('.engagement-stat-card')?.querySelector('.engagement-stat-label');
             if (bookmarkLabel) bookmarkLabel.textContent = 'Profile Views';
 
-            if (totalEngagements > 0 && totalImpressions > 0) {
+            if (totalImpressions > 0) {
                 const pct = (val) => ((val / totalImpressions) * 100).toFixed(1) + '%';
                 document.querySelectorAll('.engagement-stat-pct')[0].textContent = pct(engagement.likes || 0);
                 document.querySelectorAll('.engagement-stat-pct')[1].textContent = pct(engagement.reposts || 0);
                 document.querySelectorAll('.engagement-stat-pct')[2].textContent = pct(engagement.comments || 0);
-                document.querySelectorAll('.engagement-stat-pct')[3].textContent = data.searchAppearances ? data.searchAppearances.toLocaleString() + ' searches' : '0%';
+                document.querySelectorAll('.engagement-stat-pct')[3].textContent = searchAppearances ? searchAppearances.toLocaleString() + ' searches' : '0%';
             }
 
             buildFollowerChart(data.followersHistory || []);

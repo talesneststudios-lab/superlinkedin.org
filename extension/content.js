@@ -217,7 +217,10 @@
         }
 
         if (data.followers !== undefined || (data.posts && data.posts.length > 0) || data.dashboardStats) {
+            console.log('[SuperLinkedIn] Scraped data:', JSON.stringify(data.dashboardStats || {}), 'posts:', (data.posts || []).length);
             sendToBackground(data);
+        } else {
+            console.log('[SuperLinkedIn] No data found on this page:', url.substring(0, 80));
         }
 
         if (sidebarOpen) updateSidebarUI();
