@@ -579,10 +579,10 @@ app.get('/auth/linkedin/callback', async (req, res) => {
         const isPaid = req.session.user.paid || (parentId && (await dbGetUser(parentId))?.paid);
         console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!isPaid} | onboarded=${!!req.session.user.onboardingComplete}`);
 
-        if (req.session.user.onboardingComplete) {
+        if (req.session.user.onboardingComplete && isPaid) {
             res.redirect('/app');
-        } else if (isPaid && req.session.user.onboardingComplete === undefined) {
-            res.redirect('/app');
+        } else if (req.session.user.onboardingComplete && !isPaid) {
+            res.redirect('/upgrade');
         } else {
             res.redirect('/onboarding');
         }
@@ -2580,7 +2580,7 @@ async function authExtension(req, res, next) {
 
 // Receive scraped analytics data from extension
 app.post('/api/analytics/sync', authExtension, async (req, res) => {
-    const { followers, posts, dashboardStats } = req.body;
+    const { followers, posts, dashboardStats, dms } = req.body;
     const linkedinId = req.extUser.linkedinId;
 
     const updates = {};
@@ -2637,6 +2637,47 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
                 updates.analyticsEngagement.impressions = dashboardStats.postImpressions;
             }
         }
+    }
+
+    if (dms && dms.conversations && dms.conversations.length > 0) {
+        const user = await dbGetUser(linkedinId);
+        const existing = (user && user.dmConversations) || [];
+        dms.conversations.forEach(incoming => {
+            const idx = existing.findIndex(e => e.participantName === incoming.participantName);
+            if (idx >= 0) {
+                existing[idx].lastMessage = incoming.lastMessage || existing[idx].lastMessage;
+                existing[idx].lastMessageAt = incoming.lastMessageAt || existing[idx].lastMessageAt;
+                existing[idx].unread = incoming.unread;
+            } else {
+                existing.push({
+                    id: incoming.id || ('dm-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8)),
+                    participantName: incoming.participantName,
+                    participantUrl: incoming.participantUrl || '',
+                    lastMessage: incoming.lastMessage || '',
+                    lastMessageAt: incoming.lastMessageAt || now,
+                    unread: incoming.unread || false,
+                    labels: [],
+                    messages: [],
+                });
+            }
+        });
+        if (dms.activeThread && dms.activeThread.messages && dms.activeThread.messages.length > 0) {
+            const threadConv = existing.find(c => c.participantName === dms.activeThread.participantName);
+            if (threadConv) {
+                const existingTexts = new Set((threadConv.messages || []).map(m => m.text + '|' + m.timestamp));
+                dms.activeThread.messages.forEach(msg => {
+                    if (!existingTexts.has(msg.text + '|' + msg.timestamp)) {
+                        threadConv.messages.push(msg);
+                    }
+                });
+                if (threadConv.messages.length > 500) {
+                    threadConv.messages = threadConv.messages.slice(-500);
+                }
+            }
+        }
+        if (existing.length > 200) existing.splice(0, existing.length - 200);
+        updates.dmConversations = existing;
+        console.log('[Sync] DM data merged:', dms.conversations.length, 'conversations');
     }
 
     updates.analyticsLastSync = now;
@@ -3314,6 +3355,141 @@ app.get('/api/v1/analytics', apiKeyAuth, (req, res) => {
         membersReached: dashboard.membersReached || 0,
         profileViews: dashboard.profileViews || 0,
     });
+});
+
+// ---------- DM ENDPOINTS ----------
+
+app.get('/api/dms', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const convos = (user && user.dmConversations) || [];
+    res.json({ conversations: convos });
+});
+
+app.post('/api/dms/reply', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const { conversationId, text } = req.body;
+    if (!conversationId || !text) return res.status(400).json({ error: 'conversationId and text are required' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const convos = user.dmConversations || [];
+    const conv = convos.find(c => c.id === conversationId);
+    if (!conv) return res.status(404).json({ error: 'Conversation not found' });
+
+    const newMsg = {
+        sender: 'You',
+        text: text.substring(0, 2000),
+        timestamp: new Date().toISOString(),
+    };
+    if (!conv.messages) conv.messages = [];
+    conv.messages.push(newMsg);
+    conv.lastMessage = text.substring(0, 200);
+    conv.lastMessageAt = newMsg.timestamp;
+
+    await dbUpdateFields(user.linkedinId, { dmConversations: convos });
+    res.json({ ok: true, message: newMsg, sendViaExtension: true });
+});
+
+app.post('/api/dms/ai-reply', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const credits = await getCreditsForSession(req.session);
+    if (credits.remaining < 1) return res.json({ error: 'No AI credits remaining.' });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') return res.json({ error: 'OpenAI API key not configured.' });
+
+    const { conversationId, style } = req.body;
+    if (!conversationId) return res.status(400).json({ error: 'conversationId is required' });
+
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const convos = (user && user.dmConversations) || [];
+    const conv = convos.find(c => c.id === conversationId);
+    if (!conv) return res.status(404).json({ error: 'Conversation not found' });
+
+    const recentMsgs = (conv.messages || []).slice(-6).map(m => `${m.sender}: ${m.text}`).join('\n');
+    const styleMap = {
+        professional: 'Reply in a professional, polished tone.',
+        friendly: 'Reply in a warm, friendly conversational tone.',
+        brief: 'Reply concisely in 1-2 short sentences.',
+        'follow-up': 'Write a polite follow-up message checking in.',
+    };
+    const systemPrompt = `You write LinkedIn DM replies. ${styleMap[style] || styleMap.professional} Keep it natural and under 150 words.`;
+
+    try {
+        const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini', max_tokens: 250,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: `Here is the recent conversation with ${conv.participantName}:\n\n${recentMsgs}\n\nWrite a reply.` },
+                ],
+            }),
+        });
+        const data = await aiRes.json();
+        await consumeCredit(req.session, 1);
+        res.json({ reply: data.choices?.[0]?.message?.content || '' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.get('/api/dms/auto-followup', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    res.json({ rules: (user && user.dmAutoFollowup) || [] });
+});
+
+app.post('/api/dms/auto-followup', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const { triggerDays, messageTemplate, style, active } = req.body;
+    if (!triggerDays || !messageTemplate) return res.status(400).json({ error: 'triggerDays and messageTemplate are required' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const rules = user.dmAutoFollowup || [];
+    const newRule = {
+        id: 'dmfu-' + Date.now(),
+        triggerDays: parseInt(triggerDays),
+        messageTemplate: messageTemplate.substring(0, 500),
+        style: style || 'professional',
+        active: active !== false,
+        createdAt: new Date().toISOString(),
+    };
+    rules.push(newRule);
+    await dbUpdateFields(user.linkedinId, { dmAutoFollowup: rules });
+    res.json({ ok: true, rule: newRule });
+});
+
+app.delete('/api/dms/auto-followup/:id', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const rules = (user.dmAutoFollowup || []).filter(r => r.id !== req.params.id);
+    await dbUpdateFields(user.linkedinId, { dmAutoFollowup: rules });
+    res.json({ ok: true });
+});
+
+app.get('/api/dms/:id', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const convos = (user && user.dmConversations) || [];
+    const conv = convos.find(c => c.id === req.params.id);
+    if (!conv) return res.status(404).json({ error: 'Conversation not found' });
+    res.json({ conversation: conv });
+});
+
+app.put('/api/dms/:id/labels', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const { labels } = req.body;
+    if (!Array.isArray(labels)) return res.status(400).json({ error: 'labels must be an array' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const convos = user.dmConversations || [];
+    const conv = convos.find(c => c.id === req.params.id);
+    if (!conv) return res.status(404).json({ error: 'Conversation not found' });
+    conv.labels = labels;
+    await dbUpdateFields(user.linkedinId, { dmConversations: convos });
+    res.json({ ok: true, labels: conv.labels });
 });
 
 // ---------- POST SCHEDULER ----------

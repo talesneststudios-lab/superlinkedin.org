@@ -540,6 +540,202 @@
             font-weight: 600; text-transform: capitalize; background: rgba(10,102,194,0.08); color: var(--accent);
         }
 
+        /* DM Page */
+        .dm-layout {
+            display: flex; height: calc(100vh - 180px); gap: 0;
+            border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+            background: var(--bg-card);
+        }
+        .dm-sidebar {
+            width: 340px; min-width: 280px; border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; background: var(--bg-card);
+        }
+        .dm-sidebar-header {
+            padding: 14px; border-bottom: 1px solid var(--border);
+        }
+        .dm-search {
+            width: 100%; padding: 9px 14px; border: 1px solid var(--border); border-radius: 8px;
+            font-family: inherit; font-size: 0.85rem; background: var(--bg-main); color: var(--text-primary);
+            margin-bottom: 10px; box-sizing: border-box;
+        }
+        .dm-label-filters {
+            display: flex; gap: 6px; flex-wrap: wrap;
+        }
+        .dm-filter-btn {
+            padding: 4px 12px; border: 1px solid var(--border); border-radius: 16px; background: transparent;
+            font-family: inherit; font-size: 0.72rem; font-weight: 600; color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s;
+        }
+        .dm-filter-btn.active, .dm-filter-btn:hover {
+            background: var(--accent); color: #fff; border-color: var(--accent);
+        }
+        .dm-conv-list {
+            flex: 1; overflow-y: auto;
+        }
+        .dm-conv-item {
+            display: flex; align-items: center; gap: 12px; padding: 14px;
+            cursor: pointer; transition: background 0.15s; border-bottom: 1px solid var(--border);
+        }
+        .dm-conv-item:hover { background: rgba(10,102,194,0.04); }
+        .dm-conv-item.active { background: rgba(10,102,194,0.08); }
+        .dm-conv-item.unread .dm-conv-name { font-weight: 800; }
+        .dm-conv-avatar {
+            width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #70B5F9);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .dm-conv-info { flex: 1; min-width: 0; }
+        .dm-conv-name {
+            font-size: 0.88rem; font-weight: 600; color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .dm-conv-preview {
+            font-size: 0.78rem; color: var(--text-muted); white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
+        }
+        .dm-conv-meta {
+            display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex-shrink: 0;
+        }
+        .dm-conv-time { font-size: 0.68rem; color: var(--text-muted); }
+        .dm-unread-dot {
+            width: 8px; height: 8px; border-radius: 50%; background: var(--accent);
+        }
+        .dm-label-badge {
+            display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 0.62rem;
+            font-weight: 700; text-transform: uppercase; margin-right: 4px;
+        }
+        .dm-label-badge[data-label="lead"] { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .dm-label-badge[data-label="follow-up"] { background: rgba(245,158,11,0.1); color: #f59e0b; }
+        .dm-label-badge[data-label="important"] { background: rgba(16,185,129,0.1); color: #10b981; }
+
+        .dm-thread {
+            flex: 1; display: flex; flex-direction: column; min-width: 0;
+        }
+        .dm-thread-empty {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; text-align: center; padding: 40px;
+        }
+        .dm-thread-active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+        .dm-thread-header {
+            padding: 14px 18px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 12px; position: relative;
+        }
+        .dm-thread-avatar {
+            width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #70B5F9);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+        }
+        .dm-thread-name { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
+        .dm-thread-labels { display: flex; gap: 4px; margin-left: 8px; }
+        .dm-label-manage-btn {
+            background: none; border: none; cursor: pointer; font-size: 1rem; padding: 4px;
+            margin-left: auto;
+        }
+        .dm-label-picker {
+            position: absolute; top: 100%; right: 14px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 8px; padding: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 10; display: flex; flex-direction: column; gap: 6px;
+        }
+        .dm-label-picker label {
+            display: flex; align-items: center; gap: 6px; font-size: 0.82rem; cursor: pointer;
+            color: var(--text-secondary);
+        }
+        .dm-messages {
+            flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 8px;
+        }
+        .dm-bubble {
+            max-width: 75%; padding: 10px 16px; border-radius: 16px;
+            font-size: 0.85rem; line-height: 1.5; word-wrap: break-word;
+        }
+        .dm-bubble.sent {
+            align-self: flex-end; background: var(--accent); color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .dm-bubble.received {
+            align-self: flex-start; background: var(--bg-main);
+            color: var(--text-primary); border: 1px solid var(--border);
+            border-bottom-left-radius: 4px;
+        }
+        .dm-bubble-time {
+            font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;
+        }
+        .dm-bubble.sent .dm-bubble-time { text-align: right; color: rgba(255,255,255,0.7); }
+        .dm-compose {
+            padding: 14px 18px; border-top: 1px solid var(--border); background: var(--bg-card);
+        }
+        .dm-compose-row {
+            display: flex; gap: 10px; align-items: flex-end;
+        }
+        .dm-reply-textarea {
+            flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
+            font-family: inherit; font-size: 0.85rem; resize: none; background: var(--bg-main);
+            color: var(--text-primary); min-height: 40px; max-height: 120px;
+        }
+        .dm-compose-actions {
+            display: flex; gap: 6px; align-items: flex-end;
+        }
+        .dm-ai-dropdown { position: relative; }
+        .dm-ai-btn {
+            padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card);
+            font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
+            color: var(--text-primary); transition: all 0.2s; white-space: nowrap;
+        }
+        .dm-ai-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .dm-ai-menu {
+            position: absolute; bottom: 100%; right: 0; margin-bottom: 6px;
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
+            padding: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.1); z-index: 10; min-width: 170px;
+        }
+        .dm-ai-menu button {
+            display: block; width: 100%; padding: 8px 12px; border: none; background: none;
+            font-family: inherit; font-size: 0.82rem; text-align: left; border-radius: 6px;
+            cursor: pointer; color: var(--text-primary); transition: background 0.15s;
+        }
+        .dm-ai-menu button:hover { background: rgba(10,102,194,0.06); }
+        .dm-send-btn {
+            padding: 8px 16px; background: var(--accent); color: #fff; border: none;
+            border-radius: 8px; font-size: 1rem; cursor: pointer; transition: background 0.2s;
+        }
+        .dm-send-btn:hover { background: #0957a8; }
+
+        .dm-followup-config {
+            margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+            background: var(--bg-card);
+        }
+        .dm-followup-header {
+            padding: 14px 18px; cursor: pointer; display: flex; justify-content: space-between;
+            align-items: center; font-size: 0.88rem; font-weight: 700;
+        }
+        .dm-followup-header:hover { background: rgba(10,102,194,0.04); }
+        .dm-followup-toggle { font-size: 0.7rem; color: var(--text-muted); }
+        .dm-followup-body { padding: 14px 18px; border-top: 1px solid var(--border); }
+        .dm-followup-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+        .dm-followup-rule {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 14px; background: var(--bg-main); border-radius: 8px; font-size: 0.82rem;
+        }
+        .dm-followup-rule-info { color: var(--text-secondary); }
+        .dm-followup-rule-info strong { color: var(--text-primary); }
+        .dm-followup-form { margin-top: 6px; }
+        .dm-followup-label {
+            display: block; font-size: 0.72rem; color: var(--text-muted);
+            margin-bottom: 4px; font-weight: 600;
+        }
+        .dm-followup-input {
+            padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px;
+            font-family: inherit; font-size: 0.82rem; background: var(--bg-main);
+            color: var(--text-primary); box-sizing: border-box;
+        }
+        .dm-followup-add-btn {
+            padding: 8px 18px; background: var(--accent); color: #fff; border: none;
+            border-radius: 8px; font-family: inherit; font-weight: 700; font-size: 0.82rem;
+            cursor: pointer; white-space: nowrap;
+        }
+        .dm-followup-del-btn {
+            background: none; border: none; color: #ef4444; cursor: pointer; font-size: 0.85rem;
+            padding: 4px 8px;
+        }
+
         .sidebar-user-avatar {
             width: 32px; height: 32px;
             border-radius: 50%;
@@ -3293,7 +3489,7 @@
             </a>
 
             <div class="nav-section">CRM</div>
-            <a class="nav-item nav-sub-item" onclick="showDMsDisclaimer()">
+            <a class="nav-item nav-sub-item" data-page="dms" onclick="showPage('dms')">
                 <span class="nav-icon">&#9993;</span> <span>DMs</span>
             </a>
 
@@ -4569,6 +4765,97 @@
                 </div>
             </div>
 
+            <!-- DM PAGE -->
+            <div class="page" id="page-dms">
+                <div class="dm-layout">
+                    <!-- LEFT: Conversation list -->
+                    <div class="dm-sidebar">
+                        <div class="dm-sidebar-header">
+                            <input type="text" id="dmSearchInput" placeholder="Search conversations..." class="dm-search" oninput="filterDmConversations()">
+                            <div class="dm-label-filters">
+                                <button class="dm-filter-btn active" data-filter="all" onclick="setDmFilter('all')">All</button>
+                                <button class="dm-filter-btn" data-filter="lead" onclick="setDmFilter('lead')">Leads</button>
+                                <button class="dm-filter-btn" data-filter="follow-up" onclick="setDmFilter('follow-up')">Follow-up</button>
+                                <button class="dm-filter-btn" data-filter="important" onclick="setDmFilter('important')">Important</button>
+                            </div>
+                        </div>
+                        <div id="dmConversationList" class="dm-conv-list">
+                            <div class="empty-state"><p>No conversations yet. Install the Chrome extension and visit LinkedIn Messaging to sync your DMs.</p></div>
+                        </div>
+                    </div>
+                    <!-- RIGHT: Message thread -->
+                    <div class="dm-thread" id="dmThreadPanel">
+                        <div class="dm-thread-empty" id="dmThreadEmpty">
+                            <div style="font-size:2.5rem;margin-bottom:12px;">&#9993;&#65039;</div>
+                            <h3 style="font-size:1rem;font-weight:700;margin-bottom:6px;">Select a conversation</h3>
+                            <p style="color:var(--text-muted);font-size:0.85rem;">Choose a conversation from the list to view messages and reply.</p>
+                        </div>
+                        <div class="dm-thread-active hidden" id="dmThreadActive">
+                            <div class="dm-thread-header" id="dmThreadHeader">
+                                <div class="dm-thread-avatar" id="dmThreadAvatar"></div>
+                                <div class="dm-thread-name" id="dmThreadName"></div>
+                                <div class="dm-thread-labels" id="dmThreadLabels"></div>
+                                <button class="dm-label-manage-btn" id="dmLabelBtn" onclick="toggleDmLabelPicker()" title="Manage labels">&#127991;&#65039;</button>
+                                <div class="dm-label-picker hidden" id="dmLabelPicker">
+                                    <label><input type="checkbox" value="lead" onchange="updateDmLabels()"> Lead</label>
+                                    <label><input type="checkbox" value="follow-up" onchange="updateDmLabels()"> Follow-up</label>
+                                    <label><input type="checkbox" value="important" onchange="updateDmLabels()"> Important</label>
+                                </div>
+                            </div>
+                            <div class="dm-messages" id="dmMessages"></div>
+                            <div class="dm-compose">
+                                <div class="dm-compose-row">
+                                    <textarea id="dmReplyInput" placeholder="Type a message..." rows="2" class="dm-reply-textarea"></textarea>
+                                    <div class="dm-compose-actions">
+                                        <div class="dm-ai-dropdown">
+                                            <button class="dm-ai-btn" onclick="toggleDmAiMenu()" title="AI Smart Reply">&#9889; AI</button>
+                                            <div class="dm-ai-menu hidden" id="dmAiMenu">
+                                                <button onclick="dmAiReply('professional')">&#128188; Professional</button>
+                                                <button onclick="dmAiReply('friendly')">&#128075; Friendly</button>
+                                                <button onclick="dmAiReply('brief')">&#9889; Brief</button>
+                                                <button onclick="dmAiReply('follow-up')">&#128232; Follow-up</button>
+                                            </div>
+                                        </div>
+                                        <button class="dm-send-btn" onclick="sendDmReply()" title="Send">&#10148;</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Auto Follow-up Config -->
+                <div class="dm-followup-config">
+                    <div class="dm-followup-header" onclick="document.getElementById('dmFollowupBody').classList.toggle('hidden')">
+                        <span>&#9881;&#65039; Auto Follow-up Rules</span>
+                        <span class="dm-followup-toggle">&#9660;</span>
+                    </div>
+                    <div class="dm-followup-body hidden" id="dmFollowupBody">
+                        <div id="dmFollowupList" class="dm-followup-list"></div>
+                        <div class="dm-followup-form">
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+                                <div style="flex:0 0 100px;">
+                                    <label class="dm-followup-label">Days without reply</label>
+                                    <input type="number" id="dmFollowupDays" min="1" max="30" value="3" class="dm-followup-input">
+                                </div>
+                                <div style="flex:1;min-width:200px;">
+                                    <label class="dm-followup-label">Message template</label>
+                                    <input type="text" id="dmFollowupTemplate" placeholder="Hi! Just following up on our conversation..." class="dm-followup-input" style="width:100%;">
+                                </div>
+                                <div style="flex:0 0 140px;">
+                                    <label class="dm-followup-label">Style</label>
+                                    <select id="dmFollowupStyle" class="dm-followup-input">
+                                        <option value="professional">Professional</option>
+                                        <option value="friendly">Friendly</option>
+                                        <option value="brief">Brief</option>
+                                    </select>
+                                </div>
+                                <button class="dm-followup-add-btn" onclick="addDmFollowupRule()">+ Add Rule</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 
@@ -5023,6 +5310,67 @@
         </div>
     </div>
 
+    <!-- CREATE LIST MODAL -->
+    <div class="modal-overlay hidden" id="createListModal" onclick="if(event.target===this)document.getElementById('createListModal').classList.add('hidden')">
+        <div class="modal" style="max-width:420px;">
+            <button class="modal-close" onclick="document.getElementById('createListModal').classList.add('hidden')">&times;</button>
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:2.2rem;margin-bottom:10px;">&#128203;</div>
+                <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">Create Engagement List</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);">Group connections to track and engage with them.</p>
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">List Name</label>
+                <input id="createListNameInput" type="text" placeholder="e.g. Top Prospects, Industry Leaders..." style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;" onkeydown="if(event.key==='Enter')confirmCreateList()">
+            </div>
+            <button onclick="confirmCreateList()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;">Create List</button>
+        </div>
+    </div>
+
+    <!-- CREATE RULE MODAL -->
+    <div class="modal-overlay hidden" id="createRuleModal" onclick="if(event.target===this)document.getElementById('createRuleModal').classList.add('hidden')">
+        <div class="modal" style="max-width:460px;">
+            <button class="modal-close" onclick="document.getElementById('createRuleModal').classList.add('hidden')">&times;</button>
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:2.2rem;margin-bottom:10px;">&#9889;</div>
+                <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">Create Auto-Engage Rule</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);">Set up automated interactions with posts in your network.</p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;margin-bottom:20px;">
+                <div>
+                    <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Rule Type</label>
+                    <select id="ruleTypeInput" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);">
+                        <option value="repost">Auto-Repost</option>
+                        <option value="comment">Auto-Comment</option>
+                    </select>
+                </div>
+                <div>
+                    <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Source (creator, hashtag, or leave blank for all)</label>
+                    <input id="ruleSourceInput" type="text" placeholder="e.g. @johndoe, #marketing" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                </div>
+                <div style="display:flex;gap:12px;">
+                    <div style="flex:1;">
+                        <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Min Likes to Trigger</label>
+                        <input id="ruleMinEngInput" type="number" value="50" min="0" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                    </div>
+                    <div style="flex:1;">
+                        <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Max Actions / Day</label>
+                        <input id="ruleMaxDayInput" type="number" value="5" min="1" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                    </div>
+                </div>
+                <div id="ruleStyleRow">
+                    <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Comment Style</label>
+                    <select id="ruleStyleInput" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);">
+                        <option value="supportive">Supportive</option>
+                        <option value="insightful">Insightful</option>
+                        <option value="question">Question</option>
+                    </select>
+                </div>
+            </div>
+            <button onclick="confirmCreateRule()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;">Create Rule</button>
+        </div>
+    </div>
+
     <!-- ENGAGE COMING SOON MODAL -->
     <div class="modal-overlay hidden" id="engageDisclaimerModal" onclick="if(event.target===this)document.getElementById('engageDisclaimerModal').classList.add('hidden')">
         <div class="modal" style="max-width:440px;">
@@ -5037,24 +5385,6 @@
         </div>
     </div>
 
-    <!-- DMs DISCLAIMER MODAL -->
-    <div class="modal-overlay hidden" id="dmsDisclaimerModal" onclick="if(event.target===this)document.getElementById('dmsDisclaimerModal').classList.add('hidden')">
-        <div class="modal" style="max-width:440px;">
-            <div style="text-align:center;margin-bottom:20px;">
-                <div style="font-size:2.5rem;margin-bottom:12px;">&#9993;&#65039;</div>
-                <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;">DMs Coming Soon</h2>
-                <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;">The Direct Messages feature is currently under development. Soon you'll be able to:</p>
-            </div>
-            <ul style="font-size:0.82rem;color:var(--text-secondary);line-height:1.7;padding-left:20px;margin-bottom:20px;">
-                <li>View and manage your LinkedIn DMs from SuperLinkedIn</li>
-                <li>Use AI-powered smart replies to respond faster</li>
-                <li>Organize conversations with labels and filters</li>
-                <li>Set up automated follow-up messages</li>
-            </ul>
-            <p style="font-size:0.82rem;color:var(--text-muted);text-align:center;margin-bottom:18px;">We'll notify you as soon as this feature is available.</p>
-            <button onclick="document.getElementById('dmsDisclaimerModal').classList.add('hidden')" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;transition:background 0.2s;">Got It</button>
-        </div>
-    </div>
 
     <!-- CONFETTI CANVAS -->
     <canvas id="confettiCanvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;"></canvas>
@@ -5116,10 +5446,6 @@
             document.getElementById('engageModalDesc').textContent = cfg.desc;
             document.getElementById('engageModalList').innerHTML = cfg.items.map(i => `<li>${i}</li>`).join('');
             document.getElementById('engageDisclaimerModal').classList.remove('hidden');
-        }
-
-        function showDMsDisclaimer() {
-            document.getElementById('dmsDisclaimerModal').classList.remove('hidden');
         }
 
         let _userFeatures = [];
@@ -5314,8 +5640,15 @@
         }
 
         function showCreateListModal() {
-            const name = prompt('List name:');
-            if (!name) return;
+            document.getElementById('createListNameInput').value = '';
+            document.getElementById('createListModal').classList.remove('hidden');
+            setTimeout(() => document.getElementById('createListNameInput').focus(), 100);
+        }
+
+        function confirmCreateList() {
+            const name = document.getElementById('createListNameInput').value.trim();
+            if (!name) { showNotify('Missing Name', 'Please enter a list name.', 'warning'); return; }
+            document.getElementById('createListModal').classList.add('hidden');
             fetch('/api/engage/lists', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) })
                 .then(r => r.json()).then(() => { loadEngageLists(); showNotify('List Created', 'Your engagement list has been created.', 'success'); })
                 .catch(() => showNotify('Error', 'Failed to create list.', 'error'));
@@ -5389,12 +5722,25 @@
         }
 
         function showCreateRuleModal() {
-            const type = prompt('Rule type: "repost" or "comment"');
-            if (!type || !['repost', 'comment'].includes(type)) { showNotify('Invalid', 'Enter "repost" or "comment".', 'warning'); return; }
-            const source = prompt('Source (creator name, hashtag, or leave blank for all):') || '';
-            const minEngagement = parseInt(prompt('Min likes to trigger (default 50):')) || 50;
-            const maxPerDay = parseInt(prompt('Max actions per day (default 5):')) || 5;
-            const style = type === 'comment' ? (prompt('Comment style (supportive/insightful/question):') || 'supportive') : '';
+            document.getElementById('ruleTypeInput').value = 'repost';
+            document.getElementById('ruleSourceInput').value = '';
+            document.getElementById('ruleMinEngInput').value = '50';
+            document.getElementById('ruleMaxDayInput').value = '5';
+            document.getElementById('ruleStyleInput').value = 'supportive';
+            document.getElementById('ruleStyleRow').style.display = 'none';
+            document.getElementById('ruleTypeInput').onchange = function() {
+                document.getElementById('ruleStyleRow').style.display = this.value === 'comment' ? 'block' : 'none';
+            };
+            document.getElementById('createRuleModal').classList.remove('hidden');
+        }
+
+        function confirmCreateRule() {
+            const type = document.getElementById('ruleTypeInput').value;
+            const source = document.getElementById('ruleSourceInput').value.trim();
+            const minEngagement = parseInt(document.getElementById('ruleMinEngInput').value) || 50;
+            const maxPerDay = parseInt(document.getElementById('ruleMaxDayInput').value) || 5;
+            const style = type === 'comment' ? document.getElementById('ruleStyleInput').value : '';
+            document.getElementById('createRuleModal').classList.add('hidden');
             fetch('/api/auto-engage/rules', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ type, source, minEngagement, maxPerDay, style }) })
                 .then(r => r.json()).then(() => { loadAutoEngage(); showNotify('Rule Created', 'Auto-engage rule has been created.', 'success'); })
                 .catch(() => showNotify('Error', 'Failed to create rule.', 'error'));
@@ -5571,6 +5917,284 @@
         async function loadApiKeys() {
             try {
                 const res = await fetch('/api/apikeys', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ _list: true }) });
+            } catch {}
+        }
+
+        // ── DM Page ──
+        let _dmConversations = [];
+        let _dmActiveConvId = null;
+        let _dmFilter = 'all';
+
+        async function loadDms() {
+            try {
+                const res = await fetch('/api/dms');
+                if (res.ok) {
+                    const data = await res.json();
+                    _dmConversations = data.conversations || [];
+                }
+            } catch {}
+            renderDmConversations();
+            loadDmFollowupRules();
+        }
+
+        function renderDmConversations() {
+            const container = document.getElementById('dmConversationList');
+            if (!container) return;
+            const search = (document.getElementById('dmSearchInput')?.value || '').toLowerCase();
+            let filtered = _dmConversations;
+            if (_dmFilter !== 'all') {
+                filtered = filtered.filter(c => (c.labels || []).includes(_dmFilter));
+            }
+            if (search) {
+                filtered = filtered.filter(c => c.participantName.toLowerCase().includes(search) || (c.lastMessage || '').toLowerCase().includes(search));
+            }
+            if (!filtered.length) {
+                container.innerHTML = '<div class="empty-state" style="padding:30px;"><p>' + (search || _dmFilter !== 'all' ? 'No matching conversations.' : 'No conversations yet. Install the Chrome extension and visit LinkedIn Messaging to sync your DMs.') + '</p></div>';
+                return;
+            }
+            container.innerHTML = filtered.map(c => {
+                const initials = (c.participantName || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                const isActive = c.id === _dmActiveConvId;
+                const labelBadges = (c.labels || []).map(l => `<span class="dm-label-badge" data-label="${l}">${l}</span>`).join('');
+                const timeStr = c.lastMessageAt ? formatDmTime(c.lastMessageAt) : '';
+                return `<div class="dm-conv-item ${isActive ? 'active' : ''} ${c.unread ? 'unread' : ''}" onclick="openDmConversation('${c.id}')">
+                    <div class="dm-conv-avatar">${initials}</div>
+                    <div class="dm-conv-info">
+                        <div class="dm-conv-name">${c.participantName}${labelBadges ? ' ' + labelBadges : ''}</div>
+                        <div class="dm-conv-preview">${escapeHtml((c.lastMessage || '').substring(0, 60))}</div>
+                    </div>
+                    <div class="dm-conv-meta">
+                        <span class="dm-conv-time">${timeStr}</span>
+                        ${c.unread ? '<div class="dm-unread-dot"></div>' : ''}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function formatDmTime(ts) {
+            if (!ts) return '';
+            try {
+                const d = new Date(ts);
+                if (isNaN(d.getTime())) return ts;
+                const now = new Date();
+                const diff = now - d;
+                if (diff < 60000) return 'now';
+                if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
+                if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+                if (diff < 604800000) return Math.floor(diff / 86400000) + 'd';
+                return d.toLocaleDateString();
+            } catch { return ts; }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        function filterDmConversations() { renderDmConversations(); }
+
+        function setDmFilter(filter) {
+            _dmFilter = filter;
+            document.querySelectorAll('.dm-filter-btn').forEach(b => b.classList.toggle('active', b.dataset.filter === filter));
+            renderDmConversations();
+        }
+
+        async function openDmConversation(convId) {
+            _dmActiveConvId = convId;
+            renderDmConversations();
+            document.getElementById('dmThreadEmpty').classList.add('hidden');
+            document.getElementById('dmThreadActive').classList.remove('hidden');
+
+            const conv = _dmConversations.find(c => c.id === convId);
+            if (!conv) return;
+
+            const initials = (conv.participantName || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            document.getElementById('dmThreadAvatar').textContent = initials;
+            document.getElementById('dmThreadName').textContent = conv.participantName;
+
+            const labelsHtml = (conv.labels || []).map(l => `<span class="dm-label-badge" data-label="${l}">${l}</span>`).join('');
+            document.getElementById('dmThreadLabels').innerHTML = labelsHtml;
+
+            document.querySelectorAll('#dmLabelPicker input[type="checkbox"]').forEach(cb => {
+                cb.checked = (conv.labels || []).includes(cb.value);
+            });
+
+            try {
+                const res = await fetch('/api/dms/' + convId);
+                if (res.ok) {
+                    const data = await res.json();
+                    const idx = _dmConversations.findIndex(c => c.id === convId);
+                    if (idx >= 0 && data.conversation.messages) {
+                        _dmConversations[idx].messages = data.conversation.messages;
+                    }
+                }
+            } catch {}
+
+            renderDmMessages(conv);
+        }
+
+        function renderDmMessages(conv) {
+            const container = document.getElementById('dmMessages');
+            const msgs = conv.messages || [];
+            if (!msgs.length) {
+                container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-size:0.85rem;">No messages synced yet. Open this conversation on LinkedIn with the extension active to sync messages.</div>';
+                return;
+            }
+            container.innerHTML = msgs.map(m => {
+                const isSent = (m.sender || '').toLowerCase() === 'you';
+                return `<div class="dm-bubble ${isSent ? 'sent' : 'received'}">
+                    <div>${escapeHtml(m.text)}</div>
+                    <div class="dm-bubble-time">${m.timestamp ? formatDmTime(m.timestamp) : ''}</div>
+                </div>`;
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function toggleDmLabelPicker() {
+            document.getElementById('dmLabelPicker').classList.toggle('hidden');
+        }
+
+        async function updateDmLabels() {
+            if (!_dmActiveConvId) return;
+            const labels = [];
+            document.querySelectorAll('#dmLabelPicker input[type="checkbox"]:checked').forEach(cb => labels.push(cb.value));
+            try {
+                await fetch('/api/dms/' + _dmActiveConvId + '/labels', {
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ labels }),
+                });
+                const conv = _dmConversations.find(c => c.id === _dmActiveConvId);
+                if (conv) conv.labels = labels;
+                renderDmConversations();
+                const labelsHtml = labels.map(l => `<span class="dm-label-badge" data-label="${l}">${l}</span>`).join('');
+                document.getElementById('dmThreadLabels').innerHTML = labelsHtml;
+            } catch {}
+        }
+
+        function toggleDmAiMenu() {
+            document.getElementById('dmAiMenu').classList.toggle('hidden');
+        }
+
+        async function dmAiReply(style) {
+            document.getElementById('dmAiMenu').classList.add('hidden');
+            if (!_dmActiveConvId) return;
+            const input = document.getElementById('dmReplyInput');
+            input.value = 'Generating AI reply...';
+            input.disabled = true;
+            try {
+                const res = await fetch('/api/dms/ai-reply', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversationId: _dmActiveConvId, style }),
+                });
+                const data = await res.json();
+                input.value = data.reply || data.error || 'Failed to generate reply.';
+            } catch {
+                input.value = 'Error generating reply.';
+            }
+            input.disabled = false;
+            input.focus();
+        }
+
+        async function sendDmReply() {
+            if (!_dmActiveConvId) return;
+            const input = document.getElementById('dmReplyInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.disabled = true;
+            try {
+                const res = await fetch('/api/dms/reply', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ conversationId: _dmActiveConvId, text }),
+                });
+                const data = await res.json();
+                if (data.ok) {
+                    const conv = _dmConversations.find(c => c.id === _dmActiveConvId);
+                    if (conv) {
+                        if (!conv.messages) conv.messages = [];
+                        conv.messages.push(data.message);
+                        conv.lastMessage = text.substring(0, 200);
+                        conv.lastMessageAt = data.message.timestamp;
+                        renderDmMessages(conv);
+                        renderDmConversations();
+                    }
+                    input.value = '';
+
+                    if (data.sendViaExtension) {
+                        try {
+                            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+                                chrome.runtime.sendMessage({ type: 'DM_SEND_REPLY', recipientName: conv.participantName, text }, (resp) => {
+                                    if (resp && !resp.success) {
+                                        showNotify('Send via Extension', resp.error || 'Could not send via extension. Message saved — you can copy and paste it on LinkedIn.', 'warning');
+                                    }
+                                });
+                            } else {
+                                showNotify('Extension Not Detected', 'Message saved — copy and send it on LinkedIn manually.', 'info');
+                            }
+                        } catch { showNotify('Note', 'Message saved. Send it on LinkedIn manually.', 'info'); }
+                    }
+                } else {
+                    showNotify('Error', data.error || 'Failed to send reply.', 'error');
+                }
+            } catch {
+                showNotify('Error', 'Failed to send reply.', 'error');
+            }
+            input.disabled = false;
+            input.focus();
+        }
+
+        // Auto follow-up
+        let _dmFollowupRules = [];
+
+        async function loadDmFollowupRules() {
+            try {
+                const res = await fetch('/api/dms/auto-followup');
+                if (res.ok) {
+                    const data = await res.json();
+                    _dmFollowupRules = data.rules || [];
+                }
+            } catch {}
+            renderDmFollowupRules();
+        }
+
+        function renderDmFollowupRules() {
+            const container = document.getElementById('dmFollowupList');
+            if (!container) return;
+            if (!_dmFollowupRules.length) {
+                container.innerHTML = '<div style="font-size:0.82rem;color:var(--text-muted);padding:8px 0;">No auto follow-up rules yet.</div>';
+                return;
+            }
+            container.innerHTML = _dmFollowupRules.map(r => `<div class="dm-followup-rule">
+                <div class="dm-followup-rule-info">
+                    <strong>${r.triggerDays} day${r.triggerDays > 1 ? 's' : ''}</strong> &mdash; ${escapeHtml(r.messageTemplate.substring(0, 60))}${r.messageTemplate.length > 60 ? '...' : ''} <em style="color:var(--text-muted);font-size:0.75rem;">(${r.style})</em>
+                </div>
+                <button class="dm-followup-del-btn" onclick="deleteDmFollowupRule('${r.id}')" title="Delete">&times;</button>
+            </div>`).join('');
+        }
+
+        async function addDmFollowupRule() {
+            const days = document.getElementById('dmFollowupDays').value;
+            const template = document.getElementById('dmFollowupTemplate').value.trim();
+            const style = document.getElementById('dmFollowupStyle').value;
+            if (!template) return showNotify('Missing Template', 'Please enter a message template.', 'warning');
+            try {
+                const res = await fetch('/api/dms/auto-followup', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ triggerDays: days, messageTemplate: template, style }),
+                });
+                if (res.ok) {
+                    document.getElementById('dmFollowupTemplate').value = '';
+                    await loadDmFollowupRules();
+                    showNotify('Success', 'Follow-up rule created!', 'success');
+                }
+            } catch {}
+        }
+
+        async function deleteDmFollowupRule(id) {
+            try {
+                await fetch('/api/dms/auto-followup/' + id, { method: 'DELETE' });
+                await loadDmFollowupRules();
             } catch {}
         }
 
@@ -6013,6 +6637,12 @@
             try {
                 const res = await fetch('/api/me');
                 currentUser = await res.json();
+
+                if (!currentUser.paid && !currentUser.paymentFailed) {
+                    window.location.href = '/upgrade';
+                    return;
+                }
+
                 if (currentUser.name) {
                     updateUserUI();
                     document.getElementById('modalTitle').textContent = `We wrote these for you, ${currentUser.name.split(' ')[0]}!`;
@@ -6218,7 +6848,7 @@
         }
 
         // Page navigation
-        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', inspiration: 'Inspiration', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', discover: 'Discover', mentions: 'Mentions', engagelists: 'Lists', engagereplies: 'Replies', autoengage: 'Auto-Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports' };
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', inspiration: 'Inspiration', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', discover: 'Discover', mentions: 'Mentions', engagelists: 'Lists', engagereplies: 'Replies', autoengage: 'Auto-Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages' };
 
         function showPage(page, updateHash) {
             if (!document.getElementById('page-' + page)) page = 'home';
@@ -6245,6 +6875,7 @@
             if (page === 'teammembers') loadTeamMembers();
             if (page === 'sharedqueue') loadSharedQueue();
             if (page === 'reports') loadReports();
+            if (page === 'dms') loadDms();
         }
 
         function getPageFromHash() {

@@ -1812,8 +1812,16 @@
             e.preventDefault();
             try {
                 await fetch('/api/onboarding/complete', { method: 'POST' });
-            } catch {}
-            window.location.href = '/app';
+                const res = await fetch('/api/me');
+                const user = await res.json();
+                if (user.paid) {
+                    window.location.href = '/app';
+                } else {
+                    window.location.href = '/upgrade';
+                }
+            } catch {
+                window.location.href = '/upgrade';
+            }
         }
 
         renderPost();

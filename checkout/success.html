@@ -96,8 +96,8 @@
             <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
         </div>
         <h1>You're all set!</h1>
-        <p>Your 3-day free trial has started. Let's set up your workspace so SuperLinkedIn can work its magic.</p>
-        <a href="/onboarding" class="btn">Start Setup &rarr;</a>
+        <p>Your 3-day free trial has started. Let's get you into your workspace!</p>
+        <a href="/app" class="btn" id="continueBtn">Go to Dashboard &rarr;</a>
     </div>
     <script>
         const params = new URLSearchParams(window.location.search);
@@ -121,8 +121,13 @@
 
             const r = await fetch('/api/me');
             const user = await r.json();
+            const btn = document.getElementById('continueBtn');
             if (user.onboardingComplete) {
-                window.location.href = '/app';
+                btn.href = '/app';
+                btn.textContent = 'Go to Dashboard \u2192';
+            } else {
+                btn.href = '/onboarding';
+                btn.textContent = 'Start Setup \u2192';
             }
         }
 

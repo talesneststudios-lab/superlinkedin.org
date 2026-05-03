@@ -280,7 +280,15 @@
             }
         }
 
-        if (data.followers !== undefined || (data.posts && data.posts.length > 0) || data.dashboardStats) {
+        if (url.includes('/messaging')) {
+            const dmData = scrapeMessaging();
+            if (dmData && dmData.conversations.length > 0) {
+                data.dms = dmData;
+                console.log('[SuperLinkedIn] DM data scraped:', dmData.conversations.length, 'conversations');
+            }
+        }
+
+        if (data.followers !== undefined || (data.posts && data.posts.length > 0) || data.dashboardStats || data.dms) {
             console.log('[SuperLinkedIn] Scraped data:', JSON.stringify(data.dashboardStats || {}), 'posts:', (data.posts || []).length);
             sendToBackground(data);
         } else {
@@ -680,10 +688,98 @@
         `).join('');
     }
 
+    // ── DM Scraper ──
+    function scrapeMessaging() {
+        const conversations = [];
+        const convItems = document.querySelectorAll('.msg-conversation-listitem, .msg-conversations-container__convo-item, li.msg-conversation-card');
+        convItems.forEach((el, i) => {
+            const nameEl = el.querySelector('.msg-conversation-listitem__participant-names, .msg-conversation-card__participant-names, .msg-s-event-listitem__name, [data-control-name="overlay.view_profile"]');
+            const previewEl = el.querySelector('.msg-conversation-listitem__message-snippet, .msg-conversation-card__message-snippet, .msg-conversation-card__message-snippet-body');
+            const timeEl = el.querySelector('.msg-conversation-listitem__time-stamp, .msg-conversation-card__time-stamp, time');
+            const unread = el.classList.contains('msg-conversation-listitem--unread') || el.querySelector('.msg-conversation-card__unread-count') !== null;
+
+            const name = nameEl ? nameEl.textContent.trim() : '';
+            const preview = previewEl ? previewEl.textContent.trim() : '';
+            const time = timeEl ? (timeEl.getAttribute('datetime') || timeEl.textContent.trim()) : '';
+
+            if (name) {
+                conversations.push({
+                    id: 'dm-' + i + '-' + name.replace(/\s+/g, '-').toLowerCase().substring(0, 30),
+                    participantName: name,
+                    lastMessage: preview.substring(0, 200),
+                    lastMessageAt: time,
+                    unread: unread,
+                });
+            }
+        });
+
+        // Scrape active thread messages
+        let activeMessages = [];
+        const msgContainer = document.querySelector('.msg-s-message-list-content, .msg-s-message-list, .msg-messages-container');
+        if (msgContainer) {
+            const msgEls = msgContainer.querySelectorAll('.msg-s-event-listitem, .msg-s-message-group, .msg-s-event-listitem__message-bubble');
+            msgEls.forEach(el => {
+                const senderEl = el.querySelector('.msg-s-event-listitem__name, .msg-s-message-group__name, .msg-sender-name');
+                const bodyEl = el.querySelector('.msg-s-event-listitem__body, .msg-s-message-group__body, .msg-s-event__content');
+                const timeEl = el.querySelector('time, .msg-s-message-group__timestamp');
+
+                const sender = senderEl ? senderEl.textContent.trim() : '';
+                const body = bodyEl ? bodyEl.textContent.trim() : '';
+                const time = timeEl ? (timeEl.getAttribute('datetime') || timeEl.textContent.trim()) : '';
+
+                if (body) {
+                    activeMessages.push({ sender, text: body.substring(0, 500), timestamp: time });
+                }
+            });
+        }
+
+        // Try to identify active conversation
+        const headerName = document.querySelector('.msg-overlay-bubble-header__title, .msg-thread__link-to-profile, .msg-entity-lockup__entity-title');
+        const activeConvName = headerName ? headerName.textContent.trim() : '';
+
+        console.log('[SuperLinkedIn] DM scrape: ', conversations.length, 'conversations,', activeMessages.length, 'messages in active thread');
+
+        return {
+            conversations,
+            activeThread: activeMessages.length > 0 ? { participantName: activeConvName, messages: activeMessages } : null,
+        };
+    }
+
+    function sendDmReply(recipientName, text) {
+        try {
+            const input = document.querySelector('.msg-form__contenteditable, .msg-form__message-texteditor [contenteditable="true"]');
+            if (!input) return { success: false, error: 'Message input not found. Open a conversation first.' };
+
+            input.focus();
+            input.innerHTML = '';
+            const p = document.createElement('p');
+            p.textContent = text;
+            input.appendChild(p);
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+
+            setTimeout(() => {
+                const sendBtn = document.querySelector('.msg-form__send-button, button[type="submit"].msg-form__send-btn');
+                if (sendBtn && !sendBtn.disabled) {
+                    sendBtn.click();
+                    console.log('[SuperLinkedIn] DM reply sent to', recipientName);
+                }
+            }, 300);
+
+            return { success: true };
+        } catch (err) {
+            return { success: false, error: err.message };
+        }
+    }
+
     // ── Message listener for popup commands ──
-    chrome.runtime.onMessage.addListener((msg) => {
+    chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (msg.type === 'TOGGLE_SIDEBAR') {
             toggleSidebar();
+        }
+        if (msg.type === 'DM_SEND_REPLY') {
+            const result = sendDmReply(msg.recipientName, msg.text);
+            sendResponse(result);
+            return true;
         }
     });
 

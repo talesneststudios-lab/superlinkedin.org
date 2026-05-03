@@ -1,7 +1,7 @@
 const API_BASE = 'https://rwz9r5zqtw.us-east-1.awsapprunner.com';
 const SYNC_ALARM = 'superlinkedin-sync';
 
-let pendingData = { followers: null, posts: [], profile: null, dashboardStats: null };
+let pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'ANALYTICS_DATA') {
@@ -40,6 +40,21 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         getAnalyticsSummary().then(sendResponse);
         return true;
     }
+
+    if (msg.type === 'DM_SEND_REPLY') {
+        chrome.tabs.query({ url: '*://*.linkedin.com/messaging/*' }, (tabs) => {
+            if (tabs.length > 0) {
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    type: 'DM_SEND_REPLY',
+                    recipientName: msg.recipientName,
+                    text: msg.text,
+                }, sendResponse);
+            } else {
+                sendResponse({ success: false, error: 'No LinkedIn messaging tab open. Please open LinkedIn messaging first.' });
+            }
+        });
+        return true;
+    }
 });
 
 function mergeData(payload) {
@@ -63,6 +78,9 @@ function mergeData(payload) {
     }
     if (payload.dashboardStats) {
         pendingData.dashboardStats = { ...(pendingData.dashboardStats || {}), ...payload.dashboardStats };
+    }
+    if (payload.dms) {
+        pendingData.dms = payload.dms;
     }
 }
 
@@ -97,9 +115,10 @@ async function syncToServer() {
         posts: pendingData.posts.slice(),
         profile: pendingData.profile,
         dashboardStats: pendingData.dashboardStats,
+        dms: pendingData.dms,
     };
 
-    if (dataToSend.followers === null && dataToSend.posts.length === 0 && !dataToSend.dashboardStats) {
+    if (dataToSend.followers === null && dataToSend.posts.length === 0 && !dataToSend.dashboardStats && !dataToSend.dms) {
         return { ok: true, message: 'Nothing to sync' };
     }
 
@@ -117,7 +136,7 @@ async function syncToServer() {
         console.log('[SuperLinkedIn] Sync response:', res.status, JSON.stringify(result));
 
         if (res.ok) {
-            pendingData = { followers: null, posts: [], profile: null, dashboardStats: null };
+            pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null };
             const now = new Date().toISOString();
             await chrome.storage.local.set({ lastSync: now });
             return { ok: true, syncedAt: now };
