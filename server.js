@@ -501,6 +501,7 @@ app.get('/auth/linkedin/callback', async (req, res) => {
                 name: profile.name,
                 email: profile.email,
                 picture: profile.picture,
+                accessToken: accessToken,
                 paid: false,
                 createdAt: new Date().toISOString(),
             });
@@ -509,6 +510,7 @@ app.get('/auth/linkedin/callback', async (req, res) => {
                 name: profile.name,
                 email: profile.email,
                 picture: profile.picture,
+                accessToken: accessToken,
             });
         }
 
@@ -2346,6 +2348,41 @@ app.get('/api/auth/status', (req, res) => {
 
 // ---------- POST SCHEDULER ----------
 
+async function publishToLinkedIn(accessToken, linkedinId, text, audience) {
+    const personUrn = `urn:li:person:${linkedinId}`;
+    const visibility = audience === 'connections' ? 'CONNECTIONS' : 'PUBLIC';
+
+    const response = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify({
+            author: personUrn,
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+                'com.linkedin.ugc.ShareContent': {
+                    shareCommentary: { text: text.trim() },
+                    shareMediaCategory: 'NONE',
+                },
+            },
+            visibility: {
+                'com.linkedin.ugc.MemberNetworkVisibility': visibility,
+            },
+        }),
+    });
+
+    if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`LinkedIn API ${response.status}: ${errText}`);
+    }
+
+    const data = await response.json();
+    return data.id || null;
+}
+
 async function processScheduledPosts() {
     try {
         const now = new Date();
@@ -2360,10 +2397,30 @@ async function processScheduledPosts() {
                 if (item.status !== 'scheduled' || !item.scheduledFor) continue;
                 const scheduledTime = new Date(item.scheduledFor);
                 if (scheduledTime <= now) {
-                    item.status = 'posted';
-                    item.postedAt = now.toISOString();
+                    const token = user.accessToken;
+                    if (!token) {
+                        item.status = 'failed';
+                        item.error = 'No access token. User needs to sign in again.';
+                        item.failedAt = now.toISOString();
+                        changed = true;
+                        console.error(`[Scheduler] No access token for user ${user.linkedinId}, marking as failed`);
+                        continue;
+                    }
+
+                    try {
+                        const postId = await publishToLinkedIn(token, user.linkedinId, item.text, item.audience || 'public');
+                        item.status = 'posted';
+                        item.postedAt = now.toISOString();
+                        item.postId = postId;
+                        item.postUrl = postId ? `https://www.linkedin.com/feed/update/${postId}/` : null;
+                        console.log(`[Scheduler] Successfully published post for ${user.linkedinId}: ${postId}`);
+                    } catch (pubErr) {
+                        item.status = 'failed';
+                        item.error = pubErr.message;
+                        item.failedAt = now.toISOString();
+                        console.error(`[Scheduler] Failed to publish for ${user.linkedinId}: ${pubErr.message}`);
+                    }
                     changed = true;
-                    console.log(`[Scheduler] Posted queued item for user ${user.linkedinId} scheduled at ${item.scheduledFor}`);
                 }
             }
 

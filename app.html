@@ -5437,11 +5437,20 @@
 
             list.innerHTML = '<div class="card" style="padding:0;">' + items.map((q) => {
                 const realIdx = queue.indexOf(q);
+                let metaHtml = `${q.status.charAt(0).toUpperCase() + q.status.slice(1)} &middot; ${q.date || 'Just now'}`;
+                if (q.status === 'posted' && q.postedAt) {
+                    metaHtml = `Posted &middot; ${new Date(q.postedAt).toLocaleDateString(undefined, {month:'short',day:'numeric'})} ${new Date(q.postedAt).toLocaleTimeString(undefined, {hour:'2-digit',minute:'2-digit'})}`;
+                    if (q.postUrl) metaHtml += ` &middot; <a href="${q.postUrl}" target="_blank" style="color:var(--orange);">View on LinkedIn</a>`;
+                }
+                if (q.status === 'failed') {
+                    metaHtml = `<span style="color:var(--red);">Failed</span> &middot; ${q.failedAt ? new Date(q.failedAt).toLocaleTimeString(undefined, {hour:'2-digit',minute:'2-digit'}) : 'Unknown'}`;
+                    if (q.error) metaHtml += ` &middot; <span style="color:var(--text-muted);font-size:0.72rem;">${q.error.substring(0,80)}</span>`;
+                }
                 return `<div class="queue-item">
                     <div class="queue-item-status ${q.status}"></div>
                     <div class="queue-item-content">
                         <div class="queue-item-text">${q.text}</div>
-                        <div class="queue-item-meta">${q.status.charAt(0).toUpperCase() + q.status.slice(1)} &middot; ${q.date || 'Just now'}</div>
+                        <div class="queue-item-meta">${metaHtml}</div>
                     </div>
                     <button class="queue-slot-expand" onclick="event.stopPropagation();openQueuePreview(${realIdx})" title="View full post" style="align-self:center;">&#8943;</button>
                 </div>`;
