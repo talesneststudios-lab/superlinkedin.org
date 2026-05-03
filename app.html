@@ -3458,9 +3458,6 @@
             <a class="nav-item nav-sub-item" data-page="readytopost" onclick="showPage('readytopost')">
                 <span class="nav-icon">&#9997;</span> <span>Ready to Post</span>
             </a>
-            <a class="nav-item nav-sub-item" data-page="inspiration" onclick="showPage('inspiration')">
-                <span class="nav-icon">&#128161;</span> <span>Inspiration</span>
-            </a>
             <a class="nav-item nav-sub-item" data-page="virallibrary" onclick="navGated('viral_library','virallibrary')">
                 <span class="nav-icon">&#128293;</span> <span>Viral Library</span> <span class="nav-lock-icon" data-gate="viral_library">&#128274;</span>
             </a>
@@ -3477,9 +3474,6 @@
             </a>
             <a class="nav-item nav-sub-item" data-page="mentions" onclick="navGated('engage_engine','mentions')">
                 <span class="nav-icon">&#128172;</span> <span>Mentions</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
-            </a>
-            <a class="nav-item nav-sub-item" data-page="engagelists" onclick="navGated('engage_engine','engagelists')">
-                <span class="nav-icon">&#128203;</span> <span>Lists</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
             </a>
             <a class="nav-item nav-sub-item" data-page="engagereplies" onclick="navGated('engage_engine','engagereplies')">
                 <span class="nav-icon">&#128172;</span> <span>Replies</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
@@ -6840,7 +6834,7 @@
         }
 
         // Page navigation
-        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', inspiration: 'Inspiration', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', discover: 'Discover', mentions: 'Mentions', engagelists: 'Lists', engagereplies: 'Replies', autoengage: 'Auto-Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages' };
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', discover: 'Discover', mentions: 'Mentions', engagelists: 'Lists', engagereplies: 'Replies', autoengage: 'Auto-Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages' };
 
         function showPage(page, updateHash) {
             if (!document.getElementById('page-' + page)) page = 'home';
