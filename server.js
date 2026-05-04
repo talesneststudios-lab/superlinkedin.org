@@ -2524,7 +2524,7 @@ app.post('/api/extension/auth', async (req, res) => {
     global._tokenCache[token] = user.linkedinId;
 
     console.log(`[Extension Auth] Success for ${user.name} (${user.linkedinId})`);
-    res.json({ token, name: user.name, plan: user.planTier || user.plan || 'Pro' });
+    res.json({ token, name: user.name, linkedinId: user.linkedinId, plan: user.planTier || user.plan || 'Pro' });
 });
 
 async function authExtension(req, res, next) {
@@ -2636,6 +2636,19 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
             } else {
                 updates.analyticsEngagement.impressions = dashboardStats.postImpressions;
             }
+        }
+
+        if (dashboardStats.followers && !updates.analyticsFollowersHistory) {
+            updates.analyticsFollowers = dashboardStats.followers;
+            const history = (user && user.analyticsFollowersHistory) || [];
+            const lastEntry = history[history.length - 1];
+            if (!lastEntry || lastEntry.date !== today) {
+                history.push({ date: today, count: dashboardStats.followers });
+                if (history.length > 365) history.splice(0, history.length - 365);
+            } else {
+                lastEntry.count = dashboardStats.followers;
+            }
+            updates.analyticsFollowersHistory = history;
         }
     }
 

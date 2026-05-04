@@ -3563,7 +3563,7 @@
                     <a class="sidebar-user-menu-item" onclick="showPage('settings');document.querySelector('.sidebar-user').classList.remove('menu-open')">
                         <span class="menu-icon">&#9881;</span> Account Settings
                     </a>
-                    <a class="sidebar-user-menu-item" href="https://chromewebstore.google.com/detail/superlinkedin" target="_blank" rel="noopener">
+                    <a class="sidebar-user-menu-item" href="https://chromewebstore.google.com/detail/superlinkedin/cnfplhhdohdnmnbajindhokfpanmfblc" target="_blank" rel="noopener">
                         <span class="menu-icon">&#128268;</span> Chrome Extension
                     </a>
                     <a class="sidebar-user-menu-item" onclick="showAddAccountModal()" style="color:#f97316;">
@@ -3622,7 +3622,7 @@
                         <span class="home-mission-reward" id="missionRewardPost">+50 free credits</span>
                     </div>
 
-                    <div class="home-mission" id="mission-extension" onclick="window.open('https://chromewebstore.google.com/detail/superlinkedin','_blank')">
+                    <div class="home-mission" id="mission-extension" onclick="window.open('https://chromewebstore.google.com/detail/superlinkedin/cnfplhhdohdnmnbajindhokfpanmfblc','_blank')">
                         <div class="home-mission-check" id="missionCheckExtension">&#9898;</div>
                         <div class="home-mission-text">
                             <strong id="missionTextExtension">Connect Chrome Extension</strong>
@@ -3722,7 +3722,7 @@
                         <div style="font-weight:800;font-size:0.95rem;margin-bottom:4px;">Connect the SuperLinkedIn Extension</div>
                         <div style="font-size:0.78rem;opacity:0.85;line-height:1.5;">Install the Chrome extension and browse LinkedIn to automatically collect your analytics — followers, impressions, engagement, and more.</div>
                     </div>
-                    <a href="https://chromewebstore.google.com/detail/superlinkedin" target="_blank" style="padding:8px 20px;background:rgba(255,255,255,0.2);color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:0.82rem;white-space:nowrap;">Get Extension</a>
+                    <a href="https://chromewebstore.google.com/detail/superlinkedin/cnfplhhdohdnmnbajindhokfpanmfblc" target="_blank" style="padding:8px 20px;background:rgba(255,255,255,0.2);color:#fff;border-radius:8px;text-decoration:none;font-weight:700;font-size:0.82rem;white-space:nowrap;">Get Extension</a>
                 </div>
 
                 <!-- Top Stats -->
@@ -7445,6 +7445,21 @@
             }
 
             const recent = history.slice(-30);
+
+            if (recent.length === 1) {
+                const today = new Date();
+                const entry = recent[0];
+                const padded = [];
+                for (let i = 6; i >= 1; i--) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - i);
+                    padded.push({ date: d.toISOString().split('T')[0], count: 0 });
+                }
+                padded.push(entry);
+                recent.length = 0;
+                padded.forEach(p => recent.push(p));
+            }
+
             labels.innerHTML = recent.filter((_, i) => i % Math.max(1, Math.floor(recent.length / 6)) === 0)
                 .map(h => `<span>${h.date.slice(5)}</span>`).join('');
 
@@ -7452,19 +7467,20 @@
             const h = svg.clientHeight || 160;
             const counts = recent.map(r => r.count);
             const maxC = Math.max(...counts, 1);
-            const minC = Math.min(...counts, 0);
-            const range = maxC - minC || 1;
+            const minC = Math.min(...counts);
+            const range = maxC - minC > 0 ? maxC - minC : maxC || 1;
+            const chartMinC = maxC === minC ? 0 : minC;
 
             const chartPts = counts.map((c, i) => {
                 const x = (i / Math.max(counts.length - 1, 1)) * w;
-                const y = h - ((c - minC) / range) * (h - 10) - 5;
+                const y = h - ((c - chartMinC) / range) * (h - 20) - 10;
                 return `${x},${y}`;
             });
             line.setAttribute('points', chartPts.join(' '));
 
             const yLabels = document.querySelector('.chart-y-labels');
             if (yLabels) {
-                yLabels.innerHTML = `<span>${maxC}</span><span>${Math.round((maxC + minC) / 2)}</span><span>${minC}</span>`;
+                yLabels.innerHTML = `<span>${maxC}</span><span>${Math.round(maxC / 2)}</span><span>0</span>`;
             }
         }
 

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SuperLinkedIn Ad Image</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #222;
+            font-family: 'Inter', sans-serif;
+        }
+        .instructions {
+            color: #aaa;
+            font-size: 14px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .instructions strong { color: #fff; }
+        .ad-container {
+            width: 1200px;
+            height: 627px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+        .bg-image {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(8, 47, 94, 0.88) 0%, rgba(10, 102, 194, 0.75) 50%, rgba(5, 30, 62, 0.9) 100%);
+        }
+        .content {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            padding: 0 80px;
+            z-index: 2;
+        }
+        .text-side {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .logo-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 8px;
+        }
+        .logo-icon {
+            width: 48px; height: 48px;
+            background: rgba(255,255,255,0.15);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 18px;
+            color: #fff;
+        }
+        .logo-text {
+            font-size: 22px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.02em;
+        }
+        .main-headline {
+            font-size: 56px;
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+        }
+        .main-headline .highlight {
+            color: #70B5F9;
+        }
+        .subtext {
+            font-size: 22px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.85);
+            line-height: 1.5;
+        }
+        .cta-row {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 8px;
+        }
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 16px 36px;
+            background: #fff;
+            color: #0A66C2;
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 18px;
+            border: none;
+            border-radius: 50px;
+        }
+        .trial-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 22px;
+            background: rgba(255,255,255,0.12);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50px;
+            color: #fff;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        .features-col {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-top: 4px;
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 17px;
+            color: rgba(255,255,255,0.9);
+            font-weight: 600;
+        }
+        .feature-check {
+            width: 26px; height: 26px;
+            background: rgba(112, 181, 249, 0.25);
+            border: 2px solid #70B5F9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #70B5F9;
+            font-size: 14px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .screenshot-side {
+            flex: 0 0 420px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .screenshot-mock {
+            width: 400px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 16px;
+            padding: 16px;
+            backdrop-filter: blur(4px);
+        }
+        .mock-header {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+        .mock-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+        }
+        .mock-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .mock-bar {
+            height: 10px;
+            border-radius: 5px;
+        }
+        .mock-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+        .mock-cell {
+            height: 50px;
+            border-radius: 8px;
+            border: 1px solid rgba(112,181,249,0.15);
+        }
+        .mock-card {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 8px;
+        }
+        .mock-card-line {
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <strong>Right-click the image below → "Save image as..." to download it at 1200x627.</strong><br>
+        Or press F12 → select the .ad-container element → right-click → "Capture node screenshot"
+    </div>
+
+    <div class="ad-container">
+        <div class="overlay"></div>
+        <div class="content">
+            <div class="text-side">
+                <div class="logo-row">
+                    <div class="logo-icon">SL</div>
+                    <span class="logo-text">SuperLinkedIn</span>
+                </div>
+
+                <div class="main-headline">
+                    Grow Your LinkedIn<br>on <span class="highlight">Autopilot</span>
+                </div>
+
+                <div class="features-col">
+                    <div class="feature-item">
+                        <div class="feature-check">&#10003;</div>
+                        AI writes posts in your voice
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-check">&#10003;</div>
+                        Schedule & auto-publish
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-check">&#10003;</div>
+                        Analytics that actually work
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-check">&#10003;</div>
+                        Carousel creator & DM manager
+                    </div>
+                </div>
+
+                <div class="cta-row">
+                    <div class="cta-btn">Start Free Trial &rarr;</div>
+                    <div class="trial-badge">&#9889; 3-Day Free Trial</div>
+                </div>
+            </div>
+
+            <div class="screenshot-side">
+                <div class="screenshot-mock">
+                    <div class="mock-header">
+                        <div class="mock-dot" style="background:#ef4444;"></div>
+                        <div class="mock-dot" style="background:#f59e0b;"></div>
+                        <div class="mock-dot" style="background:#22c55e;"></div>
+                    </div>
+                    <div class="mock-row">
+                        <div class="mock-bar" style="width:50%;background:rgba(112,181,249,0.3);"></div>
+                        <div class="mock-bar" style="width:30%;background:rgba(255,255,255,0.1);"></div>
+                    </div>
+                    <div class="mock-grid">
+                        <div class="mock-cell" style="background:rgba(112,181,249,0.08);"></div>
+                        <div class="mock-cell" style="background:rgba(112,181,249,0.12);"></div>
+                        <div class="mock-cell" style="background:rgba(112,181,249,0.08);"></div>
+                    </div>
+                    <div class="mock-card">
+                        <div class="mock-card-line" style="width:80%;background:rgba(255,255,255,0.15);"></div>
+                        <div class="mock-card-line" style="width:60%;background:rgba(255,255,255,0.08);"></div>
+                        <div class="mock-card-line" style="width:70%;background:rgba(112,181,249,0.2);"></div>
+                    </div>
+                    <div class="mock-card">
+                        <div class="mock-card-line" style="width:70%;background:rgba(255,255,255,0.15);"></div>
+                        <div class="mock-card-line" style="width:90%;background:rgba(255,255,255,0.08);"></div>
+                    </div>
+                    <div class="mock-row">
+                        <div class="mock-bar" style="width:40%;background:rgba(34,197,94,0.25);"></div>
+                        <div class="mock-bar" style="width:25%;background:rgba(112,181,249,0.2);"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

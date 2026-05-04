@@ -127,6 +127,47 @@
         };
     }
 
+    function isOwnProfileByDOM() {
+        const ownIndicators = [
+            'button[aria-label*="Edit intro"]',
+            'button[aria-label*="Edit profile"]',
+            'button[aria-label*="Open to"]',
+            '.pv-top-card--edit',
+            '#profile-edit-btn',
+            'a[href*="/in/me/"]',
+            '.profile-edit-btn',
+            'button[aria-label*="Add profile section"]',
+            '.pv-dashboard-section',
+            '.creator-mode-toggle',
+        ];
+        for (const sel of ownIndicators) {
+            if (document.querySelector(sel)) return true;
+        }
+        const bodyText = document.body.innerText || '';
+        if (/\bEdit (public )?profile\b/i.test(bodyText) && /\bOpen to\b/i.test(bodyText)) return true;
+        return false;
+    }
+
+    async function isOwnProfile() {
+        if (isOwnProfileByDOM()) return true;
+
+        try {
+            const { ownerName } = await chrome.storage.local.get('ownerName');
+            if (ownerName) {
+                const pageProfile = scrapeProfileInfo();
+                if (pageProfile.name && ownerName) {
+                    const pageName = pageProfile.name.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+                    const storedName = ownerName.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+                    if (pageName && storedName && pageName === storedName) return true;
+                }
+            }
+        } catch (e) {
+            console.log('[SuperLinkedIn] Could not check owner name:', e.message);
+        }
+
+        return false;
+    }
+
     function sendToBackground(data) {
         chrome.runtime.sendMessage({ type: 'ANALYTICS_DATA', payload: data });
     }
@@ -236,24 +277,30 @@
         return Object.keys(stats).length > 0 ? stats : null;
     }
 
-    function runScrape(retryCount) {
+    async function runScrape(retryCount) {
         retryCount = retryCount || 0;
         const url = window.location.href;
         const data = { url, timestamp: new Date().toISOString() };
 
         if (url.includes('/in/')) {
-            const followers = scrapeFollowers();
-            if (followers !== null) {
-                data.followers = followers;
-                sidebarData.followers = followers;
-            }
-            const profile = scrapeProfileInfo();
-            data.profile = profile;
+            const ownProfile = await isOwnProfile();
+            if (ownProfile) {
+                const followers = scrapeFollowers();
+                if (followers !== null) {
+                    data.followers = followers;
+                    sidebarData.followers = followers;
+                }
+                const profile = scrapeProfileInfo();
+                data.profile = profile;
 
-            const dashboardStats = scrapeAnalyticsDashboard();
-            if (dashboardStats) {
-                data.dashboardStats = dashboardStats;
-                if (dashboardStats.followers) sidebarData.followers = dashboardStats.followers;
+                const dashboardStats = scrapeAnalyticsDashboard();
+                if (dashboardStats) {
+                    data.dashboardStats = dashboardStats;
+                    if (dashboardStats.followers) sidebarData.followers = dashboardStats.followers;
+                }
+                console.log('[SuperLinkedIn] Own profile detected, scraping followers & stats');
+            } else {
+                console.log('[SuperLinkedIn] Visiting another profile, skipping follower/stats sync');
             }
         }
 
@@ -272,7 +319,8 @@
             }
         }
 
-        if (url.includes('/feed') || url.includes('/in/') || url.includes('/posts/')) {
+        const shouldScrapePosts = url.includes('/feed') || url.includes('/posts/') || (url.includes('/in/') && data.profile);
+        if (shouldScrapePosts) {
             const posts = scrapePostMetrics();
             if (posts.length > 0) {
                 data.posts = posts;
@@ -324,6 +372,7 @@
 
         const toggle = document.createElement('button');
         toggle.id = 'sl-toggle-btn';
+        toggle.title = 'SuperLinkedIn';
         toggle.innerHTML = '<span class="sl-toggle-text">SL</span>';
         toggle.addEventListener('click', () => toggleSidebar());
         document.body.appendChild(toggle);
@@ -501,6 +550,7 @@
         sidebarOpen = !sidebarOpen;
         sb.classList.toggle('open', sidebarOpen);
         toggle.classList.toggle('shifted', sidebarOpen);
+        toggle.classList.toggle('active', sidebarOpen);
         if (sidebarOpen) updateSidebarUI();
     }
 

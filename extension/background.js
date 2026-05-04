@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     if (msg.type === 'LOGOUT') {
-        chrome.storage.local.remove(['authToken', 'lastSync', 'userName', 'plan']);
+        chrome.storage.local.remove(['authToken', 'lastSync', 'userName', 'plan', 'ownerLinkedinId', 'ownerName']);
         sendResponse({ ok: true });
     }
 
@@ -96,6 +96,8 @@ async function login(email, linkedinId) {
             await chrome.storage.local.set({
                 authToken: data.token,
                 userName: data.name || email,
+                ownerLinkedinId: data.linkedinId || '',
+                ownerName: data.name || '',
                 plan: data.plan || 'Pro',
             });
             return { ok: true, name: data.name };
