@@ -4112,17 +4112,47 @@
                     <!-- Team Tab -->
                     <div class="settings-panel" id="settingsTeam" style="display:none;">
                         <div class="card" style="padding:24px;">
-                            <h3 style="font-size:0.95rem;font-weight:700;margin-bottom:8px;">Team Members</h3>
-                            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px;">Manage who has access to your SuperLinkedIn workspace.</p>
-                            <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;">
-                                <div id="teamOwnerAvatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#70B5F9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.75rem;overflow:hidden;"></div>
-                                <div style="flex:1;">
-                                    <div id="teamOwnerName" style="font-weight:600;font-size:0.85rem;">You</div>
-                                    <div id="teamOwnerEmail" style="font-size:0.75rem;color:var(--text-muted);">owner</div>
-                                </div>
-                                <span style="font-size:0.72rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.5px;">Owner</span>
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                                <h3 style="font-size:0.95rem;font-weight:700;">Team Members</h3>
+                                <span id="teamSlotsBadge" style="font-size:0.72rem;font-weight:700;color:var(--accent);background:rgba(10,102,194,0.08);padding:4px 12px;border-radius:20px;"></span>
                             </div>
-                            <button style="padding:10px 20px;background:rgba(10,102,194,0.08);color:var(--accent);border:1px solid rgba(10,102,194,0.2);border-radius:8px;font-family:inherit;font-weight:600;font-size:0.82rem;cursor:pointer;">+ Invite Team Member</button>
+                            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px;">Manage who has access to your SuperLinkedIn workspace.</p>
+
+                            <div id="settingsTeamList"></div>
+
+                            <button onclick="openTeamInviteModal()" style="padding:10px 20px;background:rgba(10,102,194,0.08);color:var(--accent);border:1px solid rgba(10,102,194,0.2);border-radius:8px;font-family:inherit;font-weight:600;font-size:0.82rem;cursor:pointer;margin-top:12px;">+ Invite Team Member</button>
+                        </div>
+                    </div>
+
+                    <!-- Team Invite Modal -->
+                    <div id="teamInviteModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10001;align-items:center;justify-content:center;">
+                        <div style="background:var(--bg-card);border-radius:16px;padding:28px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+                                <h3 style="font-size:1rem;font-weight:800;">Invite Team Member</h3>
+                                <button onclick="closeTeamInviteModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted);">&times;</button>
+                            </div>
+                            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px;">Send an invite to a team member. They'll receive a link to join your workspace via LinkedIn.</p>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">Email Address</label>
+                                <input id="settingsInviteEmail" type="email" placeholder="colleague@company.com" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-secondary);color:var(--text-primary);box-sizing:border-box;">
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">Role</label>
+                                <select id="settingsInviteRole" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-secondary);color:var(--text-primary);">
+                                    <option value="editor">Editor &mdash; Can create & schedule posts</option>
+                                    <option value="viewer">Viewer &mdash; Read-only access</option>
+                                    <option value="admin">Admin &mdash; Full access</option>
+                                </select>
+                            </div>
+                            <div id="teamInviteResult" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;">
+                                <div style="font-size:0.78rem;font-weight:600;color:#16a34a;margin-bottom:4px;">Invite link created!</div>
+                                <input id="teamInviteLinkField" type="text" readonly style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.75rem;background:var(--bg-secondary);color:var(--text-primary);box-sizing:border-box;" onclick="this.select();">
+                                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Share this link with the invitee to join your workspace.</div>
+                            </div>
+                            <div style="display:flex;gap:10px;justify-content:flex-end;">
+                                <button onclick="closeTeamInviteModal()" style="padding:10px 20px;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:600;font-size:0.82rem;cursor:pointer;">Cancel</button>
+                                <button id="teamInviteSendBtn" onclick="sendTeamInvite()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;">Send Invite</button>
+                            </div>
                         </div>
                     </div>
 
@@ -6293,6 +6323,114 @@
             btn.classList.add('active');
             btn.style.borderBottomColor = 'var(--accent)';
             btn.style.color = 'var(--text-primary)';
+            if (tab === 'team') loadSettingsTeam();
+        }
+
+        async function loadSettingsTeam() {
+            try {
+                const [profilesRes, membersRes] = await Promise.all([
+                    fetch('/api/profiles'),
+                    fetch('/api/team/members'),
+                ]);
+                const profilesData = profilesRes.ok ? await profilesRes.json() : { profiles: [], maxProfiles: 3 };
+                const membersData = membersRes.ok ? await membersRes.json() : { members: [] };
+                const profiles = profilesData.profiles || [];
+                const max = profilesData.maxProfiles || 3;
+                const tier = (profilesData.planTier || 'pro').toUpperCase();
+                const members = membersData.members || [];
+                const totalUsed = profiles.length + members.filter(m => m.status === 'active').length;
+
+                document.getElementById('teamSlotsBadge').textContent = `${totalUsed} / ${max} slots used (${tier})`;
+
+                const list = document.getElementById('settingsTeamList');
+                let html = '';
+
+                profiles.forEach(p => {
+                    const isOwner = p.linkedinId === profilesData.primaryAccountId;
+                    const initials = (p.name || '??').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                    html += `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#70B5F9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.75rem;overflow:hidden;">${p.picture ? '<img src="'+p.picture+'" style="width:100%;height:100%;object-fit:cover;">' : initials}</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:0.85rem;">${p.name || 'Unknown'}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">${p.email || ''}</div>
+                        </div>
+                        <span style="font-size:0.7rem;font-weight:700;color:${isOwner ? 'var(--accent)' : '#22c55e'};text-transform:uppercase;letter-spacing:0.5px;">${isOwner ? 'Owner' : 'Linked'}</span>
+                    </div>`;
+                });
+
+                members.forEach(m => {
+                    html += `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
+                        <div style="width:36px;height:36px;border-radius:50%;background:var(--bg-card);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.85rem;">&#9993;</div>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:0.85rem;">${m.email}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">${m.role || 'editor'} &middot; ${m.status || 'invited'}</div>
+                        </div>
+                        <button onclick="removeSettingsTeamMember('${m.email}')" style="background:none;border:none;color:#ef4444;font-size:0.78rem;font-weight:600;cursor:pointer;">Remove</button>
+                    </div>`;
+                });
+
+                if (!html) html = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.82rem;">No team members yet.</div>';
+                list.innerHTML = html;
+            } catch {
+                document.getElementById('settingsTeamList').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.82rem;">Could not load team data.</div>';
+            }
+        }
+
+        function openTeamInviteModal() {
+            document.getElementById('teamInviteResult').style.display = 'none';
+            document.getElementById('settingsInviteEmail').value = '';
+            document.getElementById('settingsInviteRole').value = 'editor';
+            document.getElementById('teamInviteSendBtn').disabled = false;
+            document.getElementById('teamInviteSendBtn').textContent = 'Send Invite';
+            document.getElementById('teamInviteModal').style.display = 'flex';
+        }
+
+        function closeTeamInviteModal() {
+            document.getElementById('teamInviteModal').style.display = 'none';
+        }
+
+        async function sendTeamInvite() {
+            const email = document.getElementById('settingsInviteEmail').value.trim();
+            const role = document.getElementById('settingsInviteRole').value;
+            if (!email) { showNotify('Missing Email', 'Please enter an email address.', 'warning'); return; }
+
+            const btn = document.getElementById('teamInviteSendBtn');
+            btn.disabled = true;
+            btn.textContent = 'Sending...';
+
+            try {
+                const res = await fetch('/api/team/invite', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, role }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    document.getElementById('teamInviteResult').style.display = 'block';
+                    document.getElementById('teamInviteLinkField').value = data.inviteLink || '';
+                    btn.textContent = 'Sent!';
+                    showNotify('Invite Sent', `Invitation sent to ${email}`, 'success');
+                    loadSettingsTeam();
+                } else {
+                    btn.disabled = false;
+                    btn.textContent = 'Send Invite';
+                    showNotify('Error', data.error || 'Failed to send invite.', 'error');
+                }
+            } catch {
+                btn.disabled = false;
+                btn.textContent = 'Send Invite';
+                showNotify('Error', 'Failed to send invite.', 'error');
+            }
+        }
+
+        async function removeSettingsTeamMember(email) {
+            try {
+                await fetch('/api/team/members/' + encodeURIComponent(email), { method: 'DELETE' });
+                showNotify('Removed', 'Team member removed.', 'success');
+                loadSettingsTeam();
+            } catch {
+                showNotify('Error', 'Failed to remove member.', 'error');
+            }
         }
 
         let planBilling = 'monthly';

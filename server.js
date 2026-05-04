@@ -3142,7 +3142,6 @@ app.delete('/api/auto-engage/rules/:id', async (req, res) => {
 
 app.get('/api/team/members', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
-    if (!(await hasFeature(req.session, 'team'))) return res.status(403).json({ error: 'Upgrade to Ultra to access Team features.' });
     const primaryId = getPrimaryAccountId(req.session);
     const user = await dbGetUser(primaryId);
     res.json({ members: (user && user.teamMembers) || [] });
@@ -3150,13 +3149,22 @@ app.get('/api/team/members', async (req, res) => {
 
 app.post('/api/team/invite', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
-    if (!(await hasFeature(req.session, 'team'))) return res.status(403).json({ error: 'Upgrade to Ultra.' });
     const { email, role } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required.' });
     const primaryId = getPrimaryAccountId(req.session);
     const user = await dbGetUser(primaryId);
+
+    const tier = (user && user.planTier) || 'pro';
+    const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
+    const linkedProfiles = (user && user.linkedProfiles) || [];
     const members = (user && user.teamMembers) || [];
-    if (members.some(m => m.email === email)) return res.status(400).json({ error: 'Member already invited.' });
+    const totalUsed = linkedProfiles.length + members.length;
+
+    if (totalUsed >= limits.maxProfiles) {
+        return res.status(403).json({ error: `You have reached the ${limits.maxProfiles}-member limit for your ${tier.toUpperCase()} plan. Upgrade to add more.` });
+    }
+
+    if (members.some(m => m.email === email)) return res.status(400).json({ error: 'This email has already been invited.' });
     const inviteCode = crypto.randomBytes(16).toString('hex');
     members.push({ email, role: role || 'editor', status: 'invited', inviteCode, invitedAt: new Date().toISOString() });
     await dbUpdateFields(primaryId, { teamMembers: members });
