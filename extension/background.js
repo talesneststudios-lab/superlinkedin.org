@@ -1,7 +1,7 @@
 const API_BASE = 'https://rwz9r5zqtw.us-east-1.awsapprunner.com';
 const SYNC_ALARM = 'superlinkedin-sync';
 
-let pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null };
+let pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null, feedPosts: [] };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'ANALYTICS_DATA') {
@@ -82,6 +82,19 @@ function mergeData(payload) {
     if (payload.dms) {
         pendingData.dms = payload.dms;
     }
+    if (payload.feedPosts && payload.feedPosts.length > 0) {
+        const existingTexts = new Set(pendingData.feedPosts.map(p => (p.text || '').substring(0, 80).toLowerCase()));
+        payload.feedPosts.forEach(p => {
+            const key = (p.text || '').substring(0, 80).toLowerCase();
+            if (key && !existingTexts.has(key)) {
+                pendingData.feedPosts.push(p);
+                existingTexts.add(key);
+            }
+        });
+        if (pendingData.feedPosts.length > 50) {
+            pendingData.feedPosts = pendingData.feedPosts.slice(-50);
+        }
+    }
 }
 
 async function login(email, linkedinId) {
@@ -118,9 +131,10 @@ async function syncToServer() {
         profile: pendingData.profile,
         dashboardStats: pendingData.dashboardStats,
         dms: pendingData.dms,
+        feedPosts: pendingData.feedPosts.slice(),
     };
 
-    if (dataToSend.followers === null && dataToSend.posts.length === 0 && !dataToSend.dashboardStats && !dataToSend.dms) {
+    if (dataToSend.followers === null && dataToSend.posts.length === 0 && !dataToSend.dashboardStats && !dataToSend.dms && dataToSend.feedPosts.length === 0) {
         return { ok: true, message: 'Nothing to sync' };
     }
 
@@ -138,7 +152,7 @@ async function syncToServer() {
         console.log('[SuperLinkedIn] Sync response:', res.status, JSON.stringify(result));
 
         if (res.ok) {
-            pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null };
+            pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null, feedPosts: [] };
             const now = new Date().toISOString();
             await chrome.storage.local.set({ lastSync: now });
             return { ok: true, syncedAt: now };
