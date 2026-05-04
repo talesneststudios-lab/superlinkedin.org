@@ -172,31 +172,30 @@
 /* ── Toggle Button (fixed top-right) ── */
 #sl-toggle-btn {
     position: fixed; top: 12px; right: 16px;
-    width: 42px; height: 42px;
-    background: linear-gradient(135deg, #0A66C2, #004182);
-    border: 2px solid rgba(255,255,255,0.25);
-    border-radius: 50%;
+    width: 40px; height: 40px;
+    background: linear-gradient(145deg, #5B9BD5, #0A66C2);
+    border: none;
+    border-radius: 10px;
     cursor: pointer; z-index: 99998;
     display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 2px 12px rgba(10,102,194,0.4), 0 1px 3px rgba(0,0,0,0.15);
-    transition: all 0.3s ease;
+    box-shadow: 0 2px 10px rgba(10,102,194,0.35), 0 1px 3px rgba(0,0,0,0.12);
+    transition: all 0.25s ease;
 }
 #sl-toggle-btn:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 18px rgba(10,102,194,0.5), 0 2px 6px rgba(0,0,0,0.2);
+    transform: scale(1.08);
+    box-shadow: 0 4px 16px rgba(10,102,194,0.45), 0 2px 6px rgba(0,0,0,0.18);
 }
 #sl-toggle-btn:active { transform: scale(0.95); }
 #sl-toggle-btn .sl-toggle-text {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 0.85rem; font-weight: 900;
-    color: #fff; letter-spacing: -0.5px;
+    font-size: 0.82rem; font-weight: 900;
+    color: #fff; letter-spacing: -0.3px;
     line-height: 1;
 }
 #sl-toggle-btn.shifted { right: 396px; }
 #sl-toggle-btn.active {
-    background: linear-gradient(135deg, #004182, #0A66C2);
-    border-color: rgba(112,181,249,0.5);
-    box-shadow: 0 0 0 3px rgba(10,102,194,0.2), 0 2px 12px rgba(10,102,194,0.4);
+    background: linear-gradient(145deg, #0A66C2, #5B9BD5);
+    box-shadow: 0 0 0 3px rgba(10,102,194,0.2), 0 2px 10px rgba(10,102,194,0.4);
 }
 
 /* ── Footer ── */

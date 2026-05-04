@@ -3600,7 +3600,6 @@
 
                 <!-- Your first steps -->
                 <div class="home-steps-card" id="homeStepsCard">
-                    <button class="home-steps-close" onclick="document.getElementById('homeStepsCard').style.display='none'">&times;</button>
                     <div class="home-steps-title">Your first steps on SuperLinkedIn</div>
                     <div class="home-steps-sub">Complete these missions to get familiar with the platform and earn free credits.</div>
 
@@ -4124,37 +4123,6 @@
                         </div>
                     </div>
 
-                    <!-- Team Invite Modal -->
-                    <div id="teamInviteModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10001;align-items:center;justify-content:center;">
-                        <div style="background:var(--bg-card);border-radius:16px;padding:28px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
-                                <h3 style="font-size:1rem;font-weight:800;">Invite Team Member</h3>
-                                <button onclick="closeTeamInviteModal()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--text-muted);">&times;</button>
-                            </div>
-                            <p style="font-size:0.82rem;color:var(--text-secondary);margin-bottom:16px;">Send an invite to a team member. They'll receive a link to join your workspace via LinkedIn.</p>
-                            <div style="margin-bottom:12px;">
-                                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">Email Address</label>
-                                <input id="settingsInviteEmail" type="email" placeholder="colleague@company.com" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-secondary);color:var(--text-primary);box-sizing:border-box;">
-                            </div>
-                            <div style="margin-bottom:16px;">
-                                <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:4px;">Role</label>
-                                <select id="settingsInviteRole" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-secondary);color:var(--text-primary);">
-                                    <option value="editor">Editor &mdash; Can create & schedule posts</option>
-                                    <option value="viewer">Viewer &mdash; Read-only access</option>
-                                    <option value="admin">Admin &mdash; Full access</option>
-                                </select>
-                            </div>
-                            <div id="teamInviteResult" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:8px;">
-                                <div style="font-size:0.78rem;font-weight:600;color:#16a34a;margin-bottom:4px;">Invite link created!</div>
-                                <input id="teamInviteLinkField" type="text" readonly style="width:100%;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:0.75rem;background:var(--bg-secondary);color:var(--text-primary);box-sizing:border-box;" onclick="this.select();">
-                                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Share this link with the invitee to join your workspace.</div>
-                            </div>
-                            <div style="display:flex;gap:10px;justify-content:flex-end;">
-                                <button onclick="closeTeamInviteModal()" style="padding:10px 20px;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:600;font-size:0.82rem;cursor:pointer;">Cancel</button>
-                                <button id="teamInviteSendBtn" onclick="sendTeamInvite()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;">Send Invite</button>
-                            </div>
-                        </div>
-                    </div>
 
                     <!-- Plans Tab -->
                     <div class="settings-panel" id="settingsPlans" style="display:none;max-width:900px;">
@@ -5347,6 +5315,39 @@
         </div>
     </div>
 
+    <!-- TEAM INVITE MODAL -->
+    <div class="modal-overlay hidden" id="teamInviteModal" onclick="if(event.target===this)closeTeamInviteModal()">
+        <div class="modal" style="max-width:440px;">
+            <button class="modal-close" onclick="closeTeamInviteModal()">&times;</button>
+            <div style="text-align:center;margin-bottom:20px;">
+                <div style="font-size:2.2rem;margin-bottom:10px;">&#128101;</div>
+                <h2 style="font-size:1.1rem;font-weight:800;margin-bottom:6px;">Invite Team Member</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);">Send an invite to a team member. They'll receive a link to join your workspace via LinkedIn.</p>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Email Address</label>
+                <input id="settingsInviteEmail" type="email" placeholder="colleague@company.com" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;box-sizing:border-box;">
+            </div>
+            <div style="margin-bottom:16px;">
+                <label style="font-size:0.78rem;color:var(--text-muted);display:block;margin-bottom:4px;">Role</label>
+                <select id="settingsInviteRole" style="width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:10px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);">
+                    <option value="editor">Editor &mdash; Can create & schedule posts</option>
+                    <option value="viewer">Viewer &mdash; Read-only access</option>
+                    <option value="admin">Admin &mdash; Full access</option>
+                </select>
+            </div>
+            <div id="teamInviteResult" style="display:none;margin-bottom:12px;padding:12px 14px;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2);border-radius:10px;">
+                <div style="font-size:0.78rem;font-weight:600;color:#16a34a;margin-bottom:4px;">Invite link created!</div>
+                <input id="teamInviteLinkField" type="text" readonly style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.75rem;background:var(--bg-secondary);color:var(--text-primary);box-sizing:border-box;" onclick="this.select();">
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:4px;">Share this link with the invitee to join your workspace.</div>
+            </div>
+            <div style="display:flex;gap:10px;">
+                <button onclick="closeTeamInviteModal()" style="flex:1;padding:14px;background:var(--bg-secondary);color:var(--text-secondary);border:1px solid var(--border);border-radius:10px;font-family:inherit;font-weight:600;font-size:0.88rem;cursor:pointer;">Cancel</button>
+                <button id="teamInviteSendBtn" onclick="sendTeamInvite()" style="flex:1;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.88rem;cursor:pointer;">Send Invite</button>
+            </div>
+        </div>
+    </div>
+
     <!-- CREATE RULE MODAL -->
     <div class="modal-overlay hidden" id="createRuleModal" onclick="if(event.target===this)document.getElementById('createRuleModal').classList.add('hidden')">
         <div class="modal" style="max-width:460px;">
@@ -6382,11 +6383,11 @@
             document.getElementById('settingsInviteRole').value = 'editor';
             document.getElementById('teamInviteSendBtn').disabled = false;
             document.getElementById('teamInviteSendBtn').textContent = 'Send Invite';
-            document.getElementById('teamInviteModal').style.display = 'flex';
+            document.getElementById('teamInviteModal').classList.remove('hidden');
         }
 
         function closeTeamInviteModal() {
-            document.getElementById('teamInviteModal').style.display = 'none';
+            document.getElementById('teamInviteModal').classList.add('hidden');
         }
 
         async function sendTeamInvite() {
@@ -6731,22 +6732,19 @@
             }
         }
 
-        function checkMissions() {
-            const completedMissions = JSON.parse(localStorage.getItem('sl_missions') || '{}');
+        async function checkMissions() {
+            if (currentUser && currentUser.missionsCompleted) {
+                const card = document.getElementById('homeStepsCard');
+                if (card) card.style.display = 'none';
+                return;
+            }
+
+            const completedMissions = {};
+            if (currentUser && currentUser.aboutYou) completedMissions.profile = true;
+            if (queue.some(q => q.status === 'posted')) completedMissions.post = true;
+            if (currentUser && currentUser.analyticsLastSync) completedMissions.extension = true;
+
             let count = 0;
-
-            if (currentUser && currentUser.aboutYou) {
-                completedMissions.profile = true;
-            }
-            if (queue.some(q => q.status === 'posted')) {
-                completedMissions.post = true;
-            }
-            if (currentUser && currentUser.analyticsLastSync) {
-                completedMissions.extension = true;
-            }
-
-            localStorage.setItem('sl_missions', JSON.stringify(completedMissions));
-
             ['profile', 'post', 'extension'].forEach(key => {
                 const check = document.getElementById('missionCheck' + key.charAt(0).toUpperCase() + key.slice(1));
                 const text = document.getElementById('missionText' + key.charAt(0).toUpperCase() + key.slice(1));
@@ -6761,6 +6759,24 @@
 
             const progress = document.getElementById('missionProgress');
             if (progress) progress.textContent = count + ' / 3 completed';
+
+            if (count === 3) {
+                try {
+                    const res = await fetch('/api/me/complete-missions', { method: 'POST' });
+                    const data = await res.json();
+                    if (data.creditsAwarded) {
+                        showNotify('Missions Complete!', `You earned ${data.creditsAwarded} bonus credits!`, 'success');
+                        if (creditsData) {
+                            creditsData.aiCreditsRemaining = (creditsData.aiCreditsRemaining || 0) + data.creditsAwarded;
+                            updateCreditsPopup();
+                        }
+                    }
+                } catch {}
+                setTimeout(() => {
+                    const card = document.getElementById('homeStepsCard');
+                    if (card) card.style.display = 'none';
+                }, 2000);
+            }
         }
 
         async function loadUser() {
@@ -6777,6 +6793,7 @@
                     updateUserUI();
                     document.getElementById('modalTitle').textContent = `We wrote these for you, ${currentUser.name.split(' ')[0]}!`;
                 }
+                modalShownOnce = !!currentUser.suggestedPostsSeen;
                 loadProfiles();
                 loadUserFeatures();
                 checkPaymentStatus();
@@ -7016,14 +7033,14 @@
         window.addEventListener('hashchange', () => showPage(getPageFromHash(), false));
 
         // Modal
-        let modalShownOnce = localStorage.getItem('modalShownOnce') === 'true';
+        let modalShownOnce = true;
 
         function openModal() {
             document.getElementById('aiModal').classList.remove('hidden');
             generateModalPosts();
             if (!modalShownOnce) {
                 modalShownOnce = true;
-                localStorage.setItem('modalShownOnce', 'true');
+                fetch('/api/me/dismiss-suggestions', { method: 'POST' }).catch(() => {});
             }
         }
 

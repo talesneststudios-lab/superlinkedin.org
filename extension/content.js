@@ -333,6 +333,10 @@
             if (dmData && dmData.conversations.length > 0) {
                 data.dms = dmData;
                 console.log('[SuperLinkedIn] DM data scraped:', dmData.conversations.length, 'conversations');
+            } else if (retryCount < 3) {
+                console.log('[SuperLinkedIn] Messaging page detected but no DMs found, retry', retryCount + 1, 'of 3 in 5s...');
+                setTimeout(() => runScrape(retryCount + 1), 5000);
+                return;
             }
         }
 
@@ -741,53 +745,156 @@
     // ── DM Scraper ──
     function scrapeMessaging() {
         const conversations = [];
-        const convItems = document.querySelectorAll('.msg-conversation-listitem, .msg-conversations-container__convo-item, li.msg-conversation-card');
-        convItems.forEach((el, i) => {
-            const nameEl = el.querySelector('.msg-conversation-listitem__participant-names, .msg-conversation-card__participant-names, .msg-s-event-listitem__name, [data-control-name="overlay.view_profile"]');
-            const previewEl = el.querySelector('.msg-conversation-listitem__message-snippet, .msg-conversation-card__message-snippet, .msg-conversation-card__message-snippet-body');
-            const timeEl = el.querySelector('.msg-conversation-listitem__time-stamp, .msg-conversation-card__time-stamp, time');
-            const unread = el.classList.contains('msg-conversation-listitem--unread') || el.querySelector('.msg-conversation-card__unread-count') !== null;
+        const seen = new Set();
 
-            const name = nameEl ? nameEl.textContent.trim() : '';
-            const preview = previewEl ? previewEl.textContent.trim() : '';
-            const time = timeEl ? (timeEl.getAttribute('datetime') || timeEl.textContent.trim()) : '';
+        const junkPatterns = /^(messaging|linkedin|search|compose|new message|filter|starred|unread|my connections|other|inmail|sponsored|focused|archive)/i;
+        function isValidName(n) {
+            if (!n || n.length < 2 || n.length > 80) return false;
+            if (junkPatterns.test(n)) return false;
+            if (/^[\d\s.,!?]+$/.test(n)) return false;
+            if (n.split(' ').length > 6) return false;
+            return true;
+        }
 
-            if (name) {
-                conversations.push({
-                    id: 'dm-' + i + '-' + name.replace(/\s+/g, '-').toLowerCase().substring(0, 30),
-                    participantName: name,
-                    lastMessage: preview.substring(0, 200),
-                    lastMessageAt: time,
-                    unread: unread,
+        // Strategy 1: Standard class-based selectors for conversation list items
+        let convItems = document.querySelectorAll(
+            '.msg-conversation-listitem, .msg-conversations-container__convo-item, ' +
+            'li.msg-conversation-card, li[class*="msg-conversation"]'
+        );
+
+        // Strategy 2: Look for conversation list items via thread links
+        if (convItems.length === 0) {
+            const threadLinks = document.querySelectorAll('a[href*="/messaging/thread/"]');
+            if (threadLinks.length > 0) {
+                const items = new Set();
+                threadLinks.forEach(a => {
+                    const li = a.closest('li') || a.closest('[role="listitem"]') || a.parentElement;
+                    if (li) items.add(li);
                 });
+                convItems = Array.from(items);
             }
+        }
+
+        // Strategy 3: Find list container with class containing "msg-conversation"
+        if (convItems.length === 0) {
+            const listContainer = document.querySelector('ul[class*="msg-conversations-container__conversations-list"], ul[class*="list-style-none"][class*="msg"]');
+            if (listContainer) {
+                convItems = listContainer.querySelectorAll(':scope > li');
+            }
+        }
+
+        console.log('[SuperLinkedIn] DM scrape: found', convItems.length, 'candidate elements');
+
+        convItems.forEach((el, i) => {
+            let name = '';
+
+            // Try specific class selectors for name
+            const nameSelectors = [
+                '[class*="participant-names"]',
+                '[class*="conversation-listitem__participant"]',
+                '[class*="conversation-card__participant"]',
+                'h3[class*="truncate"]',
+            ];
+            for (const sel of nameSelectors) {
+                const found = el.querySelector(sel);
+                if (found) {
+                    const t = found.textContent.trim().replace(/\n/g, ' ').replace(/\s+/g, ' ');
+                    if (isValidName(t)) { name = t; break; }
+                }
+            }
+
+            // Fallback: img alt text (profile photos)
+            if (!name) {
+                const imgs = el.querySelectorAll('img[alt]');
+                for (const img of imgs) {
+                    const alt = (img.getAttribute('alt') || '').trim();
+                    if (isValidName(alt) && !alt.toLowerCase().includes('linkedin')) { name = alt; break; }
+                }
+            }
+
+            // Skip if no valid name or duplicate
+            if (!name || seen.has(name.toLowerCase())) return;
+            seen.add(name.toLowerCase());
+
+            // Find message preview
+            let preview = '';
+            const previewSelectors = [
+                '[class*="message-snippet"]',
+                '[class*="conversation-card__message"]',
+                'p[class*="truncate"]',
+            ];
+            for (const sel of previewSelectors) {
+                const found = el.querySelector(sel);
+                if (found) {
+                    const t = found.textContent.trim().replace(/\n/g, ' ').replace(/\s+/g, ' ');
+                    if (t && t.length > 0 && t !== name) { preview = t; break; }
+                }
+            }
+
+            // Find timestamp
+            let time = '';
+            const timeEl = el.querySelector('time');
+            if (timeEl) {
+                time = timeEl.getAttribute('datetime') || timeEl.textContent.trim();
+            }
+
+            // Check unread status
+            const elClasses = (el.className || '') + ' ' + el.innerHTML.substring(0, 500);
+            const unread = elClasses.includes('unread');
+
+            conversations.push({
+                id: 'dm-' + i + '-' + name.replace(/\s+/g, '-').toLowerCase().substring(0, 30),
+                participantName: name,
+                lastMessage: preview.substring(0, 200),
+                lastMessageAt: time,
+                unread: unread,
+            });
         });
 
         // Scrape active thread messages
         let activeMessages = [];
-        const msgContainer = document.querySelector('.msg-s-message-list-content, .msg-s-message-list, .msg-messages-container');
+        const msgContainer = document.querySelector(
+            '[class*="msg-s-message-list"], [class*="msg-thread"] [role="list"], ' +
+            'ul[class*="msg-s-message-list"]'
+        );
         if (msgContainer) {
-            const msgEls = msgContainer.querySelectorAll('.msg-s-event-listitem, .msg-s-message-group, .msg-s-event-listitem__message-bubble');
+            const msgEls = msgContainer.querySelectorAll(
+                '[class*="msg-s-event-listitem"], [class*="msg-s-message-group"]'
+            );
             msgEls.forEach(el => {
-                const senderEl = el.querySelector('.msg-s-event-listitem__name, .msg-s-message-group__name, .msg-sender-name');
-                const bodyEl = el.querySelector('.msg-s-event-listitem__body, .msg-s-message-group__body, .msg-s-event__content');
-                const timeEl = el.querySelector('time, .msg-s-message-group__timestamp');
+                let sender = '';
+                const senderEl = el.querySelector('[class*="message-group__name"], [class*="event-listitem__name"]');
+                if (senderEl) sender = senderEl.textContent.trim();
 
-                const sender = senderEl ? senderEl.textContent.trim() : '';
-                const body = bodyEl ? bodyEl.textContent.trim() : '';
-                const time = timeEl ? (timeEl.getAttribute('datetime') || timeEl.textContent.trim()) : '';
+                let body = '';
+                const bodyEl = el.querySelector('[class*="event-listitem__body"], [class*="message-group__body"], p[class*="msg-s-event"]');
+                if (bodyEl) body = bodyEl.textContent.trim();
+                if (!body) {
+                    const ps = el.querySelectorAll('p');
+                    for (const p of ps) {
+                        const t = p.textContent.trim();
+                        if (t && t.length > 0 && t !== sender) { body = t; break; }
+                    }
+                }
 
-                if (body) {
+                let time = '';
+                const timeEl = el.querySelector('time');
+                if (timeEl) time = timeEl.getAttribute('datetime') || timeEl.textContent.trim();
+
+                if (body && body.length > 1) {
                     activeMessages.push({ sender, text: body.substring(0, 500), timestamp: time });
                 }
             });
         }
 
-        // Try to identify active conversation
-        const headerName = document.querySelector('.msg-overlay-bubble-header__title, .msg-thread__link-to-profile, .msg-entity-lockup__entity-title');
+        // Active conversation header name
+        const headerName = document.querySelector(
+            '[class*="msg-overlay-bubble-header__title"], [class*="msg-thread"] h2, ' +
+            '[class*="entity-lockup__entity-title"]'
+        );
         const activeConvName = headerName ? headerName.textContent.trim() : '';
 
-        console.log('[SuperLinkedIn] DM scrape: ', conversations.length, 'conversations,', activeMessages.length, 'messages in active thread');
+        console.log('[SuperLinkedIn] DM scrape:', conversations.length, 'valid conversations,', activeMessages.length, 'messages in active thread');
 
         return {
             conversations,

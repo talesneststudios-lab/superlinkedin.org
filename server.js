@@ -2968,6 +2968,42 @@ app.get('/api/me', async (req, res) => {
     res.json(safeUser);
 });
 
+app.post('/api/me/dismiss-suggestions', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    await dbUpdateFields(req.session.user.linkedinId, { suggestedPostsSeen: true });
+    res.json({ ok: true });
+});
+
+app.post('/api/me/complete-missions', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const linkedinId = req.session.user.linkedinId;
+    const user = await dbGetUser(linkedinId);
+    if (user && user.missionsCompleted) {
+        return res.json({ ok: true, creditsAwarded: 0 });
+    }
+
+    const hasProfile = !!(user && user.aboutYou);
+    const hasPost = !!(user && (user.queue || []).some(q => q.status === 'posted'));
+    const hasExtension = !!(user && user.analyticsLastSync);
+
+    if (!hasProfile || !hasPost || !hasExtension) {
+        return res.status(400).json({ error: 'Not all missions completed yet.' });
+    }
+
+    const creditsAwarded = 200;
+    const currentUsed = user.aiCreditsUsed || 0;
+    const newUsed = Math.max(0, currentUsed - creditsAwarded);
+
+    await dbUpdateFields(linkedinId, {
+        missionsCompleted: true,
+        missionsCompletedAt: new Date().toISOString(),
+        aiCreditsUsed: newUsed,
+    });
+
+    console.log(`[Missions] All 3 missions completed by ${user.name} (${linkedinId}), awarded ${creditsAwarded} credits`);
+    res.json({ ok: true, creditsAwarded });
+});
+
 // Logout
 app.get('/auth/logout', (req, res) => {
     req.session.destroy(() => {
