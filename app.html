@@ -636,7 +636,7 @@
         .dm-label-picker {
             position: absolute; top: 100%; right: 14px; background: var(--bg-card);
             border: 1px solid var(--border); border-radius: 8px; padding: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 20; display: flex; flex-direction: column; gap: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 200; display: flex; flex-direction: column; gap: 6px;
         }
         .dm-label-picker label {
             display: flex; align-items: center; gap: 6px; font-size: 0.82rem; cursor: pointer;
@@ -692,7 +692,7 @@
         .dm-ai-menu {
             position: absolute; bottom: calc(100% + 8px); right: 0;
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-            padding: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 100; min-width: 180px;
+            padding: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 200; min-width: 180px;
         }
         .dm-ai-menu button {
             display: block; width: 100%; padding: 8px 12px; border: none; background: none;
@@ -6034,6 +6034,7 @@
             renderDmConversations();
             document.getElementById('dmThreadEmpty').classList.add('hidden');
             document.getElementById('dmThreadActive').classList.remove('hidden');
+            closeDmPopups();
 
             const conv = _dmConversations.find(c => c.id === convId);
             if (!conv) return;
@@ -6084,7 +6085,13 @@
             container.scrollTop = container.scrollHeight;
         }
 
-        function toggleDmLabelPicker() {
+        function closeDmPopups() {
+            document.getElementById('dmAiMenu').classList.add('hidden');
+            document.getElementById('dmLabelPicker').classList.add('hidden');
+        }
+
+        function toggleDmLabelPicker(e) {
+            if (e) e.stopPropagation();
             document.getElementById('dmAiMenu').classList.add('hidden');
             document.getElementById('dmLabelPicker').classList.toggle('hidden');
         }
@@ -6106,10 +6113,22 @@
             } catch {}
         }
 
-        function toggleDmAiMenu() {
+        function toggleDmAiMenu(e) {
+            if (e) e.stopPropagation();
             document.getElementById('dmLabelPicker').classList.add('hidden');
             document.getElementById('dmAiMenu').classList.toggle('hidden');
         }
+
+        document.addEventListener('click', function(e) {
+            const aiMenu = document.getElementById('dmAiMenu');
+            const labelPicker = document.getElementById('dmLabelPicker');
+            if (aiMenu && !aiMenu.classList.contains('hidden')) {
+                if (!e.target.closest('.dm-ai-dropdown')) aiMenu.classList.add('hidden');
+            }
+            if (labelPicker && !labelPicker.classList.contains('hidden')) {
+                if (!e.target.closest('.dm-label-manage-btn') && !e.target.closest('.dm-label-picker')) labelPicker.classList.add('hidden');
+            }
+        });
 
         async function dmAiReply(style) {
             document.getElementById('dmAiMenu').classList.add('hidden');
