@@ -171,8 +171,8 @@
 
 /* ── Toggle Button (fixed top-right) ── */
 #sl-toggle-btn {
-    position: fixed; top: 12px; right: 16px;
-    width: 40px; height: 40px;
+    position: fixed; top: 12px; right: 28px;
+    width: 42px; height: 42px;
     background: linear-gradient(145deg, #5B9BD5, #0A66C2);
     border: none;
     border-radius: 10px;
@@ -188,8 +188,8 @@
 #sl-toggle-btn:active { transform: scale(0.95); }
 #sl-toggle-btn .sl-toggle-text {
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-    font-size: 0.82rem; font-weight: 900;
-    color: #fff; letter-spacing: -0.3px;
+    font-size: 1.35rem; font-weight: 900;
+    color: #fff; letter-spacing: -0.2px;
     line-height: 1;
 }
 #sl-toggle-btn.shifted { right: 396px; }

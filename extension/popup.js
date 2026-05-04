@@ -40,6 +40,33 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.runtime.sendMessage({ type: 'LOGOUT' }, () => showLogin());
     });
 
+    // Tab switching
+    document.querySelectorAll('.tab[data-tab]').forEach(tab => {
+        tab.addEventListener('click', () => switchTab(tab.dataset.tab, tab));
+    });
+
+    // Quick Actions
+    document.getElementById('btnOpenDashboard').addEventListener('click', openDashboard);
+    document.getElementById('btnOpenAiWriter').addEventListener('click', () => {
+        switchTab('ai', document.querySelector('[data-tab="ai"]'));
+    });
+    document.getElementById('btnToggleSidebar').addEventListener('click', toggleLinkedInSidebar);
+    document.getElementById('syncBtnOverview').addEventListener('click', doSync);
+
+    // AI buttons
+    document.getElementById('btnAiGenerate').addEventListener('click', () => aiAction('generate'));
+    document.getElementById('btnAiImprove').addEventListener('click', () => aiAction('improve'));
+    document.querySelectorAll('.ai-quick-btn[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => aiAction(btn.dataset.action));
+    });
+    document.getElementById('btnAiCopy').addEventListener('click', copyAiResult);
+
+    // Footer dashboard link
+    document.getElementById('dashboardLink').addEventListener('click', (e) => {
+        e.preventDefault();
+        openDashboard();
+    });
+
     function showLogin() {
         loginView.style.display = 'block';
         statusView.style.display = 'none';

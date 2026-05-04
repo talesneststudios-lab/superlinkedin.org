@@ -2655,7 +2655,14 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
     if (dms && dms.conversations && dms.conversations.length > 0) {
         const user = await dbGetUser(linkedinId);
         const existing = (user && user.dmConversations) || [];
-        dms.conversations.forEach(incoming => {
+        const dmJunkRe = /^view\s|learn how|try premium|people you may know|suggested|job alert|view company/i;
+        const dmProfileRe = /['\u2019]s profile/i;
+        const cleanConversations = dms.conversations.filter(c => {
+            const name = c.participantName || '';
+            if (dmJunkRe.test(name) || dmProfileRe.test(name) || name.length < 2) return false;
+            return true;
+        });
+        cleanConversations.forEach(incoming => {
             const idx = existing.findIndex(e => e.participantName === incoming.participantName);
             if (idx >= 0) {
                 existing[idx].lastMessage = incoming.lastMessage || existing[idx].lastMessage;
@@ -2677,9 +2684,14 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         if (dms.activeThread && dms.activeThread.messages && dms.activeThread.messages.length > 0) {
             const threadConv = existing.find(c => c.participantName === dms.activeThread.participantName);
             if (threadConv) {
-                const existingTexts = new Set((threadConv.messages || []).map(m => m.text + '|' + m.timestamp));
+                // Dedup by normalized text content to avoid duplicates from scraping
+                const existingTexts = new Set(
+                    (threadConv.messages || []).map(m => (m.text || '').substring(0, 200).toLowerCase().trim())
+                );
                 dms.activeThread.messages.forEach(msg => {
-                    if (!existingTexts.has(msg.text + '|' + msg.timestamp)) {
+                    const key = (msg.text || '').substring(0, 200).toLowerCase().trim();
+                    if (key && !existingTexts.has(key)) {
+                        existingTexts.add(key);
                         threadConv.messages.push(msg);
                     }
                 });
@@ -2690,7 +2702,7 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         }
         if (existing.length > 200) existing.splice(0, existing.length - 200);
         updates.dmConversations = existing;
-        console.log('[Sync] DM data merged:', dms.conversations.length, 'conversations');
+        console.log('[Sync] DM data merged:', cleanConversations.length, 'conversations (filtered from', dms.conversations.length, 'raw)');
     }
 
     updates.analyticsLastSync = now;
@@ -2892,17 +2904,23 @@ app.get('/api/analytics/summary', authExtension, async (req, res) => {
                        - ((a.likes || 0) + (a.comments || 0) + (a.reposts || 0)))
         .slice(0, 5);
 
+    // Prefer official LinkedIn dashboard values over post-level aggregation.
+    // Dashboard values come from the dedicated analytics/dashboard pages on LinkedIn,
+    // while post-level values are summed from individual visible posts which may be incomplete.
     const totalImpressions = dashboard.postImpressions || eng.impressions || 0;
-    const totalLikes = eng.likes || dashboard.socialEngagements || 0;
+    const totalLikes = dashboard.socialEngagements || eng.likes || 0;
     const totalComments = eng.comments || 0;
     const totalReposts = eng.reposts || 0;
-    const totalEng = totalLikes + totalComments + totalReposts;
+    const totalEng = dashboard.socialEngagements || (totalLikes + totalComments + totalReposts);
     const avgEngagement = totalImpressions > 0
         ? (totalEng / Math.max(totalImpressions, 1) * 100)
         : 0;
 
+    // Prefer the followers count from the profile page scrape over the dashboard
+    const followers = user.analyticsFollowers || dashboard.followers || 0;
+
     res.json({
-        followers: dashboard.followers || user.analyticsFollowers || 0,
+        followers,
         totalPosts: posts.length || (user.queueItems || []).filter(q => q.status === 'posted').length || 0,
         avgEngagement: Math.round(avgEngagement * 10) / 10,
         totalImpressions,
@@ -3420,7 +3438,16 @@ app.get('/api/dms', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
     const user = await dbGetUser(req.session.user.linkedinId);
     const convos = (user && user.dmConversations) || [];
-    res.json({ conversations: convos });
+    const junkRe = /^view\s|learn how|try premium|people you may know|suggested|job alert|view company/i;
+    const profileRe = /['\u2019]s profile/i;
+    const filtered = convos.filter(c => {
+        const name = c.participantName || '';
+        if (junkRe.test(name)) return false;
+        if (profileRe.test(name)) return false;
+        if (name.length < 2) return false;
+        return true;
+    });
+    res.json({ conversations: filtered });
 });
 
 app.post('/api/dms/reply', async (req, res) => {

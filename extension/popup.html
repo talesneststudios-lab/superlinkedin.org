@@ -45,9 +45,9 @@
 
             <!-- Tabs -->
             <div class="tabs">
-                <button class="tab active" data-tab="overview" onclick="switchTab('overview',this)">Overview</button>
-                <button class="tab" data-tab="analytics" onclick="switchTab('analytics',this)">Analytics</button>
-                <button class="tab" data-tab="ai" onclick="switchTab('ai',this)">AI Tools</button>
+                <button class="tab active" data-tab="overview">Overview</button>
+                <button class="tab" data-tab="analytics">Analytics</button>
+                <button class="tab" data-tab="ai">AI Tools</button>
             </div>
 
             <!-- Overview Tab -->
@@ -82,10 +82,10 @@
 
                 <div class="section-title">Quick Actions</div>
                 <div class="quick-actions">
-                    <button class="action-btn" onclick="openDashboard()"><span>&#128200;</span> Dashboard</button>
-                    <button class="action-btn" onclick="switchTab('ai',document.querySelector('[data-tab=ai]'))"><span>&#129302;</span> AI Writer</button>
-                    <button class="action-btn" onclick="toggleLinkedInSidebar()"><span>&#128736;</span> Sidebar</button>
-                    <button class="action-btn" id="syncBtnOverview" onclick="doSync()"><span>&#128259;</span> Sync Now</button>
+                    <button class="action-btn" id="btnOpenDashboard"><span>&#128200;</span> Dashboard</button>
+                    <button class="action-btn" id="btnOpenAiWriter"><span>&#129302;</span> AI Writer</button>
+                    <button class="action-btn" id="btnToggleSidebar"><span>&#128736;</span> Sidebar</button>
+                    <button class="action-btn" id="syncBtnOverview"><span>&#128259;</span> Sync Now</button>
                 </div>
 
                 <div class="sync-bar">
@@ -136,24 +136,24 @@
                 <div class="section-title">AI Post Writer</div>
                 <textarea class="ai-textarea" id="aiTextarea" placeholder="Write or paste your post here..."></textarea>
                 <div class="ai-actions">
-                    <button class="ai-btn" onclick="aiAction('generate')">&#129302; Generate Post</button>
-                    <button class="ai-btn secondary" onclick="aiAction('improve')">&#10024; Improve</button>
+                    <button class="ai-btn" id="btnAiGenerate">&#129302; Generate Post</button>
+                    <button class="ai-btn secondary" id="btnAiImprove">&#10024; Improve</button>
                 </div>
 
                 <div class="section-title" style="margin-top:14px;">Quick Improve</div>
                 <div class="ai-quick-grid">
-                    <button class="ai-quick-btn" onclick="aiAction('grammar')">&#9998; Grammar</button>
-                    <button class="ai-quick-btn" onclick="aiAction('translate')">&#127760; Translate</button>
-                    <button class="ai-quick-btn" onclick="aiAction('hook')">&#10024; Hook</button>
-                    <button class="ai-quick-btn" onclick="aiAction('concise')">&#9986; Concise</button>
-                    <button class="ai-quick-btn" onclick="aiAction('engaging')">&#128171; Engaging</button>
-                    <button class="ai-quick-btn" onclick="aiAction('humorous')">&#128514; Humorous</button>
+                    <button class="ai-quick-btn" data-action="grammar">&#9998; Grammar</button>
+                    <button class="ai-quick-btn" data-action="translate">&#127760; Translate</button>
+                    <button class="ai-quick-btn" data-action="hook">&#10024; Hook</button>
+                    <button class="ai-quick-btn" data-action="concise">&#9986; Concise</button>
+                    <button class="ai-quick-btn" data-action="engaging">&#128171; Engaging</button>
+                    <button class="ai-quick-btn" data-action="humorous">&#128514; Humorous</button>
                 </div>
 
                 <div id="aiResult" class="ai-result" style="display:none;">
                     <div class="section-title">Result</div>
                     <div class="ai-result-text" id="aiResultText"></div>
-                    <button class="ai-btn small" onclick="copyAiResult()">&#128203; Copy</button>
+                    <button class="ai-btn small" id="btnAiCopy">&#128203; Copy</button>
                 </div>
 
                 <div id="aiLoading" class="ai-loading" style="display:none;">
@@ -163,7 +163,7 @@
 
             <!-- Footer -->
             <div class="popup-footer">
-                <a href="#" id="dashboardLink" onclick="openDashboard()">Open Dashboard</a>
+                <a href="#" id="dashboardLink">Open Dashboard</a>
                 <button id="logoutBtn" class="btn-link">Disconnect</button>
             </div>
         </div>

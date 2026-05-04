@@ -7652,7 +7652,7 @@
             const engagement = data.engagement || {};
             const postMetrics = data.postMetrics || [];
 
-            const followers = dashboard.followers || data.followers || 0;
+            const followers = data.followers || dashboard.followers || 0;
             const postedCount = queue.filter(q => q.status === 'posted').length;
             const totalPosts = postMetrics.length || postedCount || queue.length;
             const totalImpressions = dashboard.postImpressions || engagement.impressions || 0;

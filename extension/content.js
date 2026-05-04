@@ -36,30 +36,55 @@
 
     // ── Scraping ──
     function scrapeFollowers() {
+        // Restrict search to the profile header area to avoid picking up
+        // follower counts from "People also viewed", sidebar cards, etc.
+        const headerContainers = [
+            document.querySelector('.pv-top-card'),
+            document.querySelector('.scaffold-layout__main'),
+            document.querySelector('main'),
+        ].filter(Boolean);
+
+        const target = headerContainers[0] || document.body;
+
         const selectors = [
             '.pv-top-card--list-bullet .t-bold',
             '.pvs-header__subtitle',
             '[data-test-id="follower-count"]',
+            '.pv-recent-activity-section__follower-count',
+            '.pv-top-card--list .t-black--light',
         ];
         for (const sel of selectors) {
-            const els = document.querySelectorAll(sel);
+            const els = target.querySelectorAll(sel);
             for (const el of els) {
                 if (/follower/i.test(el.textContent || '')) return parseNumber(el.textContent);
             }
         }
-        const allText = document.body.innerText;
-        const fm = allText.match(/([\d,.]+[KMB]?)\s+followers/i);
+
+        // Scoped regex: only search within the first 800 chars of the header text
+        // to avoid matching follower counts from other sections of the page
+        const headerText = target === document.body
+            ? (target.innerText || '').substring(0, 2000)
+            : (target.innerText || '');
+        const fm = headerText.match(/([\d,.]+[KMB]?)\s+followers/i);
         if (fm) return parseNumber(fm[1]);
-        const cm = allText.match(/([\d,.]+)\s+connections/i);
+        const cm = headerText.match(/([\d,.]+[KMB]?)\s+connections/i);
         if (cm) return parseNumber(cm[1]);
         return null;
     }
 
-    function scrapePostMetrics() {
+    async function scrapePostMetrics() {
         const posts = [];
         const feedPosts = document.querySelectorAll(
             '.feed-shared-update-v2, [data-urn*="activity"], .occludable-update'
         );
+
+        let ownerName = '';
+        try {
+            const stored = await chrome.storage.local.get('ownerName');
+            ownerName = (stored.ownerName || '').toLowerCase().replace(/[^a-z\s]/g, '').trim();
+        } catch (e) {}
+
+        const isOwnProfilePage = window.location.href.includes('/in/') || window.location.href.includes('/posts/');
 
         feedPosts.forEach(post => {
             const authorEl = post.querySelector(
@@ -68,6 +93,14 @@
                 '.feed-shared-actor__name'
             );
             const authorName = authorEl ? authorEl.textContent.trim() : '';
+
+            // On the feed, only count the logged-in user's own posts
+            if (!isOwnProfilePage && ownerName && authorName) {
+                const normalAuthor = authorName.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+                if (!normalAuthor.includes(ownerName) && !ownerName.includes(normalAuthor)) {
+                    return;
+                }
+            }
 
             const textEl = post.querySelector(
                 '.feed-shared-text, .update-components-text, .break-words'
@@ -292,13 +325,7 @@
                 }
                 const profile = scrapeProfileInfo();
                 data.profile = profile;
-
-                const dashboardStats = scrapeAnalyticsDashboard();
-                if (dashboardStats) {
-                    data.dashboardStats = dashboardStats;
-                    if (dashboardStats.followers) sidebarData.followers = dashboardStats.followers;
-                }
-                console.log('[SuperLinkedIn] Own profile detected, scraping followers & stats');
+                console.log('[SuperLinkedIn] Own profile detected, scraped followers:', followers);
             } else {
                 console.log('[SuperLinkedIn] Visiting another profile, skipping follower/stats sync');
             }
@@ -321,7 +348,7 @@
 
         const shouldScrapePosts = url.includes('/feed') || url.includes('/posts/') || (url.includes('/in/') && data.profile);
         if (shouldScrapePosts) {
-            const posts = scrapePostMetrics();
+            const posts = await scrapePostMetrics();
             if (posts.length > 0) {
                 data.posts = posts;
                 updateSidebarData(posts);
@@ -747,10 +774,12 @@
         const conversations = [];
         const seen = new Set();
 
-        const junkPatterns = /^(messaging|linkedin|search|compose|new message|filter|starred|unread|my connections|other|inmail|sponsored|focused|archive)/i;
+        const junkPatterns = /^(messaging|linkedin|search|compose|new message|filter|starred|unread|my connections|other|inmail|sponsored|focused|archive|view |learn how|try premium|upgrade|promoted|ad\b)/i;
+        const junkContains = /\bprofile\b|\bcompany:|\bconnect with\b|\bfollow\b|\bview\b.*\bprofile\b|\bpeople you may know\b|\bsuggested\b|\bjob alert/i;
         function isValidName(n) {
             if (!n || n.length < 2 || n.length > 80) return false;
             if (junkPatterns.test(n)) return false;
+            if (junkContains.test(n)) return false;
             if (/^[\d\s.,!?]+$/.test(n)) return false;
             if (n.split(' ').length > 6) return false;
             return true;
@@ -814,6 +843,13 @@
 
             // Skip if no valid name or duplicate
             if (!name || seen.has(name.toLowerCase())) return;
+
+            // Final check: reject entries whose full text looks like a non-DM element
+            const fullText = (el.textContent || '').trim().toLowerCase();
+            if (/^view\s|learn how|try premium|people you may know|suggested|job alert/i.test(fullText)) return;
+            if (fullText.includes("'s profile") || fullText.includes('\u2019s profile')) return;
+            if (/^view company/i.test(fullText)) return;
+
             seen.add(name.toLowerCase());
 
             // Find message preview
@@ -851,8 +887,9 @@
             });
         });
 
-        // Scrape active thread messages
+        // Scrape active thread messages (with client-side dedup)
         let activeMessages = [];
+        const seenMsgTexts = new Set();
         const msgContainer = document.querySelector(
             '[class*="msg-s-message-list"], [class*="msg-thread"] [role="list"], ' +
             'ul[class*="msg-s-message-list"]'
@@ -882,7 +919,11 @@
                 if (timeEl) time = timeEl.getAttribute('datetime') || timeEl.textContent.trim();
 
                 if (body && body.length > 1) {
-                    activeMessages.push({ sender, text: body.substring(0, 500), timestamp: time });
+                    const dedupKey = body.substring(0, 200).toLowerCase();
+                    if (!seenMsgTexts.has(dedupKey)) {
+                        seenMsgTexts.add(dedupKey);
+                        activeMessages.push({ sender, text: body.substring(0, 500), timestamp: time });
+                    }
                 }
             });
         }
