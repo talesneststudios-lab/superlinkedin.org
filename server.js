@@ -3438,11 +3438,12 @@ app.get('/api/dms', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
     const user = await dbGetUser(req.session.user.linkedinId);
     const convos = (user && user.dmConversations) || [];
-    const junkRe = /^view\s|learn how|try premium|people you may know|suggested|job alert|view company/i;
+    const junkRe = /^view\s|learn how|try premium|people you may know|suggested|job alert|view company|get hired|grow your|boost your/i;
     const profileRe = /['\u2019]s profile/i;
     const filtered = convos.filter(c => {
         const name = c.participantName || '';
-        if (junkRe.test(name)) return false;
+        const preview = c.lastMessage || '';
+        if (junkRe.test(name) || junkRe.test(preview)) return false;
         if (profileRe.test(name)) return false;
         if (name.length < 2) return false;
         return true;

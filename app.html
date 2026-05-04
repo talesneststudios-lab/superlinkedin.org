@@ -542,13 +542,14 @@
 
         /* DM Page */
         .dm-layout {
-            display: flex; height: calc(100vh - 180px); gap: 0;
-            border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
+            display: flex; height: calc(100vh - 220px); max-height: 600px; gap: 0;
+            border: 1px solid var(--border); border-radius: 12px;
             background: var(--bg-card);
         }
         .dm-sidebar {
             width: 340px; min-width: 280px; border-right: 1px solid var(--border);
             display: flex; flex-direction: column; background: var(--bg-card);
+            border-radius: 12px 0 0 12px; overflow: hidden;
         }
         .dm-sidebar-header {
             padding: 14px; border-bottom: 1px solid var(--border);
@@ -610,10 +611,11 @@
 
         .dm-thread {
             flex: 1; display: flex; flex-direction: column; min-width: 0;
+            border-radius: 0 12px 12px 0; overflow: visible;
         }
         .dm-thread-empty {
             flex: 1; display: flex; flex-direction: column; align-items: center;
-            justify-content: center; text-align: center; padding: 40px;
+            justify-content: center; text-align: center; padding: 24px;
         }
         .dm-thread-active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
         .dm-thread-header {
@@ -656,15 +658,21 @@
             color: var(--text-primary); border: 1px solid var(--border);
             border-bottom-left-radius: 4px;
         }
+        .dm-bubble-sender {
+            font-size: 0.7rem; font-weight: 700; margin-bottom: 2px;
+            color: var(--text-muted);
+        }
+        .dm-bubble.sent .dm-bubble-sender { color: rgba(255,255,255,0.8); text-align: right; }
         .dm-bubble-time {
             font-size: 0.65rem; color: var(--text-muted); margin-top: 4px;
         }
         .dm-bubble.sent .dm-bubble-time { text-align: right; color: rgba(255,255,255,0.7); }
         .dm-compose {
             padding: 14px 18px; border-top: 1px solid var(--border); background: var(--bg-card);
+            overflow: visible; position: relative;
         }
         .dm-compose-row {
-            display: flex; gap: 10px; align-items: flex-end;
+            display: flex; gap: 10px; align-items: flex-end; overflow: visible;
         }
         .dm-reply-textarea {
             flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
@@ -672,9 +680,9 @@
             color: var(--text-primary); min-height: 40px; max-height: 120px;
         }
         .dm-compose-actions {
-            display: flex; gap: 6px; align-items: flex-end;
+            display: flex; gap: 6px; align-items: flex-end; overflow: visible;
         }
-        .dm-ai-dropdown { position: relative; }
+        .dm-ai-dropdown { position: relative; display: inline-block; }
         .dm-ai-btn {
             padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card);
             font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
@@ -682,9 +690,9 @@
         }
         .dm-ai-btn:hover { border-color: var(--accent); color: var(--accent); }
         .dm-ai-menu {
-            position: absolute; bottom: 100%; right: 0; margin-bottom: 6px;
+            position: absolute; bottom: calc(100% + 8px); right: 0;
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-            padding: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.15); z-index: 20; min-width: 170px;
+            padding: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.18); z-index: 100; min-width: 180px;
         }
         .dm-ai-menu button {
             display: block; width: 100%; padding: 8px 12px; border: none; background: none;
@@ -6062,9 +6070,13 @@
                 container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text-muted);font-size:0.85rem;">No messages synced yet. Open this conversation on LinkedIn with the extension active to sync messages.</div>';
                 return;
             }
+            const participantName = (conv.participantName || '').toLowerCase().replace(/[^a-z\s]/g, '').trim();
             container.innerHTML = msgs.map(m => {
-                const isSent = (m.sender || '').toLowerCase() === 'you';
+                const senderLower = (m.sender || '').toLowerCase().trim();
+                const isSent = senderLower === 'you' || senderLower === 'me';
+                const senderLabel = isSent ? 'You' : (m.sender || conv.participantName || 'Them');
                 return `<div class="dm-bubble ${isSent ? 'sent' : 'received'}">
+                    <div class="dm-bubble-sender">${escapeHtml(senderLabel)}</div>
                     <div>${escapeHtml(m.text)}</div>
                     <div class="dm-bubble-time">${m.timestamp ? formatDmTime(m.timestamp) : ''}</div>
                 </div>`;

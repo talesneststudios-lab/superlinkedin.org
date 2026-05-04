@@ -202,7 +202,10 @@
     }
 
     function sendToBackground(data) {
-        chrome.runtime.sendMessage({ type: 'ANALYTICS_DATA', payload: data });
+        if (!isExtensionValid()) return;
+        try {
+            chrome.runtime.sendMessage({ type: 'ANALYTICS_DATA', payload: data });
+        } catch (e) { /* extension context invalidated */ }
     }
 
     function scrapeAnalyticsDashboard() {
@@ -310,7 +313,23 @@
         return Object.keys(stats).length > 0 ? stats : null;
     }
 
+    function isExtensionValid() {
+        try {
+            const url = chrome.runtime.getURL('');
+            return url && !url.includes('invalid');
+        } catch (e) {
+            return false;
+        }
+    }
+
     async function runScrape(retryCount) {
+        if (!isExtensionValid()) {
+            if (_scrapeInterval) { clearInterval(_scrapeInterval); _scrapeInterval = null; }
+            if (_urlObserver) { _urlObserver.disconnect(); _urlObserver = null; }
+            console.log('[SuperLinkedIn] Extension context invalidated, all timers stopped.');
+            return;
+        }
+        try {
         retryCount = retryCount || 0;
         const url = window.location.href;
         const data = { url, timestamp: new Date().toISOString() };
@@ -356,7 +375,7 @@
         }
 
         if (url.includes('/messaging')) {
-            const dmData = scrapeMessaging();
+            const dmData = await scrapeMessaging();
             if (dmData && dmData.conversations.length > 0) {
                 data.dms = dmData;
                 console.log('[SuperLinkedIn] DM data scraped:', dmData.conversations.length, 'conversations');
@@ -375,6 +394,9 @@
         }
 
         if (sidebarOpen) updateSidebarUI();
+        } catch (err) {
+            console.log('[SuperLinkedIn] Scrape error:', err.message);
+        }
     }
 
     function updateSidebarData(posts) {
@@ -420,7 +442,7 @@
             <div class="sl-sb-tabs">
                 <button class="sl-sb-tab active" data-panel="analytics">Analytics</button>
                 <button class="sl-sb-tab" data-panel="aitools">AI Tools</button>
-                <button class="sl-sb-tab" data-panel="inspiration">Inspiration</button>
+                <button class="sl-sb-tab" data-panel="inspiration">Tips</button>
             </div>
 
             <div class="sl-sb-body">
@@ -444,30 +466,31 @@
 
                     <div class="sl-section-title">Top Posts</div>
                     <div class="sl-top-posts" id="slTopPosts">
-                        <div style="text-align:center;color:#bbb;font-size:0.78rem;padding:16px;">
-                            Scroll your feed to collect analytics
+                        <div class="sl-empty-state">
+                            <div class="sl-empty-icon">&#128202;</div>
+                            <div class="sl-empty-text">Scroll your feed to collect post analytics</div>
                         </div>
                     </div>
 
                     <div class="sl-section-title">Engagement Breakdown</div>
                     <div class="sl-eng-section">
                         <div class="sl-eng-row">
-                            <span class="sl-eng-label">Likes</span>
+                            <span class="sl-eng-label">&#128077; Likes</span>
                             <div class="sl-eng-bar-wrap"><div class="sl-eng-bar likes" id="slEngLikes" style="width:0%"></div></div>
                             <span class="sl-eng-val" id="slEngLikesVal">0</span>
                         </div>
                         <div class="sl-eng-row">
-                            <span class="sl-eng-label">Comments</span>
+                            <span class="sl-eng-label">&#128172; Comments</span>
                             <div class="sl-eng-bar-wrap"><div class="sl-eng-bar comments" id="slEngComments" style="width:0%"></div></div>
                             <span class="sl-eng-val" id="slEngCommentsVal">0</span>
                         </div>
                         <div class="sl-eng-row">
-                            <span class="sl-eng-label">Reposts</span>
+                            <span class="sl-eng-label">&#128257; Reposts</span>
                             <div class="sl-eng-bar-wrap"><div class="sl-eng-bar reposts" id="slEngReposts" style="width:0%"></div></div>
                             <span class="sl-eng-val" id="slEngRepostsVal">0</span>
                         </div>
                         <div class="sl-eng-row">
-                            <span class="sl-eng-label">Views</span>
+                            <span class="sl-eng-label">&#128065; Views</span>
                             <div class="sl-eng-bar-wrap"><div class="sl-eng-bar views" id="slEngViews" style="width:0%"></div></div>
                             <span class="sl-eng-val" id="slEngViewsVal">0</span>
                         </div>
@@ -475,18 +498,39 @@
 
                     <div class="sl-section-title">Profile Interactions</div>
                     <div class="sl-profile-section" id="slProfileSection">
-                        <div style="text-align:center;color:#bbb;font-size:0.78rem;padding:16px;">
-                            Visit a profile to see interactions
+                        <div class="sl-empty-state">
+                            <div class="sl-empty-icon">&#128100;</div>
+                            <div class="sl-empty-text">Visit your profile to see interactions</div>
                         </div>
+                    </div>
+
+                    <div class="sl-section-title">Quick Actions</div>
+                    <div class="sl-quick-actions">
+                        <a class="sl-action-card" href="${API_BASE}/app" target="_blank">
+                            <span class="sl-action-icon">&#128200;</span>
+                            <span class="sl-action-label">Dashboard</span>
+                        </a>
+                        <a class="sl-action-card" href="${API_BASE}/app#queue" target="_blank">
+                            <span class="sl-action-icon">&#128197;</span>
+                            <span class="sl-action-label">Queue</span>
+                        </a>
+                        <a class="sl-action-card" href="${API_BASE}/app#analytics" target="_blank">
+                            <span class="sl-action-icon">&#128202;</span>
+                            <span class="sl-action-label">Analytics</span>
+                        </a>
+                        <a class="sl-action-card" href="${API_BASE}/app#dms" target="_blank">
+                            <span class="sl-action-icon">&#128172;</span>
+                            <span class="sl-action-label">DMs</span>
+                        </a>
                     </div>
                 </div>
 
                 <!-- AI Tools Panel -->
                 <div class="sl-sb-panel" id="slPanelAitools">
                     <div class="sl-section-title">AI Post Writer</div>
-                    <textarea class="sl-ai-textarea" id="slAiText" placeholder="Write or paste your post here..."></textarea>
+                    <textarea class="sl-ai-textarea" id="slAiText" placeholder="Describe what you want to post about, or paste text to improve..."></textarea>
                     <div class="sl-ai-actions">
-                        <button class="sl-ai-btn" id="slAiGenerate">&#129302; Generate</button>
+                        <button class="sl-ai-btn" id="slAiGenerate">&#129302; Generate Post</button>
                         <button class="sl-ai-btn secondary" id="slAiImprove">&#10024; Improve</button>
                     </div>
 
@@ -506,41 +550,62 @@
                     <div id="slAiResult" class="sl-ai-result" style="display:none;">
                         <div class="sl-section-title">Result</div>
                         <div class="sl-ai-result-text" id="slAiResultText"></div>
-                        <button class="sl-ai-copy-btn" id="slAiCopy">Copy</button>
+                        <button class="sl-ai-copy-btn" id="slAiCopy">&#128203; Copy to Clipboard</button>
                     </div>
                 </div>
 
-                <!-- Inspiration Panel -->
+                <!-- Tips Panel -->
                 <div class="sl-sb-panel" id="slPanelInspiration">
-                    <div class="sl-section-title">Post Inspiration</div>
-                    <div class="sl-inspiration-list" id="slInspirationList">
-                        <div style="text-align:center;color:#bbb;font-size:0.78rem;padding:16px;">
-                            Loading inspiration posts...
+                    <div class="sl-section-title">Growth Tips</div>
+                    <div class="sl-tip-card" style="border-left:4px solid #0A66C2;background:#f0f7ff;">
+                        <div class="sl-tip-icon">&#128337;</div>
+                        <div class="sl-tip-content">
+                            <div class="sl-tip-title">Post at Peak Times</div>
+                            <div class="sl-tip-text">Tuesday-Thursday, 8-10 AM your local time tends to get 2x more engagement.</div>
+                        </div>
+                    </div>
+                    <div class="sl-tip-card" style="border-left:4px solid #22c55e;background:#f0fff4;">
+                        <div class="sl-tip-icon">&#129693;</div>
+                        <div class="sl-tip-content">
+                            <div class="sl-tip-title">Use Strong Hooks</div>
+                            <div class="sl-tip-text">Start with a bold statement or question. Posts with hooks get 40% more impressions.</div>
+                        </div>
+                    </div>
+                    <div class="sl-tip-card" style="border-left:4px solid #f59e0b;background:#fffbeb;">
+                        <div class="sl-tip-icon">&#128172;</div>
+                        <div class="sl-tip-content">
+                            <div class="sl-tip-title">Engage Before Posting</div>
+                            <div class="sl-tip-text">Comment on 5 posts before publishing yours. The algorithm rewards active users.</div>
+                        </div>
+                    </div>
+                    <div class="sl-tip-card" style="border-left:4px solid #8b5cf6;background:#f5f3ff;">
+                        <div class="sl-tip-icon">&#128247;</div>
+                        <div class="sl-tip-content">
+                            <div class="sl-tip-title">Use Visuals</div>
+                            <div class="sl-tip-text">Posts with images get 2x more comments. Carousels and documents get 3x more reach.</div>
+                        </div>
+                    </div>
+                    <div class="sl-tip-card" style="border-left:4px solid #ef4444;background:#fef2f2;">
+                        <div class="sl-tip-icon">&#128640;</div>
+                        <div class="sl-tip-content">
+                            <div class="sl-tip-title">Be Consistent</div>
+                            <div class="sl-tip-text">Post 3-5 times per week. Consistency signals the algorithm to boost your content.</div>
                         </div>
                     </div>
 
-                    <div class="sl-section-title" style="margin-top:14px;">Tips for Growth</div>
-                    <div class="sl-insp-card" style="background:#f0f7ff;border-color:#c7dcf0;">
-                        <div class="sl-insp-text" style="font-size:0.75rem;color:#0A66C2;">
-                            <b>Post at peak times:</b> Tuesday–Thursday, 8–10 AM your local time tends to get 2x more engagement.
-                        </div>
-                    </div>
-                    <div class="sl-insp-card" style="background:#f0fff4;border-color:#c6f0d4;">
-                        <div class="sl-insp-text" style="font-size:0.75rem;color:#16a34a;">
-                            <b>Use hooks:</b> Start with a bold statement or question. Posts with strong hooks get 40% more impressions.
-                        </div>
-                    </div>
-                    <div class="sl-insp-card" style="background:#fffbeb;border-color:#fde68a;">
-                        <div class="sl-insp-text" style="font-size:0.75rem;color:#d97706;">
-                            <b>Engage first:</b> Comment on 5 posts before publishing yours. The algorithm rewards active users.
+                    <div class="sl-section-title" style="margin-top:20px;">Inspiration</div>
+                    <div class="sl-inspiration-list" id="slInspirationList">
+                        <div class="sl-empty-state">
+                            <div class="sl-empty-icon">&#128161;</div>
+                            <div class="sl-empty-text">Post ideas will appear here</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="sl-sb-footer">
-                <a href="${API_BASE}/app" target="_blank">Open Dashboard</a>
-                <span>SuperLinkedIn v1.1</span>
+                <a href="${API_BASE}/app" target="_blank">&#127968; Open Dashboard</a>
+                <span>SuperLinkedIn v1.5</span>
             </div>
         `;
         document.body.appendChild(sb);
@@ -770,7 +835,7 @@
     }
 
     // ── DM Scraper ──
-    function scrapeMessaging() {
+    async function scrapeMessaging() {
         const conversations = [];
         const seen = new Set();
 
@@ -846,9 +911,10 @@
 
             // Final check: reject entries whose full text looks like a non-DM element
             const fullText = (el.textContent || '').trim().toLowerCase();
-            if (/^view\s|learn how|try premium|people you may know|suggested|job alert/i.test(fullText)) return;
+            if (/^view\s|learn how|try premium|people you may know|suggested|job alert|get hired|grow your network|boost your/i.test(fullText)) return;
+            if (/learn how|try premium|people you may know|suggested for you|get hired faster/i.test(fullText)) return;
             if (fullText.includes("'s profile") || fullText.includes('\u2019s profile')) return;
-            if (/^view company/i.test(fullText)) return;
+            if (/^view company|view .{1,40} profile/i.test(fullText)) return;
 
             seen.add(name.toLowerCase());
 
@@ -875,7 +941,7 @@
             }
 
             // Check unread status
-            const elClasses = (el.className || '') + ' ' + el.innerHTML.substring(0, 500);
+            const elClasses = (typeof el.className === 'string' ? el.className : '') + ' ' + el.innerHTML.substring(0, 500);
             const unread = elClasses.includes('unread');
 
             conversations.push({
@@ -887,9 +953,17 @@
             });
         });
 
-        // Scrape active thread messages (with client-side dedup)
+        // Scrape active thread messages (with client-side dedup and sent/received detection)
         let activeMessages = [];
         const seenMsgTexts = new Set();
+
+        // Get owner name for sent/received detection
+        let threadOwnerName = '';
+        try {
+            const stored = await chrome.storage.local.get('ownerName');
+            threadOwnerName = (stored.ownerName || '').toLowerCase().replace(/[^a-z\s]/g, '').trim();
+        } catch (e) {}
+
         const msgContainer = document.querySelector(
             '[class*="msg-s-message-list"], [class*="msg-thread"] [role="list"], ' +
             'ul[class*="msg-s-message-list"]'
@@ -902,6 +976,25 @@
                 let sender = '';
                 const senderEl = el.querySelector('[class*="message-group__name"], [class*="event-listitem__name"]');
                 if (senderEl) sender = senderEl.textContent.trim();
+
+                // Detect if this message was sent by the logged-in user
+                let isSent = false;
+                if (sender) {
+                    const normalSender = sender.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+                    if (normalSender === 'you' || (threadOwnerName && (
+                        normalSender.includes(threadOwnerName) || threadOwnerName.includes(normalSender)
+                    ))) {
+                        isSent = true;
+                    }
+                }
+                // LinkedIn often marks own messages with specific classes
+                const elClasses = (typeof el.className === 'string' ? el.className : '').toLowerCase();
+                if (elClasses.includes('msg-s-message-group--selfauthor') ||
+                    elClasses.includes('self-author') ||
+                    elClasses.includes('outbound') ||
+                    el.querySelector('[class*="selfauthor"], [class*="self-author"]')) {
+                    isSent = true;
+                }
 
                 let body = '';
                 const bodyEl = el.querySelector('[class*="event-listitem__body"], [class*="message-group__body"], p[class*="msg-s-event"]');
@@ -922,7 +1015,11 @@
                     const dedupKey = body.substring(0, 200).toLowerCase();
                     if (!seenMsgTexts.has(dedupKey)) {
                         seenMsgTexts.add(dedupKey);
-                        activeMessages.push({ sender, text: body.substring(0, 500), timestamp: time });
+                        activeMessages.push({
+                            sender: isSent ? 'you' : (sender || 'them'),
+                            text: body.substring(0, 500),
+                            timestamp: time,
+                        });
                     }
                 }
             });
@@ -982,20 +1079,25 @@
     });
 
     // ── Init ──
+    let _scrapeInterval = null;
+    let _urlObserver = null;
+
     function init() {
+        if (!isExtensionValid()) return;
         createSidebar();
         setTimeout(runScrape, SCRAPE_DELAY);
 
-        const observer = new MutationObserver(() => {
+        _urlObserver = new MutationObserver(() => {
+            if (!isExtensionValid()) { _urlObserver.disconnect(); _urlObserver = null; return; }
             const currentUrl = window.location.href;
             if (currentUrl !== lastUrl) {
                 lastUrl = currentUrl;
                 setTimeout(runScrape, SCRAPE_DELAY);
             }
         });
-        observer.observe(document.body, { childList: true, subtree: true });
+        _urlObserver.observe(document.body, { childList: true, subtree: true });
 
-        setInterval(runScrape, 30000);
+        _scrapeInterval = setInterval(runScrape, 30000);
     }
 
     if (document.readyState === 'loading') {
