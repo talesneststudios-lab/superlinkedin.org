@@ -3481,8 +3481,8 @@
             </a>
 
             <div class="nav-section">Engage</div>
-            <a class="nav-item nav-sub-item" data-page="discover" onclick="navGated('engage_engine','discover')">
-                <span class="nav-icon">&#128269;</span> <span>Discover</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
+            <a class="nav-item nav-sub-item" data-page="discover" onclick="showPage('discover',true)">
+                <span class="nav-icon">&#128269;</span> <span>Discover</span>
             </a>
             <a class="nav-item nav-sub-item" data-page="mentions" onclick="navGated('engage_engine','mentions')">
                 <span class="nav-icon">&#128172;</span> <span>Mentions</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
@@ -4618,7 +4618,7 @@
                     <div id="discoverFeed" style="display:flex;flex-direction:column;gap:12px;"></div>
                     <div id="discoverEmpty" class="empty-state" style="display:none;">
                         <div style="font-size:2rem;margin-bottom:10px;">&#128269;</div>
-                        <p>Install the SuperLinkedIn Chrome extension to populate your discover feed with trending posts from your LinkedIn network.</p>
+                        <p>Scroll through your LinkedIn feed with the SuperLinkedIn extension active to discover trending posts. Posts from your feed will appear here automatically.</p>
                     </div>
                 </div>
             </div>
@@ -5424,13 +5424,13 @@
         const ENGAGE_FEATURES = {
             discover: {
                 icon: '&#128269;',
-                title: 'Discover Coming Soon',
-                desc: 'The Discover feature is currently under development. Soon you\'ll be able to:',
+                title: 'Discover',
+                desc: 'Browse trending posts from your LinkedIn network. Scroll your LinkedIn feed with the extension active to populate this section.',
                 items: [
-                    'Find trending posts and topics in your industry',
-                    'Discover new creators and thought leaders to follow',
-                    'Get AI-curated content recommendations',
-                    'Track hashtag performance and trends',
+                    'See trending posts and topics from your network',
+                    'Engage directly with AI-powered replies',
+                    'Use popular posts as content inspiration',
+                    'Track what\'s working in your industry',
                 ],
             },
             mentions: {
@@ -5567,12 +5567,12 @@
 
         // ===== DISCOVER =====
         async function loadDiscover() {
+            const feed = document.getElementById('discoverFeed');
+            const empty = document.getElementById('discoverEmpty');
             try {
                 const res = await fetch('/api/engage/discover');
-                if (!res.ok) return;
+                if (!res.ok) { feed.innerHTML = ''; empty.style.display = 'block'; return; }
                 const data = await res.json();
-                const feed = document.getElementById('discoverFeed');
-                const empty = document.getElementById('discoverEmpty');
                 if (!data.posts || data.posts.length === 0) {
                     feed.innerHTML = '';
                     empty.style.display = 'block';
@@ -5594,7 +5594,7 @@
                         </div>
                     </div>
                 `).join('');
-            } catch {}
+            } catch { feed.innerHTML = ''; empty.style.display = 'block'; }
         }
 
         async function aiReplyTo(postText) {

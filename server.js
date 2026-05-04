@@ -1584,12 +1584,41 @@ Make each post different in format (one list-based, one story, one insight/opini
     }
 });
 
+async function resolveUserFromReq(req) {
+    if (req.session && req.session.user) return req.session.user;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.slice(7);
+        const secret = process.env.SESSION_SECRET || 'fallback';
+        if (!global._tokenCache) global._tokenCache = {};
+        if (global._tokenCache[token]) {
+            return await dbGetUser(global._tokenCache[token]);
+        }
+        try {
+            const result = await ddb.send(new ScanCommand({
+                TableName: DYNAMO_TABLE,
+                FilterExpression: 'extensionToken = :token',
+                ExpressionAttributeValues: { ':token': token },
+            }));
+            if (result.Items && result.Items[0]) {
+                global._tokenCache[token] = result.Items[0].linkedinId;
+                return result.Items[0];
+            }
+        } catch (err) {
+            console.error('[resolveUser] DB scan error:', err.message);
+        }
+    }
+    return null;
+}
+
 app.post('/api/ai/write', async (req, res) => {
-    if (!req.session.user) {
+    const user = await resolveUserFromReq(req);
+    if (!user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const credits = await getCreditsForSession(req.session);
+    const fakeSession = { user };
+    const credits = await getCreditsForSession(fakeSession);
     if (credits.remaining < 1) {
         return res.json({ error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
     }
@@ -1599,8 +1628,7 @@ app.post('/api/ai/write', async (req, res) => {
         return res.json({ error: 'OpenAI API key not configured' });
     }
 
-    const { tone } = req.body;
-    const user = req.session.user;
+    const { tone, prompt: extPrompt } = req.body;
     const writingProfile = user.writingProfile || {};
     const topTags = Object.entries(writingProfile).sort((a, b) => b[1] - a[1]).map(e => e[0]).slice(0, 5);
     const aboutYou = user.aboutYou || '';
@@ -1651,7 +1679,8 @@ app.post('/api/ai/write', async (req, res) => {
     if (likedPostBodies.length) systemContent += `\n\nWRITING DNA: Use these posts the user liked as reference for their preferred style:\n${likedPostBodies.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
     if (products.length) systemContent += `\n\nPRODUCT PROMOTION: Naturally weave in the user's product/service where relevant: ${productsList}`;
 
-    const userPrompt = `Write a single LinkedIn post for me.${charLimit ? `\nHARD LIMIT: The post MUST be under ${charLimit} characters. Keep it extremely short and concise.` : ''}
+    const topicHint = extPrompt ? `\nTopic/prompt from user: ${extPrompt}` : '';
+    const userPrompt = `Write a single LinkedIn post for me.${charLimit ? `\nHARD LIMIT: The post MUST be under ${charLimit} characters. Keep it extremely short and concise.` : ''}${topicHint}
 About me: ${aboutYou || 'A professional looking to grow on LinkedIn.'}
 Tone: ${toneDesc[tone] || toneDesc.auto}${creators.length ? `\nWrite in a style similar to: ${creators.join(', ')}` : ''}${interests ? `\nMy interests: ${interests}` : ''}${productsList ? `\nNaturally mention my product/service where relevant: ${productsList}` : ''}
 Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITICAL — Follow these rules strictly: ${customRules}` : ''}`;
@@ -1680,7 +1709,7 @@ Requirements: ${defaultReqs}. Return ONLY the post text.${customRules ? `\nCRITI
             const cut = post.lastIndexOf(' ', charLimit - 3);
             post = post.substring(0, cut > 0 ? cut : charLimit - 3) + '...';
         }
-        await consumeCredit(req.session, 1);
+        await consumeCredit(fakeSession, 1);
         res.json({ post });
     } catch (err) {
         console.error('AI write error:', err);
@@ -1819,11 +1848,13 @@ app.post('/api/inspiration/search', async (req, res) => {
 });
 
 app.post('/api/ai/improve', async (req, res) => {
-    if (!req.session.user) {
+    const user = await resolveUserFromReq(req);
+    if (!user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const credits = await getCreditsForSession(req.session);
+    const fakeSession = { user };
+    const credits = await getCreditsForSession(fakeSession);
     if (credits.remaining < 1) {
         return res.json({ error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
     }
@@ -1876,7 +1907,7 @@ app.post('/api/ai/improve', async (req, res) => {
 
         const data = await response.json();
         const result = data.choices?.[0]?.message?.content?.trim() || '';
-        await consumeCredit(req.session, 1);
+        await consumeCredit(fakeSession, 1);
         res.json({ text: result });
     } catch (err) {
         console.error('AI improve error:', err);
@@ -2580,7 +2611,7 @@ async function authExtension(req, res, next) {
 
 // Receive scraped analytics data from extension
 app.post('/api/analytics/sync', authExtension, async (req, res) => {
-    const { followers, posts, dashboardStats, dms } = req.body;
+    const { followers, posts, dashboardStats, dms, feedPosts } = req.body;
     const linkedinId = req.extUser.linkedinId;
 
     const updates = {};
@@ -2703,6 +2734,22 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         if (existing.length > 200) existing.splice(0, existing.length - 200);
         updates.dmConversations = existing;
         console.log('[Sync] DM data merged:', cleanConversations.length, 'conversations (filtered from', dms.conversations.length, 'raw)');
+    }
+
+    if (feedPosts && feedPosts.length > 0) {
+        const user = await dbGetUser(linkedinId);
+        const existing = (user && user.engageFeed) || [];
+        const existingTexts = new Set(existing.map(p => (p.text || '').substring(0, 80).toLowerCase()));
+        feedPosts.forEach(fp => {
+            const key = (fp.text || '').substring(0, 80).toLowerCase();
+            if (key && !existingTexts.has(key)) {
+                existingTexts.add(key);
+                existing.push(fp);
+            }
+        });
+        if (existing.length > 100) existing.splice(0, existing.length - 100);
+        updates.engageFeed = existing;
+        console.log('[Sync] Feed posts for Discover:', feedPosts.length, 'new, total:', existing.length);
     }
 
     updates.analyticsLastSync = now;
@@ -3062,7 +3109,6 @@ app.get('/api/viral-library', async (req, res) => {
 
 app.get('/api/engage/discover', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
-    if (!(await hasFeature(req.session, 'engage_engine'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra.' });
     const user = await dbGetUser(req.session.user.linkedinId);
     const feedData = (user && user.engageFeed) || [];
     const postMetrics = (user && user.analyticsPostMetrics) || [];

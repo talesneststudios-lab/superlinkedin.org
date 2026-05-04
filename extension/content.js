@@ -151,6 +151,69 @@
         return posts;
     }
 
+    async function scrapeFeedPosts() {
+        if (!window.location.href.includes('/feed')) return [];
+        const posts = [];
+        const feedPosts = document.querySelectorAll(
+            '.feed-shared-update-v2, [data-urn*="activity"], .occludable-update'
+        );
+
+        let ownerName = '';
+        try {
+            const stored = await chrome.storage.local.get('ownerName');
+            ownerName = (stored.ownerName || '').toLowerCase().replace(/[^a-z\s]/g, '').trim();
+        } catch (e) {}
+
+        const seen = new Set();
+        feedPosts.forEach(post => {
+            const authorEl = post.querySelector(
+                '.update-components-actor__name .visually-hidden, ' +
+                '.update-components-actor__title .visually-hidden, ' +
+                '.feed-shared-actor__name'
+            );
+            const authorName = authorEl ? authorEl.textContent.trim() : '';
+            if (!authorName) return;
+
+            const normalAuthor = authorName.toLowerCase().replace(/[^a-z\s]/g, '').trim();
+            if (ownerName && (normalAuthor.includes(ownerName) || ownerName.includes(normalAuthor))) return;
+
+            const textEl = post.querySelector(
+                '.feed-shared-text, .update-components-text, .break-words'
+            );
+            const postText = textEl ? textEl.textContent.trim().substring(0, 300) : '';
+            if (!postText || postText.length < 10) return;
+
+            const key = postText.substring(0, 80).toLowerCase();
+            if (seen.has(key)) return;
+            seen.add(key);
+
+            const likesEl = post.querySelector(
+                '.social-details-social-counts__reactions-count, [data-test-id="social-actions__reaction-count"]'
+            );
+            const likes = likesEl ? parseNumber(likesEl.textContent) : 0;
+
+            const commentsEl = post.querySelector(
+                'button[aria-label*="comment" i], .social-details-social-counts__comments'
+            );
+            const comments = commentsEl ? parseNumber(commentsEl.textContent || commentsEl.getAttribute('aria-label') || '') : 0;
+
+            const repostsEl = post.querySelector(
+                'button[aria-label*="repost" i], .social-details-social-counts__item--with-social-proof'
+            );
+            const reposts = repostsEl ? parseNumber(repostsEl.textContent || repostsEl.getAttribute('aria-label') || '') : 0;
+
+            posts.push({
+                text: postText,
+                author: authorName,
+                likes, comments, reposts,
+                engagement: likes + comments + reposts,
+                scrapedAt: new Date().toISOString(),
+            });
+        });
+
+        return posts.slice(0, 30);
+    }
+
     function scrapeProfileInfo() {
         const nameEl = document.querySelector('.text-heading-xlarge, .pv-top-card--list li:first-child');
         const headlineEl = document.querySelector('.text-body-medium, .pv-top-card--experience-list-text');
@@ -374,6 +437,14 @@
             }
         }
 
+        if (url.includes('/feed')) {
+            const networkPosts = await scrapeFeedPosts();
+            if (networkPosts.length > 0) {
+                data.feedPosts = networkPosts;
+                console.log('[SuperLinkedIn] Feed posts scraped for Discover:', networkPosts.length);
+            }
+        }
+
         if (url.includes('/messaging')) {
             const dmData = await scrapeMessaging();
             if (dmData && dmData.conversations.length > 0) {
@@ -386,7 +457,7 @@
             }
         }
 
-        if (data.followers !== undefined || (data.posts && data.posts.length > 0) || data.dashboardStats || data.dms) {
+        if (data.followers !== undefined || (data.posts && data.posts.length > 0) || data.dashboardStats || data.dms || data.feedPosts) {
             console.log('[SuperLinkedIn] Scraped data:', JSON.stringify(data.dashboardStats || {}), 'posts:', (data.posts || []).length);
             sendToBackground(data);
         } else {
@@ -593,13 +664,6 @@
                         </div>
                     </div>
 
-                    <div class="sl-section-title" style="margin-top:20px;">Inspiration</div>
-                    <div class="sl-inspiration-list" id="slInspirationList">
-                        <div class="sl-empty-state">
-                            <div class="sl-empty-icon">&#128161;</div>
-                            <div class="sl-empty-text">Post ideas will appear here</div>
-                        </div>
-                    </div>
                 </div>
             </div>
 
@@ -634,7 +698,6 @@
             btn.addEventListener('click', () => sidebarAiAction(btn.dataset.action));
         });
 
-        loadInspiration();
     }
 
     function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
@@ -756,8 +819,8 @@
 
             const endpoint = type === 'generate' ? '/api/ai/write' : '/api/ai/improve';
             const body = type === 'generate'
-                ? { prompt: text || 'Write me an engaging LinkedIn post about professional growth' }
-                : { text, style: type };
+                ? { prompt: text || 'Write me an engaging LinkedIn post about professional growth', tone: 'auto' }
+                : { text, action: type };
 
             const res = await fetch(`${API_BASE}${endpoint}`, {
                 method: 'POST',
@@ -771,67 +834,12 @@
             const data = await res.json();
             loadingDiv.style.display = 'none';
             resultDiv.style.display = 'block';
-            resultText.textContent = data.text || data.result || data.error || 'No result';
+            resultText.textContent = data.post || data.text || data.result || data.error || 'No result';
         } catch {
             loadingDiv.style.display = 'none';
             resultDiv.style.display = 'block';
             resultText.textContent = 'Error: Could not connect to server.';
         }
-    }
-
-    async function loadInspiration() {
-        const container = document.getElementById('slInspirationList');
-        if (!container) return;
-
-        try {
-            const { authToken } = await chrome.storage.local.get('authToken');
-            if (!authToken) {
-                container.innerHTML = '<div style="text-align:center;color:#bbb;font-size:0.78rem;padding:16px;">Connect your account to see inspiration</div>';
-                return;
-            }
-
-            const res = await fetch(`${API_BASE}/api/inspiration/posts?limit=5`, {
-                headers: { 'Authorization': `Bearer ${authToken}` }
-            });
-
-            if (!res.ok) {
-                showFallbackInspiration(container);
-                return;
-            }
-
-            const data = await res.json();
-            const posts = data.posts || [];
-
-            if (!posts.length) {
-                showFallbackInspiration(container);
-                return;
-            }
-
-            container.innerHTML = posts.map(p => `
-                <div class="sl-insp-card">
-                    <div class="sl-insp-text">${escapeHtml((p.text || '').substring(0, 150))}${(p.text || '').length > 150 ? '...' : ''}</div>
-                    <div class="sl-insp-meta">${formatNum(p.likes || 0)} likes &middot; ${formatNum(p.comments || 0)} comments</div>
-                </div>
-            `).join('');
-        } catch {
-            showFallbackInspiration(container);
-        }
-    }
-
-    function showFallbackInspiration(container) {
-        const tips = [
-            { text: "Share your biggest professional lesson from the past year. Be specific and vulnerable.", meta: "Storytelling format" },
-            { text: "Post a contrarian take on a common industry belief. Back it up with data or experience.", meta: "Thought leadership" },
-            { text: "Celebrate a team member's achievement publicly. Tag them and explain why it mattered.", meta: "Community building" },
-            { text: "Share 3 tools or resources that changed how you work this quarter.", meta: "Value-driven content" },
-            { text: "Write about a recent failure and what you learned. Authenticity drives engagement.", meta: "Authentic storytelling" },
-        ];
-        container.innerHTML = tips.map(t => `
-            <div class="sl-insp-card">
-                <div class="sl-insp-text">${t.text}</div>
-                <div class="sl-insp-meta">${t.meta}</div>
-            </div>
-        `).join('');
     }
 
     // ── DM Scraper ──
