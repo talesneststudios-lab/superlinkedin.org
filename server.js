@@ -116,12 +116,17 @@ if (CANONICAL_HOST) {
 const LINKEDIN = {
     clientId: process.env.LINKEDIN_CLIENT_ID,
     clientSecret: process.env.LINKEDIN_CLIENT_SECRET,
-    redirectUri: `${process.env.BASE_URL}/auth/linkedin/callback`,
     authUrl: 'https://www.linkedin.com/oauth/v2/authorization',
     tokenUrl: 'https://www.linkedin.com/oauth/v2/accessToken',
     userInfoUrl: 'https://api.linkedin.com/v2/userinfo',
     scope: 'openid profile email w_member_social',
 };
+
+function getRedirectUri(req) {
+    const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.headers['x-forwarded-host'] || req.headers.host || new URL(process.env.BASE_URL).host;
+    return `${proto}://${host}/auth/linkedin/callback`;
+}
 
 let sessionStore;
 try {
@@ -150,6 +155,7 @@ const sessionConfig = {
         httpOnly: true,
         sameSite: 'lax',
         maxAge: 7 * 24 * 60 * 60 * 1000,
+        domain: process.env.COOKIE_DOMAIN || undefined,
     },
 };
 if (sessionStore) sessionConfig.store = sessionStore;
@@ -357,14 +363,16 @@ app.get('/api/referral', async (req, res) => {
 
 // Step 1: Redirect user to LinkedIn authorization page
 app.get('/auth/linkedin', (req, res) => {
-    console.log('[Auth] LinkedIn login initiated, redirectUri:', LINKEDIN.redirectUri);
+    const redirectUri = getRedirectUri(req);
+    console.log('[Auth] LinkedIn login initiated, redirectUri:', redirectUri);
     const state = crypto.randomBytes(32).toString('hex');
     req.session.oauthState = state;
+    req.session.oauthRedirectUri = redirectUri;
 
     const params = new URLSearchParams({
         response_type: 'code',
         client_id: LINKEDIN.clientId,
-        redirect_uri: LINKEDIN.redirectUri,
+        redirect_uri: redirectUri,
         scope: LINKEDIN.scope,
         state: state,
     });
@@ -384,13 +392,15 @@ app.get('/auth/linkedin/add-profile', (req, res) => {
     req.session.addingProfile = true;
     req.session.addingProfilePrimaryId = req.session.primaryAccountId || req.session.user.linkedinId;
 
+    const redirectUri = getRedirectUri(req);
     const state = crypto.randomBytes(32).toString('hex');
     req.session.oauthState = state;
+    req.session.oauthRedirectUri = redirectUri;
 
     const params = new URLSearchParams({
         response_type: 'code',
         client_id: LINKEDIN.clientId,
-        redirect_uri: LINKEDIN.redirectUri,
+        redirect_uri: redirectUri,
         scope: LINKEDIN.scope,
         state: state,
     });
@@ -415,6 +425,8 @@ app.get('/auth/linkedin/callback', async (req, res) => {
     }
 
     try {
+        const redirectUri = req.session.oauthRedirectUri || getRedirectUri(req);
+
         // Step 3: Exchange authorization code for access token
         const tokenResponse = await fetch(LINKEDIN.tokenUrl, {
             method: 'POST',
@@ -424,7 +436,7 @@ app.get('/auth/linkedin/callback', async (req, res) => {
                 code: code,
                 client_id: LINKEDIN.clientId,
                 client_secret: LINKEDIN.clientSecret,
-                redirect_uri: LINKEDIN.redirectUri,
+                redirect_uri: redirectUri,
             }),
         });
 
