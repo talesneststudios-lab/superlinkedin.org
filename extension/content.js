@@ -115,6 +115,35 @@
         return null;
     }
 
+    // ── Feed sidebar stats ──
+    // The LinkedIn feed page's left identity card shows two metrics that
+    // mirror the analytics dashboard: "Profile viewers" and "Post
+    // impressions". Scrape them so the extension popup stays fresh without
+    // requiring the user to visit /analytics/.
+    function scrapeFeedSidebarStats() {
+        const result = {};
+        const card = document.querySelector(
+            '.feed-identity-module, .feed-identity-module__profile-card, .scaffold-layout__sidebar'
+        ) || document.body;
+        if (!card) return null;
+        const text = (card.innerText || '').replace(/\u00a0/g, ' ').substring(0, 4000);
+
+        // Pattern: "Profile viewers\n18" or "Profile viewers 18"
+        const pv = text.match(/Profile\s+viewers?[\s:]*(\d[\d,.]*[KMB]?)/i);
+        if (pv) {
+            const n = parseNumber(pv[1]);
+            if (n > 0) result.profileViews = n;
+        }
+        // Pattern: "Post impressions\n24" or "Post impressions 24"
+        const pi = text.match(/Post\s+impressions?[\s:]*(\d[\d,.]*[KMB]?)/i);
+        if (pi) {
+            const n = parseNumber(pi[1]);
+            if (n > 0) result.postImpressions = n;
+        }
+
+        return Object.keys(result).length ? result : null;
+    }
+
     async function scrapePostMetrics() {
         const posts = [];
         const feedPosts = document.querySelectorAll(
@@ -438,6 +467,11 @@
         const url = window.location.href;
         const data = { url, timestamp: new Date().toISOString() };
 
+        // ── Connections / followers ──
+        // scrapeFollowers() handles its own page-eligibility check (mynetwork
+        // is preferred, /in/<vanity>/ is next, then a strict feed/sidebar
+        // fallback). Always call it so the stat refreshes when the user
+        // visits any of those pages, not only /in/.
         if (url.includes('/in/')) {
             const ownProfile = await isOwnProfile();
             if (ownProfile) {
@@ -452,13 +486,34 @@
             } else {
                 console.log('[SuperLinkedIn] Visiting another profile, skipping follower/stats sync');
             }
+        } else if (url.includes('/mynetwork') || url.includes('/feed') || url.includes('/notifications') || url.includes('/jobs') || url.includes('/messaging')) {
+            const followers = scrapeFollowers();
+            if (followers !== null) {
+                data.followers = followers;
+                sidebarData.followers = followers;
+                console.log('[SuperLinkedIn] Connections scraped from', url.substring(0, 80), '=>', followers);
+            }
+        }
+
+        // ── Feed identity sidebar — Profile viewers / Post impressions ──
+        // The feed page's left-rail user card shows the same metrics LinkedIn
+        // surfaces on its own analytics dashboard, just for the last 7 days.
+        // Scrape them here so the popup updates without waiting for the user
+        // to visit the analytics dashboard.
+        if (url.includes('/feed')) {
+            const feedStats = scrapeFeedSidebarStats();
+            if (feedStats && (feedStats.postImpressions || feedStats.profileViews)) {
+                data.dashboardStats = Object.assign({}, data.dashboardStats || {}, feedStats);
+                if (feedStats.postImpressions) sidebarData.totalImpressions = feedStats.postImpressions;
+                console.log('[SuperLinkedIn] Feed sidebar stats scraped:', feedStats);
+            }
         }
 
         const isAnalyticsPage = url.includes('/dashboard') || url.includes('/analytics') || url.includes('/creator');
         if (isAnalyticsPage) {
             const dashboardStats = scrapeAnalyticsDashboard();
             if (dashboardStats) {
-                data.dashboardStats = dashboardStats;
+                data.dashboardStats = Object.assign({}, data.dashboardStats || {}, dashboardStats);
                 if (dashboardStats.followers) sidebarData.followers = dashboardStats.followers;
                 if (dashboardStats.postImpressions) sidebarData.totalImpressions = dashboardStats.postImpressions;
                 if (dashboardStats.socialEngagements) sidebarData.totalLikes = dashboardStats.socialEngagements;
