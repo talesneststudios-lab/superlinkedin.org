@@ -100,18 +100,34 @@ async function dbUpdateFields(linkedinId, fields) {
 
 app.set('trust proxy', 1);
 
-const CANONICAL_HOST = (() => {
-    try { return new URL(process.env.BASE_URL).host; } catch { return ''; }
-})();
+// Two-host setup: marketing site lives on `www`, the app/dashboard lives on `app`.
+// We path-route between them: anything in APP_PATH_PREFIXES is forced onto APP_HOST,
+// everything else is forced onto MARKETING_HOST. Apex always redirects to one or the other.
+const APEX_HOST = 'superlinkedin.org';
+const APP_HOST = (process.env.APP_HOST || 'app.superlinkedin.org').toLowerCase();
+const MARKETING_HOST = (process.env.MARKETING_HOST || 'www.superlinkedin.org').toLowerCase();
+const APP_BASE = `https://${APP_HOST}`;
+const MARKETING_BASE = `https://${MARKETING_HOST}`;
 
-if (CANONICAL_HOST) {
-    app.use((req, res, next) => {
-        if (req.hostname !== CANONICAL_HOST.split(':')[0]) {
-            return res.redirect(301, process.env.BASE_URL + req.originalUrl);
-        }
-        next();
-    });
+const APP_PATH_PREFIXES = ['/app', '/auth', '/api', '/checkout', '/billing', '/onboarding', '/upgrade', '/playbook', '/logout'];
+
+function pathBelongsToApp(pathname) {
+    if (!pathname) return false;
+    return APP_PATH_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
 }
+
+app.use((req, res, next) => {
+    const host = (req.hostname || '').toLowerCase();
+    const knownHost = host === APEX_HOST || host === APP_HOST || host === MARKETING_HOST;
+    // Pass through anything that isn't one of our three known hosts (App Runner default URL, localhost, etc.)
+    if (!knownHost) return next();
+
+    const targetHost = pathBelongsToApp(req.path) ? APP_HOST : MARKETING_HOST;
+    if (host !== targetHost) {
+        return res.redirect(301, `https://${targetHost}${req.originalUrl}`);
+    }
+    next();
+});
 
 const LINKEDIN = {
     clientId: process.env.LINKEDIN_CLIENT_ID,
@@ -342,7 +358,7 @@ app.get('/api/referral', async (req, res) => {
         await dbUpdateFields(linkedinId, { referralCode: code });
     }
 
-    const referralLink = `${process.env.BASE_URL || 'https://www.superlinkedin.org'}/?ref=${code}`;
+    const referralLink = `${MARKETING_BASE}/?ref=${code}`;
     const referrals = user?.referrals || [];
     const discountsEarned = referrals.filter(r => r.paid).length;
 
@@ -3283,7 +3299,7 @@ app.post('/api/team/invite', async (req, res) => {
     const inviteCode = crypto.randomBytes(16).toString('hex');
     members.push({ email, role: role || 'editor', status: 'invited', inviteCode, invitedAt: new Date().toISOString() });
     await dbUpdateFields(primaryId, { teamMembers: members });
-    const inviteLink = `${process.env.BASE_URL || 'https://www.superlinkedin.org'}/app?invite=${inviteCode}`;
+    const inviteLink = `${APP_BASE}/app?invite=${inviteCode}`;
     res.json({ members, inviteLink });
 });
 

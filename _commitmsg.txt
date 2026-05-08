@@ -1,12 +1,8 @@
-﻿Polish app UI: subscription, dark mode, sidebar, engage, DMs, discover
+﻿Path-aware two-host routing: www = marketing, app = dashboard
 
-- account: subscription panel falls back to currentUser data when /api/credits fails, logs the failure reason instead of staying on "Loading..."
-- account: dark mode toggle reads from localStorage as source of truth and re-syncs html+body classes on settings load and on initial body parse
-- layout: remove the persistent main-header bar; pages start directly with their own card titles
-- engage: consolidate Discover/Mentions/Replies/Auto-Engage into a single Engage page with a tabbed sub-nav and routing/back-compat for legacy hashes
-- engage: add SuperX-style URL fetcher above tabs and a right-aligned Filters button
-- engage discover: add topic-setup empty state, persisted topic chips, and a filters drawer (min engagement, sort)
-- sidebar: SuperX-style collapsible nav-groups (Create/Engage/CRM/Reports) with colored section headers, chevrons, faint vertical guideline, persisted collapsed state
-- sidebar: active item across the whole sidebar uses the LinkedIn-blue accent regardless of section
-- sidebar: SuperLinkedIn logo navigates back to Home in-app instead of doing a full page reload
-- dms: thread structure is always rendered; empty state lives inside the messages area; controls start disabled and enable when a conversation is opened
+- server.js: replace single-canonical-host middleware with a path-aware one. APP_PATH_PREFIXES (/app, /auth, /api, /checkout, /billing, /onboarding, /upgrade, /playbook, /logout) are 301-redirected to APP_HOST; everything else (landing, marketing pages) is redirected to MARKETING_HOST. Apex (superlinkedin.org) is also routed to the appropriate subdomain.
+- server.js: introduce APP_HOST / MARKETING_HOST / APP_BASE / MARKETING_BASE constants (env-overridable) and use them for referral and invite links so referrals land on www and invites land on app.
+- .env.example: document the two-host setup with APP_HOST, MARKETING_HOST, and COOKIE_DOMAIN=.superlinkedin.org so sessions span both subdomains.
+
+Pairs with App Runner having both www and app as Active custom domains.
+LinkedIn Developer Portal must list https://app.superlinkedin.org/auth/linkedin/callback as an authorized redirect URL.
