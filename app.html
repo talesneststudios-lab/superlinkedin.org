@@ -1304,6 +1304,187 @@
             padding: 4px 8px;
         }
 
+        /* ===== Bulk DMs page ===== */
+        .bulk-dms-wrap { max-width: 1200px; margin: 0 auto; }
+        .bulk-dms-header { margin-bottom: 22px; }
+        .bulk-dms-header h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+        .bulk-dms-header p { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 10px; }
+        .bulk-dms-meta {
+            display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
+            font-size: 0.82rem; color: var(--text-secondary);
+        }
+        .bulk-dms-meta strong { color: var(--text-primary); margin-right: 4px; }
+        .bulk-dms-meta a { color: var(--accent); font-weight: 700; text-decoration: none; }
+        .bulk-dms-meta a:hover { text-decoration: underline; }
+
+        .bulk-dms-grid {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 320px;
+            gap: 20px;
+            align-items: start;
+        }
+        @media (max-width: 1024px) {
+            .bulk-dms-grid { grid-template-columns: 1fr; }
+            .bulk-dms-side > .card { position: static !important; }
+        }
+
+        .bulk-dms-label-row {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .bulk-dms-label-row h3 {
+            font-size: 1rem; font-weight: 800;
+        }
+        .bulk-dms-counter { font-size: 0.78rem; color: var(--text-muted); }
+
+        .bulk-dms-recipients {
+            display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px;
+            padding: 8px; background: var(--bg-secondary); border: 1px dashed var(--border);
+            border-radius: 8px;
+        }
+        .bulk-dms-recipients:empty::before {
+            content: 'No recipients yet. Click "+ Add Recipients" to begin.';
+            color: var(--text-muted); font-size: 0.82rem; padding: 6px;
+        }
+        .bulk-dms-recipient-chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 8px 5px 5px; background: var(--bg-card);
+            border: 1px solid var(--border); border-radius: 999px;
+            font-size: 0.78rem; max-width: 100%;
+        }
+        .bulk-dms-recipient-chip .chip-avatar {
+            width: 22px; height: 22px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.65rem; flex-shrink: 0; overflow: hidden;
+        }
+        .bulk-dms-recipient-chip .chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .bulk-dms-recipient-chip .chip-name { max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .bulk-dms-recipient-chip .chip-x {
+            background: none; border: none; cursor: pointer; color: var(--text-muted);
+            padding: 0 4px; font-size: 0.95rem; line-height: 1;
+        }
+        .bulk-dms-recipient-chip .chip-x:hover { color: #ef4444; }
+
+        .bulk-dms-textarea {
+            width: 100%; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px;
+            font-family: inherit; font-size: 0.92rem; background: var(--bg-card);
+            color: var(--text-primary); outline: none; resize: vertical; line-height: 1.5;
+        }
+        .bulk-dms-textarea:focus { border-color: var(--accent); }
+
+        .bulk-dms-vars { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; }
+        .bulk-dms-vars-label { font-size: 0.78rem; color: var(--text-muted); margin-right: 4px; }
+        .bulk-dms-var-chip {
+            padding: 4px 10px; background: var(--bg-secondary);
+            border: 1px solid var(--border); border-radius: 6px;
+            font-family: 'Menlo', 'Consolas', monospace; font-size: 0.78rem;
+            color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+        }
+        .bulk-dms-var-chip:hover {
+            border-color: var(--accent); color: var(--accent);
+            background: rgba(10,102,194,0.08);
+        }
+
+        .bulk-dms-btn-primary {
+            padding: 10px 22px; background: var(--accent); color: #fff;
+            border: none; border-radius: 8px; font-family: inherit;
+            font-weight: 700; font-size: 0.88rem; cursor: pointer;
+        }
+        .bulk-dms-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .bulk-dms-btn-secondary {
+            padding: 8px 14px; background: rgba(168,85,247,0.08);
+            color: #a855f7; border: 1px solid rgba(168,85,247,0.3);
+            border-radius: 8px; font-family: inherit; font-weight: 700;
+            font-size: 0.82rem; cursor: pointer;
+        }
+        .bulk-dms-btn-secondary:hover { background: rgba(168,85,247,0.16); }
+        .bulk-dms-btn-ghost {
+            padding: 8px 12px; background: none; color: var(--text-secondary);
+            border: 1px solid var(--border); border-radius: 8px;
+            font-family: inherit; font-weight: 600; font-size: 0.8rem; cursor: pointer;
+        }
+        .bulk-dms-btn-ghost:hover { color: var(--text-primary); border-color: var(--text-muted); }
+        .bulk-dms-btn-warning {
+            padding: 8px 14px; background: none; color: #f59e0b;
+            border: 1px solid rgba(245,158,11,0.4); border-radius: 8px;
+            font-family: inherit; font-weight: 700; font-size: 0.82rem; cursor: pointer;
+        }
+        .bulk-dms-btn-warning:hover { background: rgba(245,158,11,0.08); }
+        .bulk-dms-btn-warning.paused { background: rgba(245,158,11,0.14); color: #f59e0b; }
+        .bulk-dms-btn-danger {
+            padding: 8px 14px; background: none; color: #ef4444;
+            border: 1px solid rgba(239,68,68,0.4); border-radius: 8px;
+            font-family: inherit; font-weight: 700; font-size: 0.82rem; cursor: pointer;
+        }
+        .bulk-dms-btn-danger:hover { background: rgba(239,68,68,0.08); }
+        .bulk-dms-status { font-size: 0.78rem; color: var(--text-muted); }
+        .bulk-dms-status.ok { color: #22c55e; }
+        .bulk-dms-status.err { color: #ef4444; }
+
+        .bulk-dms-history { display: flex; flex-direction: column; }
+        .bulk-dms-history-row {
+            display: grid;
+            grid-template-columns: 1.4fr 2fr 90px 100px 32px;
+            gap: 12px; align-items: center;
+            padding: 10px 8px; border-bottom: 1px solid var(--border);
+            font-size: 0.82rem;
+        }
+        .bulk-dms-history-row.head {
+            font-weight: 700; color: var(--text-muted); text-transform: uppercase;
+            font-size: 0.7rem; letter-spacing: 0.04em;
+        }
+        .bulk-dms-history-row .cell-recipient { display: flex; gap: 8px; align-items: center; min-width: 0; }
+        .bulk-dms-history-row .cell-message { color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bulk-dms-history-row .cell-status { font-weight: 700; }
+        .bulk-dms-history-row .status-pending { color: #f59e0b; }
+        .bulk-dms-history-row .status-sending { color: #3b82f6; }
+        .bulk-dms-history-row .status-sent { color: #22c55e; }
+        .bulk-dms-history-row .status-failed { color: #ef4444; }
+        .bulk-dms-history-row .status-cancelled { color: var(--text-muted); }
+        .bulk-dms-history-row .cell-action button {
+            background: none; border: none; cursor: pointer; color: var(--text-muted);
+            font-size: 0.95rem; padding: 4px;
+        }
+        .bulk-dms-history-row .cell-action button:hover { color: #ef4444; }
+
+        .bulk-dms-preview-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .bulk-dms-preview-avatar {
+            width: 38px; height: 38px; border-radius: 50%;
+            background: linear-gradient(135deg, #a855f7, #d8b4fe);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 800; font-size: 0.85rem; overflow: hidden; flex-shrink: 0;
+        }
+        .bulk-dms-preview-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .bulk-dms-preview-bubble {
+            background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.18);
+            border-radius: 12px; padding: 12px 14px;
+            font-size: 0.85rem; color: var(--text-primary);
+            white-space: pre-wrap; line-height: 1.5; min-height: 60px;
+        }
+        .bulk-dms-preview-bubble.empty { color: var(--text-muted); font-style: italic; }
+
+        .bulk-dms-picker-list {
+            max-height: 220px; overflow-y: auto; border: 1px solid var(--border);
+            border-radius: 8px; background: var(--bg-secondary);
+        }
+        .bulk-dms-picker-item {
+            display: flex; align-items: center; gap: 10px; padding: 8px 12px;
+            cursor: pointer; border-bottom: 1px solid var(--border);
+            font-size: 0.82rem;
+        }
+        .bulk-dms-picker-item:last-child { border-bottom: none; }
+        .bulk-dms-picker-item:hover { background: rgba(168,85,247,0.06); }
+        .bulk-dms-picker-item.selected { background: rgba(168,85,247,0.12); }
+        .bulk-dms-picker-item input[type="checkbox"] { margin-right: 4px; }
+        .bulk-dms-picker-item .chip-avatar {
+            width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            color: #fff; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.7rem; overflow: hidden;
+        }
+        .bulk-dms-picker-item .chip-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
         .sidebar-user-avatar {
             width: 32px; height: 32px;
             border-radius: 50%;
@@ -4103,6 +4284,9 @@
                     <a class="nav-item nav-sub-item" data-page="dms" data-label="DMs" onclick="showPage('dms')">
                         <span class="nav-icon">&#9993;</span> <span>DMs</span>
                     </a>
+                    <a class="nav-item nav-sub-item" data-page="bulkdms" data-label="Bulk DMs" onclick="showPage('bulkdms')">
+                        <span class="nav-icon">&#128227;</span> <span>Bulk DMs</span>
+                    </a>
                 </div>
             </div>
 
@@ -5551,6 +5735,119 @@
                                 <button class="dm-followup-add-btn" onclick="addDmFollowupRule()">+ Add Rule</button>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BULK DM PAGE -->
+            <div class="page" id="page-bulkdms">
+                <div class="bulk-dms-wrap">
+                    <div class="bulk-dms-header">
+                        <h1>Bulk Direct Messages</h1>
+                        <p>Send personalized DMs to grow your network. Variables fill in each recipient's details automatically.</p>
+                        <div class="bulk-dms-meta">
+                            <span><strong>Today:</strong> <span id="bulkDmsTodayCount">0</span> / <span id="bulkDmsTodayLimit">25</span></span>
+                            <span><strong>Monthly:</strong> <span id="bulkDmsMonthCount">0</span> / <span id="bulkDmsMonthLimit">500</span></span>
+                            <a href="#" onclick="event.preventDefault();showPage('settings');">Manage limits</a>
+                        </div>
+                    </div>
+
+                    <div class="bulk-dms-grid">
+                        <div class="bulk-dms-main">
+                            <div class="card" style="padding:18px 20px;margin-bottom:16px;">
+                                <div class="bulk-dms-label-row">
+                                    <h3>Recipients</h3>
+                                    <span class="bulk-dms-counter"><span id="bulkDmsRecipientCount">0</span> recipient(s)</span>
+                                </div>
+                                <div id="bulkDmsRecipients" class="bulk-dms-recipients"></div>
+                                <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+                                    <button class="bulk-dms-btn-secondary" onclick="openBulkDmRecipientPicker()">+ Add Recipients</button>
+                                    <button class="bulk-dms-btn-ghost" onclick="clearBulkDmRecipients()" id="bulkDmsClearRecipientsBtn" style="display:none;">Clear all</button>
+                                </div>
+                            </div>
+
+                            <div class="card" style="padding:18px 20px;margin-bottom:16px;">
+                                <div class="bulk-dms-label-row">
+                                    <h3>Message</h3>
+                                    <span class="bulk-dms-counter"><span id="bulkDmsCharCount">0</span> chars</span>
+                                </div>
+                                <textarea id="bulkDmsMessage" class="bulk-dms-textarea" rows="6" placeholder="Hey [first], thanks for connecting! I wanted to reach out..." oninput="updateBulkDmPreview()"></textarea>
+                                <div class="bulk-dms-vars">
+                                    <span class="bulk-dms-vars-label">Variables:</span>
+                                    <button class="bulk-dms-var-chip" onclick="insertBulkDmVar('[name]')" title="Full name (e.g. John Doe)">[name]</button>
+                                    <button class="bulk-dms-var-chip" onclick="insertBulkDmVar('[first]')" title="First name only (e.g. John)">[first]</button>
+                                    <button class="bulk-dms-var-chip" onclick="insertBulkDmVar('[handle]')" title="LinkedIn handle (e.g. @johndoe)">[handle]</button>
+                                </div>
+                            </div>
+
+                            <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:24px;">
+                                <button class="bulk-dms-btn-primary" id="bulkDmsSendBtn" onclick="enqueueBulkDms()" disabled>Send DMs</button>
+                                <button class="bulk-dms-btn-warning" onclick="toggleBulkDmsPause()" id="bulkDmsPauseBtn">Pause sending</button>
+                                <button class="bulk-dms-btn-danger" onclick="clearPendingBulkDms()">Clear Pending</button>
+                                <span id="bulkDmsStatus" class="bulk-dms-status"></span>
+                            </div>
+
+                            <div class="card" style="padding:18px 20px;">
+                                <div class="bulk-dms-label-row">
+                                    <h3>DM History <span style="font-weight:500;color:var(--text-muted);font-size:0.8rem;">(<span id="bulkDmsHistoryCount">0</span> total)</span></h3>
+                                    <button class="bulk-dms-btn-ghost" onclick="loadBulkDms()">Refresh</button>
+                                </div>
+                                <div id="bulkDmsHistory" class="bulk-dms-history">
+                                    <div class="empty-state" style="padding:30px;"><p>No bulk DMs sent yet. Add recipients and a message above to get started.</p></div>
+                                </div>
+                            </div>
+
+                            <div class="card" style="padding:18px 20px;margin-top:16px;background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.3);">
+                                <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:8px;">Pro Tips</h4>
+                                <ul style="font-size:0.82rem;color:var(--text-secondary);padding-left:18px;line-height:1.7;">
+                                    <li>DMs are sent once every 1&ndash;2 minutes to avoid spam detection and rate limits.</li>
+                                    <li>Use <code>[name]</code>, <code>[first]</code>, and <code>[handle]</code> to personalize each message.</li>
+                                    <li>Keep a LinkedIn Messaging tab open in the same browser; the extension delivers each DM automatically when its turn arrives.</li>
+                                    <li>Each recipient can only receive one bulk DM from your account per 24 hours.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="bulk-dms-side">
+                            <div class="card" style="padding:18px 20px;position:sticky;top:80px;">
+                                <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:14px;">Preview</h4>
+                                <div class="bulk-dms-preview-row">
+                                    <div class="bulk-dms-preview-avatar" id="bulkDmsPreviewAvatar">P</div>
+                                    <div>
+                                        <div style="font-weight:700;font-size:0.88rem;" id="bulkDmsPreviewName">Sample Recipient</div>
+                                        <div style="font-size:0.75rem;color:var(--text-muted);" id="bulkDmsPreviewHandle">@sample</div>
+                                    </div>
+                                </div>
+                                <div class="bulk-dms-preview-bubble" id="bulkDmsPreviewBubble">Your message will appear here&hellip;</div>
+                                <p style="font-size:0.72rem;color:var(--text-muted);margin-top:10px;">Variables are replaced for each recipient at send time.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BULK DM RECIPIENT PICKER MODAL -->
+            <div class="sched-overlay" id="bulkDmsPickerOverlay" onclick="if(event.target===this)closeBulkDmRecipientPicker()">
+                <div class="sched-modal" style="width:560px;">
+                    <div class="sched-title-row">
+                        <span class="sched-title">Add Recipients</span>
+                        <button class="sched-close" onclick="closeBulkDmRecipientPicker()">&times;</button>
+                    </div>
+                    <p style="font-size:0.82rem;color:var(--text-secondary);margin:8px 0 14px;">
+                        Pick from existing conversations or paste in new contacts. Each line should be:
+                        <code style="font-size:0.78rem;">Name, @handle</code>
+                    </p>
+                    <div style="margin-bottom:14px;">
+                        <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:6px;">Pick from your conversations</label>
+                        <div id="bulkDmsPickerConvList" class="bulk-dms-picker-list"></div>
+                    </div>
+                    <div style="margin-bottom:8px;">
+                        <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:6px;">Or paste contacts manually</label>
+                        <textarea id="bulkDmsPickerManual" rows="4" placeholder="John Doe, @johndoe&#10;Jane Smith, @janesmith" class="bulk-dms-textarea"></textarea>
+                    </div>
+                    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px;">
+                        <button class="bulk-dms-btn-ghost" onclick="closeBulkDmRecipientPicker()">Cancel</button>
+                        <button class="bulk-dms-btn-primary" onclick="confirmBulkDmRecipients()">Add</button>
                     </div>
                 </div>
             </div>
@@ -7209,6 +7506,372 @@
             } catch {}
         }
 
+        // ===== Bulk DMs =====
+        let bulkDmsState = {
+            recipients: [],
+            queue: [],
+            history: [],
+            counts: { today: 0, month: 0 },
+            limits: { daily: 25, monthly: 500 },
+            paused: false,
+        };
+        let bulkDmsTickHandle = null;
+        let bulkDmsTickInFlight = false;
+
+        function renderBulkDmTemplateClient(template, recipient) {
+            const name = (recipient.name || '').trim();
+            const first = (name.split(/\s+/)[0] || name);
+            const handle = (recipient.handle || '').trim().replace(/^@?/, '@');
+            return String(template || '')
+                .replace(/\[name\]/gi, name || 'there')
+                .replace(/\[first\]/gi, first || 'there')
+                .replace(/\[handle\]/gi, handle || '');
+        }
+
+        function bulkDmRecipientChip(r, idx) {
+            const initials = ((r.name || '?').split(/\s+/).map(w => w[0]).join('') || '?').substring(0, 2).toUpperCase();
+            const avatar = r.picture
+                ? `<span class="chip-avatar"><img src="${escapeHtml(r.picture)}" alt=""></span>`
+                : `<span class="chip-avatar">${initials}</span>`;
+            return `<span class="bulk-dms-recipient-chip">
+                ${avatar}
+                <span class="chip-name">${escapeHtml(r.name || r.handle || '?')}</span>
+                <button class="chip-x" onclick="removeBulkDmRecipient(${idx})" title="Remove">&times;</button>
+            </span>`;
+        }
+
+        function renderBulkDmRecipients() {
+            const wrap = document.getElementById('bulkDmsRecipients');
+            if (!wrap) return;
+            wrap.innerHTML = bulkDmsState.recipients.map((r, i) => bulkDmRecipientChip(r, i)).join('');
+            const count = bulkDmsState.recipients.length;
+            const cnt = document.getElementById('bulkDmsRecipientCount');
+            if (cnt) cnt.textContent = count;
+            const clearBtn = document.getElementById('bulkDmsClearRecipientsBtn');
+            if (clearBtn) clearBtn.style.display = count > 0 ? '' : 'none';
+            updateBulkDmSendBtnState();
+            updateBulkDmPreview();
+        }
+
+        function updateBulkDmSendBtnState() {
+            const btn = document.getElementById('bulkDmsSendBtn');
+            const ta = document.getElementById('bulkDmsMessage');
+            if (!btn || !ta) return;
+            const has = bulkDmsState.recipients.length > 0 && ta.value.trim().length > 0 && !bulkDmsState.paused;
+            btn.disabled = !has;
+            const remainingDay = Math.max(0, bulkDmsState.limits.daily - bulkDmsState.counts.today);
+            btn.textContent = has
+                ? `Send DMs (${Math.min(bulkDmsState.recipients.length, remainingDay)})`
+                : 'Send DMs';
+        }
+
+        function updateBulkDmPreview() {
+            const ta = document.getElementById('bulkDmsMessage');
+            const bubble = document.getElementById('bulkDmsPreviewBubble');
+            const nameEl = document.getElementById('bulkDmsPreviewName');
+            const handleEl = document.getElementById('bulkDmsPreviewHandle');
+            const avEl = document.getElementById('bulkDmsPreviewAvatar');
+            const charCount = document.getElementById('bulkDmsCharCount');
+            if (!ta || !bubble) return;
+            const text = ta.value || '';
+            if (charCount) charCount.textContent = text.length;
+            const sample = bulkDmsState.recipients[0] || { name: 'Sample Recipient', handle: '@sample', picture: '' };
+            if (nameEl) nameEl.textContent = sample.name || 'Sample Recipient';
+            if (handleEl) handleEl.textContent = sample.handle ? (sample.handle.startsWith('@') ? sample.handle : '@' + sample.handle) : '@sample';
+            if (avEl) {
+                const initials = ((sample.name || '?').split(/\s+/).map(w => w[0]).join('') || '?').substring(0, 2).toUpperCase();
+                avEl.innerHTML = sample.picture ? `<img src="${escapeHtml(sample.picture)}" alt="">` : initials;
+            }
+            const rendered = text.trim() ? renderBulkDmTemplateClient(text, sample) : '';
+            if (rendered) { bubble.textContent = rendered; bubble.classList.remove('empty'); }
+            else { bubble.textContent = 'Your message will appear here\u2026'; bubble.classList.add('empty'); }
+            updateBulkDmSendBtnState();
+        }
+
+        function insertBulkDmVar(token) {
+            const ta = document.getElementById('bulkDmsMessage');
+            if (!ta) return;
+            const start = ta.selectionStart || 0;
+            const end = ta.selectionEnd || 0;
+            const val = ta.value;
+            ta.value = val.slice(0, start) + token + val.slice(end);
+            const newPos = start + token.length;
+            ta.focus();
+            ta.setSelectionRange(newPos, newPos);
+            updateBulkDmPreview();
+        }
+
+        function clearBulkDmRecipients() {
+            bulkDmsState.recipients = [];
+            renderBulkDmRecipients();
+        }
+        function removeBulkDmRecipient(i) {
+            bulkDmsState.recipients.splice(i, 1);
+            renderBulkDmRecipients();
+        }
+
+        function openBulkDmRecipientPicker() {
+            const list = document.getElementById('bulkDmsPickerConvList');
+            const conversations = (typeof _dmConversations !== 'undefined' && _dmConversations) ? _dmConversations : [];
+            if (list) {
+                if (!conversations.length) {
+                    list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:0.82rem;">No conversations to pick from. Sync DMs first or paste contacts manually below.</div>';
+                } else {
+                    list.innerHTML = conversations.slice(0, 50).map((c, i) => {
+                        const initials = ((c.participantName || '?').split(/\s+/).map(w => w[0]).join('') || '?').substring(0, 2).toUpperCase();
+                        const avatar = c.participantPicture
+                            ? `<span class="chip-avatar"><img src="${escapeHtml(c.participantPicture)}" alt=""></span>`
+                            : `<span class="chip-avatar">${initials}</span>`;
+                        return `<label class="bulk-dms-picker-item">
+                            <input type="checkbox" data-idx="${i}">
+                            ${avatar}
+                            <span style="flex:1;">${escapeHtml(c.participantName || '')}</span>
+                        </label>`;
+                    }).join('');
+                }
+            }
+            const manual = document.getElementById('bulkDmsPickerManual');
+            if (manual) manual.value = '';
+            document.getElementById('bulkDmsPickerOverlay').classList.add('open');
+        }
+        function closeBulkDmRecipientPicker() {
+            document.getElementById('bulkDmsPickerOverlay').classList.remove('open');
+        }
+        function confirmBulkDmRecipients() {
+            const conversations = (typeof _dmConversations !== 'undefined' && _dmConversations) ? _dmConversations : [];
+            const checks = document.querySelectorAll('#bulkDmsPickerConvList input[type="checkbox"]:checked');
+            checks.forEach(ch => {
+                const i = parseInt(ch.getAttribute('data-idx'), 10);
+                const c = conversations[i];
+                if (!c) return;
+                const handle = (c.participantUrl || '').split('/in/')[1];
+                const name = c.participantName || '';
+                if (!name) return;
+                if (bulkDmsState.recipients.some(r => r.name.toLowerCase() === name.toLowerCase())) return;
+                bulkDmsState.recipients.push({
+                    name,
+                    handle: handle ? '@' + handle.replace(/\/$/, '') : '',
+                    picture: c.participantPicture || '',
+                });
+            });
+
+            const manual = (document.getElementById('bulkDmsPickerManual') || {}).value || '';
+            manual.split(/\r?\n/).forEach(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return;
+                const parts = trimmed.split(',').map(p => p.trim());
+                const name = parts[0] || '';
+                const handle = parts[1] ? parts[1].replace(/^@?/, '@') : '';
+                if (!name) return;
+                if (bulkDmsState.recipients.some(r => r.name.toLowerCase() === name.toLowerCase())) return;
+                bulkDmsState.recipients.push({ name, handle, picture: '' });
+            });
+
+            closeBulkDmRecipientPicker();
+            renderBulkDmRecipients();
+        }
+
+        async function loadBulkDms() {
+            try {
+                const res = await fetch('/api/bulk-dms');
+                if (!res.ok) return;
+                const data = await res.json();
+                bulkDmsState.queue = data.queue || [];
+                bulkDmsState.history = data.history || [];
+                bulkDmsState.counts = data.counts || { today: 0, month: 0 };
+                bulkDmsState.limits = data.limits || { daily: 25, monthly: 500 };
+                bulkDmsState.paused = !!data.paused;
+                renderBulkDmHistory();
+                renderBulkDmCounters();
+                renderBulkDmPauseBtn();
+                updateBulkDmSendBtnState();
+            } catch (err) {
+                console.warn('[BulkDMs] load failed:', err);
+            }
+        }
+
+        function renderBulkDmCounters() {
+            const tc = document.getElementById('bulkDmsTodayCount');
+            const tl = document.getElementById('bulkDmsTodayLimit');
+            const mc = document.getElementById('bulkDmsMonthCount');
+            const ml = document.getElementById('bulkDmsMonthLimit');
+            if (tc) tc.textContent = bulkDmsState.counts.today;
+            if (tl) tl.textContent = bulkDmsState.limits.daily;
+            if (mc) mc.textContent = bulkDmsState.counts.month;
+            if (ml) ml.textContent = bulkDmsState.limits.monthly;
+        }
+
+        function renderBulkDmPauseBtn() {
+            const btn = document.getElementById('bulkDmsPauseBtn');
+            if (!btn) return;
+            if (bulkDmsState.paused) { btn.textContent = 'Resume sending'; btn.classList.add('paused'); }
+            else { btn.textContent = 'Pause sending'; btn.classList.remove('paused'); }
+        }
+
+        function renderBulkDmHistory() {
+            const wrap = document.getElementById('bulkDmsHistory');
+            const cnt = document.getElementById('bulkDmsHistoryCount');
+            if (!wrap) return;
+            const items = (bulkDmsState.queue || []).concat(bulkDmsState.history || []);
+            // Newest first
+            items.sort((a, b) => {
+                const aT = new Date(a.sentAt || a.failedAt || a.cancelledAt || a.scheduledFor || a.createdAt || 0).getTime();
+                const bT = new Date(b.sentAt || b.failedAt || b.cancelledAt || b.scheduledFor || b.createdAt || 0).getTime();
+                return bT - aT;
+            });
+            if (cnt) cnt.textContent = items.length;
+            if (!items.length) {
+                wrap.innerHTML = '<div class="empty-state" style="padding:30px;"><p>No bulk DMs sent yet. Add recipients and a message above to get started.</p></div>';
+                return;
+            }
+            const head = `<div class="bulk-dms-history-row head"><div>Recipient</div><div>Message</div><div>Status</div><div>Date</div><div></div></div>`;
+            const rows = items.slice(0, 100).map(it => {
+                const r = it.recipient || {};
+                const initials = ((r.name || '?').split(/\s+/).map(w => w[0]).join('') || '?').substring(0, 2).toUpperCase();
+                const avatar = r.picture
+                    ? `<span class="chip-avatar"><img src="${escapeHtml(r.picture)}" alt=""></span>`
+                    : `<span class="chip-avatar">${initials}</span>`;
+                const date = it.sentAt || it.failedAt || it.cancelledAt || it.scheduledFor || it.createdAt;
+                const dateStr = date ? formatDmTime(date) : '';
+                const status = (it.status || 'pending');
+                const statusLabel = { pending: 'Queued', sending: 'Sending', sent: 'Sent', failed: 'Failed', cancelled: 'Cancelled' }[status] || status;
+                const action = (status === 'pending' || status === 'sending')
+                    ? `<button onclick="cancelBulkDm('${it.id}')" title="Cancel">&times;</button>`
+                    : '';
+                return `<div class="bulk-dms-history-row">
+                    <div class="cell-recipient">${avatar}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.name || r.handle || '?')}</span></div>
+                    <div class="cell-message" title="${escapeHtml(it.renderedMessage || it.template || '')}">${escapeHtml(it.renderedMessage || it.template || '')}</div>
+                    <div class="cell-status status-${status}">${statusLabel}</div>
+                    <div>${dateStr}</div>
+                    <div class="cell-action">${action}</div>
+                </div>`;
+            }).join('');
+            wrap.innerHTML = head + rows;
+        }
+
+        async function enqueueBulkDms() {
+            const ta = document.getElementById('bulkDmsMessage');
+            const status = document.getElementById('bulkDmsStatus');
+            if (!ta || !ta.value.trim() || !bulkDmsState.recipients.length) return;
+            const btn = document.getElementById('bulkDmsSendBtn');
+            if (btn) btn.disabled = true;
+            try {
+                const res = await fetch('/api/bulk-dms/queue', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ template: ta.value, recipients: bulkDmsState.recipients }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to queue');
+                if (status) {
+                    status.textContent = `Queued ${data.added} message(s)` + (data.skipped ? `, skipped ${data.skipped} (already messaged or limit reached)` : '');
+                    status.className = 'bulk-dms-status ok';
+                }
+                bulkDmsState.recipients = [];
+                ta.value = '';
+                renderBulkDmRecipients();
+                updateBulkDmPreview();
+                await loadBulkDms();
+                ensureBulkDmsTick();
+            } catch (err) {
+                if (status) { status.textContent = err.message || String(err); status.className = 'bulk-dms-status err'; }
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        async function toggleBulkDmsPause() {
+            try {
+                const res = await fetch('/api/bulk-dms/pause', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ paused: !bulkDmsState.paused }),
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    bulkDmsState.paused = !!data.paused;
+                    renderBulkDmPauseBtn();
+                    updateBulkDmSendBtnState();
+                }
+            } catch {}
+        }
+
+        async function clearPendingBulkDms() {
+            if (!confirm('Cancel all queued bulk DMs? Sent messages stay in your history.')) return;
+            try {
+                const res = await fetch('/api/bulk-dms/clear', { method: 'POST' });
+                if (res.ok) await loadBulkDms();
+            } catch {}
+        }
+
+        async function cancelBulkDm(id) {
+            try {
+                const res = await fetch('/api/bulk-dms/cancel/' + encodeURIComponent(id), { method: 'POST' });
+                if (res.ok) await loadBulkDms();
+            } catch {}
+        }
+
+        // Background tick: every 30s, ask the server if a queued message is due,
+        // and if so deliver it via the extension. Server hands us at most one
+        // item at a time, already marked "sending", so even if the user has
+        // multiple tabs open we won't double-send the same item.
+        async function bulkDmsTick() {
+            if (bulkDmsTickInFlight) return;
+            bulkDmsTickInFlight = true;
+            try {
+                const res = await fetch('/api/bulk-dms/next-due', { method: 'POST' });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!data.item) {
+                    if (data.limitReached) console.log('[BulkDMs] daily/monthly limit reached');
+                    return;
+                }
+                const it = data.item;
+                let result;
+                try {
+                    if (typeof isExtensionInstalled === 'function' && isExtensionInstalled()) {
+                        result = await sendToExtension({
+                            type: 'DM_SEND_REPLY',
+                            recipientName: it.recipient.name,
+                            text: it.renderedMessage,
+                        }, 30000);
+                    } else {
+                        result = { success: false, error: 'Extension not detected' };
+                    }
+                } catch (e) {
+                    result = { success: false, error: (e && e.message) || 'Send error' };
+                }
+                await fetch('/api/bulk-dms/result', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: it.id, ok: !!(result && result.success), error: result && result.error }),
+                });
+                // Refresh state if user is on the page
+                if (document.getElementById('page-bulkdms') && document.getElementById('page-bulkdms').classList.contains('active')) {
+                    loadBulkDms();
+                }
+            } catch (err) {
+                console.warn('[BulkDMs] tick failed:', err);
+            } finally {
+                bulkDmsTickInFlight = false;
+            }
+        }
+        function ensureBulkDmsTick() {
+            if (bulkDmsTickHandle) return;
+            // Run an immediate tick + every 30s. The server enforces the
+            // 1-2 minute interval -- it just won't return an item until it's
+            // due, so we can safely poll faster.
+            bulkDmsTick();
+            bulkDmsTickHandle = setInterval(bulkDmsTick, 30000);
+        }
+
+        async function loadBulkDmsPage() {
+            renderBulkDmRecipients();
+            updateBulkDmPreview();
+            await loadBulkDms();
+            ensureBulkDmsTick();
+        }
+
         let profilesData = { profiles: [], activeProfileId: null, primaryAccountId: null, maxProfiles: 3, planTier: 'pro' };
 
         async function loadProfiles() {
@@ -7912,6 +8575,9 @@
                 // Manage Subscription modal never start out blank, regardless
                 // of which page the user visits first.
                 loadSubscriptionInfo().catch(err => console.warn('[Boot] loadSubscriptionInfo failed:', err));
+                // Start the bulk-DM scheduler tick so queued messages keep
+                // sending in the background no matter which page the user is on.
+                try { ensureBulkDmsTick(); } catch (e) { console.warn('[Boot] bulkDmsTick failed:', e); }
             } catch {}
         }
 
@@ -8144,7 +8810,7 @@
         }
 
         // Page navigation
-        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', engage: 'Engage', discover: 'Engage', mentions: 'Engage', engagelists: 'Lists', engagereplies: 'Engage', autoengage: 'Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages' };
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', engage: 'Engage', discover: 'Engage', mentions: 'Engage', engagelists: 'Lists', engagereplies: 'Engage', autoengage: 'Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages', bulkdms: 'Bulk Direct Messages' };
 
         // Maps the legacy page names to their new tab inside the Engage page
         const ENGAGE_TABS = { discover: { gate: null }, mentions: { gate: 'engage_engine' }, engagereplies: { gate: 'engage_engine' }, autoengage: { gate: 'auto_repost' } };
@@ -8208,6 +8874,7 @@
             if (page === 'sharedqueue') loadSharedQueue();
             if (page === 'reports') loadReports();
             if (page === 'dms') loadDms();
+            if (page === 'bulkdms') loadBulkDmsPage();
         }
 
         function getPageFromHash() {

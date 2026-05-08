@@ -3685,6 +3685,228 @@ app.put('/api/dms/:id/labels', async (req, res) => {
     res.json({ ok: true, labels: conv.labels });
 });
 
+// ---------- BULK DMs (variable substitution + rate-limited send queue) ----------
+
+const BULK_DM_DAILY_LIMIT = 25;
+const BULK_DM_MONTHLY_LIMIT = 500;
+const BULK_DM_MIN_INTERVAL_MS = 60 * 1000;       // 1 min
+const BULK_DM_MAX_INTERVAL_MS = 2 * 60 * 1000;   // 2 min
+const BULK_DM_MAX_LENGTH = 1500;
+const BULK_DM_PER_RECIPIENT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+function renderBulkDmTemplate(template, recipient) {
+    const name = (recipient.name || '').trim();
+    const first = name.split(/\s+/)[0] || name;
+    const handle = (recipient.handle || '').trim().replace(/^@?/, '@');
+    return String(template || '')
+        .replace(/\[name\]/gi, name || 'there')
+        .replace(/\[first\]/gi, first || 'there')
+        .replace(/\[handle\]/gi, handle || '');
+}
+
+function todayStartIso() {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+}
+function monthStartIso() {
+    const d = new Date();
+    d.setDate(1);
+    d.setHours(0, 0, 0, 0);
+    return d.toISOString();
+}
+
+function bulkDmCounts(history) {
+    const dayStart = new Date(todayStartIso()).getTime();
+    const monthStart = new Date(monthStartIso()).getTime();
+    let today = 0, month = 0;
+    (history || []).forEach(h => {
+        if (h.status !== 'sent') return;
+        const t = h.sentAt ? new Date(h.sentAt).getTime() : 0;
+        if (t >= monthStart) month++;
+        if (t >= dayStart) today++;
+    });
+    return { today, month };
+}
+
+function nextSendDelay() {
+    return BULK_DM_MIN_INTERVAL_MS + Math.floor(Math.random() * (BULK_DM_MAX_INTERVAL_MS - BULK_DM_MIN_INTERVAL_MS));
+}
+
+app.get('/api/bulk-dms', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const queue = user.bulkDmQueue || [];
+    const history = user.bulkDmHistory || [];
+    const counts = bulkDmCounts(history.concat(queue));
+    res.json({
+        queue,
+        history,
+        counts,
+        limits: { daily: BULK_DM_DAILY_LIMIT, monthly: BULK_DM_MONTHLY_LIMIT },
+        paused: !!user.bulkDmPaused,
+    });
+});
+
+app.post('/api/bulk-dms/queue', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const { template, recipients } = req.body;
+    if (!template || typeof template !== 'string' || !template.trim()) {
+        return res.status(400).json({ error: 'Message template is required' });
+    }
+    if (template.length > BULK_DM_MAX_LENGTH) {
+        return res.status(400).json({ error: `Message must be under ${BULK_DM_MAX_LENGTH} characters` });
+    }
+    if (!Array.isArray(recipients) || recipients.length === 0) {
+        return res.status(400).json({ error: 'At least one recipient is required' });
+    }
+
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const history = user.bulkDmHistory || [];
+    const queue = user.bulkDmQueue || [];
+    const counts = bulkDmCounts(history.concat(queue));
+    const remainingDay = Math.max(0, BULK_DM_DAILY_LIMIT - counts.today);
+    const remainingMonth = Math.max(0, BULK_DM_MONTHLY_LIMIT - counts.month);
+    const allowed = Math.min(remainingDay, remainingMonth);
+    if (allowed <= 0) {
+        return res.status(429).json({ error: 'You have reached your bulk-DM limit. Try again later or upgrade your plan.' });
+    }
+
+    // Skip recipients we already messaged in the last 24h to avoid spamming
+    const cooldownThreshold = Date.now() - BULK_DM_PER_RECIPIENT_COOLDOWN_MS;
+    const recentlyMessaged = new Set(
+        history
+            .filter(h => h.status === 'sent' && h.sentAt && new Date(h.sentAt).getTime() > cooldownThreshold)
+            .map(h => ((h.recipient && h.recipient.handle) || (h.recipient && h.recipient.name) || '').toLowerCase())
+    );
+
+    let scheduledFor = Date.now();
+    // Stagger from now using the 1-2 min interval
+    let lastQueuedTs = (queue[queue.length - 1] && new Date(queue[queue.length - 1].scheduledFor || 0).getTime()) || Date.now();
+    let added = 0;
+    let skipped = 0;
+    const newItems = [];
+    for (const r of recipients) {
+        if (added >= allowed) { skipped++; continue; }
+        const key = ((r.handle || r.name || '') + '').toLowerCase();
+        if (!key) { skipped++; continue; }
+        if (recentlyMessaged.has(key)) { skipped++; continue; }
+
+        lastQueuedTs = Math.max(lastQueuedTs, Date.now()) + nextSendDelay();
+        const item = {
+            id: 'bdm-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8),
+            recipient: {
+                name: (r.name || '').trim(),
+                handle: (r.handle || '').trim(),
+                picture: r.picture || '',
+            },
+            template,
+            renderedMessage: renderBulkDmTemplate(template, r),
+            status: 'pending',
+            scheduledFor: new Date(lastQueuedTs).toISOString(),
+            createdAt: new Date().toISOString(),
+        };
+        queue.push(item);
+        newItems.push(item);
+        added++;
+    }
+
+    await dbUpdateFields(user.linkedinId, { bulkDmQueue: queue });
+    res.json({ ok: true, added, skipped, items: newItems });
+});
+
+app.post('/api/bulk-dms/pause', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const { paused } = req.body;
+    await dbUpdateFields(req.session.user.linkedinId, { bulkDmPaused: !!paused });
+    res.json({ ok: true, paused: !!paused });
+});
+
+app.post('/api/bulk-dms/clear', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const queue = user.bulkDmQueue || [];
+    const history = user.bulkDmHistory || [];
+    queue.forEach(q => {
+        if (q.status === 'pending') {
+            history.push({ ...q, status: 'cancelled', cancelledAt: new Date().toISOString() });
+        }
+    });
+    await dbUpdateFields(user.linkedinId, { bulkDmQueue: [], bulkDmHistory: history });
+    res.json({ ok: true });
+});
+
+app.post('/api/bulk-dms/cancel/:id', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const queue = user.bulkDmQueue || [];
+    const history = user.bulkDmHistory || [];
+    const idx = queue.findIndex(q => q.id === req.params.id);
+    if (idx < 0) return res.status(404).json({ error: 'Queue item not found' });
+    const [item] = queue.splice(idx, 1);
+    item.status = 'cancelled';
+    item.cancelledAt = new Date().toISOString();
+    history.push(item);
+    await dbUpdateFields(user.linkedinId, { bulkDmQueue: queue, bulkDmHistory: history });
+    res.json({ ok: true });
+});
+
+// Called by the dashboard tick: returns the next due item the extension should
+// deliver (and immediately marks it "sending" so we don't double-send). The
+// browser then calls /api/bulk-dms/result with success/failure.
+app.post('/api/bulk-dms/next-due', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (user.bulkDmPaused) return res.json({ item: null, paused: true });
+
+    const queue = user.bulkDmQueue || [];
+    const history = user.bulkDmHistory || [];
+    const counts = bulkDmCounts(history.concat(queue));
+    if (counts.today >= BULK_DM_DAILY_LIMIT || counts.month >= BULK_DM_MONTHLY_LIMIT) {
+        return res.json({ item: null, limitReached: true });
+    }
+
+    const now = Date.now();
+    const idx = queue.findIndex(q => q.status === 'pending' && new Date(q.scheduledFor || 0).getTime() <= now);
+    if (idx < 0) return res.json({ item: null });
+
+    queue[idx].status = 'sending';
+    queue[idx].pickedUpAt = new Date().toISOString();
+    await dbUpdateFields(user.linkedinId, { bulkDmQueue: queue });
+    res.json({ item: queue[idx] });
+});
+
+app.post('/api/bulk-dms/result', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const { id, ok, error } = req.body;
+    if (!id) return res.status(400).json({ error: 'id required' });
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    const queue = user.bulkDmQueue || [];
+    const history = user.bulkDmHistory || [];
+    const idx = queue.findIndex(q => q.id === id);
+    if (idx < 0) return res.status(404).json({ error: 'Queue item not found' });
+    const [item] = queue.splice(idx, 1);
+    if (ok) {
+        item.status = 'sent';
+        item.sentAt = new Date().toISOString();
+    } else {
+        item.status = 'failed';
+        item.failedAt = new Date().toISOString();
+        item.error = (error || 'Send failed').substring(0, 200);
+    }
+    history.push(item);
+    if (history.length > 500) history.splice(0, history.length - 500);
+    await dbUpdateFields(user.linkedinId, { bulkDmQueue: queue, bulkDmHistory: history });
+    res.json({ ok: true, item });
+});
+
 // ---------- POST SCHEDULER ----------
 
 async function publishToLinkedIn(accessToken, linkedinId, text, audience) {
