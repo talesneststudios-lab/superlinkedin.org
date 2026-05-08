@@ -13,11 +13,11 @@
         :root {
             --bg: #f5f5f7;
             --bg-white: #ffffff;
-            --sidebar-bg: #1a1a2e;
-            --sidebar-text: #b0b0c0;
+            --sidebar-bg: #0a0a0a;
+            --sidebar-text: #a0a0a0;
             --sidebar-active: #ffffff;
-            --sidebar-hover: rgba(255,255,255,0.06);
-            --sidebar-section: #6b6b80;
+            --sidebar-hover: rgba(255,255,255,0.05);
+            --sidebar-section: #6b6b6b;
             --text-primary: #1a1a2e;
             --text-secondary: #555566;
             --text-muted: #888899;
@@ -32,31 +32,31 @@
         }
 
         :root.dark-mode, :root.dark-mode body {
-            --bg: #0f0f1a;
-            --bg-white: #1a1a2e;
-            --bg-card: #1a1a2e;
-            --text-primary: #e4e4ed;
-            --text-secondary: #a0a0b8;
-            --text-muted: #6b6b80;
-            --border: #2a2a40;
+            --bg: #0a0a0a;
+            --bg-white: #181818;
+            --bg-card: #181818;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #6b6b6b;
+            --border: #262626;
             --accent-light: rgba(10,102,194,0.15);
-            --queue-slot-bg: #1e1e34;
-            --queue-slot-border: #2a2a40;
+            --queue-slot-bg: #1c1c1c;
+            --queue-slot-border: #262626;
         }
-        .dark-mode .card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+        .dark-mode .card { box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
         .dark-mode input, .dark-mode select, .dark-mode textarea {
-            background: #12121f !important;
-            border-color: #2a2a40 !important;
+            background: #111111 !important;
+            border-color: #262626 !important;
             color: var(--text-primary) !important;
         }
-        .dark-mode .compose-panel { background: #1a1a2e; border-color: #2a2a40; }
-        .dark-mode .home-steps-card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-        .dark-mode .home-post-card { box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
-        .dark-mode .home-mission { border-color: #2a2a40; }
+        .dark-mode .compose-panel { background: #181818; border-color: #262626; }
+        .dark-mode .home-steps-card { box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+        .dark-mode .home-post-card { box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+        .dark-mode .home-mission { border-color: #262626; }
         .dark-mode .home-mission:hover { background: rgba(255,255,255,0.03); }
         .dark-mode .queue-edit-btn:hover { background: rgba(10,102,194,0.12); }
-        .dark-mode .notify-btn-secondary:hover { background: #12121f; }
-        .dark-mode .congrats-btn-copy:hover { background: #12121f; }
+        .dark-mode .notify-btn-secondary:hover { background: #111111; }
+        .dark-mode .congrats-btn-copy:hover { background: #111111; }
 
         .dark-toggle {
             position: relative;
@@ -110,7 +110,113 @@
             bottom: 0;
             z-index: 100;
             overflow: visible;
+            transition: width 0.2s ease;
         }
+
+        /* Collapsed sidebar (icons only) */
+        .sidebar.collapsed { width: 64px; }
+        .sidebar.collapsed .sidebar-logo span,
+        .sidebar.collapsed .nav-item > span:not(.nav-icon),
+        .sidebar.collapsed .nav-section,
+        .sidebar.collapsed .nav-section-header,
+        .sidebar.collapsed .nav-divider,
+        .sidebar.collapsed .sidebar-create-btn,
+        .sidebar.collapsed .sidebar-credits > span:not(.credits-icon),
+        .sidebar.collapsed .sidebar-credits .credits-popup,
+        .sidebar.collapsed .sidebar-user-info,
+        .sidebar.collapsed .sidebar-user .sidebar-user-menu { display: none; }
+        .sidebar.collapsed .sidebar-create-btn-icon { display: flex; }
+        .sidebar.collapsed .sidebar-logo { justify-content: center; padding: 20px 0 16px; }
+        .sidebar.collapsed .nav-item { padding: 10px 0; justify-content: center; gap: 0; }
+        .sidebar.collapsed .nav-sub-item { padding-left: 0; }
+        .sidebar.collapsed .nav-section-items {
+            border-left: none;
+            margin-left: 0;
+            padding-left: 0;
+            display: block !important;
+        }
+        .sidebar.collapsed .sidebar-bottom { padding: 8px 8px; }
+        .sidebar.collapsed .sidebar-credits { justify-content: center; padding: 8px; }
+        .sidebar.collapsed .sidebar-user { justify-content: center; padding: 8px; }
+        .sidebar.collapsed .nav-lock-icon { display: none; }
+
+        /* Tooltip on hover for icons-only nav items */
+        .sidebar.collapsed .nav-item { position: relative; }
+        .sidebar.collapsed .nav-item:hover::after {
+            content: attr(data-label);
+            position: absolute;
+            left: calc(100% + 8px);
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--sidebar-bg);
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            font-size: 0.78rem;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            pointer-events: none;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        /* Collapse-only "+" create button */
+        .sidebar-create-btn-icon {
+            display: none;
+            margin: 12px auto 8px;
+            width: 36px; height: 36px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s;
+        }
+        .sidebar-create-btn-icon:hover { background: var(--accent-hover); }
+
+        /* Sidebar collapse toggle button — tab handle sticking out the right edge */
+        .sidebar-user-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+        }
+        .sidebar-user-row .sidebar-user { flex: 1; min-width: 0; }
+        .sidebar-toggle {
+            position: absolute;
+            right: -28px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 26px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--sidebar-bg);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-left: none;
+            border-top-right-radius: 6px;
+            border-bottom-right-radius: 6px;
+            color: var(--sidebar-text);
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+            font-size: 0.7rem;
+            padding: 0;
+            z-index: 110;
+            box-shadow: 2px 0 6px rgba(0,0,0,0.25);
+        }
+        .sidebar-toggle:hover {
+            background: var(--sidebar-hover);
+            color: var(--sidebar-active);
+            border-color: rgba(255,255,255,0.22);
+        }
+        .sidebar.collapsed .sidebar-toggle { right: -28px; }
+        .sidebar.collapsed .sidebar-user-arrow { display: none; }
 
         .sidebar-logo {
             padding: 20px 20px 16px;
@@ -159,7 +265,10 @@
             padding: 8px 0;
             flex: 1;
             overflow-y: auto;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
         }
+        .sidebar-nav::-webkit-scrollbar { display: none; }
 
         .nav-item {
             display: flex;
@@ -180,9 +289,9 @@
         }
 
         .nav-item.active {
-            color: var(--sidebar-active);
-            background: var(--sidebar-hover);
-            font-weight: 600;
+            color: var(--accent);
+            background: rgba(10, 102, 194, 0.14);
+            font-weight: 700;
         }
 
         .nav-item .nav-icon {
@@ -201,8 +310,109 @@
         }
 
         .nav-sub-item {
-            padding-left: 48px;
+            padding-left: 36px;
             font-size: 0.82rem;
+        }
+
+        /* SuperX-style collapsible sections with colored headers and a vertical guideline */
+        .nav-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin: 10px 16px;
+        }
+        .nav-group {
+            --section-color: var(--sidebar-active);
+            margin: 2px 0;
+        }
+        .nav-group[data-color="blue"]   { --section-color: #3B82F6; }
+        .nav-group[data-color="green"]  { --section-color: #10B981; }
+        .nav-group[data-color="purple"] { --section-color: #A855F7; }
+        .nav-group[data-color="amber"]  { --section-color: #F59E0B; }
+
+        .nav-section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: calc(100% - 16px);
+            margin: 8px 8px 4px;
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            border-radius: 8px;
+            color: var(--section-color);
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: left;
+            transition: background 0.15s;
+        }
+        .nav-section-header:hover { background: var(--sidebar-hover); }
+        .nav-section-header .nav-section-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+        .nav-section-header .nav-section-label {
+            flex: 1;
+            min-width: 0;
+        }
+        .nav-section-header .nav-section-chevron {
+            font-size: 0.75rem;
+            color: var(--section-color);
+            opacity: 0.85;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        .nav-group.collapsed .nav-section-chevron { transform: rotate(-90deg); }
+
+        .nav-section-items {
+            position: relative;
+            margin: 2px 8px 6px 24px;
+            padding-left: 12px;
+            border-left: 1px solid rgba(255,255,255,0.08);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-height: 600px;
+            transition: max-height 0.2s ease, opacity 0.15s ease;
+        }
+        .nav-group.collapsed .nav-section-items {
+            max-height: 0;
+            opacity: 0;
+            margin-top: 0;
+            margin-bottom: 0;
+            pointer-events: none;
+        }
+
+        .nav-section-items .nav-item {
+            padding: 7px 12px;
+            border-radius: 6px;
+        }
+        .nav-section-items .nav-item.active {
+            color: var(--accent);
+            background: rgba(10, 102, 194, 0.14);
+            position: relative;
+            font-weight: 700;
+        }
+        .nav-section-items .nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: -13px;
+            top: 6px;
+            bottom: 6px;
+            width: 2px;
+            background: var(--accent);
+            border-radius: 2px;
+        }
+        .nav-section-items .nav-item:hover {
+            color: var(--section-color);
+            background: rgba(255, 255, 255, 0.04);
+        }
+        .nav-section-items .nav-item.active:hover {
+            color: var(--accent);
+            background: rgba(10, 102, 194, 0.18);
         }
 
         .sidebar-bottom {
@@ -480,6 +690,317 @@
         }
         .empty-state p { font-size: 0.88rem; line-height: 1.6; max-width: 400px; margin: 0 auto; }
 
+        .engage-tabs {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .engage-tabs::-webkit-scrollbar { display: none; }
+        .engage-tab {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 10px 18px;
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -1px;
+            font-family: inherit;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: color 0.15s, border-color 0.15s;
+        }
+        .engage-tab:hover { color: var(--text-primary); }
+        .engage-tab.active {
+            color: var(--text-primary);
+            border-bottom-color: var(--accent);
+        }
+        .engage-tab-lock {
+            font-size: 0.7rem;
+            opacity: 0.7;
+        }
+        .engage-tab-lock.hidden { display: none; }
+        .engage-panel { display: none; }
+        .engage-panel.active { display: block; }
+
+        /* URL fetcher (paste a LinkedIn post URL to reply to) */
+        .engage-url-fetcher {
+            display: flex;
+            align-items: center;
+            gap: 0;
+            margin-bottom: 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .engage-url-fetcher:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(10,102,194,0.18);
+        }
+        .engage-url-icon {
+            padding: 0 12px;
+            font-size: 1rem;
+            color: var(--text-muted);
+            user-select: none;
+        }
+        .engage-url-input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 8px;
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.88rem;
+        }
+        .engage-url-input::placeholder { color: var(--text-muted); }
+        .engage-url-fetch-btn {
+            padding: 10px 22px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            margin: 4px;
+            font-family: inherit;
+            font-size: 0.85rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .engage-url-fetch-btn:hover { background: var(--accent-hover); }
+
+        /* Tabs row containing tabs on the left and filters on the right */
+        .engage-tabs-row {
+            display: flex;
+            align-items: stretch;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        .engage-tabs-row .engage-tabs {
+            border-bottom: none;
+            margin-bottom: 0;
+            flex: 1;
+            min-width: 0;
+        }
+        .engage-filters-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 14px;
+            margin: 4px 0;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            white-space: nowrap;
+            transition: border-color 0.15s, background 0.15s, color 0.15s;
+            align-self: center;
+        }
+        .engage-filters-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        .engage-filters-icon { font-size: 0.85rem; }
+
+        /* Discover topic setup empty state (centered) */
+        .discover-topics-setup {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 60px 24px 80px;
+            max-width: 520px;
+            margin: 0 auto;
+        }
+        .discover-topics-setup.hidden { display: none; }
+        .discover-search-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--accent);
+            margin-bottom: 18px;
+        }
+        .discover-topics-setup h3 {
+            font-size: 1.1rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+            color: var(--text-primary);
+        }
+        .discover-topics-setup p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-bottom: 22px;
+            line-height: 1.55;
+        }
+        .discover-topics-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.9rem;
+            margin-bottom: 14px;
+            text-align: center;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .discover-topics-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(10,102,194,0.18);
+        }
+        .discover-topics-input::placeholder { color: var(--text-muted); }
+        .discover-start-btn {
+            width: 100%;
+            padding: 12px 24px;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.05s;
+        }
+        .discover-start-btn:hover { background: var(--accent-hover); }
+        .discover-start-btn:active { transform: translateY(1px); }
+
+        /* Topics chip bar (after configuration) */
+        .discover-topics-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 12px 14px;
+            margin-bottom: 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+        .discover-topics-bar.hidden { display: none; }
+        .discover-topics-bar-label {
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .discover-topics-bar-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            flex: 1;
+            min-width: 0;
+        }
+        .discover-topic-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 10px;
+            background: rgba(10,102,194,0.12);
+            color: var(--accent);
+            border-radius: 999px;
+            font-size: 0.78rem;
+            font-weight: 600;
+        }
+        .discover-topics-edit-btn {
+            padding: 6px 12px;
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+        .discover-topics-edit-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Filters drawer */
+        .discover-filters {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+        }
+        .discover-filters.hidden { display: none; }
+        .discover-filter-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .discover-filter-label {
+            flex: 0 0 160px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        .discover-filter-input {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.85rem;
+        }
+        .discover-filter-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .discover-filter-cancel,
+        .discover-filter-apply {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+        .discover-filter-cancel:hover { border-color: var(--accent); color: var(--accent); }
+        .discover-filter-apply {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .discover-filter-apply:hover { background: var(--accent-hover); }
+
         .feed-card {
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px;
             padding: 16px; transition: box-shadow 0.15s;
@@ -542,12 +1063,17 @@
 
         /* DM Page */
         .dm-layout {
-            display: flex; height: calc(100vh - 220px); max-height: 600px; gap: 0;
+            display: flex; height: calc(100vh - 220px); min-height: 520px; max-height: 820px; gap: 0;
             border: 1px solid var(--border); border-radius: 12px;
             background: var(--bg-card);
         }
+        .dm-thread-empty.hidden,
+        .dm-thread-active.hidden,
+        .dm-label-picker.hidden,
+        .dm-followup-body.hidden,
+        .dm-ai-menu.hidden { display: none; }
         .dm-sidebar {
-            width: 340px; min-width: 280px; border-right: 1px solid var(--border);
+            width: 240px; min-width: 200px; max-width: 260px; border-right: 1px solid var(--border);
             display: flex; flex-direction: column; background: var(--bg-card);
             border-radius: 12px 0 0 12px; overflow: hidden;
         }
@@ -645,7 +1171,7 @@
             color: var(--text-primary); padding: 4px 2px; white-space: nowrap;
         }
         .dm-messages {
-            flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 8px;
+            flex: 1 1 auto; min-height: 360px; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 8px;
         }
         .dm-bubble {
             max-width: 75%; padding: 10px 16px; border-radius: 16px;
@@ -677,9 +1203,9 @@
             display: flex; gap: 10px; align-items: flex-end; overflow: visible;
         }
         .dm-reply-textarea {
-            flex: 1; padding: 10px 14px; border: 1px solid var(--border); border-radius: 10px;
-            font-family: inherit; font-size: 0.85rem; resize: none; background: var(--bg-main);
-            color: var(--text-primary); min-height: 40px; max-height: 120px;
+            flex: 1; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+            font-family: inherit; font-size: 0.85rem; resize: vertical; background: var(--bg-main);
+            color: var(--text-primary); min-height: 90px; max-height: 240px;
         }
         .dm-compose-actions {
             display: flex; gap: 6px; align-items: flex-end; overflow: visible;
@@ -691,10 +1217,27 @@
             color: var(--text-primary); transition: all 0.2s; white-space: nowrap;
         }
         .dm-ai-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .dm-ai-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .dm-ai-btn:disabled:hover { border-color: var(--border); color: var(--text-primary); }
+        .dm-reply-textarea:disabled { background: var(--bg-card); color: var(--text-muted); cursor: not-allowed; }
         .dm-ai-menu {
-            position: absolute; bottom: calc(100% + 8px); right: 0;
+            position: absolute; bottom: 100%; right: 0;
+            padding-bottom: 8px;
+            background: transparent; z-index: 300; min-width: 180px;
+            display: none;
+        }
+        .dm-ai-menu > .dm-ai-menu-inner {
             background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-            padding: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.22); z-index: 300; min-width: 180px;
+            padding: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+        }
+        .dm-ai-dropdown:hover .dm-ai-menu,
+        .dm-ai-dropdown:focus-within .dm-ai-menu,
+        .dm-ai-menu:hover {
+            display: block;
+        }
+        .dm-ai-dropdown:has(.dm-ai-btn:disabled):hover .dm-ai-menu,
+        .dm-ai-dropdown:has(.dm-ai-btn:disabled):focus-within .dm-ai-menu {
+            display: none;
         }
         .dm-ai-menu button {
             display: block; width: 100%; padding: 8px 12px; border: none; background: none;
@@ -707,6 +1250,7 @@
             border-radius: 8px; font-size: 1rem; cursor: pointer; transition: background 0.2s;
         }
         .dm-send-btn:hover { background: #0957a8; }
+        .dm-send-btn:disabled { opacity: 0.45; cursor: not-allowed; background: var(--accent); }
 
         .dm-followup-config {
             margin-top: 16px; border: 1px solid var(--border); border-radius: 12px; overflow: hidden;
@@ -786,24 +1330,9 @@
             flex: 1;
             min-height: 100vh;
             overflow-x: hidden;
+            transition: margin-left 0.2s ease;
         }
-
-        .main-header {
-            padding: 20px 32px;
-            background: var(--bg-white);
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            position: sticky;
-            top: 0;
-            z-index: 50;
-        }
-
-        .main-header h1 {
-            font-size: 1.3rem;
-            font-weight: 800;
-        }
+        .main.sidebar-collapsed { margin-left: 64px; }
 
         .main-content {
             padding: 28px 32px;
@@ -1339,7 +1868,7 @@
 
         /* Playbook / learn section */
         .home-playbook {
-            background: #1a1a2e;
+            background: #181818;
             border-radius: 14px;
             padding: 28px 28px 20px;
             margin-bottom: 28px;
@@ -3027,6 +3556,36 @@
 
         .main.panel-open { margin-right: 380px; }
 
+        /* Compose panel collapse handle (left-edge tab) */
+        .compose-collapse-handle {
+            position: absolute;
+            left: -26px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 26px;
+            height: 64px;
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-right: none;
+            border-top-left-radius: 10px;
+            border-bottom-left-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            font-weight: 700;
+            z-index: 1;
+            box-shadow: -2px 2px 8px rgba(0,0,0,0.08);
+            transition: color 0.15s, background 0.15s;
+        }
+        .compose-collapse-handle:hover {
+            color: var(--accent);
+            background: var(--bg-card);
+        }
+        .dark-mode .compose-collapse-handle { background: #181818; border-color: #262626; }
+
         .compose-header {
             display: flex;
             align-items: center;
@@ -3411,7 +3970,7 @@
             }
             .sidebar-overlay.active { display: block; }
             .main { margin-left: 0; }
-            .main-header { padding-left: 56px; }
+            .main-content { padding-left: 56px; }
             .mobile-menu-btn {
                 display: flex;
                 position: fixed;
@@ -3439,7 +3998,8 @@
     </style>
 </head>
 <body>
-    <script>if (localStorage.getItem('sl_dark_mode') === 'true') { document.documentElement.classList.add('dark-mode'); document.body.classList.add('dark-mode'); }</script>
+    <script>(function(){var d=localStorage.getItem('sl_dark_mode')==='true';if(d){document.documentElement.classList.add('dark-mode');if(document.body)document.body.classList.add('dark-mode');document.addEventListener('DOMContentLoaded',function(){document.body.classList.add('dark-mode');});}})();</script>
+    <script>window.__slSidebarCollapsed = localStorage.getItem('sl_sidebar_collapsed') === '1';</script>
 
     <!-- MOBILE MENU -->
     <button class="mobile-menu-btn" onclick="document.querySelector('.sidebar').classList.toggle('mobile-open');document.getElementById('sidebarOverlay').classList.toggle('active')">&#9776;</button>
@@ -3447,64 +4007,99 @@
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
-        <a class="sidebar-logo" href="/" style="text-decoration:none;">
+        <a class="sidebar-logo" href="#" onclick="event.preventDefault();showPage('home');" style="text-decoration:none;cursor:pointer;">
             <div class="logo-icon">SL</div>
             <span>SuperLinkedIn</span>
         </a>
 
         <button class="sidebar-create-btn" onclick="toggleCompose()">+ Create a post</button>
+        <button class="sidebar-create-btn-icon" onclick="toggleCompose()" title="Create a post" aria-label="Create a post">+</button>
 
         <nav class="sidebar-nav">
-            <a class="nav-item active" data-page="home" onclick="showPage('home')">
+            <a class="nav-item active" data-page="home" data-label="Home" onclick="showPage('home')">
                 <span class="nav-icon">&#127968;</span> <span>Home</span>
             </a>
-            <a class="nav-item" data-page="queue" onclick="showPage('queue')">
+            <a class="nav-item" data-page="queue" data-label="Queue" onclick="showPage('queue')">
                 <span class="nav-icon">&#128197;</span> <span>Queue</span>
             </a>
-            <a class="nav-item" data-page="analytics" onclick="showPage('analytics')">
+            <a class="nav-item" data-page="analytics" data-label="Analytics" onclick="showPage('analytics')">
                 <span class="nav-icon">&#128200;</span> <span>Analytics</span>
             </a>
-            <a class="nav-item" data-page="context" onclick="showPage('context')">
+            <a class="nav-item" data-page="context" data-label="Context" onclick="showPage('context')">
                 <span class="nav-icon">&#128218;</span> <span>Context</span>
             </a>
 
-            <div class="nav-section">Create</div>
-            <a class="nav-item nav-sub-item" data-page="readytopost" onclick="showPage('readytopost')">
-                <span class="nav-icon">&#9997;</span> <span>Ready to Post</span>
-            </a>
-            <a class="nav-item nav-sub-item" data-page="virallibrary" onclick="navGated('viral_library','virallibrary')">
-                <span class="nav-icon">&#128293;</span> <span>Viral Library</span> <span class="nav-lock-icon" data-gate="viral_library">&#128274;</span>
-            </a>
-            <a class="nav-item nav-sub-item" data-page="create" onclick="showPage('create')">
-                <span class="nav-icon">&#129302;</span> <span>AI Writer</span>
-            </a>
-            <a class="nav-item nav-sub-item" data-page="carousel" onclick="handleCarouselNav()" id="navCarousel">
-                <span class="nav-icon">&#127912;</span> <span>Carousel</span> <span id="carouselLockIcon" class="crs-nav-locked" style="display:none;">&#128274;</span>
-            </a>
+            <div class="nav-divider"></div>
 
-            <div class="nav-section">Engage</div>
-            <a class="nav-item nav-sub-item" data-page="discover" onclick="showPage('discover',true)">
-                <span class="nav-icon">&#128269;</span> <span>Discover</span>
-            </a>
-            <a class="nav-item nav-sub-item" data-page="mentions" onclick="navGated('engage_engine','mentions')">
-                <span class="nav-icon">&#128172;</span> <span>Mentions</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
-            </a>
-            <a class="nav-item nav-sub-item" data-page="engagereplies" onclick="navGated('engage_engine','engagereplies')">
-                <span class="nav-icon">&#128172;</span> <span>Replies</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
-            </a>
-            <a class="nav-item nav-sub-item" data-page="autoengage" onclick="navGated('auto_repost','autoengage')">
-                <span class="nav-icon">&#9889;</span> <span>Auto-Engage</span> <span class="nav-lock-icon" data-gate="auto_repost">&#128274;</span>
-            </a>
+            <div class="nav-group" data-group="create" data-color="blue">
+                <button class="nav-section-header" type="button" onclick="toggleNavGroup('create')">
+                    <span class="nav-section-icon">&#9997;</span>
+                    <span class="nav-section-label">Create</span>
+                    <span class="nav-section-chevron">&#9662;</span>
+                </button>
+                <div class="nav-section-items">
+                    <a class="nav-item nav-sub-item" data-page="readytopost" data-label="Ready to Post" onclick="showPage('readytopost')">
+                        <span class="nav-icon">&#9997;</span> <span>Ready to Post</span>
+                    </a>
+                    <a class="nav-item nav-sub-item" data-page="virallibrary" data-label="Viral Library" onclick="navGated('viral_library','virallibrary')">
+                        <span class="nav-icon">&#128293;</span> <span>Viral Library</span> <span class="nav-lock-icon" data-gate="viral_library">&#128274;</span>
+                    </a>
+                    <a class="nav-item nav-sub-item" data-page="create" data-label="AI Writer" onclick="showPage('create')">
+                        <span class="nav-icon">&#129302;</span> <span>AI Writer</span>
+                    </a>
+                    <a class="nav-item nav-sub-item" data-page="carousel" data-label="Carousel" onclick="handleCarouselNav()" id="navCarousel">
+                        <span class="nav-icon">&#127912;</span> <span>Carousel</span> <span id="carouselLockIcon" class="crs-nav-locked" style="display:none;">&#128274;</span>
+                    </a>
+                </div>
+            </div>
 
-            <div class="nav-section">CRM</div>
-            <a class="nav-item nav-sub-item" data-page="dms" onclick="showPage('dms')">
-                <span class="nav-icon">&#9993;</span> <span>DMs</span>
-            </a>
+            <div class="nav-group" data-group="engage" data-color="green">
+                <button class="nav-section-header" type="button" onclick="toggleNavGroup('engage')">
+                    <span class="nav-section-icon">&#128172;</span>
+                    <span class="nav-section-label">Engage</span>
+                    <span class="nav-section-chevron">&#9662;</span>
+                </button>
+                <div class="nav-section-items">
+                    <a class="nav-item nav-sub-item" data-engage-tab="discover" data-label="Discover" onclick="showPage('discover')">
+                        <span class="nav-icon">&#128269;</span> <span>Discover</span>
+                    </a>
+                    <a class="nav-item nav-sub-item" data-engage-tab="mentions" data-label="Mentions" onclick="showPage('mentions')">
+                        <span class="nav-icon">&#128172;</span> <span>Mentions</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
+                    </a>
+                    <a class="nav-item nav-sub-item" data-engage-tab="engagereplies" data-label="Replies" onclick="showPage('engagereplies')">
+                        <span class="nav-icon">&#128172;</span> <span>Replies</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
+                    </a>
+                    <a class="nav-item nav-sub-item" data-engage-tab="autoengage" data-label="Auto-Engage" onclick="showPage('autoengage')">
+                        <span class="nav-icon">&#9889;</span> <span>Auto-Engage</span> <span class="nav-lock-icon" data-gate="auto_repost">&#128274;</span>
+                    </a>
+                </div>
+            </div>
 
-            <div class="nav-section">Reports</div>
-            <a class="nav-item nav-sub-item" data-page="reports" onclick="navGated('white_label','reports')">
-                <span class="nav-icon">&#128202;</span> <span>White-Label</span> <span class="nav-lock-icon" data-gate="white_label">&#128274;</span>
-            </a>
+            <div class="nav-group" data-group="crm" data-color="purple">
+                <button class="nav-section-header" type="button" onclick="toggleNavGroup('crm')">
+                    <span class="nav-section-icon">&#128101;</span>
+                    <span class="nav-section-label">CRM</span>
+                    <span class="nav-section-chevron">&#9662;</span>
+                </button>
+                <div class="nav-section-items">
+                    <a class="nav-item nav-sub-item" data-page="dms" data-label="DMs" onclick="showPage('dms')">
+                        <span class="nav-icon">&#9993;</span> <span>DMs</span>
+                    </a>
+                </div>
+            </div>
+
+            <div class="nav-group" data-group="reports" data-color="amber">
+                <button class="nav-section-header" type="button" onclick="toggleNavGroup('reports')">
+                    <span class="nav-section-icon">&#128202;</span>
+                    <span class="nav-section-label">Reports</span>
+                    <span class="nav-section-chevron">&#9662;</span>
+                </button>
+                <div class="nav-section-items">
+                    <a class="nav-item nav-sub-item" data-page="reports" data-label="White-Label" onclick="navGated('white_label','reports')">
+                        <span class="nav-icon">&#128202;</span> <span>White-Label</span> <span class="nav-lock-icon" data-gate="white_label">&#128274;</span>
+                    </a>
+                </div>
+            </div>
         </nav>
 
         <div class="sidebar-bottom">
@@ -3560,6 +4155,7 @@
                     </div>
                 </div>
             </div>
+            <div class="sidebar-user-row">
             <div class="sidebar-user" onclick="this.classList.toggle('menu-open')">
                 <div class="sidebar-user-avatar" id="sidebarAvatar"></div>
                 <div class="sidebar-user-info">
@@ -3585,6 +4181,10 @@
                     </a>
                 </div>
             </div>
+            <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar" aria-label="Collapse sidebar">
+                <span class="sidebar-toggle-icon">&#10094;</span>
+            </button>
+            </div>
             <div class="sidebar-links">
                 <a class="sidebar-link" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'" style="cursor:pointer;">&#128218; Learn / Help</a>
                 <div class="sidebar-help-submenu" style="display:none;padding:4px 0 4px 20px;">
@@ -3596,13 +4196,29 @@
         </div>
     </aside>
 
+    <script>
+        if (window.__slSidebarCollapsed) {
+            document.querySelector('.sidebar')?.classList.add('collapsed');
+            const tIcon = document.querySelector('.sidebar-toggle-icon');
+            if (tIcon) tIcon.innerHTML = '&#10095;';
+        }
+        try {
+            const raw = localStorage.getItem('sl_nav_collapsed_groups');
+            if (raw) {
+                JSON.parse(raw).forEach(g => {
+                    document.querySelector('.nav-group[data-group="' + g + '"]')?.classList.add('collapsed');
+                });
+            }
+        } catch (e) {}
+    </script>
+
     <!-- MAIN -->
     <div class="main">
-        <div class="main-header">
-            <h1 id="pageTitle">Home</h1>
-            <div id="headerRight"></div>
-        </div>
-
+        <script>
+            if (window.__slSidebarCollapsed) {
+                document.currentScript.parentElement.classList.add('sidebar-collapsed');
+            }
+        </script>
         <div class="main-content">
 
             <!-- HOME PAGE -->
@@ -4612,33 +5228,120 @@
                 </div>
             </div>
 
-            <!-- DISCOVER PAGE -->
-            <div class="page" id="page-discover">
+            <!-- ENGAGE PAGE (Discover / Mentions / Replies / Auto-Engage) -->
+            <div class="page" id="page-engage">
                 <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Discover</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Trending posts from your network. Engage to grow your visibility.</p>
-                    <div id="discoverFeed" style="display:flex;flex-direction:column;gap:12px;"></div>
-                    <div id="discoverEmpty" class="empty-state" style="display:none;">
-                        <div style="font-size:2rem;margin-bottom:10px;">&#128269;</div>
-                        <p>Scroll through your LinkedIn feed with the SuperLinkedIn extension active to discover trending posts. Posts from your feed will appear here automatically.</p>
+                    <h2 style="margin-bottom:6px;">Engage</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:18px;">Reply with intention. Grow your audience. All in one focused space.</p>
+
+                    <div class="engage-url-fetcher">
+                        <span class="engage-url-icon">&#128279;</span>
+                        <input type="text" class="engage-url-input" id="engageUrlInput" placeholder="Paste a LinkedIn post URL to reply to it..." onkeydown="if(event.key==='Enter'){fetchEngageUrl();}">
+                        <button class="engage-url-fetch-btn" type="button" onclick="fetchEngageUrl()">Fetch</button>
+                    </div>
+
+                    <div class="engage-tabs-row">
+                        <div class="engage-tabs" role="tablist">
+                            <button class="engage-tab active" data-tab="discover" onclick="switchEngageTab('discover')">Discover</button>
+                            <button class="engage-tab" data-tab="mentions" data-gate="engage_engine" onclick="switchEngageTab('mentions')">
+                                Mentions <span class="engage-tab-lock" data-gate="engage_engine">&#128274;</span>
+                            </button>
+                            <button class="engage-tab" data-tab="engagereplies" data-gate="engage_engine" onclick="switchEngageTab('engagereplies')">
+                                Replies <span class="engage-tab-lock" data-gate="engage_engine">&#128274;</span>
+                            </button>
+                            <button class="engage-tab" data-tab="autoengage" data-gate="auto_repost" onclick="switchEngageTab('autoengage')">
+                                Auto-Engage <span class="engage-tab-lock" data-gate="auto_repost">&#128274;</span>
+                            </button>
+                        </div>
+                        <button class="engage-filters-btn" type="button" onclick="toggleDiscoverFilters()">
+                            <span class="engage-filters-icon">&#9881;&#65039;</span> Filters
+                        </button>
+                    </div>
+
+                    <!-- DISCOVER PANEL -->
+                    <div class="engage-panel active" id="engagePanel-discover">
+                        <!-- Topic setup empty state -->
+                        <div class="discover-topics-setup" id="discoverTopicsSetup">
+                            <div class="discover-search-icon">
+                                <span>&#128269;</span>
+                            </div>
+                            <h3>What topics interest you?</h3>
+                            <p>Enter the topics you want to discover posts about. We'll find relevant posts for you to engage with.</p>
+                            <input id="discoverTopicsInput" type="text" class="discover-topics-input" placeholder="e.g. marketing, fitness, design, tech" onkeydown="if(event.key==='Enter'){startDiscovering();}">
+                            <button class="discover-start-btn" type="button" onclick="startDiscovering()">Start Discovering</button>
+                        </div>
+
+                        <!-- Topics chip bar shown once configured -->
+                        <div class="discover-topics-bar hidden" id="discoverTopicsBar">
+                            <span class="discover-topics-bar-label">Topics:</span>
+                            <span class="discover-topics-bar-chips" id="discoverTopicsChips"></span>
+                            <button type="button" class="discover-topics-edit-btn" onclick="editDiscoverTopics()">Edit topics</button>
+                        </div>
+
+                        <div id="discoverFeed" style="display:flex;flex-direction:column;gap:12px;"></div>
+                        <div id="discoverEmpty" class="empty-state" style="display:none;">
+                            <div style="font-size:2rem;margin-bottom:10px;">&#128269;</div>
+                            <p>No posts yet for these topics. Scroll through your LinkedIn feed with the SuperLinkedIn extension active and matching posts will appear here.</p>
+                        </div>
+
+                        <!-- Filters drawer -->
+                        <div class="discover-filters hidden" id="discoverFilters">
+                            <div class="discover-filter-row">
+                                <label class="discover-filter-label">Minimum engagement</label>
+                                <select id="discoverFilterMinEng" class="discover-filter-input">
+                                    <option value="0">Any</option>
+                                    <option value="50">50+ reactions</option>
+                                    <option value="200">200+ reactions</option>
+                                    <option value="1000">1k+ reactions</option>
+                                </select>
+                            </div>
+                            <div class="discover-filter-row">
+                                <label class="discover-filter-label">Sort by</label>
+                                <select id="discoverFilterSort" class="discover-filter-input">
+                                    <option value="recent">Most recent</option>
+                                    <option value="engagement">Most engagement</option>
+                                </select>
+                            </div>
+                            <div class="discover-filter-actions">
+                                <button type="button" class="discover-filter-cancel" onclick="toggleDiscoverFilters()">Close</button>
+                                <button type="button" class="discover-filter-apply" onclick="applyDiscoverFilters()">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- MENTIONS PANEL -->
+                    <div class="engage-panel" id="engagePanel-mentions">
+                        <div id="mentionsList" style="display:flex;flex-direction:column;gap:12px;"></div>
+                        <div id="mentionsEmpty" class="empty-state">
+                            <div style="font-size:2rem;margin-bottom:10px;">&#128172;</div>
+                            <p>No mentions found yet. As people tag you in posts and comments, they'll appear here.</p>
+                        </div>
+                    </div>
+
+                    <!-- REPLIES PANEL -->
+                    <div class="engage-panel" id="engagePanel-engagereplies">
+                        <div id="engageRepliesList" style="display:flex;flex-direction:column;gap:12px;"></div>
+                        <div id="engageRepliesEmpty" class="empty-state">
+                            <div style="font-size:2rem;margin-bottom:10px;">&#128172;</div>
+                            <p>No replies found yet. Replies to your posts will appear here once synced via the Chrome extension.</p>
+                        </div>
+                    </div>
+
+                    <!-- AUTO-ENGAGE PANEL -->
+                    <div class="engage-panel" id="engagePanel-autoengage">
+                        <div style="margin-bottom:16px;">
+                            <button onclick="showCreateRuleModal()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">+ Create Rule</button>
+                        </div>
+                        <div id="autoEngageRules" style="display:flex;flex-direction:column;gap:12px;"></div>
+                        <div id="autoEngageEmpty" class="empty-state">
+                            <div style="font-size:2rem;margin-bottom:10px;">&#9889;</div>
+                            <p>No auto-engage rules yet. Create rules to automatically interact with relevant posts.</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- MENTIONS PAGE -->
-            <div class="page" id="page-mentions">
-                <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Mentions</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Posts and comments where you were mentioned.</p>
-                    <div id="mentionsList" style="display:flex;flex-direction:column;gap:12px;"></div>
-                    <div id="mentionsEmpty" class="empty-state">
-                        <div style="font-size:2rem;margin-bottom:10px;">&#128172;</div>
-                        <p>No mentions found yet. As people tag you in posts and comments, they'll appear here.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ENGAGE LISTS PAGE -->
+            <!-- ENGAGE LISTS PAGE (kept for direct access; not exposed as a sidebar item anymore) -->
             <div class="page" id="page-engagelists">
                 <div style="max-width:960px;margin:0 auto;">
                     <h2 style="margin-bottom:6px;">Engagement Lists</h2>
@@ -4650,35 +5353,6 @@
                     <div id="engageListsEmpty" class="empty-state">
                         <div style="font-size:2rem;margin-bottom:10px;">&#128203;</div>
                         <p>No lists yet. Create your first engagement list to start tracking connections.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ENGAGE REPLIES PAGE -->
-            <div class="page" id="page-engagereplies">
-                <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Replies</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Comments and replies on your posts.</p>
-                    <div id="engageRepliesList" style="display:flex;flex-direction:column;gap:12px;"></div>
-                    <div id="engageRepliesEmpty" class="empty-state">
-                        <div style="font-size:2rem;margin-bottom:10px;">&#128172;</div>
-                        <p>No replies found yet. Replies to your posts will appear here once synced via the Chrome extension.</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AUTO-ENGAGE PAGE -->
-            <div class="page" id="page-autoengage">
-                <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Auto-Engage</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;">Set up automated rules to repost and comment on posts from your network.</p>
-                    <div style="margin-bottom:16px;">
-                        <button onclick="showCreateRuleModal()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">+ Create Rule</button>
-                    </div>
-                    <div id="autoEngageRules" style="display:flex;flex-direction:column;gap:12px;"></div>
-                    <div id="autoEngageEmpty" class="empty-state">
-                        <div style="font-size:2rem;margin-bottom:10px;">&#9889;</div>
-                        <p>No auto-engage rules yet. Create rules to automatically interact with relevant posts.</p>
                     </div>
                 </div>
             </div>
@@ -4781,15 +5455,10 @@
                             <div class="empty-state"><p>No conversations yet. Install the Chrome extension and visit LinkedIn Messaging to sync your DMs.</p></div>
                         </div>
                     </div>
-                    <!-- RIGHT: Message thread -->
+                    <!-- RIGHT: Message thread (always visible; header/empty-state swap based on selection) -->
                     <div class="dm-thread" id="dmThreadPanel">
-                        <div class="dm-thread-empty" id="dmThreadEmpty">
-                            <div style="font-size:2.5rem;margin-bottom:12px;">&#9993;&#65039;</div>
-                            <h3 style="font-size:1rem;font-weight:700;margin-bottom:6px;">Select a conversation</h3>
-                            <p style="color:var(--text-muted);font-size:0.85rem;">Choose a conversation from the list to view messages and reply.</p>
-                        </div>
-                        <div class="dm-thread-active hidden" id="dmThreadActive">
-                            <div class="dm-thread-header" id="dmThreadHeader">
+                        <div class="dm-thread-active" id="dmThreadActive">
+                            <div class="dm-thread-header hidden" id="dmThreadHeader">
                                 <div class="dm-thread-avatar" id="dmThreadAvatar"></div>
                                 <div class="dm-thread-name" id="dmThreadName"></div>
                                 <div class="dm-thread-labels" id="dmThreadLabels"></div>
@@ -4800,21 +5469,31 @@
                                     <label><input type="checkbox" value="important" onchange="updateDmLabels()"> Important</label>
                                 </div>
                             </div>
-                            <div class="dm-messages" id="dmMessages"></div>
+                            <div class="dm-messages" id="dmMessages">
+                                <div class="dm-thread-empty" id="dmThreadEmpty">
+                                    <div style="text-align:center;max-width:320px;margin:0 auto;">
+                                        <div style="font-size:1.6rem;margin-bottom:8px;opacity:0.6;">&#9993;&#65039;</div>
+                                        <h3 style="font-size:1rem;font-weight:700;margin-bottom:4px;">Select a conversation</h3>
+                                        <p style="color:var(--text-muted);font-size:0.85rem;margin:0;">Choose a conversation from the list to view messages and reply.</p>
+                                    </div>
+                                </div>
+                            </div>
                             <div class="dm-compose">
                                 <div class="dm-compose-row">
-                                    <textarea id="dmReplyInput" placeholder="Type a message..." rows="2" class="dm-reply-textarea"></textarea>
+                                    <textarea id="dmReplyInput" placeholder="Select a conversation to start replying..." rows="4" class="dm-reply-textarea" disabled></textarea>
                                     <div class="dm-compose-actions">
                                         <div class="dm-ai-dropdown">
-                                            <button class="dm-ai-btn" onclick="toggleDmAiMenu()" title="AI Smart Reply">&#9889; AI</button>
-                                            <div class="dm-ai-menu hidden" id="dmAiMenu">
-                                                <button onclick="dmAiReply('professional')">&#128188; Professional</button>
-                                                <button onclick="dmAiReply('friendly')">&#128075; Friendly</button>
-                                                <button onclick="dmAiReply('brief')">&#9889; Brief</button>
-                                                <button onclick="dmAiReply('follow-up')">&#128232; Follow-up</button>
+                                            <button class="dm-ai-btn" id="dmAiBtn" type="button" title="AI Smart Reply" disabled>&#9889; AI</button>
+                                            <div class="dm-ai-menu" id="dmAiMenu">
+                                                <div class="dm-ai-menu-inner">
+                                                    <button onclick="dmAiReply('professional')">&#128188; Professional</button>
+                                                    <button onclick="dmAiReply('friendly')">&#128075; Friendly</button>
+                                                    <button onclick="dmAiReply('brief')">&#9889; Brief</button>
+                                                    <button onclick="dmAiReply('follow-up')">&#128232; Follow-up</button>
+                                                </div>
                                             </div>
                                         </div>
-                                        <button class="dm-send-btn" onclick="sendDmReply()" title="Send">&#10148;</button>
+                                        <button class="dm-send-btn" id="dmSendBtn" onclick="sendDmReply()" title="Send" disabled>&#10148;</button>
                                     </div>
                                 </div>
                             </div>
@@ -4961,6 +5640,7 @@
 
     <!-- COMPOSE PANEL -->
     <aside class="compose-panel" id="composePanel">
+        <button class="compose-collapse-handle" onclick="toggleCompose()" title="Collapse panel" aria-label="Collapse compose panel">&#10095;</button>
         <div class="compose-header">
             <div style="display:flex;align-items:center;gap:8px;">
                 <button class="compose-close-btn" onclick="toggleCompose()" title="Close">&times;</button>
@@ -5496,6 +6176,9 @@
             document.querySelectorAll('.nav-lock-icon[data-gate]').forEach(el => {
                 el.classList.toggle('hidden', _userFeatures.includes(el.dataset.gate));
             });
+            document.querySelectorAll('.engage-tab-lock[data-gate]').forEach(el => {
+                el.classList.toggle('hidden', _userFeatures.includes(el.dataset.gate));
+            });
         }
 
         function navGated(feature, page) {
@@ -5568,35 +6251,185 @@
         }
 
         // ===== DISCOVER =====
+        const DISCOVER_TOPICS_KEY = 'sl_discover_topics';
+        const DISCOVER_FILTERS_KEY = 'sl_discover_filters';
+
+        function getDiscoverTopics() {
+            try {
+                const raw = localStorage.getItem(DISCOVER_TOPICS_KEY);
+                return raw ? JSON.parse(raw) : [];
+            } catch { return []; }
+        }
+
+        function setDiscoverTopics(topics) {
+            try { localStorage.setItem(DISCOVER_TOPICS_KEY, JSON.stringify(topics)); } catch {}
+        }
+
+        function parseTopicsString(str) {
+            return (str || '')
+                .split(/[,\n]/)
+                .map(s => s.trim())
+                .filter(Boolean)
+                .slice(0, 20);
+        }
+
+        function renderDiscoverTopicsBar() {
+            const topics = getDiscoverTopics();
+            const bar = document.getElementById('discoverTopicsBar');
+            const chips = document.getElementById('discoverTopicsChips');
+            if (!bar || !chips) return;
+            if (!topics.length) { bar.classList.add('hidden'); return; }
+            bar.classList.remove('hidden');
+            chips.innerHTML = topics.map(t => `<span class="discover-topic-chip">#${escapeHtml(t)}</span>`).join('');
+        }
+
+        function startDiscovering() {
+            const input = document.getElementById('discoverTopicsInput');
+            const topics = parseTopicsString(input ? input.value : '');
+            if (!topics.length) {
+                showNotify('Add a Topic', 'Please enter at least one topic to discover.', 'warning');
+                if (input) input.focus();
+                return;
+            }
+            setDiscoverTopics(topics);
+            document.getElementById('discoverTopicsSetup')?.classList.add('hidden');
+            renderDiscoverTopicsBar();
+            loadDiscover();
+        }
+
+        function editDiscoverTopics() {
+            const setup = document.getElementById('discoverTopicsSetup');
+            const input = document.getElementById('discoverTopicsInput');
+            const bar = document.getElementById('discoverTopicsBar');
+            const feed = document.getElementById('discoverFeed');
+            const empty = document.getElementById('discoverEmpty');
+            const filters = document.getElementById('discoverFilters');
+            if (input) input.value = getDiscoverTopics().join(', ');
+            if (setup) setup.classList.remove('hidden');
+            if (bar) bar.classList.add('hidden');
+            if (feed) feed.innerHTML = '';
+            if (empty) empty.style.display = 'none';
+            if (filters) filters.classList.add('hidden');
+            setTimeout(() => input?.focus(), 50);
+        }
+
+        function toggleDiscoverFilters() {
+            const drawer = document.getElementById('discoverFilters');
+            if (!drawer) return;
+            drawer.classList.toggle('hidden');
+            if (!drawer.classList.contains('hidden')) {
+                try {
+                    const saved = JSON.parse(localStorage.getItem(DISCOVER_FILTERS_KEY) || '{}');
+                    if (saved.minEng) document.getElementById('discoverFilterMinEng').value = saved.minEng;
+                    if (saved.sort) document.getElementById('discoverFilterSort').value = saved.sort;
+                } catch {}
+            }
+        }
+
+        function applyDiscoverFilters() {
+            const filters = {
+                minEng: document.getElementById('discoverFilterMinEng').value,
+                sort: document.getElementById('discoverFilterSort').value,
+            };
+            try { localStorage.setItem(DISCOVER_FILTERS_KEY, JSON.stringify(filters)); } catch {}
+            document.getElementById('discoverFilters')?.classList.add('hidden');
+            loadDiscover();
+        }
+
+        function getDiscoverFilters() {
+            try { return JSON.parse(localStorage.getItem(DISCOVER_FILTERS_KEY) || '{}'); } catch { return {}; }
+        }
+
+        function applyDiscoverClientFilters(posts) {
+            const f = getDiscoverFilters();
+            const minEng = parseInt(f.minEng || 0, 10);
+            const sort = f.sort || 'recent';
+            let out = posts.slice();
+            if (minEng > 0) {
+                out = out.filter(p => ((p.likes || 0) + (p.comments || 0)) >= minEng);
+            }
+            if (sort === 'engagement') {
+                out.sort((a, b) => ((b.likes || 0) + (b.comments || 0)) - ((a.likes || 0) + (a.comments || 0)));
+            } else {
+                out.sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+            }
+            return out;
+        }
+
+        function matchesDiscoverTopics(post, topics) {
+            if (!topics.length) return true;
+            const hay = ((post.text || '') + ' ' + (post.author || '') + ' ' + (post.category || '')).toLowerCase();
+            return topics.some(t => hay.includes(t.toLowerCase()));
+        }
+
         async function loadDiscover() {
             const feed = document.getElementById('discoverFeed');
             const empty = document.getElementById('discoverEmpty');
+            const setup = document.getElementById('discoverTopicsSetup');
+            if (!feed || !empty) return;
+
+            const topics = getDiscoverTopics();
+            if (!topics.length) {
+                if (setup) setup.classList.remove('hidden');
+                renderDiscoverTopicsBar();
+                feed.innerHTML = '';
+                empty.style.display = 'none';
+                return;
+            }
+
+            if (setup) setup.classList.add('hidden');
+            renderDiscoverTopicsBar();
+
             try {
                 const res = await fetch('/api/engage/discover');
                 if (!res.ok) { feed.innerHTML = ''; empty.style.display = 'block'; return; }
                 const data = await res.json();
-                if (!data.posts || data.posts.length === 0) {
+                let posts = (data.posts || []).filter(p => matchesDiscoverTopics(p, topics));
+                posts = applyDiscoverClientFilters(posts);
+                if (!posts.length) {
                     feed.innerHTML = '';
                     empty.style.display = 'block';
                     return;
                 }
                 empty.style.display = 'none';
-                feed.innerHTML = data.posts.map(p => `
+                feed.innerHTML = posts.map(p => `
                     <div class="feed-card">
-                        <div class="feed-card-meta"><span>${p.author || 'LinkedIn User'}</span></div>
-                        <div class="feed-card-text">${(p.text || '').replace(/\n/g, '<br>')}</div>
+                        <div class="feed-card-meta"><span>${escapeHtml(p.author || 'LinkedIn User')}</span></div>
+                        <div class="feed-card-text">${(escapeHtml(p.text || '')).replace(/\n/g, '<br>')}</div>
                         <div class="feed-card-stats">
                             <span>&#10084; ${(p.likes || 0).toLocaleString()}</span>
                             <span>&#128172; ${(p.comments || 0).toLocaleString()}</span>
                             <span>&#128064; ${(p.impressions || 0).toLocaleString()}</span>
                         </div>
                         <div class="feed-card-actions">
-                            <button class="feed-card-btn" onclick="aiReplyTo('${(p.text||'').substring(0,200).replace(/'/g,"\\'")}')">AI Reply</button>
-                            <button class="feed-card-btn primary" onclick="useAsTemplate(0);document.getElementById('composeTextarea').value='Inspired by: ${(p.text||'').substring(0,80).replace(/'/g,"\\'")}...\\n\\n'">Engage</button>
+                            <button class="feed-card-btn" onclick="aiReplyTo('${(p.text||'').substring(0,200).replace(/'/g,"\\'").replace(/\n/g,' ')}')">AI Reply</button>
+                            <button class="feed-card-btn primary" onclick="useAsTemplate(0);document.getElementById('composeTextarea').value='Inspired by: ${(p.text||'').substring(0,80).replace(/'/g,"\\'").replace(/\n/g,' ')}...\\n\\n'">Engage</button>
                         </div>
                     </div>
                 `).join('');
             } catch { feed.innerHTML = ''; empty.style.display = 'block'; }
+        }
+
+        function fetchEngageUrl() {
+            const input = document.getElementById('engageUrlInput');
+            const raw = (input?.value || '').trim();
+            if (!raw) {
+                showNotify('Add a URL', 'Paste a LinkedIn post URL first.', 'warning');
+                input?.focus();
+                return;
+            }
+            let url;
+            try { url = new URL(raw); } catch {
+                showNotify('Invalid URL', 'That doesn\u2019t look like a valid URL.', 'warning');
+                return;
+            }
+            if (!/linkedin\.com$/.test(url.hostname) && !/\.linkedin\.com$/.test(url.hostname)) {
+                showNotify('LinkedIn URL Required', 'Please paste a LinkedIn post URL (linkedin.com).', 'warning');
+                return;
+            }
+            window.open(url.toString(), '_blank', 'noopener');
+            showNotify('Opening Post', 'Open the post on LinkedIn with the SuperLinkedIn extension active to draft a reply here.', 'info');
+            if (input) input.value = '';
         }
 
         async function aiReplyTo(postText) {
@@ -6034,8 +6867,16 @@
         async function openDmConversation(convId) {
             _dmActiveConvId = convId;
             renderDmConversations();
-            document.getElementById('dmThreadEmpty').classList.add('hidden');
-            document.getElementById('dmThreadActive').classList.remove('hidden');
+            const empty = document.getElementById('dmThreadEmpty');
+            const header = document.getElementById('dmThreadHeader');
+            const replyInput = document.getElementById('dmReplyInput');
+            const aiBtn = document.getElementById('dmAiBtn');
+            const sendBtn = document.getElementById('dmSendBtn');
+            if (empty) empty.classList.add('hidden');
+            if (header) header.classList.remove('hidden');
+            if (replyInput) { replyInput.disabled = false; replyInput.placeholder = 'Type a message...'; }
+            if (aiBtn) aiBtn.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
             closeDmPopups();
 
             const conv = _dmConversations.find(c => c.id === convId);
@@ -6134,6 +6975,7 @@
 
         async function dmAiReply(style) {
             document.getElementById('dmAiMenu').classList.add('hidden');
+            if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
             if (!_dmActiveConvId) return;
             const input = document.getElementById('dmReplyInput');
             input.value = 'Generating AI reply...';
@@ -6178,17 +7020,16 @@
                     input.value = '';
 
                     if (data.sendViaExtension) {
-                        try {
-                            if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-                                chrome.runtime.sendMessage({ type: 'DM_SEND_REPLY', recipientName: conv.participantName, text }, (resp) => {
-                                    if (resp && !resp.success) {
-                                        showNotify('Send via Extension', resp.error || 'Could not send via extension. Message saved — you can copy and paste it on LinkedIn.', 'warning');
-                                    }
-                                });
+                        if (isExtensionInstalled()) {
+                            const resp = await sendToExtension({ type: 'DM_SEND_REPLY', recipientName: conv.participantName, text });
+                            if (!resp || !resp.success) {
+                                manualSendFallback(text, conv.participantName, resp && resp.error);
                             } else {
-                                showNotify('Extension Not Detected', 'Message saved — copy and send it on LinkedIn manually.', 'info');
+                                showNotify('Sent via Extension', `Reply sent to ${conv.participantName} on LinkedIn.`, 'success');
                             }
-                        } catch { showNotify('Note', 'Message saved. Send it on LinkedIn manually.', 'info'); }
+                        } else {
+                            manualSendFallback(text, conv.participantName);
+                        }
                     }
                 } else {
                     showNotify('Error', data.error || 'Failed to send reply.', 'error');
@@ -6198,6 +7039,70 @@
             }
             input.disabled = false;
             input.focus();
+        }
+
+        function isExtensionInstalled() {
+            try {
+                return document.documentElement.getAttribute('data-superlinkedin-ext') === '1';
+            } catch { return false; }
+        }
+
+        function sendToExtension(message, timeoutMs) {
+            timeoutMs = timeoutMs || 15000;
+            return new Promise((resolve) => {
+                if (!isExtensionInstalled()) {
+                    resolve({ success: false, error: 'Extension not installed' });
+                    return;
+                }
+                const requestId = 'sl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+                const handler = (event) => {
+                    if (event.source !== window) return;
+                    const m = event.data;
+                    if (!m || m.source !== 'superlinkedin-ext' || m.requestId !== requestId) return;
+                    window.removeEventListener('message', handler);
+                    clearTimeout(timer);
+                    resolve(m.response || { success: true });
+                };
+                window.addEventListener('message', handler);
+                const timer = setTimeout(() => {
+                    window.removeEventListener('message', handler);
+                    resolve({ success: false, error: 'Extension response timeout' });
+                }, timeoutMs);
+                window.postMessage(Object.assign({}, message, { source: 'superlinkedin-page', requestId }), '*');
+            });
+        }
+
+        async function manualSendFallback(text, recipientName, errorReason) {
+            let copied = false;
+            try {
+                if (navigator.clipboard && navigator.clipboard.writeText) {
+                    await navigator.clipboard.writeText(text);
+                    copied = true;
+                }
+            } catch {}
+            if (!copied) {
+                try {
+                    const ta = document.createElement('textarea');
+                    ta.value = text;
+                    ta.style.position = 'fixed';
+                    ta.style.opacity = '0';
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    copied = true;
+                } catch {}
+            }
+
+            const title = errorReason ? 'Send via Extension Failed' : 'Extension Not Detected';
+            const recipient = recipientName ? ` to ${recipientName}` : '';
+            const baseMsg = copied
+                ? `Message${recipient} copied to clipboard. Opening LinkedIn Messaging — paste and send.`
+                : `Message saved${recipient}. Opening LinkedIn Messaging — copy your draft and paste it there.`;
+            const fullMsg = errorReason ? baseMsg + ' (' + errorReason + ')' : baseMsg;
+            showNotify(title, fullMsg, copied ? 'info' : 'warning');
+
+            try { window.open('https://www.linkedin.com/messaging/', '_blank', 'noopener'); } catch {}
         }
 
         // Auto follow-up
@@ -6555,49 +7460,85 @@
             renderQueue();
         }
 
+        const FALLBACK_TIMEZONES = [
+            'UTC',
+            'Africa/Cairo','Africa/Johannesburg','Africa/Lagos','Africa/Nairobi',
+            'America/Anchorage','America/Argentina/Buenos_Aires','America/Bogota','America/Chicago','America/Denver','America/Halifax','America/Lima','America/Los_Angeles','America/Mexico_City','America/New_York','America/Phoenix','America/Sao_Paulo','America/Toronto','America/Vancouver',
+            'Asia/Bangkok','Asia/Dubai','Asia/Hong_Kong','Asia/Jakarta','Asia/Jerusalem','Asia/Karachi','Asia/Kolkata','Asia/Kuala_Lumpur','Asia/Manila','Asia/Riyadh','Asia/Seoul','Asia/Shanghai','Asia/Singapore','Asia/Taipei','Asia/Tehran','Asia/Tokyo',
+            'Atlantic/Azores','Atlantic/Reykjavik',
+            'Australia/Adelaide','Australia/Brisbane','Australia/Melbourne','Australia/Perth','Australia/Sydney',
+            'Europe/Amsterdam','Europe/Athens','Europe/Belgrade','Europe/Berlin','Europe/Brussels','Europe/Bucharest','Europe/Budapest','Europe/Copenhagen','Europe/Dublin','Europe/Helsinki','Europe/Istanbul','Europe/Lisbon','Europe/London','Europe/Madrid','Europe/Moscow','Europe/Oslo','Europe/Paris','Europe/Prague','Europe/Rome','Europe/Sofia','Europe/Stockholm','Europe/Vienna','Europe/Warsaw','Europe/Zurich',
+            'Pacific/Auckland','Pacific/Fiji','Pacific/Honolulu',
+        ];
+
         function populateTimezoneSelect() {
             const select = document.getElementById('settingsTimezone');
-            if (!select || select.options.length > 1) return;
-            const allTz = Intl.supportedValuesOf('timeZone');
-            const browserTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-            const savedTz = getUserTimezone();
+            if (!select) return;
+            if (select.options.length > 1) return;
 
-            select.innerHTML = '';
-            const autoOpt = document.createElement('option');
-            autoOpt.value = browserTz;
-            autoOpt.textContent = `Auto-detect (${browserTz.replace(/_/g, ' ')})`;
-            select.appendChild(autoOpt);
+            let allTz = null;
+            try {
+                if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function') {
+                    allTz = Intl.supportedValuesOf('timeZone');
+                }
+            } catch (e) {
+                console.warn('[Timezone] Intl.supportedValuesOf failed:', e);
+            }
+            if (!Array.isArray(allTz) || allTz.length === 0) {
+                console.warn('[Timezone] Falling back to curated timezone list');
+                allTz = FALLBACK_TIMEZONES.slice();
+            }
 
-            const regions = {};
-            allTz.forEach(tz => {
-                const parts = tz.split('/');
-                const region = parts[0];
-                if (!regions[region]) regions[region] = [];
-                regions[region].push(tz);
-            });
+            let browserTz = 'UTC';
+            try {
+                browserTz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC';
+            } catch {}
+            const savedTz = getUserTimezone() || browserTz;
 
-            Object.keys(regions).sort().forEach(region => {
-                const group = document.createElement('optgroup');
-                group.label = region.replace(/_/g, ' ');
-                regions[region].forEach(tz => {
-                    const opt = document.createElement('option');
-                    opt.value = tz;
-                    const now = new Date();
-                    let offset = '';
-                    try {
-                        const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(now);
-                        const tzPart = parts.find(p => p.type === 'timeZoneName');
-                        if (tzPart) offset = ' (' + tzPart.value + ')';
-                    } catch {}
-                    opt.textContent = tz.replace(/_/g, ' ') + offset;
-                    if (tz === savedTz) opt.selected = true;
-                    group.appendChild(opt);
+            try {
+                select.innerHTML = '';
+                const autoOpt = document.createElement('option');
+                autoOpt.value = browserTz;
+                autoOpt.textContent = `Auto-detect (${browserTz.replace(/_/g, ' ')})`;
+                select.appendChild(autoOpt);
+
+                const regions = {};
+                allTz.forEach(tz => {
+                    const parts = tz.split('/');
+                    const region = parts[0] || 'Other';
+                    if (!regions[region]) regions[region] = [];
+                    regions[region].push(tz);
                 });
-                select.appendChild(group);
-            });
 
-            if (!savedTz || savedTz === browserTz) {
-                select.value = browserTz;
+                Object.keys(regions).sort().forEach(region => {
+                    const group = document.createElement('optgroup');
+                    group.label = region.replace(/_/g, ' ');
+                    regions[region].forEach(tz => {
+                        const opt = document.createElement('option');
+                        opt.value = tz;
+                        let offset = '';
+                        try {
+                            const parts = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'shortOffset' }).formatToParts(new Date());
+                            const tzPart = parts.find(p => p.type === 'timeZoneName');
+                            if (tzPart) offset = ' (' + tzPart.value + ')';
+                        } catch {}
+                        opt.textContent = tz.replace(/_/g, ' ') + offset;
+                        group.appendChild(opt);
+                    });
+                    select.appendChild(group);
+                });
+
+                select.value = savedTz;
+                if (!select.value) select.value = browserTz;
+            } catch (e) {
+                console.error('[Timezone] populateTimezoneSelect failed:', e);
+                if (select.options.length === 0) {
+                    const fallbackOpt = document.createElement('option');
+                    fallbackOpt.value = browserTz;
+                    fallbackOpt.textContent = browserTz.replace(/_/g, ' ');
+                    select.appendChild(fallbackOpt);
+                    select.value = browserTz;
+                }
             }
         }
 
@@ -6623,7 +7564,16 @@
             el('teamOwnerName').textContent = currentUser.name || 'You';
             el('teamOwnerEmail').textContent = currentUser.email || '';
             const dmToggle = document.getElementById('darkModeToggle');
-            if (dmToggle) dmToggle.checked = document.documentElement.classList.contains('dark-mode');
+            if (dmToggle) {
+                const stored = localStorage.getItem('sl_dark_mode');
+                const isDark = stored === 'true'
+                    || document.documentElement.classList.contains('dark-mode')
+                    || document.body.classList.contains('dark-mode');
+                dmToggle.checked = isDark;
+                document.documentElement.classList.toggle('dark-mode', isDark);
+                document.body.classList.toggle('dark-mode', isDark);
+                if (stored === null) localStorage.setItem('sl_dark_mode', isDark ? 'true' : 'false');
+            }
             populateTimezoneSelect();
             const firstTab = document.querySelector('.settings-tab');
             if (firstTab) switchSettingsTab('general', firstTab);
@@ -6633,34 +7583,80 @@
         }
 
         async function loadSubscriptionInfo() {
-            try {
-                const res = await fetch('/api/credits');
-                if (!res.ok) return;
-                const c = await res.json();
+            const tierIcons = { pro: '\uD83C\uDFC5', advanced: '\uD83C\uDFC6', ultra: '\uD83D\uDC51', free: '\uD83C\uDD93' };
+            const elPlan = document.getElementById('subPlanName');
+            const elStatus = document.getElementById('subStatus');
+            const elRenew = document.getElementById('subRenewDate');
+            const elCredits = document.getElementById('subCredits');
 
-                const tierIcons = { pro: '\uD83C\uDFC5', advanced: '\uD83C\uDFC6', ultra: '\uD83D\uDC51' };
-                const icon = tierIcons[c.planTier] || '\uD83C\uDFC5';
+            const isPaid = !!(currentUser && currentUser.paid);
+            const paidAt = currentUser && currentUser.paidAt ? new Date(currentUser.paidAt) : null;
+            const trialDaysMs = 3 * 24 * 60 * 60 * 1000;
+            const fallbackStatus = !isPaid ? 'Free' : (paidAt && (new Date() - paidAt) < trialDaysMs ? 'Trial' : 'Active');
+            let fallbackRenew = '—';
+            if (paidAt) {
+                const renew = new Date(paidAt);
+                renew.setMonth(renew.getMonth() + 1);
+                fallbackRenew = renew.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+            }
+
+            const applyStatus = (status) => {
+                if (!elStatus) return;
+                elStatus.textContent = status;
+                elStatus.style.color = status === 'Active' ? '#16a34a' : (status === 'Trial' ? '#f97316' : 'var(--text-muted)');
+            };
+
+            const writeFallback = (reason) => {
+                if (reason) console.warn('[Subscription] using fallback:', reason);
+                const fallbackPlanLabel = currentUser && currentUser.planTier
+                    ? ('SuperLinkedIn ' + (currentUser.planTier.charAt(0).toUpperCase() + currentUser.planTier.slice(1)))
+                    : 'SuperLinkedIn';
+                if (elPlan) elPlan.innerHTML = `<span style="font-size:1.1rem;">${tierIcons.free}</span> ${fallbackPlanLabel}`;
+                applyStatus(fallbackStatus);
+                if (elRenew) elRenew.textContent = fallbackRenew;
+                if (elCredits) elCredits.textContent = '—';
+                window._subData = {
+                    planLabel: fallbackPlanLabel,
+                    status: fallbackStatus,
+                    renewDate: fallbackRenew,
+                    icon: tierIcons.free,
+                };
+            };
+
+            try {
+                const res = await fetch('/api/credits', { credentials: 'same-origin' });
+                if (!res.ok) {
+                    writeFallback('/api/credits returned ' + res.status);
+                    return;
+                }
+                const c = await res.json();
+                const icon = tierIcons[c.planTier] || tierIcons.pro;
                 const planLabel = c.planName || 'SuperLinkedIn Pro';
                 const periodLabel = c.creditPeriod === 'day' ? '/day' : '/month';
 
-                const isPaid = currentUser && currentUser.paid;
-                const paidAt = currentUser && currentUser.paidAt ? new Date(currentUser.paidAt) : null;
-                let renewDate = '—';
-                if (paidAt) {
-                    const renew = new Date(paidAt);
-                    renew.setMonth(renew.getMonth() + 1);
-                    renewDate = renew.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
-                }
-                const status = !isPaid ? 'Free' : (paidAt && (new Date() - paidAt) < 3 * 24 * 60 * 60 * 1000 ? 'Trial' : 'Active');
+                const status = c.onTrial ? 'Trial'
+                    : c.trialExpired ? 'Trial Expired'
+                    : (!isPaid ? 'Free' : 'Active');
 
-                document.getElementById('subPlanName').innerHTML = `<span style="font-size:1.1rem;">${icon}</span> ${planLabel}`;
-                document.getElementById('subStatus').textContent = status;
-                document.getElementById('subStatus').style.color = status === 'Active' ? '#16a34a' : (status === 'Trial' ? '#f97316' : 'var(--text-muted)');
-                document.getElementById('subRenewDate').textContent = renewDate;
-                document.getElementById('subCredits').textContent = c.aiCreditsRemaining + ' / ' + c.aiCreditsTotal + periodLabel;
+                let renewDate = fallbackRenew;
+                if (c.onTrial && c.trialEndsAt) {
+                    renewDate = new Date(c.trialEndsAt).toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+                }
+
+                if (elPlan) elPlan.innerHTML = `<span style="font-size:1.1rem;">${icon}</span> ${planLabel}`;
+                applyStatus(status);
+                if (elRenew) elRenew.textContent = renewDate;
+                if (elCredits) {
+                    const total = (c.aiCreditsTotal !== undefined && c.aiCreditsTotal !== null) ? c.aiCreditsTotal : '—';
+                    const remaining = (c.aiCreditsRemaining !== undefined && c.aiCreditsRemaining !== null) ? c.aiCreditsRemaining : '—';
+                    elCredits.textContent = remaining + ' / ' + total + periodLabel;
+                }
 
                 window._subData = { ...c, status, renewDate, icon, planLabel };
-            } catch {}
+            } catch (err) {
+                console.error('[Subscription] loadSubscriptionInfo failed:', err);
+                writeFallback(err && err.message ? err.message : 'fetch error');
+            }
         }
 
         async function loadLinkedProfilesSettings() {
@@ -7028,9 +8024,47 @@
         }
 
         // Page navigation
-        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', discover: 'Discover', mentions: 'Mentions', engagelists: 'Lists', engagereplies: 'Replies', autoengage: 'Auto-Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages' };
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', engage: 'Engage', discover: 'Engage', mentions: 'Engage', engagelists: 'Lists', engagereplies: 'Engage', autoengage: 'Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages' };
+
+        // Maps the legacy page names to their new tab inside the Engage page
+        const ENGAGE_TABS = { discover: { gate: null }, mentions: { gate: 'engage_engine' }, engagereplies: { gate: 'engage_engine' }, autoengage: { gate: 'auto_repost' } };
+        let _currentEngageTab = 'discover';
+
+        function switchEngageTab(tab, opts) {
+            if (!ENGAGE_TABS[tab]) tab = 'discover';
+            const cfg = ENGAGE_TABS[tab];
+            if (cfg.gate && Array.isArray(_userFeatures) && !_userFeatures.includes(cfg.gate)) {
+                showNotify('Upgrade Required', 'This feature requires an upgraded plan. Visit Account Settings > Plans to upgrade.', 'warning');
+                return;
+            }
+
+            _currentEngageTab = tab;
+            document.querySelectorAll('.engage-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+            document.querySelectorAll('.engage-panel').forEach(p => p.classList.toggle('active', p.id === 'engagePanel-' + tab));
+
+            document.querySelectorAll('.nav-item[data-engage-tab]').forEach(n => {
+                n.classList.toggle('active', n.dataset.engageTab === tab);
+            });
+
+            if (!opts || opts.updateHash !== false) {
+                location.hash = tab === 'discover' ? 'engage' : 'engage/' + tab;
+            }
+
+            if (tab === 'discover') loadDiscover();
+            else if (tab === 'mentions') loadMentions();
+            else if (tab === 'engagereplies') loadEngageReplies();
+            else if (tab === 'autoengage') loadAutoEngage();
+        }
 
         function showPage(page, updateHash) {
+            // Backward-compat: redirect legacy engage sub-pages to the consolidated Engage page.
+            if (ENGAGE_TABS[page]) {
+                const targetTab = page;
+                showPage('engage', updateHash);
+                switchEngageTab(targetTab, { updateHash: updateHash !== false });
+                return;
+            }
+
             if (!document.getElementById('page-' + page)) page = 'home';
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             document.getElementById('page-' + page).classList.add('active');
@@ -7039,7 +8073,8 @@
             const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
             if (navItem) navItem.classList.add('active');
 
-            document.getElementById('pageTitle').textContent = PAGE_TITLES[page] || page;
+            const titleEl = document.getElementById('pageTitle');
+            if (titleEl) titleEl.textContent = PAGE_TITLES[page] || page;
 
             if (updateHash !== false) location.hash = page === 'home' ? '' : page;
 
@@ -7047,11 +8082,8 @@
             if (page === 'context') loadContextPage();
             if (page === 'settings') loadSettingsPage();
             if (page === 'virallibrary') loadViralLibrary();
-            if (page === 'discover') loadDiscover();
-            if (page === 'mentions') loadMentions();
+            if (page === 'engage') switchEngageTab(_currentEngageTab, { updateHash: false });
             if (page === 'engagelists') loadEngageLists();
-            if (page === 'engagereplies') loadEngageReplies();
-            if (page === 'autoengage') loadAutoEngage();
             if (page === 'teammembers') loadTeamMembers();
             if (page === 'sharedqueue') loadSharedQueue();
             if (page === 'reports') loadReports();
@@ -7059,11 +8091,24 @@
         }
 
         function getPageFromHash() {
-            const h = location.hash.replace('#', '');
-            return h && PAGE_TITLES[h] ? h : 'home';
+            const raw = location.hash.replace('#', '');
+            if (!raw) return { page: 'home' };
+            // Support nested hashes like "engage/mentions"
+            const [first, second] = raw.split('/');
+            if (first === 'engage') {
+                const tab = second && ENGAGE_TABS[second] ? second : 'discover';
+                return { page: 'engage', engageTab: tab };
+            }
+            // Legacy direct-engage hashes
+            if (ENGAGE_TABS[first]) return { page: 'engage', engageTab: first };
+            return { page: PAGE_TITLES[first] ? first : 'home' };
         }
 
-        window.addEventListener('hashchange', () => showPage(getPageFromHash(), false));
+        window.addEventListener('hashchange', () => {
+            const r = getPageFromHash();
+            showPage(r.page, false);
+            if (r.page === 'engage' && r.engageTab) switchEngageTab(r.engageTab, { updateHash: false });
+        });
 
         // Modal
         let modalShownOnce = true;
@@ -7687,14 +8732,14 @@
 
             const followers = data.followers || dashboard.followers || 0;
             const postedCount = queue.filter(q => q.status === 'posted').length;
-            const totalPosts = postMetrics.length || postedCount || queue.length;
+            const trackedPosts = postMetrics.length || postedCount;
+            const totalPosts = trackedPosts || queue.length;
             const totalImpressions = dashboard.postImpressions || engagement.impressions || 0;
-            const socialEngagements = dashboard.socialEngagements || engagement.likes || 0;
             const membersReached = dashboard.membersReached || engagement.membersReached || 0;
-            const totalLikes = engagement.likes || dashboard.socialEngagements || 0;
-            const totalComments = engagement.comments || 0;
-            const totalReposts = engagement.reposts || 0;
-            const totalEngagements = socialEngagements + totalComments + totalReposts;
+            const totalLikes = trackedPosts ? (engagement.likes || dashboard.socialEngagements || 0) : 0;
+            const totalComments = trackedPosts ? (engagement.comments || 0) : 0;
+            const totalReposts = trackedPosts ? (engagement.reposts || 0) : 0;
+            const totalEngagements = totalLikes + totalComments + totalReposts;
             const profileViews = dashboard.profileViews || data.profileViews || 0;
             const searchAppearances = dashboard.searchAppearances || data.searchAppearances || 0;
 
@@ -8549,6 +9594,44 @@
             updateCharCount();
             showPage('create');
             showNotify('Inspiration Loaded', 'Post loaded into AI Writer. Edit it and make it your own!', 'success');
+        }
+
+        // Sidebar collapse toggle
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const main = document.querySelector('.main');
+            if (!sidebar || !main) return;
+            const collapsed = sidebar.classList.toggle('collapsed');
+            main.classList.toggle('sidebar-collapsed', collapsed);
+            try { localStorage.setItem('sl_sidebar_collapsed', collapsed ? '1' : '0'); } catch {}
+            const icon = sidebar.querySelector('.sidebar-toggle-icon');
+            if (icon) icon.innerHTML = collapsed ? '&#10095;' : '&#10094;';
+            const btn = sidebar.querySelector('.sidebar-toggle');
+            if (btn) btn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+        }
+
+        function toggleNavGroup(group) {
+            const el = document.querySelector('.nav-group[data-group="' + group + '"]');
+            if (!el) return;
+            const collapsed = el.classList.toggle('collapsed');
+            try {
+                const raw = localStorage.getItem('sl_nav_collapsed_groups');
+                const set = new Set(raw ? JSON.parse(raw) : []);
+                if (collapsed) set.add(group); else set.delete(group);
+                localStorage.setItem('sl_nav_collapsed_groups', JSON.stringify([...set]));
+            } catch {}
+        }
+
+        function restoreNavGroups() {
+            let collapsedGroups = [];
+            try {
+                const raw = localStorage.getItem('sl_nav_collapsed_groups');
+                if (raw) collapsedGroups = JSON.parse(raw) || [];
+            } catch {}
+            collapsedGroups.forEach(g => {
+                const el = document.querySelector('.nav-group[data-group="' + g + '"]');
+                if (el) el.classList.add('collapsed');
+            });
         }
 
         // Compose panel
@@ -9591,11 +10674,14 @@
             checkMissions();
             updateCarouselNavLock();
 
-            const startPage = getPageFromHash();
-            if (startPage === 'carousel') {
+            const startRoute = getPageFromHash();
+            if (startRoute.page === 'carousel') {
                 handleCarouselNav();
-            } else if (startPage !== 'home') {
-                showPage(startPage, false);
+            } else if (startRoute.page !== 'home') {
+                showPage(startRoute.page, false);
+                if (startRoute.page === 'engage' && startRoute.engageTab) {
+                    switchEngageTab(startRoute.engageTab, { updateHash: false });
+                }
             }
 
             if (!modalShownOnce) {

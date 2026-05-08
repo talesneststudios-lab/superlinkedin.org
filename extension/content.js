@@ -45,30 +45,43 @@
         ].filter(Boolean);
 
         const target = headerContainers[0] || document.body;
+        const FOLLOWERS_RE = /([\d][\d,.]*\s*[KMB]?)\s+followers?\b/i;
+        const CONNECTIONS_RE = /([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i;
 
         const selectors = [
-            '.pv-top-card--list-bullet .t-bold',
-            '.pvs-header__subtitle',
             '[data-test-id="follower-count"]',
             '.pv-recent-activity-section__follower-count',
+            '.pv-top-card--list-bullet .t-bold',
+            '.pvs-header__subtitle',
             '.pv-top-card--list .t-black--light',
         ];
         for (const sel of selectors) {
             const els = target.querySelectorAll(sel);
             for (const el of els) {
-                if (/follower/i.test(el.textContent || '')) return parseNumber(el.textContent);
+                const text = (el.textContent || '').trim();
+                const m = text.match(FOLLOWERS_RE);
+                if (m) {
+                    const n = parseNumber(m[1]);
+                    if (n > 0) return n;
+                }
             }
         }
 
-        // Scoped regex: only search within the first 800 chars of the header text
-        // to avoid matching follower counts from other sections of the page
+        // Fallback: search header text for the "<n> followers" pattern,
+        // capturing the number directly preceding "followers" (not just any digits in the text).
         const headerText = target === document.body
-            ? (target.innerText || '').substring(0, 2000)
-            : (target.innerText || '');
-        const fm = headerText.match(/([\d,.]+[KMB]?)\s+followers/i);
-        if (fm) return parseNumber(fm[1]);
-        const cm = headerText.match(/([\d,.]+[KMB]?)\s+connections/i);
-        if (cm) return parseNumber(cm[1]);
+            ? (target.innerText || '').substring(0, 4000)
+            : (target.innerText || '').substring(0, 8000);
+        const fm = headerText.match(FOLLOWERS_RE);
+        if (fm) {
+            const n = parseNumber(fm[1]);
+            if (n > 0) return n;
+        }
+        const cm = headerText.match(CONNECTIONS_RE);
+        if (cm) {
+            const n = parseNumber(cm[1]);
+            if (n > 0) return n;
+        }
         return null;
     }
 
@@ -284,7 +297,6 @@
             'member': 'membersReached',
             'reached': 'membersReached',
             'social engagement': 'socialEngagements',
-            'reaction': 'socialEngagements',
         };
 
         document.querySelectorAll('p, span, div, h1, h2, h3, h4, strong, b, li, td').forEach(el => {
@@ -324,7 +336,6 @@
             { key: 'searchAppearances', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '[Ss]earch appear', 'i') },
             { key: 'membersReached', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '[Mm]embers?' + flexWS + 'reached', 'i') },
             { key: 'socialEngagements', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '[Ss]ocial engagements?', 'i') },
-            { key: 'socialEngagements', re: new RegExp('[Rr]eactions?' + flexWS + '(\\d[\\d,.]*[KMB]?)', 'i') },
         ];
         fwdPatterns.forEach(({ key, re }) => {
             if (!stats[key]) {

@@ -2789,10 +2789,13 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
             ? dashboardStats.membersReached
             : null;
 
+        const hasPosts = allPosts.length > 0;
         updates.analyticsEngagement = {
-            likes: dashboardReactions !== null ? dashboardReactions : (totalLikes || prevEng.likes || 0),
-            comments: totalComments || prevEng.comments || 0,
-            reposts: totalReposts || prevEng.reposts || 0,
+            likes: hasPosts
+                ? (totalLikes || (dashboardReactions !== null ? dashboardReactions : (prevEng.likes || 0)))
+                : 0,
+            comments: hasPosts ? (totalComments || prevEng.comments || 0) : 0,
+            reposts: hasPosts ? (totalReposts || prevEng.reposts || 0) : 0,
             impressions: Math.max(dashboardImpressions, totalImpressions),
             totalPosts: allPosts.length,
             membersReached: dashboardMembersReached !== null ? dashboardMembersReached : (prevEng.membersReached || 0),

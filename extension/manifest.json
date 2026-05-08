@@ -4,7 +4,12 @@
   "description": "LinkedIn analytics, AI post writer, engagement tracking, post scheduler and growth tools in your feed.",
   "version": "1.5.5",
   "permissions": ["storage", "activeTab", "alarms", "tabs"],
-  "host_permissions": ["https://www.linkedin.com/*"],
+  "host_permissions": [
+    "https://www.linkedin.com/*",
+    "https://*.superlinkedin.org/*",
+    "https://superlinkedin.org/*",
+    "https://*.awsapprunner.com/*"
+  ],
   "background": {
     "service_worker": "background.js"
   },
@@ -14,6 +19,15 @@
       "js": ["content.js"],
       "css": ["sidebar.css"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://*.superlinkedin.org/*",
+        "https://superlinkedin.org/*",
+        "https://*.awsapprunner.com/*"
+      ],
+      "js": ["bridge.js"],
+      "run_at": "document_start"
     }
   ],
   "action": {
