@@ -8176,14 +8176,16 @@
                 profiles.forEach(p => {
                     const isOwner = p.linkedinId === profilesData.primaryAccountId;
                     const initials = (p.name || '??').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                    const safeId = escapeHtml(p.linkedinId || '');
+                    const safeName = escapeHtml(p.name || 'this profile');
                     const removeBtn = isOwner
                         ? ''
-                        : `<button class="team-row-remove" onclick="removeLinkedProfileFromSettings('${p.linkedinId}', ${JSON.stringify(p.name || 'this profile')})">Remove</button>`;
+                        : `<button class="team-row-remove" data-action="remove-profile" data-linkedin-id="${safeId}" data-display-name="${safeName}">Remove</button>`;
                     html += `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
                         <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#70B5F9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.75rem;overflow:hidden;flex-shrink:0;">${p.picture ? '<img src="'+p.picture+'" style="width:100%;height:100%;object-fit:cover;">' : initials}</div>
                         <div style="flex:1;min-width:0;">
-                            <div style="font-weight:600;font-size:0.85rem;">${p.name || 'Unknown'}</div>
-                            <div style="font-size:0.72rem;color:var(--text-muted);">${p.email || ''}</div>
+                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(p.name || 'Unknown')}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">${escapeHtml(p.email || '')}</div>
                         </div>
                         <span style="font-size:0.7rem;font-weight:700;color:${isOwner ? 'var(--accent)' : '#22c55e'};text-transform:uppercase;letter-spacing:0.5px;">${isOwner ? 'Owner' : 'Linked'}</span>
                         ${removeBtn}
@@ -8191,18 +8193,32 @@
                 });
 
                 members.forEach(m => {
+                    const safeEmail = escapeHtml(m.email || '');
                     html += `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
                         <div style="width:36px;height:36px;border-radius:50%;background:var(--bg-card);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.85rem;flex-shrink:0;">&#9993;</div>
                         <div style="flex:1;min-width:0;">
-                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(m.email || '')}</div>
-                            <div style="font-size:0.72rem;color:var(--text-muted);">${m.role || 'editor'} &middot; ${m.status || 'invited'}</div>
+                            <div style="font-weight:600;font-size:0.85rem;">${safeEmail}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">${escapeHtml(m.role || 'editor')} &middot; ${escapeHtml(m.status || 'invited')}</div>
                         </div>
-                        <button class="team-row-remove" onclick="removeSettingsTeamMember(${JSON.stringify(m.email || '')})">Remove</button>
+                        <button class="team-row-remove" data-action="remove-member" data-email="${safeEmail}">Remove</button>
                     </div>`;
                 });
 
                 if (!html) html = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.82rem;">No team members yet.</div>';
                 list.innerHTML = html;
+
+                // Wire up Remove buttons via addEventListener so names/emails
+                // containing quotes don't break inline onclick attributes.
+                list.querySelectorAll('button[data-action="remove-profile"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        removeLinkedProfileFromSettings(btn.dataset.linkedinId, btn.dataset.displayName);
+                    });
+                });
+                list.querySelectorAll('button[data-action="remove-member"]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        removeSettingsTeamMember(btn.dataset.email);
+                    });
+                });
             } catch {
                 document.getElementById('settingsTeamList').innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:0.82rem;">Could not load team data.</div>';
             }
