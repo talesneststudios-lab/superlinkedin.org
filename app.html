@@ -13,6 +13,8 @@
         :root {
             --bg: #f5f5f7;
             --bg-white: #ffffff;
+            --bg-card: #ffffff;
+            --bg-secondary: #f5f5f7;
             --sidebar-bg: #0a0a0a;
             --sidebar-text: #a0a0a0;
             --sidebar-active: #ffffff;
@@ -35,6 +37,7 @@
             --bg: #0a0a0a;
             --bg-white: #181818;
             --bg-card: #181818;
+            --bg-secondary: #111111;
             --text-primary: #ffffff;
             --text-secondary: #a0a0a0;
             --text-muted: #6b6b6b;
@@ -1241,8 +1244,15 @@
             display: none;
         }
         .dm-ai-menu > .dm-ai-menu-inner {
-            background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px;
-            padding: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+            background: var(--bg-card, #ffffff);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 8px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+        }
+        :root.dark-mode .dm-ai-menu > .dm-ai-menu-inner {
+            background: #181818;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.55);
         }
         .dm-ai-dropdown:hover .dm-ai-menu,
         .dm-ai-dropdown:focus-within .dm-ai-menu,
@@ -2936,12 +2946,42 @@
             border: 1px solid var(--border);
             border-radius: var(--radius);
             padding: 20px;
+            position: relative;
+            overflow: hidden;
         }
+        .stat-card-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+        .stat-card-headings { min-width: 0; }
 
         .stat-label { font-size: 0.72rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
-        .stat-value { font-size: 2rem; font-weight: 900; }
-        .stat-mini-chart { height: 32px; margin-top: 8px; display: flex; align-items: flex-end; }
-        .stat-mini-chart .mini-line { width: 100%; height: 2px; background: var(--accent); border-radius: 2px; opacity: 0.4; }
+        .stat-value { font-size: 2rem; font-weight: 900; line-height: 1.1; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+        .stat-delta { font-size: 0.72rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+        .stat-delta.up { color: #22c55e; background: rgba(34,197,94,0.12); }
+        .stat-delta.down { color: #ef4444; background: rgba(239,68,68,0.12); }
+        .stat-delta.flat { color: var(--text-muted); background: rgba(148,163,184,0.12); }
+        .stat-mini-chart {
+            height: 56px;
+            margin-top: 12px;
+            position: relative;
+        }
+        .stat-mini-chart svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+            overflow: visible;
+        }
+        .stat-mini-chart .spark-line {
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+        .stat-mini-chart .spark-empty {
+            fill: none;
+            stroke: var(--border);
+            stroke-width: 1.5;
+            stroke-dasharray: 3 4;
+            opacity: 0.7;
+        }
 
         /* Streak Heatmap */
         .streak-card {
@@ -4556,23 +4596,23 @@
                 <div class="stats-grid">
                     <div class="stat-card">
                         <div class="stat-label">Followers</div>
-                        <div class="stat-value" id="aFollowers">0</div>
-                        <div class="stat-mini-chart"><div class="mini-line"></div></div>
+                        <div class="stat-value"><span id="aFollowers">0</span><span class="stat-delta flat" id="aFollowersDelta" style="display:none;"></span></div>
+                        <div class="stat-mini-chart" id="sparkFollowers"></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Posts</div>
-                        <div class="stat-value" id="aPosts">0</div>
-                        <div class="stat-mini-chart"><div class="mini-line"></div></div>
+                        <div class="stat-value"><span id="aPosts">0</span><span class="stat-delta flat" id="aPostsDelta" style="display:none;"></span></div>
+                        <div class="stat-mini-chart" id="sparkPosts"></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Impressions</div>
-                        <div class="stat-value" id="aImpressions">0</div>
-                        <div class="stat-mini-chart"><div class="mini-line"></div></div>
+                        <div class="stat-value"><span id="aImpressions">0</span><span class="stat-delta flat" id="aImpressionsDelta" style="display:none;"></span></div>
+                        <div class="stat-mini-chart" id="sparkImpressions"></div>
                     </div>
                     <div class="stat-card">
                         <div class="stat-label">Engagements</div>
-                        <div class="stat-value" id="aEngagements">0</div>
-                        <div class="stat-mini-chart"><div class="mini-line"></div></div>
+                        <div class="stat-value"><span id="aEngagements">0</span><span class="stat-delta flat" id="aEngagementsDelta" style="display:none;"></span></div>
+                        <div class="stat-mini-chart" id="sparkEngagements"></div>
                     </div>
                 </div>
 
@@ -9406,6 +9446,124 @@
         }
 
         // Analytics
+
+        // Build a daily-bucketed series for the last `days` days. `mapper` is
+        // called for each entry of `source` and should return either a Date or
+        // a parseable date string for that entry; entries that fall in a given
+        // day contribute their `valueOf` (default 1) to that day's total.
+        function bucketSeries(source, days, mapper, valueOf) {
+            const buckets = new Array(days).fill(0);
+            const now = new Date();
+            const start = new Date(now); start.setHours(0, 0, 0, 0);
+            start.setDate(start.getDate() - (days - 1));
+            (source || []).forEach(item => {
+                const raw = mapper(item);
+                if (!raw) return;
+                const d = new Date(raw);
+                if (isNaN(d.getTime())) return;
+                d.setHours(0, 0, 0, 0);
+                const idx = Math.floor((d - start) / 86400000);
+                if (idx < 0 || idx >= days) return;
+                buckets[idx] += (typeof valueOf === 'function' ? (valueOf(item) || 0) : 1);
+            });
+            return buckets;
+        }
+
+        function smoothPath(points, w, h, padBottom) {
+            if (!points.length) return '';
+            // Catmull-Rom -> cubic bezier for a smooth area chart.
+            const n = points.length;
+            const cmd = ['M ' + points[0][0] + ' ' + points[0][1]];
+            for (let i = 0; i < n - 1; i++) {
+                const p0 = points[i - 1] || points[i];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[i + 2] || points[i + 1];
+                const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+                const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+                const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+                const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+                cmd.push(`C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)} ${cp2x.toFixed(2)} ${cp2y.toFixed(2)} ${p2[0]} ${p2[1]}`);
+            }
+            return cmd.join(' ');
+        }
+
+        function renderStatSparkline(containerId, series, opts) {
+            const host = document.getElementById(containerId);
+            if (!host) return;
+            opts = opts || {};
+            const color = opts.color || '#3B82F6';
+            const W = 280; // viewBox width
+            const H = 56;  // viewBox height
+            const padX = 2;
+            const padTop = 4;
+            const padBottom = 2;
+            const data = (series && series.length ? series : []).slice();
+            const hasData = data.some(v => v > 0);
+
+            // Empty state -- a soft dashed baseline so the card never looks broken
+            if (!hasData) {
+                host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+                    <line class="spark-empty" x1="${padX}" y1="${H - padBottom - 6}" x2="${W - padX}" y2="${H - padBottom - 6}"></line>
+                </svg>`;
+                return;
+            }
+
+            const max = Math.max.apply(null, data);
+            const min = Math.min.apply(null, data);
+            const range = (max - min) || 1;
+            const n = data.length;
+            const stepX = n > 1 ? (W - padX * 2) / (n - 1) : 0;
+            const points = data.map((v, i) => {
+                const x = padX + i * stepX;
+                const y = padTop + (1 - (v - min) / range) * (H - padTop - padBottom);
+                return [x, y];
+            });
+            // Single-point fallback: extend across the chart at the midline
+            if (points.length === 1) {
+                const y = padTop + (H - padTop - padBottom) / 2;
+                points[0] = [padX, y];
+                points.push([W - padX, y]);
+            }
+
+            const linePath = smoothPath(points, W, H, padBottom);
+            const areaPath = linePath
+                + ` L ${points[points.length - 1][0]} ${H - padBottom}`
+                + ` L ${points[0][0]} ${H - padBottom} Z`;
+            const gradId = 'sparkGrad-' + containerId;
+
+            host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+                <defs>
+                    <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="${color}" stop-opacity="0.45"></stop>
+                        <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
+                    </linearGradient>
+                </defs>
+                <path d="${areaPath}" fill="url(#${gradId})"></path>
+                <path class="spark-line" d="${linePath}" stroke="${color}"></path>
+            </svg>`;
+        }
+
+        function applyStatDelta(deltaElId, series) {
+            const el = document.getElementById(deltaElId);
+            if (!el) return;
+            const data = series || [];
+            if (data.length < 2) { el.style.display = 'none'; return; }
+            const half = Math.max(1, Math.floor(data.length / 2));
+            const recent = data.slice(-half).reduce((a, b) => a + b, 0);
+            const prior = data.slice(0, data.length - half).reduce((a, b) => a + b, 0);
+            const diff = recent - prior;
+            if (diff === 0 && prior === 0 && recent === 0) { el.style.display = 'none'; return; }
+            let pct;
+            if (prior === 0) pct = recent > 0 ? 100 : 0;
+            else pct = Math.round((diff / prior) * 100);
+            const arrow = diff > 0 ? '\u2191' : (diff < 0 ? '\u2193' : '\u2192');
+            const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
+            el.className = 'stat-delta ' + cls;
+            el.textContent = `${arrow} ${Math.abs(pct)}%`;
+            el.style.display = '';
+        }
+
         function buildHeatmap() {
             const grid = document.getElementById('heatmapGrid');
             const labels = document.getElementById('heatmapLabels');
@@ -9543,6 +9701,63 @@
             document.getElementById('aPosts').textContent = totalPosts.toLocaleString();
             document.getElementById('aImpressions').textContent = totalImpressions.toLocaleString();
             document.getElementById('aEngagements').textContent = totalEngagements.toLocaleString();
+
+            // ---- SuperX-style sparklines: build a 30-day series for each card ----
+            const SPARK_DAYS = 30;
+            const followersHistory = data.followersHistory || data.followerHistory || [];
+            // Build the followers series by walking the history forward and
+            // forward-filling gaps so the line stays visually continuous.
+            (function buildFollowersSeries() {
+                const buckets = new Array(SPARK_DAYS).fill(null);
+                const start = new Date(); start.setHours(0,0,0,0); start.setDate(start.getDate() - (SPARK_DAYS - 1));
+                followersHistory.forEach(h => {
+                    if (!h || !h.date) return;
+                    const d = new Date(h.date); if (isNaN(d.getTime())) return;
+                    d.setHours(0,0,0,0);
+                    const idx = Math.floor((d - start) / 86400000);
+                    if (idx < 0 || idx >= SPARK_DAYS) return;
+                    buckets[idx] = h.count || 0;
+                });
+                // Forward-fill: if today's bucket is null, use the latest known
+                // count up to that point. This gives a flat-line until growth
+                // happens, instead of a chart full of zeros.
+                let last = (followersHistory.length && followersHistory[0].count) || followers || 0;
+                const series = buckets.map(v => { if (v === null) return last; last = v; return v; });
+                // If still all the same value but we have a real follower count,
+                // show that as a flat (informative) line instead of empty state.
+                if (followers > 0 && series.every(v => v === series[0])) series[series.length - 1] = followers;
+                renderStatSparkline('sparkFollowers', series, { color: '#3B82F6' });
+                applyStatDelta('aFollowersDelta', series);
+            })();
+
+            const postsSeries = bucketSeries(postMetrics, SPARK_DAYS, p => p.postedAt || p.publishedAt || p.date);
+            // Augment with locally-tracked posted queue items so the chart still
+            // reflects activity when the extension hasn't synced metrics yet.
+            queue.filter(q => q.status === 'posted' && q.postedAt).forEach(q => {
+                const d = new Date(q.postedAt); if (isNaN(d.getTime())) return;
+                d.setHours(0,0,0,0);
+                const start = new Date(); start.setHours(0,0,0,0); start.setDate(start.getDate() - (SPARK_DAYS - 1));
+                const idx = Math.floor((d - start) / 86400000);
+                if (idx >= 0 && idx < SPARK_DAYS) postsSeries[idx] += 1;
+            });
+            renderStatSparkline('sparkPosts', postsSeries, { color: '#10B981' });
+            applyStatDelta('aPostsDelta', postsSeries);
+
+            const impressionsSeries = bucketSeries(
+                postMetrics, SPARK_DAYS,
+                p => p.postedAt || p.publishedAt || p.date,
+                p => p.impressions || 0,
+            );
+            renderStatSparkline('sparkImpressions', impressionsSeries, { color: '#F59E0B' });
+            applyStatDelta('aImpressionsDelta', impressionsSeries);
+
+            const engagementsSeries = bucketSeries(
+                postMetrics, SPARK_DAYS,
+                p => p.postedAt || p.publishedAt || p.date,
+                p => (p.likes || 0) + (p.comments || 0) + (p.reposts || 0),
+            );
+            renderStatSparkline('sparkEngagements', engagementsSeries, { color: '#A855F7' });
+            applyStatDelta('aEngagementsDelta', engagementsSeries);
 
             document.getElementById('aLikes').textContent = totalLikes.toLocaleString();
             document.getElementById('aReposts').textContent = totalReposts.toLocaleString();

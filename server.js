@@ -2108,18 +2108,29 @@ function renderCarouselPDF(slides, brandColor, title, userName) {
 
     const doc = new PDFDocument({ size: [WIDTH, HEIGHT], margin: 0, autoFirstPage: false });
 
+    // PDFKit's heightOfString uses the currently active font size on the
+    // document. The `fontSize` option in the options bag is ignored, so we
+    // MUST call doc.fontSize(N) before measuring, otherwise heights come back
+    // computed at 12pt (the default) and our layout offsets all collapse,
+    // stacking the title / body / name on top of each other.
+    function measureH(text, fontSize, opts) {
+        if (!text) return 0;
+        doc.fontSize(fontSize);
+        return doc.heightOfString(String(text), opts || { width: CW });
+    }
+
     function measureContentHeight(slide) {
         let h = 0;
         if (slide.title) {
-            h += doc.heightOfString(slide.title, { width: CW, fontSize: 56 }) + 40;
-            h += 8 + 40;
+            h += measureH(slide.title, 56, { width: CW, lineGap: 10 }) + 40;
+            h += 8 + 40; // accent bar + spacing
         }
         if (slide.body) {
-            h += doc.heightOfString(slide.body, { width: CW, fontSize: 32, lineGap: 12 }) + 36;
+            h += measureH(slide.body, 32, { width: CW, lineGap: 12 }) + 36;
         }
         if (slide.bulletPoints && slide.bulletPoints.length > 0) {
             slide.bulletPoints.forEach(bp => {
-                h += doc.heightOfString(bp, { width: CW - 50, fontSize: 30, lineGap: 10 }) + 24;
+                h += measureH(bp, 30, { width: CW - 50, lineGap: 10 }) + 24;
             });
         }
         return h;
@@ -2138,9 +2149,9 @@ function renderCarouselPDF(slides, brandColor, title, userName) {
 
             const titleText = slide.title || title || '';
             const bodyText = slide.body || '';
-            const titleH = doc.heightOfString(titleText, { width: CW, fontSize: 68, lineGap: 12 });
-            const bodyH = bodyText ? doc.heightOfString(bodyText, { width: CW, fontSize: 34, lineGap: 10 }) : 0;
-            const totalH = titleH + 40 + bodyH;
+            const titleH = measureH(titleText, 68, { width: CW, align: 'center', lineGap: 12 });
+            const bodyH = bodyText ? measureH(bodyText, 34, { width: CW, align: 'center', lineGap: 10 }) : 0;
+            const totalH = titleH + (bodyText ? 40 + bodyH : 0);
             const startY = Math.max(120, (HEIGHT - 240 - totalH) / 2);
 
             doc.fontSize(68).fillColor(color)
@@ -2161,20 +2172,22 @@ function renderCarouselPDF(slides, brandColor, title, userName) {
 
             const titleText = slide.title || 'Thanks for reading!';
             const bodyText = slide.body || 'Follow for more content like this.';
-            const titleH = doc.heightOfString(titleText, { width: CW, fontSize: 64, lineGap: 12 });
-            const bodyH = doc.heightOfString(bodyText, { width: CW, fontSize: 34, lineGap: 10 });
+            const titleH = measureH(titleText, 64, { width: CW, align: 'center', lineGap: 12 });
+            const bodyH = measureH(bodyText, 34, { width: CW, align: 'center', lineGap: 10 });
             const nameH = userName ? 60 : 0;
-            const totalH = titleH + 50 + bodyH + nameH;
-            const startY = (HEIGHT - totalH) / 2;
+            const titleToBodyGap = 50;
+            const bodyToNameGap = 60;
+            const totalH = titleH + titleToBodyGap + bodyH + (userName ? bodyToNameGap + nameH : 0);
+            const startY = Math.max(80, (HEIGHT - totalH) / 2);
 
             doc.fontSize(64).fillColor('#FFFFFF')
                .text(titleText, MARGIN, startY, { width: CW, align: 'center', lineGap: 12 });
             doc.fontSize(34).fillColor('#FFFFFF').opacity(0.85)
-               .text(bodyText, MARGIN, startY + titleH + 50, { width: CW, align: 'center', lineGap: 10 });
+               .text(bodyText, MARGIN, startY + titleH + titleToBodyGap, { width: CW, align: 'center', lineGap: 10 });
             doc.opacity(1);
             if (userName) {
                 doc.fontSize(30).fillColor('#FFFFFF')
-                   .text(userName, MARGIN, startY + titleH + 50 + bodyH + 40, { width: CW, align: 'center' });
+                   .text(userName, MARGIN, startY + titleH + titleToBodyGap + bodyH + bodyToNameGap, { width: CW, align: 'center' });
             }
         } else {
             doc.rect(0, 0, WIDTH, HEIGHT).fill('#FFFFFF');
@@ -2187,28 +2200,31 @@ function renderCarouselPDF(slides, brandColor, title, userName) {
             let y = Math.max(80, (HEIGHT - contentH) / 2);
 
             if (slide.title) {
+                const titleH = measureH(slide.title, 56, { width: CW, lineGap: 10 });
                 doc.fontSize(56).fillColor(color)
                    .text(slide.title, MARGIN, y, { width: CW, lineGap: 10 });
-                y += doc.heightOfString(slide.title, { width: CW, fontSize: 56 }) + 40;
+                y += titleH + 40;
 
                 doc.rect(MARGIN, y, 80, 6).fill(color);
                 y += 8 + 40;
             }
 
             if (slide.body) {
+                const bodyH = measureH(slide.body, 32, { width: CW, lineGap: 12 });
                 doc.fontSize(32).fillColor('#333333')
                    .text(slide.body, MARGIN, y, { width: CW, lineGap: 12 });
-                y += doc.heightOfString(slide.body, { width: CW, fontSize: 32, lineGap: 12 }) + 36;
+                y += bodyH + 36;
             }
 
             if (slide.bulletPoints && slide.bulletPoints.length > 0) {
                 slide.bulletPoints.forEach(bp => {
+                    const bpH = measureH(bp, 30, { width: CW - 50, lineGap: 10 });
                     doc.save();
                     doc.circle(MARGIN + 10, y + 14, 7).fill(color);
                     doc.restore();
                     doc.fontSize(30).fillColor('#444444')
                        .text(bp, MARGIN + 50, y, { width: CW - 50, lineGap: 10 });
-                    y += doc.heightOfString(bp, { width: CW - 50, fontSize: 30, lineGap: 10 }) + 24;
+                    y += bpH + 24;
                 });
             }
         }
