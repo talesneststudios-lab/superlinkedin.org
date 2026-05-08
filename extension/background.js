@@ -1,4 +1,4 @@
-const API_BASE = 'https://rwz9r5zqtw.us-east-1.awsapprunner.com';
+const API_BASE = 'https://app.superlinkedin.org';
 const SYNC_ALARM = 'superlinkedin-sync';
 
 let pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null, feedPosts: [] };
@@ -23,6 +23,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     if (msg.type === 'LOGIN') {
         login(msg.email, msg.linkedinId).then(sendResponse);
+        return true;
+    }
+
+    if (msg.type === 'AUTO_LOGIN') {
+        autoLoginViaCookie().then(sendResponse);
+        return true;
+    }
+
+    if (msg.type === 'STORE_TOKEN') {
+        storeTokenFromPage(msg.data).then(sendResponse);
         return true;
     }
 
@@ -116,6 +126,52 @@ async function login(email, linkedinId) {
             return { ok: true, name: data.name };
         }
         return { ok: false, error: data.error || 'Authentication failed' };
+    } catch (err) {
+        return { ok: false, error: 'Could not connect to server' };
+    }
+}
+
+// Persist a token handed to us directly from a logged-in dashboard tab.
+// This is the primary auto-connect path: the page does a same-origin fetch
+// (cookie travels reliably) and forwards the resulting token to us.
+async function storeTokenFromPage(data) {
+    if (!data || !data.token) return { ok: false, error: 'No token' };
+    await chrome.storage.local.set({
+        authToken: data.token,
+        userName: data.name || data.email || '',
+        ownerLinkedinId: data.linkedinId || '',
+        ownerName: data.name || '',
+        plan: data.plan || 'Pro',
+    });
+    console.log('[SuperLinkedIn] Token stored from dashboard auto-login');
+    return { ok: true, name: data.name };
+}
+
+// Cookie-based silent login (fallback). Works when the user is already
+// signed into the SuperLinkedIn dashboard in the same browser profile.
+// SameSite=Lax may prevent the session cookie from being sent on this
+// cross-site fetch, in which case we fall through to the manual login flow
+// or rely on the dashboard tab pushing us a token via STORE_TOKEN.
+async function autoLoginViaCookie() {
+    try {
+        const res = await fetch(`${API_BASE}/api/extension/issue-token`, {
+            method: 'GET',
+            credentials: 'include',
+            headers: { 'Accept': 'application/json' },
+        });
+        if (!res.ok) {
+            return { ok: false, status: res.status, error: res.status === 401 ? 'Not signed in to SuperLinkedIn' : 'Auto-login failed' };
+        }
+        const data = await res.json();
+        if (!data.token) return { ok: false, error: 'No token returned' };
+        await chrome.storage.local.set({
+            authToken: data.token,
+            userName: data.name || data.email || '',
+            ownerLinkedinId: data.linkedinId || '',
+            ownerName: data.name || '',
+            plan: data.plan || 'Pro',
+        });
+        return { ok: true, name: data.name, autoLogin: true };
     } catch (err) {
         return { ok: false, error: 'Could not connect to server' };
     }

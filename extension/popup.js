@@ -1,4 +1,4 @@
-const API_BASE = 'https://rwz9r5zqtw.us-east-1.awsapprunner.com';
+const API_BASE = 'https://app.superlinkedin.org';
 let cachedAnalytics = null;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -12,7 +12,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response && response.authenticated) {
             showStatus(response);
         } else {
-            showLogin();
+            // Silent auto-login: if the user is already signed into the
+            // SuperLinkedIn dashboard the cookie endpoint will hand us a
+            // token without any input.
+            chrome.runtime.sendMessage({ type: 'AUTO_LOGIN' }, (autoResp) => {
+                if (autoResp && autoResp.ok) {
+                    chrome.runtime.sendMessage({ type: 'GET_STATUS' }, showStatus);
+                } else {
+                    showLogin();
+                    if (autoResp && autoResp.status === 401) {
+                        loginError.innerHTML = 'Not signed in. <a href="#" id="openDashLink" style="color:#0a66c2;text-decoration:underline;">Open SuperLinkedIn</a> to connect automatically.';
+                        const link = document.getElementById('openDashLink');
+                        if (link) link.addEventListener('click', (e) => { e.preventDefault(); openDashboard(); });
+                    }
+                }
+            });
         }
     });
 

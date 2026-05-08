@@ -2548,6 +2548,34 @@ app.post('/api/carousel/publish', async (req, res) => {
 // ---------- EXTENSION & ANALYTICS ----------
 
 // Generate a simple auth token for the extension
+// Cookie-based auto-login for the Chrome extension.
+// Called by the extension when it has no token yet; if the browser is logged
+// into the dashboard the session cookie is sent (the extension has host
+// permission for app.superlinkedin.org), and we hand back a fresh token so
+// the user never has to type their email/LinkedIn ID into the popup.
+app.get('/api/extension/issue-token', async (req, res) => {
+    if (!req.session || !req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    const sessUser = req.session.user;
+    const user = await dbGetUser(sessUser.linkedinId) || sessUser;
+    const secret = process.env.SESSION_SECRET || 'fallback';
+    const token = crypto.createHmac('sha256', secret)
+        .update(user.linkedinId)
+        .digest('hex');
+    try { await dbUpdateFields(user.linkedinId, { extensionToken: token }); } catch {}
+    if (!global._tokenCache) global._tokenCache = {};
+    global._tokenCache[token] = user.linkedinId;
+    console.log(`[Extension Auth] Cookie auto-login for ${user.name} (${user.linkedinId})`);
+    res.json({
+        token,
+        name: user.name,
+        email: user.email,
+        linkedinId: user.linkedinId,
+        plan: user.planTier || user.plan || 'Pro',
+    });
+});
+
 app.post('/api/extension/auth', async (req, res) => {
     const { email, linkedinId } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required' });
@@ -2727,11 +2755,14 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
                 existing[idx].lastMessage = incoming.lastMessage || existing[idx].lastMessage;
                 existing[idx].lastMessageAt = incoming.lastMessageAt || existing[idx].lastMessageAt;
                 existing[idx].unread = incoming.unread;
+                if (incoming.participantPicture) existing[idx].participantPicture = incoming.participantPicture;
+                if (incoming.participantUrl) existing[idx].participantUrl = incoming.participantUrl;
             } else {
                 existing.push({
                     id: incoming.id || ('dm-' + Date.now() + '-' + Math.random().toString(36).substring(2, 8)),
                     participantName: incoming.participantName,
                     participantUrl: incoming.participantUrl || '',
+                    participantPicture: incoming.participantPicture || '',
                     lastMessage: incoming.lastMessage || '',
                     lastMessageAt: incoming.lastMessageAt || now,
                     unread: incoming.unread || false,

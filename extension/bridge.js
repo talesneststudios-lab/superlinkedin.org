@@ -25,6 +25,36 @@
             return;
         }
 
+        if (msg.type === 'AUTO_LOGIN') {
+            try {
+                chrome.runtime.sendMessage({ type: 'AUTO_LOGIN' }, function (resp) {
+                    if (chrome.runtime.lastError) {
+                        reply(requestId, { success: false, error: chrome.runtime.lastError.message || 'Extension error' });
+                        return;
+                    }
+                    reply(requestId, resp || { success: false, error: 'No response from extension' });
+                });
+            } catch (e) {
+                reply(requestId, { success: false, error: 'Extension error: ' + (e && e.message ? e.message : String(e)) });
+            }
+            return;
+        }
+
+        if (msg.type === 'STORE_TOKEN') {
+            try {
+                chrome.runtime.sendMessage({ type: 'STORE_TOKEN', data: msg.data }, function (resp) {
+                    if (chrome.runtime.lastError) {
+                        reply(requestId, { success: false, error: chrome.runtime.lastError.message || 'Extension error' });
+                        return;
+                    }
+                    reply(requestId, resp || { success: true });
+                });
+            } catch (e) {
+                reply(requestId, { success: false, error: 'Extension error: ' + (e && e.message ? e.message : String(e)) });
+            }
+            return;
+        }
+
         if (msg.type === 'DM_SEND_REPLY') {
             try {
                 chrome.runtime.sendMessage({

@@ -963,9 +963,28 @@
             const elClasses = (typeof el.className === 'string' ? el.className : '') + ' ' + el.innerHTML.substring(0, 500);
             const unread = elClasses.includes('unread');
 
+            // Find profile picture (LinkedIn CDN avatars). Prefer images whose alt matches the name
+            // so we don't accidentally pick up reaction emoji or company logos in the row.
+            let participantPicture = '';
+            const candidateImgs = el.querySelectorAll('img[src]');
+            const nameLower = name.toLowerCase();
+            for (const img of candidateImgs) {
+                const src = img.getAttribute('src') || '';
+                const alt = (img.getAttribute('alt') || '').toLowerCase();
+                if (!src.startsWith('http')) continue;
+                // LinkedIn profile photo CDNs
+                const isProfileCdn = /media-exp\d+\.licdn\.com|media\.licdn\.com|static\.licdn\.com\/sc\/h\/aahz/.test(src);
+                if (!isProfileCdn) continue;
+                // Skip ghost/default avatars
+                if (/ghost-person|aahz/i.test(src)) continue;
+                if (alt && alt === nameLower) { participantPicture = src; break; }
+                if (!participantPicture) participantPicture = src; // first plausible match as fallback
+            }
+
             conversations.push({
                 id: 'dm-' + i + '-' + name.replace(/\s+/g, '-').toLowerCase().substring(0, 30),
                 participantName: name,
+                participantPicture: participantPicture,
                 lastMessage: preview.substring(0, 200),
                 lastMessageAt: time,
                 unread: unread,

@@ -135,6 +135,16 @@
             padding-left: 0;
             display: block !important;
         }
+        .sidebar.collapsed .sidebar-help-submenu { display: none; }
+        .sidebar.collapsed .sidebar-link .sidebar-link-label { display: none; }
+        .sidebar.collapsed .sidebar-link {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 1rem;
+        }
+        .sidebar.collapsed .sidebar-link-icon { font-size: 1rem; }
         .sidebar.collapsed .sidebar-bottom { padding: 8px 8px; }
         .sidebar.collapsed .sidebar-credits { justify-content: center; padding: 8px; }
         .sidebar.collapsed .sidebar-user { justify-content: center; padding: 8px; }
@@ -390,9 +400,11 @@
             padding: 7px 12px;
             border-radius: 6px;
         }
+        /* Active sub-item inherits its parent section's color (blue for Create,
+           green for Engage, purple for CRM, amber for Reports). */
         .nav-section-items .nav-item.active {
-            color: var(--accent);
-            background: rgba(10, 102, 194, 0.14);
+            color: var(--section-color);
+            background: color-mix(in srgb, var(--section-color) 16%, transparent);
             position: relative;
             font-weight: 700;
         }
@@ -403,7 +415,7 @@
             top: 6px;
             bottom: 6px;
             width: 2px;
-            background: var(--accent);
+            background: var(--section-color);
             border-radius: 2px;
         }
         .nav-section-items .nav-item:hover {
@@ -411,8 +423,8 @@
             background: rgba(255, 255, 255, 0.04);
         }
         .nav-section-items .nav-item.active:hover {
-            color: var(--accent);
-            background: rgba(10, 102, 194, 0.18);
+            color: var(--section-color);
+            background: color-mix(in srgb, var(--section-color) 22%, transparent);
         }
 
         .sidebar-bottom {
@@ -1109,8 +1121,9 @@
         .dm-conv-avatar {
             width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #70B5F9);
             color: #fff; display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.85rem; flex-shrink: 0;
+            font-weight: 700; font-size: 0.85rem; flex-shrink: 0; overflow: hidden;
         }
+        .dm-conv-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
         .dm-conv-info { flex: 1; min-width: 0; }
         .dm-conv-name {
             font-size: 0.88rem; font-weight: 600; color: var(--text-primary);
@@ -1152,8 +1165,9 @@
         .dm-thread-avatar {
             width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), #70B5F9);
             color: #fff; display: flex; align-items: center; justify-content: center;
-            font-weight: 700; font-size: 0.8rem; flex-shrink: 0;
+            font-weight: 700; font-size: 0.8rem; flex-shrink: 0; overflow: hidden;
         }
+        .dm-thread-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
         .dm-thread-name { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); }
         .dm-thread-labels { display: flex; gap: 4px; margin-left: 8px; }
         .dm-label-manage-btn {
@@ -1314,13 +1328,17 @@
         }
 
         .sidebar-link {
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 6px;
             padding: 6px 4px;
             font-size: 0.75rem;
             color: var(--sidebar-text);
             text-decoration: none;
             cursor: pointer;
         }
+        .sidebar-link-icon { flex-shrink: 0; }
+        .sidebar-link-label { min-width: 0; }
 
         .sidebar-link:hover { color: var(--sidebar-active); }
 
@@ -4186,12 +4204,12 @@
             </button>
             </div>
             <div class="sidebar-links">
-                <a class="sidebar-link" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'" style="cursor:pointer;">&#128218; Learn / Help</a>
+                <a class="sidebar-link" data-label="Learn / Help" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'" style="cursor:pointer;"><span class="sidebar-link-icon">&#10067;</span><span class="sidebar-link-label">Learn / Help</span></a>
                 <div class="sidebar-help-submenu" style="display:none;padding:4px 0 4px 20px;">
-                    <a class="sidebar-link" href="/playbook" target="_blank" style="font-size:0.72rem;padding:4px 0;">&#128214; Playbook</a>
-                    <a class="sidebar-link" href="mailto:info@superlinkedin.org?subject=SuperLinkedIn%20Support%20Request" style="font-size:0.72rem;padding:4px 0;">&#128172; Get Support</a>
+                    <a class="sidebar-link" href="/playbook" target="_blank" style="font-size:0.72rem;padding:4px 0;"><span class="sidebar-link-icon">&#128214;</span><span class="sidebar-link-label">Playbook</span></a>
+                    <a class="sidebar-link" href="mailto:info@superlinkedin.org?subject=SuperLinkedIn%20Support%20Request" style="font-size:0.72rem;padding:4px 0;"><span class="sidebar-link-icon">&#128172;</span><span class="sidebar-link-label">Get Support</span></a>
                 </div>
-                <a class="sidebar-link" onclick="openReferralPopup()" style="cursor:pointer;">&#127873; Earn 40% Referral</a>
+                <a class="sidebar-link" data-label="Earn 40% Referral" onclick="openReferralPopup()" style="cursor:pointer;"><span class="sidebar-link-icon">&#127873;</span><span class="sidebar-link-label">Earn 40% Referral</span></a>
             </div>
         </div>
     </aside>
@@ -5439,6 +5457,10 @@
 
             <!-- DM PAGE -->
             <div class="page" id="page-dms">
+                <div style="max-width:1200px;margin:0 auto 16px;">
+                    <h2 style="margin-bottom:6px;">Direct Messages</h2>
+                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0;">Reply to LinkedIn DMs, label leads and follow-ups, and manage automated reminders &mdash; all in one inbox.</p>
+                </div>
                 <div class="dm-layout">
                     <!-- LEFT: Conversation list -->
                     <div class="dm-sidebar">
@@ -6801,30 +6823,58 @@
             loadDmFollowupRules();
         }
 
+        function dmAvatarHtml(conv) {
+            const initials = (conv.participantName || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+            const pic = conv.participantPicture || conv.participantAvatar;
+            if (pic) {
+                return `<img src="${escapeHtml(pic)}" alt="${escapeHtml(conv.participantName || '')}" onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${initials.replace(/'/g,"\\'")}'}));" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+            }
+            return initials;
+        }
+
+        function dmTimestampValue(c) {
+            let best = 0;
+            const lm = c.lastMessageAt;
+            if (lm) {
+                const p = new Date(lm).getTime();
+                if (!isNaN(p)) best = Math.max(best, p);
+            }
+            const msgs = c.messages || [];
+            for (let i = msgs.length - 1; i >= 0; i--) {
+                const ts = msgs[i] && msgs[i].timestamp;
+                if (ts) {
+                    const p = new Date(ts).getTime();
+                    if (!isNaN(p)) { best = Math.max(best, p); break; }
+                }
+            }
+            return best;
+        }
+
         function renderDmConversations() {
             const container = document.getElementById('dmConversationList');
             if (!container) return;
             const search = (document.getElementById('dmSearchInput')?.value || '').toLowerCase();
-            let filtered = _dmConversations;
+            let filtered = _dmConversations.slice();
             if (_dmFilter !== 'all') {
                 filtered = filtered.filter(c => (c.labels || []).includes(_dmFilter));
             }
             if (search) {
                 filtered = filtered.filter(c => c.participantName.toLowerCase().includes(search) || (c.lastMessage || '').toLowerCase().includes(search));
             }
+            // Sort by most recent message first; conversations without a usable timestamp fall to the bottom
+            filtered.sort((a, b) => dmTimestampValue(b) - dmTimestampValue(a));
             if (!filtered.length) {
                 container.innerHTML = '<div class="empty-state" style="padding:30px;"><p>' + (search || _dmFilter !== 'all' ? 'No matching conversations.' : 'No conversations yet. Install the Chrome extension and visit LinkedIn Messaging to sync your DMs.') + '</p></div>';
                 return;
             }
             container.innerHTML = filtered.map(c => {
-                const initials = (c.participantName || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
                 const isActive = c.id === _dmActiveConvId;
                 const labelBadges = (c.labels || []).map(l => `<span class="dm-label-badge" data-label="${l}">${l}</span>`).join('');
                 const timeStr = c.lastMessageAt ? formatDmTime(c.lastMessageAt) : '';
                 return `<div class="dm-conv-item ${isActive ? 'active' : ''} ${c.unread ? 'unread' : ''}" onclick="openDmConversation('${c.id}')">
-                    <div class="dm-conv-avatar">${initials}</div>
+                    <div class="dm-conv-avatar">${dmAvatarHtml(c)}</div>
                     <div class="dm-conv-info">
-                        <div class="dm-conv-name">${c.participantName}${labelBadges ? ' ' + labelBadges : ''}</div>
+                        <div class="dm-conv-name">${escapeHtml(c.participantName || '')}${labelBadges ? ' ' + labelBadges : ''}</div>
                         <div class="dm-conv-preview">${escapeHtml((c.lastMessage || '').substring(0, 60))}</div>
                     </div>
                     <div class="dm-conv-meta">
@@ -6882,8 +6932,8 @@
             const conv = _dmConversations.find(c => c.id === convId);
             if (!conv) return;
 
-            const initials = (conv.participantName || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-            document.getElementById('dmThreadAvatar').textContent = initials;
+            const avatarEl = document.getElementById('dmThreadAvatar');
+            avatarEl.innerHTML = dmAvatarHtml(conv);
             document.getElementById('dmThreadName').textContent = conv.participantName;
 
             const labelsHtml = (conv.labels || []).map(l => `<span class="dm-label-badge" data-label="${l}">${l}</span>`).join('');
@@ -7474,42 +7524,50 @@
         function populateTimezoneSelect() {
             const select = document.getElementById('settingsTimezone');
             if (!select) return;
-            if (select.options.length > 1) return;
 
-            let allTz = null;
+            let browserTz = 'UTC';
+            try {
+                browserTz = (typeof Intl !== 'undefined' && Intl.DateTimeFormat
+                    ? (Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC')
+                    : 'UTC');
+            } catch {}
+
+            let savedTz = browserTz;
+            try { savedTz = getUserTimezone() || browserTz; } catch {}
+
+            // Build the list of timezones. Prefer Intl.supportedValuesOf, fall
+            // back to our curated list. Either way we ALWAYS end up with a
+            // non-empty array.
+            let allTz = [];
             try {
                 if (typeof Intl !== 'undefined' && typeof Intl.supportedValuesOf === 'function') {
-                    allTz = Intl.supportedValuesOf('timeZone');
+                    const v = Intl.supportedValuesOf('timeZone');
+                    if (Array.isArray(v) && v.length > 0) allTz = v;
                 }
             } catch (e) {
                 console.warn('[Timezone] Intl.supportedValuesOf failed:', e);
             }
-            if (!Array.isArray(allTz) || allTz.length === 0) {
-                console.warn('[Timezone] Falling back to curated timezone list');
-                allTz = FALLBACK_TIMEZONES.slice();
-            }
+            if (!allTz.length) allTz = FALLBACK_TIMEZONES.slice();
 
-            let browserTz = 'UTC';
+            // Always wipe and rebuild so re-entering Settings refreshes the
+            // list (otherwise an old failure-state select keeps its broken
+            // contents forever).
+            select.innerHTML = '';
+
+            // Step 1: guaranteed first option so the select is never blank.
+            const autoOpt = document.createElement('option');
+            autoOpt.value = browserTz;
+            autoOpt.textContent = `Auto-detect (${browserTz.replace(/_/g, ' ')})`;
+            select.appendChild(autoOpt);
+
+            // Step 2: grouped options. If anything throws inside this block
+            // we still have the auto-detect option above.
             try {
-                browserTz = (Intl.DateTimeFormat().resolvedOptions().timeZone) || 'UTC';
-            } catch {}
-            const savedTz = getUserTimezone() || browserTz;
-
-            try {
-                select.innerHTML = '';
-                const autoOpt = document.createElement('option');
-                autoOpt.value = browserTz;
-                autoOpt.textContent = `Auto-detect (${browserTz.replace(/_/g, ' ')})`;
-                select.appendChild(autoOpt);
-
                 const regions = {};
                 allTz.forEach(tz => {
-                    const parts = tz.split('/');
-                    const region = parts[0] || 'Other';
-                    if (!regions[region]) regions[region] = [];
-                    regions[region].push(tz);
+                    const region = (tz.split('/')[0]) || 'Other';
+                    (regions[region] = regions[region] || []).push(tz);
                 });
-
                 Object.keys(regions).sort().forEach(region => {
                     const group = document.createElement('optgroup');
                     group.label = region.replace(/_/g, ' ');
@@ -7527,44 +7585,54 @@
                     });
                     select.appendChild(group);
                 });
-
-                select.value = savedTz;
-                if (!select.value) select.value = browserTz;
             } catch (e) {
-                console.error('[Timezone] populateTimezoneSelect failed:', e);
-                if (select.options.length === 0) {
-                    const fallbackOpt = document.createElement('option');
-                    fallbackOpt.value = browserTz;
-                    fallbackOpt.textContent = browserTz.replace(/_/g, ' ');
-                    select.appendChild(fallbackOpt);
-                    select.value = browserTz;
-                }
+                console.error('[Timezone] failed to render groups:', e);
             }
+
+            // Step 3: pick a value. If savedTz isn't one of the options, fall
+            // back to the auto-detect option, which we know exists.
+            const hasOption = (val) => Array.from(select.options).some(o => o.value === val);
+            if (savedTz && hasOption(savedTz)) {
+                select.value = savedTz;
+            } else {
+                select.value = browserTz;
+            }
+            console.log('[Timezone] populated', select.options.length, 'options, selected:', select.value);
         }
 
         async function loadSettingsPage() {
             if (!currentUser) return;
-            const el = id => document.getElementById(id);
-            el('settingsName').textContent = currentUser.name || '';
-            el('settingsEmail').textContent = currentUser.email || '';
-            el('settingsDisplayName').value = currentUser.name || '';
-            el('settingsEmailInput').value = currentUser.email || '';
-            const avatar = el('settingsAvatar');
-            if (currentUser.picture) {
-                avatar.innerHTML = `<img src="${currentUser.picture}" style="width:100%;height:100%;object-fit:cover;">`;
-            } else {
-                avatar.textContent = (currentUser.name || '').split(' ').map(n=>n[0]).join('').toUpperCase();
-            }
-            const teamAvatar = el('teamOwnerAvatar');
-            if (currentUser.picture) {
-                teamAvatar.innerHTML = `<img src="${currentUser.picture}" style="width:100%;height:100%;object-fit:cover;">`;
-            } else {
-                teamAvatar.textContent = (currentUser.name || '').split(' ').map(n=>n[0]).join('').toUpperCase();
-            }
-            el('teamOwnerName').textContent = currentUser.name || 'You';
-            el('teamOwnerEmail').textContent = currentUser.email || '';
-            const dmToggle = document.getElementById('darkModeToggle');
-            if (dmToggle) {
+            const safe = (label, fn) => { try { fn(); } catch (e) { console.warn('[Settings] ' + label + ' failed:', e); } };
+
+            safe('basic fields', () => {
+                const el = id => document.getElementById(id);
+                el('settingsName').textContent = currentUser.name || '';
+                el('settingsEmail').textContent = currentUser.email || '';
+                el('settingsDisplayName').value = currentUser.name || '';
+                el('settingsEmailInput').value = currentUser.email || '';
+                const avatar = el('settingsAvatar');
+                if (avatar) {
+                    if (currentUser.picture) {
+                        avatar.innerHTML = `<img src="${currentUser.picture}" style="width:100%;height:100%;object-fit:cover;">`;
+                    } else {
+                        avatar.textContent = (currentUser.name || '').split(' ').map(n=>n[0]).join('').toUpperCase();
+                    }
+                }
+                const teamAvatar = el('teamOwnerAvatar');
+                if (teamAvatar) {
+                    if (currentUser.picture) {
+                        teamAvatar.innerHTML = `<img src="${currentUser.picture}" style="width:100%;height:100%;object-fit:cover;">`;
+                    } else {
+                        teamAvatar.textContent = (currentUser.name || '').split(' ').map(n=>n[0]).join('').toUpperCase();
+                    }
+                }
+                const ton = el('teamOwnerName'); if (ton) ton.textContent = currentUser.name || 'You';
+                const toe = el('teamOwnerEmail'); if (toe) toe.textContent = currentUser.email || '';
+            });
+
+            safe('dark-mode toggle', () => {
+                const dmToggle = document.getElementById('darkModeToggle');
+                if (!dmToggle) return;
                 const stored = localStorage.getItem('sl_dark_mode');
                 const isDark = stored === 'true'
                     || document.documentElement.classList.contains('dark-mode')
@@ -7573,13 +7641,18 @@
                 document.documentElement.classList.toggle('dark-mode', isDark);
                 document.body.classList.toggle('dark-mode', isDark);
                 if (stored === null) localStorage.setItem('sl_dark_mode', isDark ? 'true' : 'false');
-            }
-            populateTimezoneSelect();
-            const firstTab = document.querySelector('.settings-tab');
-            if (firstTab) switchSettingsTab('general', firstTab);
-            await loadSubscriptionInfo();
-            loadLinkedProfilesSettings();
-            highlightCurrentPlan();
+            });
+
+            safe('timezone select', () => populateTimezoneSelect());
+
+            safe('first tab', () => {
+                const firstTab = document.querySelector('.settings-tab');
+                if (firstTab) switchSettingsTab('general', firstTab);
+            });
+
+            try { await loadSubscriptionInfo(); } catch (e) { console.error('[Settings] loadSubscriptionInfo failed:', e); }
+            try { await loadLinkedProfilesSettings(); } catch (e) { console.warn('[Settings] loadLinkedProfilesSettings failed:', e); }
+            safe('highlightCurrentPlan', () => highlightCurrentPlan());
         }
 
         async function loadSubscriptionInfo() {
@@ -7727,16 +7800,24 @@
             }
         }
 
-        function openManageSubPopup() {
-            const d = window._subData || {};
-            document.getElementById('msubPlanName').textContent = d.planLabel || '—';
-            document.getElementById('msubStatus').textContent = d.status || '—';
-            document.getElementById('msubCredits').textContent = d.aiCreditsRemaining !== undefined
-                ? d.aiCreditsRemaining + ' / ' + d.aiCreditsTotal
-                : '—';
-            document.getElementById('msubProfiles').textContent = d.maxProfiles ? (profilesData.profiles.length || 1) + ' / ' + d.maxProfiles : '—';
-            document.getElementById('msubRenew').textContent = d.renewDate || '—';
+        async function openManageSubPopup() {
             document.getElementById('manageSubOverlay').classList.add('open');
+            const fillModal = () => {
+                const d = window._subData || {};
+                document.getElementById('msubPlanName').textContent = d.planLabel || '—';
+                document.getElementById('msubStatus').textContent = d.status || '—';
+                document.getElementById('msubCredits').textContent = d.aiCreditsRemaining !== undefined
+                    ? d.aiCreditsRemaining + ' / ' + (d.aiCreditsTotal || '—')
+                    : '—';
+                const profCount = (profilesData && profilesData.profiles ? profilesData.profiles.length : 1) || 1;
+                document.getElementById('msubProfiles').textContent = d.maxProfiles ? profCount + ' / ' + d.maxProfiles : '—';
+                document.getElementById('msubRenew').textContent = d.renewDate || '—';
+            };
+            fillModal();
+            if (!window._subData || !window._subData.planLabel) {
+                try { await loadSubscriptionInfo(); } catch {}
+                fillModal();
+            }
         }
 
         function closeManageSubPopup() {
@@ -7826,6 +7907,45 @@
                 loadProfiles();
                 loadUserFeatures();
                 checkPaymentStatus();
+                triggerExtensionAutoLogin();
+                // Pre-load subscription data so the Account Settings card and
+                // Manage Subscription modal never start out blank, regardless
+                // of which page the user visits first.
+                loadSubscriptionInfo().catch(err => console.warn('[Boot] loadSubscriptionInfo failed:', err));
+            } catch {}
+        }
+
+        // Once the dashboard knows the user is authenticated, hand a token
+        // to the extension (if installed) so the user never has to type
+        // their email/LinkedIn ID into the popup. We do the fetch here
+        // (same-origin, so the session cookie is always sent) and forward
+        // the token via the extension bridge.
+        function triggerExtensionAutoLogin() {
+            try {
+                const KEY = 'sl_ext_autologin_done';
+                if (sessionStorage.getItem(KEY)) return;
+                let attempts = 0;
+                const tick = () => {
+                    attempts++;
+                    if (isExtensionInstalled()) {
+                        sessionStorage.setItem(KEY, '1');
+                        fetch('/api/extension/issue-token', { credentials: 'same-origin' })
+                            .then(r => r.ok ? r.json() : null)
+                            .then(data => {
+                                if (!data || !data.token) return;
+                                return sendToExtension({ type: 'STORE_TOKEN', data }, 10000);
+                            })
+                            .then(resp => {
+                                if (resp && resp.success !== false) {
+                                    console.log('[SuperLinkedIn] Extension auto-connected');
+                                }
+                            })
+                            .catch(() => {});
+                        return;
+                    }
+                    if (attempts < 6) setTimeout(tick, 500);
+                };
+                tick();
             } catch {}
         }
 
@@ -8285,7 +8405,7 @@
             }
 
             const postsEl = document.getElementById('aPosts');
-            if (postsEl) postsEl.textContent = queue.length;
+            if (postsEl) postsEl.textContent = queue.filter(q => q.status === 'posted').length;
         }
 
         function renderQueueCalendar(list) {
@@ -8732,8 +8852,12 @@
 
             const followers = data.followers || dashboard.followers || 0;
             const postedCount = queue.filter(q => q.status === 'posted').length;
-            const trackedPosts = postMetrics.length || postedCount;
-            const totalPosts = trackedPosts || queue.length;
+            // Only count posts that were actually published. Drafts and scheduled
+            // queue items must NOT inflate this metric. We take the larger of
+            // (a) per-post metrics scraped from LinkedIn and (b) queue items
+            // marked as posted -- whichever source has more truth.
+            const trackedPosts = Math.max(postMetrics.length, postedCount);
+            const totalPosts = trackedPosts;
             const totalImpressions = dashboard.postImpressions || engagement.impressions || 0;
             const membersReached = dashboard.membersReached || engagement.membersReached || 0;
             const totalLikes = trackedPosts ? (engagement.likes || dashboard.socialEngagements || 0) : 0;
@@ -8787,12 +8911,15 @@
                         <div style="font-size:0.75rem;color:var(--text-muted);white-space:nowrap;">${(p.impressions || 0).toLocaleString()} views &middot; ${(p.likes || 0)} likes</div>
                     </div>`
                 ).join('');
-            } else if (queue.length > 0) {
-                document.getElementById('topPostsEmpty').style.display = 'none';
-                document.getElementById('topPostsList').style.display = 'block';
-                document.getElementById('topPostsList').innerHTML = queue.slice(0, 5).map(q =>
-                    `<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--text-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${q.text}</div>`
-                ).join('');
+            } else {
+                const postedQueue = queue.filter(q => q.status === 'posted');
+                if (postedQueue.length > 0) {
+                    document.getElementById('topPostsEmpty').style.display = 'none';
+                    document.getElementById('topPostsList').style.display = 'block';
+                    document.getElementById('topPostsList').innerHTML = postedQueue.slice(0, 5).map(q =>
+                        `<div style="padding:10px 0;border-bottom:1px solid var(--border);font-size:0.85rem;color:var(--text-secondary);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${q.text}</div>`
+                    ).join('');
+                }
             }
 
             if (data.lastSync) {
