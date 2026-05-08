@@ -1316,9 +1316,7 @@
 
         /* ===== Bulk DMs page ===== */
         .bulk-dms-wrap { max-width: 1200px; margin: 0 auto; }
-        .bulk-dms-header { margin-bottom: 22px; }
-        .bulk-dms-header h1 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
-        .bulk-dms-header p { color: var(--text-muted); font-size: 0.88rem; margin-bottom: 10px; }
+        .bulk-dms-meta-row { margin: -6px 0 16px; }
         .bulk-dms-meta {
             display: flex; gap: 18px; flex-wrap: wrap; align-items: center;
             font-size: 0.82rem; color: var(--text-secondary);
@@ -1445,6 +1443,13 @@
             font-size: 0.7rem; letter-spacing: 0.04em;
         }
         .bulk-dms-history-row .cell-recipient { display: flex; gap: 8px; align-items: center; min-width: 0; }
+        .bulk-dms-history-row .chip-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            color: #fff; display: inline-flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.72rem; flex-shrink: 0; overflow: hidden;
+        }
+        .bulk-dms-history-row .chip-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
         .bulk-dms-history-row .cell-message { color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .bulk-dms-history-row .cell-status { font-weight: 700; }
         .bulk-dms-history-row .status-pending { color: #f59e0b; }
@@ -1550,6 +1555,54 @@
         /* PAGE CONTAINERS */
         .page { display: none; }
         .page.active { display: block; }
+
+        /* Red destructive action used in the Team & Permissions list (and
+           anywhere else we need an inline "Remove" button next to a row). */
+        .team-row-remove {
+            flex-shrink: 0;
+            padding: 6px 14px;
+            background: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.35);
+            border-radius: 8px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.75rem;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s, border-color 0.15s;
+        }
+        .team-row-remove:hover {
+            background: #ef4444;
+            color: #fff;
+            border-color: #ef4444;
+        }
+        .team-row-remove:focus-visible {
+            outline: 2px solid #ef4444;
+            outline-offset: 2px;
+        }
+
+        /* Unified page header — every top-level page title aligns to the
+           left padding of .main-content so the layout feels consistent
+           regardless of whether the page body is centered or full-width. */
+        .page-header {
+            max-width: none;
+            margin: 0 0 18px;
+        }
+        .page-header h1,
+        .page-header h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            line-height: 1.2;
+            margin: 0 0 6px;
+            color: var(--text-primary);
+        }
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            line-height: 1.5;
+            margin: 0;
+        }
 
         /* CARDS */
         .card {
@@ -4620,6 +4673,11 @@
             <!-- ANALYTICS PAGE -->
             <div class="page" id="page-analytics">
 
+                <div class="page-header">
+                    <h2>Analytics</h2>
+                    <p>Track your follower growth, post impressions, and engagement trends over the last 30 days.</p>
+                </div>
+
                 <!-- Extension Connect Banner -->
                 <div id="analyticsExtBanner" style="display:none;background:linear-gradient(135deg,#0A66C2,#004182);border-radius:12px;padding:20px 24px;margin-bottom:16px;color:#fff;display:flex;align-items:center;gap:16px;">
                     <div style="font-size:2rem;">&#128268;</div>
@@ -4633,7 +4691,7 @@
                 <!-- Top Stats -->
                 <div class="stats-grid">
                     <div class="stat-card">
-                        <div class="stat-label">Followers</div>
+                        <div class="stat-label">Connections</div>
                         <div class="stat-value"><span id="aFollowers">0</span><span class="stat-delta flat" id="aFollowersDelta" style="display:none;"></span></div>
                         <div class="stat-mini-chart" id="sparkFollowers"></div>
                     </div>
@@ -4768,7 +4826,7 @@
                     <div class="top-posts-header">
                         <h3>Posts that generated the most</h3>
                         <select class="top-posts-filter">
-                            <option>Followers</option>
+                            <option>Connections</option>
                             <option>Impressions</option>
                             <option>Engagement</option>
                         </select>
@@ -4803,8 +4861,10 @@
 
             <!-- CONTEXT PAGE -->
             <div class="page" id="page-context">
-                <div class="ctx-page-title">Context Settings</div>
-                <div class="ctx-page-sub">This data influences your AI inspirations and generations.</div>
+                <div class="page-header">
+                    <h2>Context Settings</h2>
+                    <p>This data influences your AI inspirations and generations.</p>
+                </div>
 
                 <!-- About You -->
                 <div class="ctx-section">
@@ -4915,11 +4975,11 @@
 
             <!-- SETTINGS PAGE -->
             <div class="page" id="page-settings">
+                <div class="page-header">
+                    <h2>Account Settings</h2>
+                    <p>Manage your account preferences</p>
+                </div>
                 <div style="max-width:700px;">
-                    <div style="margin-bottom:24px;">
-                        <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:4px;">Account Settings</h2>
-                        <p style="font-size:0.85rem;color:var(--text-secondary);">Manage your account preferences</p>
-                    </div>
 
                     <div class="settings-tabs" style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px;">
                         <button class="settings-tab active" onclick="switchSettingsTab('general',this)" style="padding:10px 20px;background:none;border:none;font-family:inherit;font-size:0.85rem;font-weight:600;color:var(--text-secondary);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;">General</button>
@@ -5003,7 +5063,7 @@
                                 <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:0.82rem;">Loading profiles...</div>
                             </div>
                             <div style="padding:0 24px 16px;">
-                                <button onclick="showAddAccountModal()" style="width:100%;padding:10px;background:rgba(10,102,194,0.08);color:var(--accent);border:1px solid rgba(10,102,194,0.2);border-radius:8px;font-family:inherit;font-weight:600;font-size:0.82rem;cursor:pointer;">+ Add Another Profile</button>
+                                <button onclick="showAddAccountModal()" style="width:100%;padding:10px;background:rgba(10,102,194,0.08);color:var(--accent);border:1px solid rgba(10,102,194,0.2);border-radius:8px;font-family:inherit;font-weight:600;font-size:0.82rem;cursor:pointer;">+ Add Account</button>
                             </div>
                         </div>
 
@@ -5182,7 +5242,7 @@
 
             <!-- READY TO POST PAGE -->
             <div class="page" id="page-readytopost">
-                <div class="rtp-header">
+                <div class="page-header">
                     <h2>Ready to Post</h2>
                     <p>AI-generated posts tailored to your profile. Pick one and publish.</p>
                 </div>
@@ -5315,6 +5375,10 @@
 
             <!-- CREATE PAGE -->
             <div class="page" id="page-create">
+                <div class="page-header">
+                    <h2>AI Writer</h2>
+                    <p>Draft a LinkedIn post from scratch or let the AI generate one in your voice.</p>
+                </div>
                 <div class="create-wrapper">
                     <div class="card">
                         <div class="card-title">&#129302; AI Writer</div>
@@ -5382,6 +5446,10 @@
 
             <!-- Carousel Creator Page -->
             <div class="page" id="page-carousel">
+                <div class="page-header">
+                    <h2>Carousel Creator</h2>
+                    <p>Generate beautiful multi-slide PDF carousels with AI.</p>
+                </div>
                 <div style="max-width:960px;margin:0 auto;">
                     <!-- Upgrade overlay for non-carousel plans -->
                     <div id="carouselUpgradeOverlay" style="display:none;">
@@ -5480,9 +5548,11 @@
 
             <!-- VIRAL LIBRARY PAGE -->
             <div class="page" id="page-virallibrary">
+                <div class="page-header">
+                    <h2>Viral Posts Library</h2>
+                    <p>Browse 50+ high-performing LinkedIn post templates. Use them as inspiration for your own content.</p>
+                </div>
                 <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Viral Posts Library</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Browse 50+ high-performing LinkedIn post templates. Use them as inspiration for your own content.</p>
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
                         <input id="vlSearch" type="text" placeholder="Search posts..." oninput="loadViralLibrary()" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
                         <select id="vlCategory" onchange="loadViralLibrary()" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
@@ -5510,9 +5580,11 @@
 
             <!-- ENGAGE PAGE (Discover / Mentions / Replies / Auto-Engage) -->
             <div class="page" id="page-engage">
+                <div class="page-header">
+                    <h2>Engage</h2>
+                    <p>Reply with intention. Grow your audience. All in one focused space.</p>
+                </div>
                 <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Engage</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:18px;">Reply with intention. Grow your audience. All in one focused space.</p>
 
                     <div class="engage-url-fetcher">
                         <span class="engage-url-icon">&#128279;</span>
@@ -5623,9 +5695,11 @@
 
             <!-- ENGAGE LISTS PAGE (kept for direct access; not exposed as a sidebar item anymore) -->
             <div class="page" id="page-engagelists">
+                <div class="page-header">
+                    <h2>Engagement Lists</h2>
+                    <p>Create custom lists of connections to track and engage with.</p>
+                </div>
                 <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Engagement Lists</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;">Create custom lists of connections to track and engage with.</p>
                     <div style="margin-bottom:16px;">
                         <button onclick="showCreateListModal()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;">+ Create List</button>
                     </div>
@@ -5639,9 +5713,11 @@
 
             <!-- TEAM MEMBERS PAGE -->
             <div class="page" id="page-teammembers">
+                <div class="page-header">
+                    <h2>Team Members</h2>
+                    <p>Invite team members to collaborate on content creation and scheduling.</p>
+                </div>
                 <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Team Members</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:16px;">Invite team members to collaborate on content creation and scheduling.</p>
                     <div style="margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;">
                         <input id="teamInviteEmail" type="email" placeholder="Email address" style="flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
                         <select id="teamInviteRole" style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);">
@@ -5661,9 +5737,11 @@
 
             <!-- SHARED QUEUE PAGE -->
             <div class="page" id="page-sharedqueue">
+                <div class="page-header">
+                    <h2>Shared Queue</h2>
+                    <p>View and manage posts across all team members.</p>
+                </div>
                 <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">Shared Queue</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">View and manage posts across all team members.</p>
                     <div id="sharedQueueList" style="display:flex;flex-direction:column;gap:12px;"></div>
                     <div id="sharedQueueEmpty" class="empty-state">
                         <div style="font-size:2rem;margin-bottom:10px;">&#128196;</div>
@@ -5674,9 +5752,11 @@
 
             <!-- WHITE-LABEL REPORTS PAGE -->
             <div class="page" id="page-reports">
+                <div class="page-header">
+                    <h2>White-Label Reports</h2>
+                    <p>Generate branded PDF reports for your LinkedIn performance.</p>
+                </div>
                 <div style="max-width:960px;margin:0 auto;">
-                    <h2 style="margin-bottom:6px;">White-Label Reports</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:20px;">Generate branded PDF reports for your LinkedIn performance.</p>
                     <div class="card" style="padding:20px;margin-bottom:20px;">
                         <h3 style="font-size:0.95rem;font-weight:800;margin-bottom:16px;">Branding Settings</h3>
                         <div style="display:flex;flex-direction:column;gap:12px;">
@@ -5719,9 +5799,9 @@
 
             <!-- DM PAGE -->
             <div class="page" id="page-dms">
-                <div style="max-width:1200px;margin:0 auto 16px;">
-                    <h2 style="margin-bottom:6px;">Direct Messages</h2>
-                    <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:0;">Reply to LinkedIn DMs, label leads and follow-ups, and manage automated reminders &mdash; all in one inbox.</p>
+                <div class="page-header">
+                    <h2>Direct Messages</h2>
+                    <p>Reply to LinkedIn DMs, label leads and follow-ups, and manage automated reminders &mdash; all in one inbox.</p>
                 </div>
                 <div class="dm-layout">
                     <!-- LEFT: Conversation list -->
@@ -5819,10 +5899,12 @@
 
             <!-- BULK DM PAGE -->
             <div class="page" id="page-bulkdms">
+                <div class="page-header">
+                    <h1>Bulk Direct Messages</h1>
+                    <p>Send personalized DMs to grow your network. Variables fill in each recipient's details automatically.</p>
+                </div>
                 <div class="bulk-dms-wrap">
-                    <div class="bulk-dms-header">
-                        <h1>Bulk Direct Messages</h1>
-                        <p>Send personalized DMs to grow your network. Variables fill in each recipient's details automatically.</p>
+                    <div class="bulk-dms-meta-row">
                         <div class="bulk-dms-meta">
                             <span><strong>Today:</strong> <span id="bulkDmsTodayCount">0</span> / <span id="bulkDmsTodayLimit">25</span></span>
                             <span><strong>Monthly:</strong> <span id="bulkDmsMonthCount">0</span> / <span id="bulkDmsMonthLimit">500</span></span>
@@ -6358,20 +6440,24 @@
         <div class="modal" style="max-width:420px;">
             <button class="modal-close" onclick="document.getElementById('addAccountModal').classList.add('hidden')">&times;</button>
             <div style="text-align:center;margin-bottom:20px;">
-                <div style="font-size:2rem;margin-bottom:12px;">&#128100;</div>
-                <h2 style="font-size:1.15rem;font-weight:800;margin-bottom:8px;">Add LinkedIn Account</h2>
-                <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;">Connect another LinkedIn account to manage multiple profiles from one dashboard.</p>
+                <div style="font-size:2rem;margin-bottom:12px;">&#128260;</div>
+                <h2 style="font-size:1.15rem;font-weight:800;margin-bottom:8px;">Switch LinkedIn Account</h2>
+                <p style="font-size:0.85rem;color:var(--text-secondary);line-height:1.6;">Sign in with a different LinkedIn account. Only one LinkedIn can post from this workspace at a time &mdash; the new account will replace the current one.</p>
                 <p style="font-size:0.78rem;color:var(--text-muted);margin-top:8px;" id="addAccountLimit"></p>
             </div>
             <div id="addAccountContent">
+                <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:10px;padding:12px 14px;margin-bottom:14px;text-align:left;">
+                    <div style="font-size:0.78rem;font-weight:700;color:#ef4444;margin-bottom:6px;">&#9888; Heads up</div>
+                    <p style="font-size:0.78rem;color:var(--text-secondary);line-height:1.55;margin:0;">The LinkedIn currently linked to this workspace will be unlinked. Its queue and history stay in our database, but it won't be able to post until you sign back in as that account. The new account will start fresh through onboarding.</p>
+                </div>
                 <div style="background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:16px;text-align:left;">
                     <div style="font-size:0.78rem;font-weight:700;color:var(--accent);margin-bottom:8px;">&#9432; Before you connect</div>
                     <ol style="font-size:0.76rem;color:var(--text-secondary);line-height:1.7;margin:0;padding-left:18px;">
                         <li>Open <a href="https://www.linkedin.com" target="_blank" style="color:var(--accent);text-decoration:underline;">linkedin.com</a> in a new tab and <strong>sign out</strong> of your current account</li>
                         <li>Come back here and click <strong>"Connect with LinkedIn"</strong> below</li>
-                        <li>Sign in with the <strong>different LinkedIn account</strong> you want to add</li>
+                        <li>Sign in with the <strong>different LinkedIn account</strong> you want to switch to</li>
                     </ol>
-                    <p style="font-size:0.72rem;color:var(--text-muted);margin:8px 0 0;line-height:1.5;">LinkedIn will authenticate whichever account is currently signed in. You must sign out first to connect a different profile.</p>
+                    <p style="font-size:0.72rem;color:var(--text-muted);margin:8px 0 0;line-height:1.5;">LinkedIn will authenticate whichever account is currently signed in there. Sign out first if it's the wrong one.</p>
                 </div>
                 <a href="/auth/linkedin/add-profile" id="addAccountLink" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;background:#0A66C2;color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;text-decoration:none;">
                     <svg style="width:18px;height:18px;" viewBox="0 0 24 24"><path fill="#fff" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
@@ -7816,10 +7902,13 @@
                 const action = (status === 'pending' || status === 'sending')
                     ? `<button onclick="cancelBulkDm('${it.id}')" title="Cancel">&times;</button>`
                     : '';
+                const statusTitle = (status === 'failed' && it.error)
+                    ? ` title="${escapeHtml(it.error)}"`
+                    : '';
                 return `<div class="bulk-dms-history-row">
                     <div class="cell-recipient">${avatar}<span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(r.name || r.handle || '?')}</span></div>
                     <div class="cell-message" title="${escapeHtml(it.renderedMessage || it.template || '')}">${escapeHtml(it.renderedMessage || it.template || '')}</div>
-                    <div class="cell-status status-${status}">${statusLabel}</div>
+                    <div class="cell-status status-${status}"${statusTitle}>${statusLabel}${status === 'failed' && it.error ? ' &#9432;' : ''}</div>
                     <div>${dateStr}</div>
                     <div class="cell-action">${action}</div>
                 </div>`;
@@ -7974,14 +8063,17 @@
         function renderProfilesList() {
             const container = document.getElementById('sidebarProfilesList');
             if (!container) return;
-            const { profiles, activeProfileId, maxProfiles } = profilesData;
+            const { profiles, activeProfileId } = profilesData;
 
-            if (!profiles.length) {
+            // Replace-mode: there's only ever one posting profile in the
+            // workspace, so the list/switcher is hidden. Use "Switch
+            // LinkedIn" in the user menu to swap accounts.
+            if (profiles.length <= 1) {
                 container.innerHTML = '';
                 return;
             }
 
-            let html = `<div class="sidebar-profiles-title">Profiles (${profiles.length}/${maxProfiles})</div>`;
+            let html = `<div class="sidebar-profiles-title">Profile</div>`;
             profiles.forEach(p => {
                 const isActive = p.linkedinId === activeProfileId;
                 const initials = (p.name || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
@@ -7992,7 +8084,6 @@
                     <div class="sidebar-profile-avatar-sm">${avatarContent}</div>
                     <span class="sidebar-profile-name">${p.name || 'Unknown'}</span>
                     ${isActive ? '<span class="sidebar-profile-badge">&#9679;</span>' : ''}
-                    ${p.isPrimary ? '<span style="font-size:0.55rem;color:rgba(255,255,255,0.35);">owner</span>' : ''}
                 </div>`;
             });
             container.innerHTML = html;
@@ -8034,20 +8125,14 @@
 
         async function showAddAccountModal() {
             await loadProfiles();
-            const { profiles, maxProfiles } = profilesData;
             const limitEl = document.getElementById('addAccountLimit');
             const contentEl = document.getElementById('addAccountContent');
             const upgradeEl = document.getElementById('addAccountUpgrade');
 
-            limitEl.textContent = `${profiles.length} of ${maxProfiles} profiles used (${profilesData.planTier.toUpperCase()} plan)`;
-
-            if (profiles.length >= maxProfiles) {
-                contentEl.style.display = 'none';
-                upgradeEl.style.display = 'block';
-            } else {
-                contentEl.style.display = 'block';
-                upgradeEl.style.display = 'none';
-            }
+            // Replace-mode: only one LinkedIn at a time, no plan-based cap.
+            limitEl.textContent = '';
+            contentEl.style.display = 'block';
+            upgradeEl.style.display = 'none';
 
             document.getElementById('addAccountModal').classList.remove('hidden');
         }
@@ -8091,24 +8176,28 @@
                 profiles.forEach(p => {
                     const isOwner = p.linkedinId === profilesData.primaryAccountId;
                     const initials = (p.name || '??').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
+                    const removeBtn = isOwner
+                        ? ''
+                        : `<button class="team-row-remove" onclick="removeLinkedProfileFromSettings('${p.linkedinId}', ${JSON.stringify(p.name || 'this profile')})">Remove</button>`;
                     html += `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
-                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#70B5F9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.75rem;overflow:hidden;">${p.picture ? '<img src="'+p.picture+'" style="width:100%;height:100%;object-fit:cover;">' : initials}</div>
-                        <div style="flex:1;">
+                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#70B5F9);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:0.75rem;overflow:hidden;flex-shrink:0;">${p.picture ? '<img src="'+p.picture+'" style="width:100%;height:100%;object-fit:cover;">' : initials}</div>
+                        <div style="flex:1;min-width:0;">
                             <div style="font-weight:600;font-size:0.85rem;">${p.name || 'Unknown'}</div>
                             <div style="font-size:0.72rem;color:var(--text-muted);">${p.email || ''}</div>
                         </div>
                         <span style="font-size:0.7rem;font-weight:700;color:${isOwner ? 'var(--accent)' : '#22c55e'};text-transform:uppercase;letter-spacing:0.5px;">${isOwner ? 'Owner' : 'Linked'}</span>
+                        ${removeBtn}
                     </div>`;
                 });
 
                 members.forEach(m => {
                     html += `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:10px;margin-bottom:8px;">
-                        <div style="width:36px;height:36px;border-radius:50%;background:var(--bg-card);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.85rem;">&#9993;</div>
-                        <div style="flex:1;">
-                            <div style="font-weight:600;font-size:0.85rem;">${m.email}</div>
+                        <div style="width:36px;height:36px;border-radius:50%;background:var(--bg-card);border:2px dashed var(--border);display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:0.85rem;flex-shrink:0;">&#9993;</div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-weight:600;font-size:0.85rem;">${escapeHtml(m.email || '')}</div>
                             <div style="font-size:0.72rem;color:var(--text-muted);">${m.role || 'editor'} &middot; ${m.status || 'invited'}</div>
                         </div>
-                        <button onclick="removeSettingsTeamMember('${m.email}')" style="background:none;border:none;color:#ef4444;font-size:0.78rem;font-weight:600;cursor:pointer;">Remove</button>
+                        <button class="team-row-remove" onclick="removeSettingsTeamMember(${JSON.stringify(m.email || '')})">Remove</button>
                     </div>`;
                 });
 
@@ -8167,12 +8256,45 @@
         }
 
         async function removeSettingsTeamMember(email) {
+            const confirmed = await showNotify(
+                'Remove team member?',
+                `${email} will lose access to your SuperLinkedIn workspace immediately. They can be re-invited at any time.`,
+                'warning',
+                { confirm: true, confirmText: 'Remove', cancelText: 'Keep them', danger: true }
+            );
+            if (!confirmed) return;
             try {
-                await fetch('/api/team/members/' + encodeURIComponent(email), { method: 'DELETE' });
+                const res = await fetch('/api/team/members/' + encodeURIComponent(email), { method: 'DELETE' });
+                if (!res.ok) throw new Error('Failed');
                 showNotify('Removed', 'Team member removed.', 'success');
                 loadSettingsTeam();
             } catch {
                 showNotify('Error', 'Failed to remove member.', 'error');
+            }
+        }
+
+        async function removeLinkedProfileFromSettings(linkedinId, displayName) {
+            const name = displayName || 'this profile';
+            const confirmed = await showNotify(
+                'Unlink LinkedIn account?',
+                `${name} will be unlinked from your workspace and won't be able to post until you sign back in as that account. Their queue and history are kept in our database.`,
+                'warning',
+                { confirm: true, confirmText: 'Unlink', cancelText: 'Keep linked', danger: true }
+            );
+            if (!confirmed) return;
+            try {
+                const res = await fetch('/api/profiles/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ linkedinId }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) throw new Error(data.error || 'Failed');
+                showNotify('Unlinked', `${name} has been removed from this workspace.`, 'success');
+                loadSettingsTeam();
+                loadProfiles();
+            } catch (err) {
+                showNotify('Error', (err && err.message) || 'Failed to remove profile.', 'error');
             }
         }
 

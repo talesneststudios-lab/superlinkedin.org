@@ -52,15 +52,33 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     if (msg.type === 'DM_SEND_REPLY') {
-        chrome.tabs.query({ url: '*://*.linkedin.com/messaging/*' }, (tabs) => {
-            if (tabs.length > 0) {
-                chrome.tabs.sendMessage(tabs[0].id, {
+        // Prefer a tab already on /messaging/ since the content script can
+        // skip navigation. Fall back to any linkedin.com tab — the content
+        // script will navigate to messaging itself. If neither exists, open
+        // messaging in a background tab so future bulk sends just work.
+        chrome.tabs.query({ url: '*://*.linkedin.com/*' }, (tabs) => {
+            const messagingTab = tabs.find(t => /\/messaging(\/|$)/.test(t.url || ''));
+            const liTab = messagingTab || tabs[0];
+            const dispatch = (tabId) => {
+                chrome.tabs.sendMessage(tabId, {
                     type: 'DM_SEND_REPLY',
                     recipientName: msg.recipientName,
                     text: msg.text,
-                }, sendResponse);
+                }, (response) => {
+                    if (chrome.runtime.lastError) {
+                        sendResponse({ success: false, error: 'LinkedIn page not ready. Reload linkedin.com and try again.' });
+                    } else {
+                        sendResponse(response || { success: false, error: 'No response from LinkedIn page' });
+                    }
+                });
+            };
+            if (liTab) {
+                dispatch(liTab.id);
             } else {
-                sendResponse({ success: false, error: 'No LinkedIn messaging tab open. Please open LinkedIn messaging first.' });
+                chrome.tabs.create({ url: 'https://www.linkedin.com/messaging/', active: false }, (tab) => {
+                    // Give the new tab a moment to boot the content script.
+                    setTimeout(() => dispatch(tab.id), 6000);
+                });
             }
         });
         return true;

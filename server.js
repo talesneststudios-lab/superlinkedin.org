@@ -601,33 +601,28 @@ app.get('/auth/linkedin/callback', async (req, res) => {
                 return res.redirect('/auth/error.html?message=' + encodeURIComponent('Primary account not found or not paid'));
             }
 
-            const tier = primaryUser.planTier || 'pro';
-            const limits = PLAN_LIMITS[tier] || PLAN_LIMITS.pro;
-            const linkedProfiles = primaryUser.linkedProfiles || [{ linkedinId: primaryId, name: primaryUser.name, email: primaryUser.email, picture: primaryUser.picture, addedAt: primaryUser.createdAt || new Date().toISOString() }];
+            // REPLACE MODE: signing in via "+ Add Account" replaces the
+            // previously-active LinkedIn entirely. Only one posting profile
+            // at a time — whichever LinkedIn signed in last. The paying
+            // owner (primaryId) stays the same so billing isn't disturbed.
+            const previousProfiles = primaryUser.linkedProfiles || [];
+            const droppedIds = previousProfiles
+                .map(p => p && p.linkedinId)
+                .filter(id => id && id !== profile.sub && id !== primaryId);
 
-            if (linkedProfiles.length >= limits.maxProfiles) {
-                return res.redirect('/auth/error.html?message=' + encodeURIComponent(`Profile limit reached (${limits.maxProfiles} for ${tier} plan). Upgrade to add more.`));
+            // Sever the parent link on the LinkedIn accounts being removed
+            // from this workspace so they can sign in independently later.
+            for (const did of droppedIds) {
+                try { await dbUpdateFields(did, { parentAccountId: null }); } catch {}
             }
 
-            if (linkedProfiles.some(p => p.linkedinId === profile.sub)) {
-                req.session.activeProfileId = profile.sub;
-                req.session.primaryAccountId = primaryId;
-                const existingProfile = await dbGetUser(profile.sub);
-                if (existingProfile) {
-                    req.session.user = { ...existingProfile, linkedinId: profile.sub, accessToken };
-                }
-                console.log(`Profile ${profile.name} already linked, switching to it`);
-                return res.redirect('/app');
-            }
-
-            linkedProfiles.push({
+            const linkedProfiles = [{
                 linkedinId: profile.sub,
                 name: profile.name,
                 email: profile.email,
                 picture: profile.picture,
                 addedAt: new Date().toISOString(),
-            });
-
+            }];
             await dbUpdateFields(primaryId, { linkedProfiles });
 
             const existingDbProfile = await dbGetUser(profile.sub);
@@ -643,24 +638,27 @@ app.get('/auth/linkedin/callback', async (req, res) => {
                     createdAt: new Date().toISOString(),
                 });
             } else {
+                // Re-purpose the existing record as a child profile of this
+                // workspace. Always force onboarding to run again so the
+                // owner can capture writing-DNA / interests / products for
+                // THIS persona — even if the LinkedIn ID had previously
+                // completed onboarding under a different account.
                 await dbUpdateFields(profile.sub, {
                     name: profile.name,
                     email: profile.email,
                     picture: profile.picture,
                     parentAccountId: primaryId,
+                    onboardingComplete: false,
+                    onboardingCompletedAt: null,
                 });
             }
 
             req.session.primaryAccountId = primaryId;
             req.session.activeProfileId = profile.sub;
             const newProfile = await dbGetUser(profile.sub) || {};
-            req.session.user = { ...newProfile, linkedinId: profile.sub, accessToken };
+            req.session.user = { ...newProfile, linkedinId: profile.sub, accessToken, onboardingComplete: false };
 
-            console.log(`Profile added: ${profile.name} (${profile.email}) under primary ${primaryId}`);
-
-            if (newProfile.onboardingComplete) {
-                return res.redirect('/app');
-            }
+            console.log(`Profile added: ${profile.name} (${profile.email}) under primary ${primaryId} -> /onboarding`);
             return res.redirect('/onboarding');
         }
 
@@ -704,9 +702,26 @@ app.get('/auth/linkedin/callback', async (req, res) => {
             });
         }
 
-        // Initialize linkedProfiles for the primary account if not set
-        if (!parentId && req.session.user.paid && !dbUser.linkedProfiles) {
-            const initialProfiles = [{ linkedinId: profile.sub, name: profile.name, email: profile.email, picture: profile.picture, addedAt: dbUser.createdAt || new Date().toISOString() }];
+        // REPLACE MODE: a primary login always pins linkedProfiles to JUST
+        // this LinkedIn. If a previous "+ Add Account" had attached child
+        // profiles, they get severed here so only the latest signed-in
+        // LinkedIn can post. Children are unlinked (parentAccountId cleared)
+        // so they can sign in independently later if they choose.
+        if (!parentId && req.session.user.paid) {
+            const previousProfiles = dbUser.linkedProfiles || [];
+            const droppedIds = previousProfiles
+                .map(p => p && p.linkedinId)
+                .filter(id => id && id !== profile.sub);
+            for (const did of droppedIds) {
+                try { await dbUpdateFields(did, { parentAccountId: null }); } catch {}
+            }
+            const initialProfiles = [{
+                linkedinId: profile.sub,
+                name: profile.name,
+                email: profile.email,
+                picture: profile.picture,
+                addedAt: dbUser.createdAt || new Date().toISOString(),
+            }];
             await dbUpdateFields(profile.sub, { linkedProfiles: initialProfiles });
             req.session.user.linkedProfiles = initialProfiles;
         }

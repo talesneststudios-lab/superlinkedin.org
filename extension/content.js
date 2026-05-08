@@ -35,53 +35,83 @@
     }
 
     // ── Scraping ──
+    // Returns the user's CONNECTIONS count (the field is named `followers`
+    // for backwards compatibility with the database schema and existing
+    // dashboard code, but we now look for connections first since that's
+    // what most LinkedIn users actually grow).
+    //
+    // The function only trusts numbers from pages where the LOGGED-IN user's
+    // own profile data is visible — primarily the My Network page or their
+    // own /in/<vanity>/ profile. On the feed and other pages we'd otherwise
+    // pick up "1 follower" widgets ("Add to your feed → Pages"), which is
+    // exactly the bug that was producing the spurious "1 followers" reading.
     function scrapeFollowers() {
-        // Restrict search to the profile header area to avoid picking up
-        // follower counts from "People also viewed", sidebar cards, etc.
-        const headerContainers = [
-            document.querySelector('.pv-top-card'),
-            document.querySelector('.scaffold-layout__main'),
-            document.querySelector('main'),
-        ].filter(Boolean);
+        const url = location.href;
+        const path = location.pathname;
 
-        const target = headerContainers[0] || document.body;
-        const FOLLOWERS_RE = /([\d][\d,.]*\s*[KMB]?)\s+followers?\b/i;
-        const CONNECTIONS_RE = /([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i;
+        const onMyNetwork = /\/(mynetwork|my-network)(\/|$)/i.test(path);
+        const onOwnProfile = /\/in\/[^/]+\/?(\?|$)/i.test(path);
+        // The settings/feed pages still surface "X connections" in the user
+        // card on the left; allow it ONLY when the number looks plausible.
+        const onFeedOrSettings = /\/(feed|notifications|jobs|messaging)(\/|$)/i.test(path);
 
-        const selectors = [
-            '[data-test-id="follower-count"]',
-            '.pv-recent-activity-section__follower-count',
-            '.pv-top-card--list-bullet .t-bold',
-            '.pvs-header__subtitle',
-            '.pv-top-card--list .t-black--light',
-        ];
-        for (const sel of selectors) {
-            const els = target.querySelectorAll(sel);
-            for (const el of els) {
-                const text = (el.textContent || '').trim();
-                const m = text.match(FOLLOWERS_RE);
-                if (m) {
-                    const n = parseNumber(m[1]);
-                    if (n > 0) return n;
+        // 1) My Network page — most reliable: the "Connections" tile shows
+        //    the total count directly.
+        if (onMyNetwork) {
+            const tile = document.querySelector('a[href*="/mynetwork/invite-connect/connections/"], a[href*="/mynetwork/network-manager/"]');
+            const tileText = (tile && tile.textContent) || '';
+            const tileMatch = tileText.match(/([\d][\d,.]*\s*[KMB]?)/);
+            if (tileMatch) {
+                const n = parseNumber(tileMatch[1]);
+                if (n >= 1) return n;
+            }
+            // Generic page-level fallback: "Your connections … 730"
+            const pageText = (document.querySelector('main')?.innerText || '').substring(0, 4000);
+            const pageMatch = pageText.match(/([\d][\d,.]{1,}[KMB]?)\s+connections?\b/i);
+            if (pageMatch) {
+                const n = parseNumber(pageMatch[1]);
+                if (n >= 5) return n;
+            }
+        }
+
+        // 2) Own profile page — "X connections" inline in the profile header.
+        if (onOwnProfile) {
+            const header = document.querySelector('.pv-top-card, .scaffold-layout__main, main') || document.body;
+            const headerText = (header.innerText || '').substring(0, 6000);
+            const cm = headerText.match(/([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i);
+            if (cm) {
+                const n = parseNumber(cm[1]);
+                // 500+ is LinkedIn's display cap, real value lives elsewhere
+                if (n >= 5) return n;
+            }
+            const fm = headerText.match(/([\d][\d,.]*\s*[KMB]?)\s+followers?\b/i);
+            if (fm) {
+                const n = parseNumber(fm[1]);
+                if (n >= 5) return n;
+            }
+        }
+
+        // 3) Feed / settings / messaging — the left-rail "user card" shows
+        //    a profile summary that occasionally includes a count. Only
+        //    accept it when it's specifically labelled CONNECTIONS and is
+        //    >= 10, otherwise we'll keep grabbing "1 follower" from the
+        //    "Add to your feed" Pages widget.
+        if (onFeedOrSettings) {
+            const sidebars = document.querySelectorAll(
+                '.feed-identity-module, .scaffold-layout__sidebar, .global-nav__me, aside'
+            );
+            for (const side of sidebars) {
+                const text = (side.innerText || '').substring(0, 2000);
+                const cm = text.match(/([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i);
+                if (cm) {
+                    const n = parseNumber(cm[1]);
+                    if (n >= 10) return n;
                 }
             }
         }
 
-        // Fallback: search header text for the "<n> followers" pattern,
-        // capturing the number directly preceding "followers" (not just any digits in the text).
-        const headerText = target === document.body
-            ? (target.innerText || '').substring(0, 4000)
-            : (target.innerText || '').substring(0, 8000);
-        const fm = headerText.match(FOLLOWERS_RE);
-        if (fm) {
-            const n = parseNumber(fm[1]);
-            if (n > 0) return n;
-        }
-        const cm = headerText.match(CONNECTIONS_RE);
-        if (cm) {
-            const n = parseNumber(cm[1]);
-            if (n > 0) return n;
-        }
+        // No trustworthy number on this page — leave the existing value
+        // alone rather than overwriting it with garbage.
         return null;
     }
 
@@ -534,7 +564,7 @@
                     <div class="sl-stats-row">
                         <div class="sl-stat-box">
                             <div class="sl-stat-val" id="slStatFollowers">--</div>
-                            <div class="sl-stat-lbl">Followers</div>
+                            <div class="sl-stat-lbl">Connections</div>
                         </div>
                         <div class="sl-stat-box">
                             <div class="sl-stat-val" id="slStatPosts">--</div>
@@ -783,7 +813,7 @@
                     <div class="sl-interaction-grid">
                         <div class="sl-interact-item">
                             <div class="sl-interact-val">${formatNum(sidebarData.followers || 0)}</div>
-                            <div class="sl-interact-lbl">Followers</div>
+                            <div class="sl-interact-lbl">Connections</div>
                         </div>
                         <div class="sl-interact-item">
                             <div class="sl-interact-val">${sidebarData.posts.length}</div>
@@ -1078,10 +1108,119 @@
         };
     }
 
-    function sendDmReply(recipientName, text) {
+    // Wait until a selector exists (or the timeout elapses). Resolves with
+    // the matched element or null. Used to coordinate with LinkedIn's SPA
+    // navigation, which renders panels asynchronously.
+    function waitForSelector(selector, timeoutMs) {
+        return new Promise((resolve) => {
+            const start = Date.now();
+            const tick = () => {
+                const el = document.querySelector(selector);
+                if (el) return resolve(el);
+                if (Date.now() - start >= timeoutMs) return resolve(null);
+                setTimeout(tick, 150);
+            };
+            tick();
+        });
+    }
+
+    // Normalise a participant name for comparison — strip diacritics, drop
+    // suffixes like ", PhD", squash whitespace, lowercase.
+    function normName(s) {
+        return String(s || '')
+            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+            .replace(/,.*$/, '')
+            .replace(/\s+/g, ' ')
+            .trim()
+            .toLowerCase();
+    }
+
+    function findConversationCard(recipientName) {
+        const target = normName(recipientName);
+        if (!target) return null;
+        const cards = document.querySelectorAll(
+            '.msg-conversation-listitem, .msg-conversation-card, li.msg-conversations-container__convo-item'
+        );
+        let bestPrefix = null;
+        for (const card of cards) {
+            const nameEl = card.querySelector(
+                '.msg-conversation-listitem__participant-names, .msg-conversation-card__participant-names, .msg-conversation-listitem__participant-name'
+            );
+            const nm = normName(nameEl ? nameEl.textContent : '');
+            if (!nm) continue;
+            if (nm === target) return card;
+            if (!bestPrefix && (nm.startsWith(target) || target.startsWith(nm))) bestPrefix = card;
+        }
+        return bestPrefix;
+    }
+
+    async function openConversation(recipientName) {
+        // Try the search box first — it's the most reliable way to surface
+        // the conversation, even if the user has thousands of threads.
+        const search = document.querySelector('input[placeholder*="Search messages"], input.msg-search-typeahead__search-input');
+        if (search) {
+            search.focus();
+            search.value = recipientName;
+            search.dispatchEvent(new Event('input', { bubbles: true }));
+            await new Promise(r => setTimeout(r, 1200));
+        }
+        let card = findConversationCard(recipientName);
+        if (!card) {
+            // Clear search and fall back to scanning the unfiltered list
+            if (search) {
+                search.value = '';
+                search.dispatchEvent(new Event('input', { bubbles: true }));
+                await new Promise(r => setTimeout(r, 600));
+            }
+            card = findConversationCard(recipientName);
+        }
+        if (!card) return false;
+        // The clickable element is sometimes a child link; click whichever
+        // exists to ensure LinkedIn routes to the thread.
+        const link = card.querySelector('a.msg-conversation-listitem__link, a[href*="/messaging/thread/"]') || card;
+        link.click();
+        return true;
+    }
+
+    async function sendDmReply(recipientName, text) {
         try {
-            const input = document.querySelector('.msg-form__contenteditable, .msg-form__message-texteditor [contenteditable="true"]');
-            if (!input) return { success: false, error: 'Message input not found. Open a conversation first.' };
+            if (!/(^|\.)linkedin\.com$/i.test(location.hostname)) {
+                return { success: false, error: 'This tab is not on linkedin.com' };
+            }
+
+            // Navigate to messaging if we're somewhere else on LinkedIn. We
+            // can't just set location.href because that aborts the message
+            // listener; instead, resolve immediately with a "navigating"
+            // error and let the next scheduler tick try again.
+            if (!/\/messaging(\/|$)/.test(location.pathname)) {
+                history.pushState({}, '', '/messaging/');
+                window.dispatchEvent(new PopStateEvent('popstate'));
+                // SPA route change isn't always picked up — fall back to a
+                // hard navigation if the messaging container doesn't appear.
+                const ok = await waitForSelector('.msg-conversations-container, .msg-overlay-list-bubble', 4000);
+                if (!ok) {
+                    location.href = 'https://www.linkedin.com/messaging/';
+                    return { success: false, error: 'Opening LinkedIn Messaging — will retry shortly.' };
+                }
+            }
+
+            const listEl = await waitForSelector('.msg-conversations-container, .msg-overlay-list-bubble', 8000);
+            if (!listEl) {
+                return { success: false, error: 'LinkedIn Messaging did not load. Reload linkedin.com/messaging and try again.' };
+            }
+
+            // Already in a thread with the right person? Just send.
+            const activeHeader = document.querySelector('.msg-thread__link-to-profile, .msg-entity-lockup__entity-title');
+            const onTarget = activeHeader && normName(activeHeader.textContent).startsWith(normName(recipientName).split(' ')[0]);
+            if (!onTarget) {
+                const opened = await openConversation(recipientName);
+                if (!opened) {
+                    return { success: false, error: `Could not find a conversation with "${recipientName}" in your inbox. Connect with them on LinkedIn first.` };
+                }
+            }
+
+            const input = await waitForSelector('.msg-form__contenteditable, .msg-form__message-texteditor [contenteditable="true"]', 6000);
+            if (!input) return { success: false, error: 'Message input did not load on LinkedIn.' };
 
             input.focus();
             input.innerHTML = '';
@@ -1090,17 +1229,25 @@
             input.appendChild(p);
             input.dispatchEvent(new Event('input', { bubbles: true }));
 
-            setTimeout(() => {
-                const sendBtn = document.querySelector('.msg-form__send-button, button[type="submit"].msg-form__send-btn');
-                if (sendBtn && !sendBtn.disabled) {
-                    sendBtn.click();
-                    console.log('[SuperLinkedIn] DM reply sent to', recipientName);
-                }
-            }, 300);
+            // Wait for LinkedIn to enable the send button after detecting input.
+            let sendBtn = null;
+            for (let i = 0; i < 20; i++) {
+                sendBtn = document.querySelector('.msg-form__send-button:not([disabled]), button[type="submit"].msg-form__send-btn:not([disabled])');
+                if (sendBtn) break;
+                await new Promise(r => setTimeout(r, 150));
+            }
+            if (!sendBtn) {
+                return { success: false, error: 'Send button stayed disabled — LinkedIn may have blocked the message field.' };
+            }
+            sendBtn.click();
+            console.log('[SuperLinkedIn] DM sent to', recipientName);
 
+            // Give LinkedIn ~700ms to actually post; if the input clears we
+            // treat it as a successful send.
+            await new Promise(r => setTimeout(r, 700));
             return { success: true };
         } catch (err) {
-            return { success: false, error: err.message };
+            return { success: false, error: (err && err.message) || 'Send failed' };
         }
     }
 
@@ -1108,11 +1255,13 @@
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (msg.type === 'TOGGLE_SIDEBAR') {
             toggleSidebar();
+            return false;
         }
         if (msg.type === 'DM_SEND_REPLY') {
-            const result = sendDmReply(msg.recipientName, msg.text);
-            sendResponse(result);
-            return true;
+            sendDmReply(msg.recipientName, msg.text).then(sendResponse).catch(err => {
+                sendResponse({ success: false, error: (err && err.message) || 'Unhandled error' });
+            });
+            return true; // keep channel open for async response
         }
     });
 
