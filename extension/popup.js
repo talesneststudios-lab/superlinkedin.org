@@ -201,7 +201,6 @@ function renderTopPosts(posts) {
 }
 
 function renderEngagementBars(d) {
-    const total = Math.max((d.totalLikes || 0) + (d.totalComments || 0) + (d.totalReposts || 0) + (d.totalImpressions || 0), 1);
     const maxVal = Math.max(d.totalLikes || 0, d.totalComments || 0, d.totalReposts || 0, d.totalImpressions || 0, 1);
 
     document.getElementById('engLikesBar').style.width = ((d.totalLikes || 0) / maxVal * 100) + '%';
@@ -231,10 +230,7 @@ function renderFollowerChart(history) {
         <div class="follower-chart-bars">
             ${recent.map(h => {
                 const pct = ((h.count || 0) / maxVal * 100);
-                const label = h.date ? new Date(h.date).toLocaleDateString('en', { month: 'short', day: 'numeric' }) : '';
-                return `<div class="fc-bar" style="height:${Math.max(pct, 5)}%">
-                    <span class="fc-bar-label">${formatNum(h.count || 0)}</span>
-                </div>`;
+                return `<div class="fc-bar" style="height:${pct}%"><span class="fc-bar-label">${formatNum(h.count || 0)}</span></div>`;
             }).join('')}
         </div>
         <div class="fc-label-row">

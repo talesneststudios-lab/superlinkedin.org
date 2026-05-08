@@ -539,7 +539,7 @@
         toggle.id = 'sl-toggle-btn';
         toggle.title = 'SuperLinkedIn';
         toggle.innerHTML = '<span class="sl-toggle-text">SL</span>';
-        toggle.addEventListener('click', () => toggleSidebar());
+        toggle.addEventListener('click', () => toggleUpgradePanel());
         document.body.appendChild(toggle);
 
         const sb = document.createElement('div');
@@ -752,6 +752,418 @@
         toggle.classList.toggle('shifted', sidebarOpen);
         toggle.classList.toggle('active', sidebarOpen);
         if (sidebarOpen) updateSidebarUI();
+    }
+
+    // ── Upgrade Panel (opened from the floating SL button) ──
+    let upgradePanelOpen = false;
+
+    function createUpgradePanel() {
+        if (document.getElementById('sl-upgrade-panel')) return;
+
+        const panel = document.createElement('div');
+        panel.id = 'sl-upgrade-panel';
+        panel.innerHTML = `
+            <div class="sl-up-header">
+                <div class="sl-up-logo">SL</div>
+                <span class="sl-up-brand" id="slUpHeaderTitle">SuperLinkedIn</span>
+                <button class="sl-up-icon-btn" id="slUpSettingsBtn" title="Settings" aria-label="Settings">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </button>
+                <button class="sl-up-icon-btn" id="slUpBackBtn" title="Back" aria-label="Back" style="display:none;">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <button class="sl-up-close" id="slUpClose" aria-label="Close">&times;</button>
+            </div>
+
+            <div class="sl-up-body" id="slUpBody">
+                <div class="sl-up-view" id="slUpViewMain">
+                    <div id="slUpConnBanner" class="sl-up-conn connected" style="display:none;">
+                        <span class="sl-up-dot"></span>
+                        <div class="sl-up-conn-text">
+                            <div class="sl-up-conn-label">CONNECTED AS</div>
+                            <div class="sl-up-conn-name" id="slUpUserName">--</div>
+                        </div>
+                        <span class="sl-up-plan" id="slUpPlanBadge">PRO</span>
+                    </div>
+
+                    <div id="slUpLoggedOut" class="sl-up-conn muted" style="display:none;">
+                        <span class="sl-up-dot offline"></span>
+                        <div class="sl-up-conn-text">
+                            <div class="sl-up-conn-label">NOT CONNECTED</div>
+                            <a href="#" id="slUpSignIn" class="sl-up-link">Sign in to your dashboard &rarr;</a>
+                        </div>
+                    </div>
+
+                    <div class="sl-up-hero">
+                        <span class="sl-up-pill">NEW RELEASE</span>
+                        <h2 class="sl-up-title">Introducing SuperLinkedIn 2.0</h2>
+                        <p class="sl-up-sub">The biggest upgrade we've ever made</p>
+                    </div>
+
+                    <button type="button" class="sl-up-webapp" id="slUpWebApp">
+                        <div>
+                            <div class="sl-up-webapp-title">SuperLinkedIn Web App</div>
+                            <div class="sl-up-webapp-sub">Included with your subscription</div>
+                        </div>
+                        <span class="sl-up-webapp-arrow">&rarr;</span>
+                    </button>
+
+                    <div class="sl-up-card">
+                        <div class="sl-up-card-title">WHAT'S NEW</div>
+                        <div class="sl-up-features">
+                            <div class="sl-up-feature">
+                                <span class="sl-up-check">&#10004;</span>
+                                <div>
+                                    <div class="sl-up-feature-name">Engage</div>
+                                    <div class="sl-up-feature-desc">Reply with intention, grow your audience, all in one focused space</div>
+                                </div>
+                            </div>
+                            <div class="sl-up-feature">
+                                <span class="sl-up-check">&#10004;</span>
+                                <div>
+                                    <div class="sl-up-feature-name">Web App Included</div>
+                                    <div class="sl-up-feature-desc">Full SuperLinkedIn web app access with your subscription</div>
+                                </div>
+                            </div>
+                            <div class="sl-up-feature">
+                                <span class="sl-up-check">&#10004;</span>
+                                <div>
+                                    <div class="sl-up-feature-name">Pay Less, Get More</div>
+                                    <div class="sl-up-feature-desc">Flexible plans that fit your budget</div>
+                                </div>
+                            </div>
+                            <div class="sl-up-feature">
+                                <span class="sl-up-check">&#10004;</span>
+                                <div>
+                                    <div class="sl-up-feature-name">Streamlined Experience</div>
+                                    <div class="sl-up-feature-desc">Spend less time waiting, more time growing</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sl-up-card sl-up-plans-card">
+                        <div class="sl-up-card-title centered">Choose Your Plan</div>
+
+                        <div class="sl-up-plan-card">
+                            <div class="sl-up-plan-price-row">
+                                <span class="sl-up-plan-price">$39</span>
+                                <span class="sl-up-plan-period">/month</span>
+                            </div>
+                            <div class="sl-up-plan-tagline">Start growing your audience</div>
+                            <button type="button" class="sl-up-plan-btn outline" data-plan="pro">Upgrade to PRO</button>
+                        </div>
+
+                        <div class="sl-up-plan-card highlighted">
+                            <span class="sl-up-plan-discount">-20% OFF</span>
+                            <div class="sl-up-plan-name-tag">ADVANCED</div>
+                            <div class="sl-up-plan-price-row">
+                                <span class="sl-up-plan-price">$39</span>
+                                <span class="sl-up-plan-old">$49</span>
+                                <span class="sl-up-plan-period">/month</span>
+                            </div>
+                            <div class="sl-up-plan-tagline">Launch offer (regular price at $49/month)</div>
+                            <button type="button" class="sl-up-plan-btn primary" data-plan="advanced">Upgrade to ADVANCED</button>
+                        </div>
+
+                        <div class="sl-up-plan-card">
+                            <div class="sl-up-plan-name-tag">ULTRA</div>
+                            <div class="sl-up-plan-price-row">
+                                <span class="sl-up-plan-price">$199</span>
+                                <span class="sl-up-plan-period">/month</span>
+                            </div>
+                            <div class="sl-up-plan-tagline">Go further with the highest limits</div>
+                            <button type="button" class="sl-up-plan-btn outline" data-plan="ultra">Upgrade to ULTRA</button>
+                        </div>
+
+                        <a href="#" class="sl-up-show-features" id="slUpShowFeatures">Show features</a>
+
+                        <div class="sl-up-fineprint">Direct payment - no trial needed</div>
+                    </div>
+
+                    <div class="sl-up-footer">
+                        Questions? Contact us at <a href="mailto:info@superlinkedin.org">info@superlinkedin.org</a>
+                    </div>
+                </div>
+
+                <div class="sl-up-view" id="slUpViewSettings" style="display:none;">
+                    <div class="sl-up-settings-section">
+                        <div class="sl-up-settings-heading">Theme mode</div>
+                        <div class="sl-up-settings-sub">Choose your preferred theme color</div>
+                        <div class="sl-up-theme-row" id="slUpThemeRow">
+                            <button type="button" class="sl-up-theme-btn" data-theme="system">
+                                <span class="sl-up-theme-swatch system"></span>
+                                <span class="sl-up-theme-label">System</span>
+                            </button>
+                            <button type="button" class="sl-up-theme-btn" data-theme="dark">
+                                <span class="sl-up-theme-swatch dark"></span>
+                                <span class="sl-up-theme-label">Dark</span>
+                            </button>
+                            <button type="button" class="sl-up-theme-btn" data-theme="dim">
+                                <span class="sl-up-theme-swatch dim"></span>
+                                <span class="sl-up-theme-label">Dim</span>
+                            </button>
+                            <button type="button" class="sl-up-theme-btn" data-theme="light">
+                                <span class="sl-up-theme-swatch light"></span>
+                                <span class="sl-up-theme-label">Light</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="sl-up-settings-section">
+                        <div class="sl-up-settings-heading larger">Tabs</div>
+                        <div class="sl-up-toggle-list" id="slUpToggleList">
+                            <div class="sl-up-toggle-row" data-feature="home">
+                                <div>
+                                    <div class="sl-up-toggle-name">Home</div>
+                                    <div class="sl-up-toggle-desc">User highlight, recent posts</div>
+                                </div>
+                                <button type="button" class="sl-up-switch on" data-feature="home" aria-label="Toggle Home"><span class="sl-up-switch-knob"></span></button>
+                            </div>
+                            <div class="sl-up-toggle-row" data-feature="composer">
+                                <div>
+                                    <div class="sl-up-toggle-name">Composer</div>
+                                    <div class="sl-up-toggle-desc">Post scheduling</div>
+                                </div>
+                                <button type="button" class="sl-up-switch on" data-feature="composer" aria-label="Toggle Composer"><span class="sl-up-switch-knob"></span></button>
+                            </div>
+                            <div class="sl-up-toggle-row" data-feature="activities">
+                                <div>
+                                    <div class="sl-up-toggle-name">Activities</div>
+                                    <div class="sl-up-toggle-desc">Detailed profile analytics</div>
+                                </div>
+                                <button type="button" class="sl-up-switch on" data-feature="activities" aria-label="Toggle Activities"><span class="sl-up-switch-knob"></span></button>
+                            </div>
+                            <div class="sl-up-toggle-row" data-feature="posts">
+                                <div>
+                                    <div class="sl-up-toggle-name">Posts</div>
+                                    <div class="sl-up-toggle-desc">Table of user posts, comments, reposts</div>
+                                </div>
+                                <button type="button" class="sl-up-switch on" data-feature="posts" aria-label="Toggle Posts"><span class="sl-up-switch-knob"></span></button>
+                            </div>
+                            <div class="sl-up-toggle-row" data-feature="engage">
+                                <div>
+                                    <div class="sl-up-toggle-name">Engage</div>
+                                    <div class="sl-up-toggle-desc">Never miss a mention again</div>
+                                </div>
+                                <button type="button" class="sl-up-switch on" data-feature="engage" aria-label="Toggle Engage"><span class="sl-up-switch-knob"></span></button>
+                            </div>
+                            <div class="sl-up-toggle-row" data-feature="timelines">
+                                <div>
+                                    <div class="sl-up-toggle-name">Timelines</div>
+                                    <div class="sl-up-toggle-desc">Custom feeds</div>
+                                </div>
+                                <button type="button" class="sl-up-switch on" data-feature="timelines" aria-label="Toggle Timelines"><span class="sl-up-switch-knob"></span></button>
+                            </div>
+                            <div class="sl-up-toggle-row" data-feature="chat">
+                                <div>
+                                    <div class="sl-up-toggle-name">Chat</div>
+                                    <div class="sl-up-toggle-desc">Chat with any profile using AI</div>
+                                </div>
+                                <button type="button" class="sl-up-switch" data-feature="chat" aria-label="Toggle Chat"><span class="sl-up-switch-knob"></span></button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="sl-up-settings-card">
+                        <button type="button" class="sl-up-quick-link" id="slUpQuickWebApp">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+                            <span>Explore Web App</span>
+                        </button>
+                        <button type="button" class="sl-up-quick-link" id="slUpQuickSubscription">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7l10 5 10-5"></path><path d="M2 7v10l10 5 10-5V7"></path><path d="M12 2l10 5-10 5L2 7l10-5z"></path></svg>
+                            <span>Manage subscription</span>
+                        </button>
+                        <button type="button" class="sl-up-quick-link" id="slUpQuickSupport">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            <span>Support &amp; Feedback</span>
+                        </button>
+                        <button type="button" class="sl-up-quick-link danger" id="slUpQuickLogout">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(panel);
+
+        const headerTitle = panel.querySelector('#slUpHeaderTitle');
+        const settingsBtn = panel.querySelector('#slUpSettingsBtn');
+        const backBtn = panel.querySelector('#slUpBackBtn');
+        const viewMain = panel.querySelector('#slUpViewMain');
+        const viewSettings = panel.querySelector('#slUpViewSettings');
+        const body = panel.querySelector('#slUpBody');
+
+        const showSettingsView = () => {
+            viewMain.style.setProperty('display', 'none', 'important');
+            viewSettings.style.setProperty('display', 'block', 'important');
+            settingsBtn.style.setProperty('display', 'none', 'important');
+            backBtn.style.setProperty('display', 'flex', 'important');
+            headerTitle.textContent = 'Settings';
+            body.scrollTop = 0;
+        };
+        const showMainView = () => {
+            viewSettings.style.setProperty('display', 'none', 'important');
+            viewMain.style.setProperty('display', 'block', 'important');
+            settingsBtn.style.setProperty('display', 'flex', 'important');
+            backBtn.style.setProperty('display', 'none', 'important');
+            headerTitle.textContent = 'SuperLinkedIn';
+            body.scrollTop = 0;
+        };
+
+        settingsBtn.addEventListener('click', showSettingsView);
+        backBtn.addEventListener('click', showMainView);
+        panel.querySelector('#slUpClose').addEventListener('click', () => toggleUpgradePanel());
+
+        const dashUrl = 'https://app.superlinkedin.org/app';
+        const upgradeUrl = 'https://app.superlinkedin.org/upgrade';
+        const subscriptionUrl = 'https://app.superlinkedin.org/app#settings';
+        const supportUrl = 'mailto:info@superlinkedin.org';
+
+        const openTab = (url) => window.open(url, '_blank', 'noopener,noreferrer');
+
+        panel.querySelector('#slUpWebApp').addEventListener('click', () => openTab(dashUrl));
+        const signIn = panel.querySelector('#slUpSignIn');
+        if (signIn) signIn.addEventListener('click', (e) => { e.preventDefault(); openTab(dashUrl); });
+        panel.querySelector('#slUpShowFeatures').addEventListener('click', (e) => { e.preventDefault(); openTab(upgradeUrl); });
+
+        panel.querySelectorAll('.sl-up-plan-btn[data-plan]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.classList.contains('current')) return;
+                const plan = btn.dataset.plan || 'pro';
+                openTab(`${upgradeUrl}?plan=${encodeURIComponent(plan)}`);
+            });
+        });
+
+        // Quick links in Settings
+        panel.querySelector('#slUpQuickWebApp').addEventListener('click', () => openTab(dashUrl));
+        panel.querySelector('#slUpQuickSubscription').addEventListener('click', () => openTab(subscriptionUrl));
+        panel.querySelector('#slUpQuickSupport').addEventListener('click', () => openTab(supportUrl));
+        panel.querySelector('#slUpQuickLogout').addEventListener('click', () => {
+            try {
+                chrome.runtime.sendMessage({ type: 'LOGOUT' }, () => {
+                    refreshUpgradePanelStatus();
+                    showMainView();
+                });
+            } catch {
+                refreshUpgradePanelStatus();
+            }
+        });
+
+        // Theme picker
+        const themeButtons = panel.querySelectorAll('.sl-up-theme-btn[data-theme]');
+        themeButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const theme = btn.dataset.theme || 'dim';
+                applyUpgradeTheme(theme);
+                try { chrome.storage.local.set({ slUpTheme: theme }); } catch {}
+            });
+        });
+
+        // Feature toggles (UI-only, persisted to chrome.storage)
+        const switches = panel.querySelectorAll('.sl-up-switch[data-feature]');
+        switches.forEach(sw => {
+            sw.addEventListener('click', () => {
+                const on = sw.classList.toggle('on');
+                const feature = sw.dataset.feature;
+                try {
+                    chrome.storage.local.get(['slUpFeatures'], (res) => {
+                        const features = (res && res.slUpFeatures) || {};
+                        features[feature] = on;
+                        chrome.storage.local.set({ slUpFeatures: features });
+                    });
+                } catch {}
+            });
+        });
+
+        // Restore saved theme + toggles
+        try {
+            chrome.storage.local.get(['slUpTheme', 'slUpFeatures'], (res) => {
+                const theme = (res && res.slUpTheme) || 'dim';
+                applyUpgradeTheme(theme);
+                if (res && res.slUpFeatures) {
+                    Object.entries(res.slUpFeatures).forEach(([feature, on]) => {
+                        const sw = panel.querySelector(`.sl-up-switch[data-feature="${feature}"]`);
+                        if (sw) sw.classList.toggle('on', !!on);
+                    });
+                }
+            });
+        } catch {
+            applyUpgradeTheme('dim');
+        }
+    }
+
+    function applyUpgradeTheme(theme) {
+        const panel = document.getElementById('sl-upgrade-panel');
+        if (!panel) return;
+        panel.classList.remove('theme-system', 'theme-dark', 'theme-dim', 'theme-light');
+        panel.classList.add(`theme-${theme}`);
+        const buttons = panel.querySelectorAll('.sl-up-theme-btn[data-theme]');
+        buttons.forEach(b => b.classList.toggle('selected', b.dataset.theme === theme));
+    }
+
+    async function refreshUpgradePanelStatus() {
+        const connBanner = document.getElementById('slUpConnBanner');
+        const loggedOut = document.getElementById('slUpLoggedOut');
+        const userNameEl = document.getElementById('slUpUserName');
+        const planBadgeEl = document.getElementById('slUpPlanBadge');
+        if (!connBanner) return;
+
+        try {
+            const stored = await chrome.storage.local.get(['authToken', 'userName']);
+            const token = stored && stored.authToken;
+            if (!token) {
+                connBanner.style.setProperty('display', 'none', 'important');
+                if (loggedOut) loggedOut.style.setProperty('display', 'flex', 'important');
+                return;
+            }
+
+            connBanner.style.setProperty('display', 'flex', 'important');
+            if (loggedOut) loggedOut.style.setProperty('display', 'none', 'important');
+            if (userNameEl) userNameEl.textContent = stored.userName || 'Connected';
+
+            try {
+                const res = await fetch('https://app.superlinkedin.org/api/analytics/summary', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    const plan = String(data.plan || data.tier || '').toLowerCase();
+                    if (planBadgeEl) {
+                        if (!plan || plan === 'free' || plan === 'trial') {
+                            planBadgeEl.textContent = 'FREE';
+                        } else {
+                            planBadgeEl.textContent = plan.toUpperCase();
+                        }
+                    }
+                    document.querySelectorAll('.sl-up-plan-btn[data-plan]').forEach(btn => {
+                        btn.classList.remove('current');
+                        if (plan && btn.dataset.plan === plan) {
+                            btn.classList.add('current');
+                            btn.textContent = 'Current Plan';
+                        }
+                    });
+                }
+            } catch {
+                // network – plan badge stays default
+            }
+        } catch {
+            // storage failure – keep existing visibility state
+        }
+    }
+
+    function toggleUpgradePanel() {
+        createUpgradePanel();
+        const panel = document.getElementById('sl-upgrade-panel');
+        const toggle = document.getElementById('sl-toggle-btn');
+        upgradePanelOpen = !upgradePanelOpen;
+        panel.classList.toggle('open', upgradePanelOpen);
+        if (toggle) {
+            toggle.classList.toggle('shifted', upgradePanelOpen);
+            toggle.classList.toggle('active', upgradePanelOpen);
+        }
+        if (upgradePanelOpen) refreshUpgradePanelStatus();
     }
 
     function updateSidebarUI() {

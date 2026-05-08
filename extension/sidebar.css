@@ -271,3 +271,706 @@
 }
 .sl-interact-val { font-size: 1.1rem; font-weight: 800; color: #0A66C2; }
 .sl-interact-lbl { font-size: 0.72rem; color: #888; font-weight: 600; text-transform: uppercase; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Upgrade panel (toggled from the floating SL button on LinkedIn)
+   Dark theme matching SuperX 2.0 reference design
+   ─────────────────────────────────────────────────────────────────── */
+#sl-upgrade-panel {
+    position: fixed !important;
+    top: 0 !important;
+    right: -380px !important;
+    width: 380px !important;
+    max-width: 100vw;
+    height: 100vh !important;
+    background: #0c1119 !important;
+    box-shadow: -8px 0 32px rgba(0,0,0,0.55) !important;
+    z-index: 99997 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    color: #e7eaf0 !important;
+    overflow: hidden !important;
+}
+#sl-upgrade-panel.open { right: 0 !important; }
+#sl-upgrade-panel,
+#sl-upgrade-panel * {
+    box-sizing: border-box !important;
+    margin: 0;
+    padding: 0;
+}
+
+#sl-upgrade-panel button { background: none; border: none; }
+
+/* Header */
+.sl-up-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 14px 16px !important;
+    background: #131a25 !important;
+    border-bottom: 1px solid #1f2733 !important;
+    flex-shrink: 0 !important;
+}
+.sl-up-logo {
+    width: 30px !important;
+    height: 30px !important;
+    background: linear-gradient(135deg, #0A66C2, #5B9BD5) !important;
+    border-radius: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-weight: 900 !important;
+    font-size: 0.7rem !important;
+    color: #fff !important;
+}
+.sl-up-brand {
+    flex: 1 !important;
+    font-weight: 800 !important;
+    font-size: 1rem !important;
+    color: #f1f3f8 !important;
+}
+.sl-up-close {
+    width: 28px !important;
+    height: 28px !important;
+    background: rgba(255,255,255,0.06) !important;
+    color: #c8cdd6 !important;
+    border-radius: 6px !important;
+    font-size: 1.15rem !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.18s, color 0.18s !important;
+}
+.sl-up-close:hover { background: rgba(255,255,255,0.14) !important; color: #fff !important; }
+
+/* Body */
+.sl-up-body {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    padding: 16px 18px 24px !important;
+    background: #0c1119 !important;
+}
+.sl-up-body::-webkit-scrollbar { width: 6px; }
+.sl-up-body::-webkit-scrollbar-track { background: transparent; }
+.sl-up-body::-webkit-scrollbar-thumb { background: #2a3344; border-radius: 3px; }
+.sl-up-body::-webkit-scrollbar-thumb:hover { background: #3b465a; }
+
+/* Connection banner */
+.sl-up-conn {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 10px 12px !important;
+    border-radius: 10px !important;
+    margin-bottom: 16px !important;
+    background: #161e2b !important;
+    border: 1px solid #1f2937 !important;
+}
+.sl-up-conn.muted { border: 1px dashed #2a3344 !important; }
+.sl-up-dot {
+    width: 8px !important;
+    height: 8px !important;
+    border-radius: 50% !important;
+    flex-shrink: 0 !important;
+    background: #22c55e !important;
+    box-shadow: 0 0 0 3px rgba(34,197,94,0.18) !important;
+}
+.sl-up-dot.offline { background: #5b6478 !important; box-shadow: none !important; }
+.sl-up-conn-text { flex: 1 !important; min-width: 0 !important; }
+.sl-up-conn-label {
+    font-size: 0.6rem !important;
+    font-weight: 800 !important;
+    color: #7a8497 !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 2px !important;
+}
+.sl-up-conn-name {
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #e7eaf0 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+.sl-up-link {
+    color: #5B9BD5 !important;
+    font-weight: 700 !important;
+    font-size: 0.78rem !important;
+    text-decoration: none !important;
+}
+.sl-up-link:hover { text-decoration: underline !important; }
+.sl-up-plan {
+    padding: 4px 9px !important;
+    border-radius: 999px !important;
+    font-size: 0.58rem !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, #0A66C2, #5B9BD5) !important;
+    color: #fff !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.5px !important;
+    flex-shrink: 0 !important;
+}
+
+/* Hero */
+.sl-up-hero {
+    text-align: center !important;
+    padding: 18px 12px 20px !important;
+    margin-bottom: 16px !important;
+}
+.sl-up-pill {
+    display: inline-block !important;
+    padding: 5px 16px !important;
+    background: #f59e0b !important;
+    color: #fff !important;
+    font-size: 0.7rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.4px !important;
+    border-radius: 999px !important;
+    margin-bottom: 14px !important;
+    text-transform: uppercase !important;
+}
+.sl-up-title {
+    font-size: 1.45rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    line-height: 1.25 !important;
+    margin-bottom: 8px !important;
+}
+.sl-up-sub {
+    font-size: 0.85rem !important;
+    color: #94a0b6 !important;
+    line-height: 1.45 !important;
+}
+
+/* Web App card */
+.sl-up-webapp {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    padding: 14px 16px !important;
+    background: #161e2b !important;
+    border: 1px solid #1f2937 !important;
+    border-radius: 14px !important;
+    margin-bottom: 16px !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    font-family: inherit !important;
+    color: #e7eaf0 !important;
+    transition: border 0.2s, background 0.2s, transform 0.2s !important;
+}
+.sl-up-webapp:hover {
+    border-color: #0A66C2 !important;
+    background: #1a2233 !important;
+    transform: translateY(-1px) !important;
+}
+.sl-up-webapp-title {
+    font-size: 0.92rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin-bottom: 4px !important;
+}
+.sl-up-webapp-sub {
+    font-size: 0.74rem !important;
+    color: #7a8497 !important;
+}
+.sl-up-webapp-arrow {
+    font-size: 1.15rem !important;
+    color: #5b6478 !important;
+    margin-left: 8px !important;
+    flex-shrink: 0 !important;
+    transition: color 0.2s, transform 0.2s !important;
+}
+.sl-up-webapp:hover .sl-up-webapp-arrow {
+    color: #5B9BD5 !important;
+    transform: translateX(2px) !important;
+}
+
+/* Cards */
+.sl-up-card {
+    background: #131a25 !important;
+    border: 1px solid #1f2937 !important;
+    border-radius: 16px !important;
+    padding: 18px 16px !important;
+    margin-bottom: 16px !important;
+}
+.sl-up-card-title {
+    font-size: 0.72rem !important;
+    font-weight: 800 !important;
+    color: #7a8497 !important;
+    letter-spacing: 0.7px !important;
+    text-transform: uppercase !important;
+    margin-bottom: 16px !important;
+}
+.sl-up-card-title.centered {
+    text-align: center !important;
+    font-size: 1.05rem !important;
+    color: #ffffff !important;
+    letter-spacing: 0 !important;
+    text-transform: none !important;
+    margin-bottom: 16px !important;
+    font-weight: 700 !important;
+}
+
+/* Features list */
+.sl-up-features {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+}
+.sl-up-feature {
+    display: flex !important;
+    gap: 12px !important;
+    align-items: flex-start !important;
+}
+.sl-up-check {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    border-radius: 50% !important;
+    background: #22c55e !important;
+    color: #fff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 0.65rem !important;
+    font-weight: 900 !important;
+    margin-top: 1px !important;
+}
+.sl-up-feature-name {
+    font-size: 0.88rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin-bottom: 3px !important;
+}
+.sl-up-feature-desc {
+    font-size: 0.78rem !important;
+    color: #94a0b6 !important;
+    line-height: 1.45 !important;
+}
+
+/* Plan cards */
+.sl-up-plans-card {
+    background: #131a25 !important;
+    padding: 20px 16px !important;
+}
+
+.sl-up-plan-card {
+    position: relative !important;
+    background: #1a2233 !important;
+    border: 1px solid #243044 !important;
+    border-radius: 14px !important;
+    padding: 18px 16px 16px !important;
+    margin-bottom: 12px !important;
+    text-align: center !important;
+}
+.sl-up-plan-card.highlighted {
+    border: 1px solid #f59e0b !important;
+    box-shadow: 0 4px 16px rgba(245,158,11,0.18) !important;
+}
+.sl-up-plan-card:last-of-type { margin-bottom: 0 !important; }
+
+.sl-up-plan-discount {
+    position: absolute !important;
+    top: -10px !important;
+    right: 14px !important;
+    background: #f59e0b !important;
+    color: #fff !important;
+    padding: 4px 10px !important;
+    border-radius: 999px !important;
+    font-size: 0.62rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.3px !important;
+    box-shadow: 0 2px 6px rgba(245,158,11,0.4) !important;
+}
+.sl-up-plan-name-tag {
+    font-size: 0.85rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    letter-spacing: 0.5px !important;
+    margin-bottom: 10px !important;
+}
+.sl-up-plan-price-row {
+    display: flex !important;
+    align-items: baseline !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    margin-bottom: 6px !important;
+    flex-wrap: wrap !important;
+}
+.sl-up-plan-price {
+    font-size: 1.85rem !important;
+    font-weight: 800 !important;
+    color: #ffffff !important;
+    line-height: 1 !important;
+}
+.sl-up-plan-old {
+    font-size: 0.92rem !important;
+    color: #5b6478 !important;
+    text-decoration: line-through !important;
+    font-weight: 600 !important;
+}
+.sl-up-plan-period {
+    font-size: 0.82rem !important;
+    color: #94a0b6 !important;
+    font-weight: 600 !important;
+}
+.sl-up-plan-tagline {
+    font-size: 0.78rem !important;
+    color: #f59e0b !important;
+    margin-bottom: 16px !important;
+    font-weight: 600 !important;
+    line-height: 1.35 !important;
+}
+.sl-up-plan-btn {
+    display: block !important;
+    width: 100% !important;
+    padding: 12px 16px !important;
+    border-radius: 999px !important;
+    font-family: inherit !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    transition: background 0.18s, color 0.18s, border-color 0.18s !important;
+    border: 1.5px solid #f59e0b !important;
+    background: transparent !important;
+    color: #f59e0b !important;
+    line-height: 1.2 !important;
+}
+.sl-up-plan-btn:hover {
+    background: rgba(245,158,11,0.12) !important;
+}
+.sl-up-plan-btn.primary {
+    background: #f59e0b !important;
+    color: #fff !important;
+    border-color: #f59e0b !important;
+}
+.sl-up-plan-btn.primary:hover {
+    background: #e58e09 !important;
+    border-color: #e58e09 !important;
+}
+.sl-up-plan-btn.current {
+    background: #22c55e !important;
+    color: #fff !important;
+    border-color: #22c55e !important;
+    cursor: default !important;
+}
+.sl-up-plan-btn.current:hover { background: #22c55e !important; }
+
+.sl-up-show-features {
+    display: block !important;
+    text-align: center !important;
+    color: #94a0b6 !important;
+    font-size: 0.78rem !important;
+    text-decoration: none !important;
+    margin: 18px 0 10px !important;
+    font-weight: 600 !important;
+}
+.sl-up-show-features:hover { color: #ffffff !important; text-decoration: underline !important; }
+
+.sl-up-fineprint {
+    text-align: center !important;
+    font-size: 0.74rem !important;
+    color: #7a8497 !important;
+    line-height: 1.5 !important;
+}
+
+.sl-up-footer {
+    text-align: center !important;
+    margin-top: 6px !important;
+    padding-top: 14px !important;
+    font-size: 0.76rem !important;
+    color: #94a0b6 !important;
+}
+.sl-up-footer a {
+    color: #f59e0b !important;
+    text-decoration: none !important;
+    font-weight: 700 !important;
+}
+.sl-up-footer a:hover { text-decoration: underline !important; }
+
+/* ── Header icon buttons (settings/back) ── */
+.sl-up-icon-btn {
+    width: 30px !important;
+    height: 30px !important;
+    background: rgba(255,255,255,0.04) !important;
+    color: #c8cdd6 !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: background 0.18s, color 0.18s !important;
+    flex-shrink: 0 !important;
+    padding: 0 !important;
+    display: flex;
+}
+.sl-up-icon-btn[hidden],
+.sl-up-icon-btn[style*="display:none"],
+.sl-up-icon-btn[style*="display: none"],
+.sl-up-conn[style*="display:none"],
+.sl-up-conn[style*="display: none"],
+.sl-up-view[style*="display:none"],
+.sl-up-view[style*="display: none"] { display: none !important; }
+.sl-up-icon-btn:hover { background: rgba(255,255,255,0.12) !important; color: #fff !important; }
+.sl-up-icon-btn svg { display: block !important; }
+
+/* ── Settings view ── */
+.sl-up-settings-section { margin-bottom: 22px !important; }
+.sl-up-settings-heading {
+    font-size: 1rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin-bottom: 4px !important;
+}
+.sl-up-settings-heading.larger {
+    font-size: 1.35rem !important;
+    font-weight: 800 !important;
+    margin-bottom: 14px !important;
+    margin-top: 4px !important;
+}
+.sl-up-settings-sub {
+    font-size: 0.78rem !important;
+    color: #94a0b6 !important;
+    margin-bottom: 14px !important;
+    line-height: 1.4 !important;
+}
+
+/* Theme picker */
+.sl-up-theme-row {
+    display: flex !important;
+    gap: 8px !important;
+    background: #131a25 !important;
+    border: 1px solid #1f2937 !important;
+    border-radius: 12px !important;
+    padding: 10px 8px !important;
+}
+.sl-up-theme-btn {
+    flex: 1 !important;
+    background: transparent !important;
+    border: none !important;
+    cursor: pointer !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 4px !important;
+    border-radius: 10px !important;
+    font-family: inherit !important;
+    color: #94a0b6 !important;
+    transition: color 0.18s !important;
+}
+.sl-up-theme-btn:hover { color: #ffffff !important; }
+.sl-up-theme-btn.selected { color: #f59e0b !important; }
+.sl-up-theme-swatch {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 50% !important;
+    border: 2px solid transparent !important;
+    transition: border 0.18s !important;
+}
+.sl-up-theme-btn.selected .sl-up-theme-swatch { border-color: #f59e0b !important; }
+.sl-up-theme-swatch.system {
+    background: linear-gradient(135deg, #f5f5f7 0 50%, #1a1a2e 50% 100%) !important;
+    border: 1px solid #2a3344 !important;
+}
+.sl-up-theme-swatch.dark { background: #000000 !important; border: 1px solid #2a3344 !important; }
+.sl-up-theme-swatch.dim { background: #15202b !important; border: 1px solid #2a3344 !important; }
+.sl-up-theme-swatch.light { background: #ffffff !important; border: 1px solid #2a3344 !important; }
+.sl-up-theme-label {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+}
+
+/* Toggle list */
+.sl-up-toggle-list {
+    display: flex !important;
+    flex-direction: column !important;
+}
+.sl-up-toggle-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    padding: 14px 0 !important;
+    border-bottom: 1px solid #1c2433 !important;
+}
+.sl-up-toggle-row:last-child { border-bottom: none !important; }
+.sl-up-toggle-name {
+    font-size: 0.95rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+    margin-bottom: 3px !important;
+}
+.sl-up-toggle-desc {
+    font-size: 0.78rem !important;
+    color: #94a0b6 !important;
+    line-height: 1.35 !important;
+}
+.sl-up-switch {
+    position: relative !important;
+    width: 40px !important;
+    height: 22px !important;
+    background: #2a3344 !important;
+    border-radius: 999px !important;
+    cursor: pointer !important;
+    flex-shrink: 0 !important;
+    transition: background 0.2s !important;
+    border: none !important;
+    padding: 0 !important;
+}
+.sl-up-switch.on { background: #f59e0b !important; }
+.sl-up-switch-knob {
+    position: absolute !important;
+    top: 3px !important;
+    left: 3px !important;
+    width: 16px !important;
+    height: 16px !important;
+    background: #ffffff !important;
+    border-radius: 50% !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.25) !important;
+    transition: left 0.2s !important;
+}
+.sl-up-switch.on .sl-up-switch-knob { left: 21px !important; }
+
+/* Quick links card */
+.sl-up-settings-card {
+    background: #131a25 !important;
+    border: 1px solid #1f2937 !important;
+    border-radius: 16px !important;
+    padding: 6px 4px !important;
+    margin-top: 14px !important;
+}
+.sl-up-quick-link {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+    width: 100% !important;
+    padding: 12px 14px !important;
+    background: transparent !important;
+    border: none !important;
+    color: #5B9BD5 !important;
+    font-family: inherit !important;
+    font-size: 0.92rem !important;
+    font-weight: 600 !important;
+    cursor: pointer !important;
+    text-align: left !important;
+    border-radius: 10px !important;
+    transition: background 0.18s !important;
+}
+.sl-up-quick-link:hover { background: rgba(91,155,213,0.10) !important; }
+.sl-up-quick-link svg {
+    flex-shrink: 0 !important;
+    color: inherit !important;
+    display: block !important;
+}
+.sl-up-quick-link.danger { color: #ef4444 !important; }
+.sl-up-quick-link.danger:hover { background: rgba(239,68,68,0.10) !important; }
+
+/* ─────────────────────────────────────────────────────────────────────
+   Theme variants
+   ─────────────────────────────────────────────────────────────────── */
+
+/* Dark = pure black */
+#sl-upgrade-panel.theme-dark { background: #000000 !important; }
+#sl-upgrade-panel.theme-dark .sl-up-header { background: #050505 !important; border-bottom-color: #161616 !important; }
+#sl-upgrade-panel.theme-dark .sl-up-body { background: #000000 !important; }
+#sl-upgrade-panel.theme-dark .sl-up-card,
+#sl-upgrade-panel.theme-dark .sl-up-conn,
+#sl-upgrade-panel.theme-dark .sl-up-webapp,
+#sl-upgrade-panel.theme-dark .sl-up-theme-row,
+#sl-upgrade-panel.theme-dark .sl-up-settings-card {
+    background: #0d0d0d !important;
+    border-color: #1a1a1a !important;
+}
+#sl-upgrade-panel.theme-dark .sl-up-plan-card { background: #141414 !important; border-color: #232323 !important; }
+#sl-upgrade-panel.theme-dark .sl-up-toggle-row { border-bottom-color: #161616 !important; }
+#sl-upgrade-panel.theme-dark .sl-up-switch { background: #232323 !important; }
+#sl-upgrade-panel.theme-dark .sl-up-switch.on { background: #f59e0b !important; }
+
+/* Light = cream/white */
+#sl-upgrade-panel.theme-light { background: #fdf6ec !important; color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-header { background: #ffffff !important; border-bottom: 1px solid #ece6d6 !important; }
+#sl-upgrade-panel.theme-light .sl-up-brand { color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-icon-btn { background: rgba(0,0,0,0.04) !important; color: #6b6353 !important; }
+#sl-upgrade-panel.theme-light .sl-up-icon-btn:hover { background: rgba(0,0,0,0.08) !important; color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-close { background: rgba(0,0,0,0.06) !important; color: #6b6353 !important; }
+#sl-upgrade-panel.theme-light .sl-up-close:hover { background: rgba(0,0,0,0.12) !important; color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-body { background: #fdf6ec !important; }
+#sl-upgrade-panel.theme-light .sl-up-card,
+#sl-upgrade-panel.theme-light .sl-up-conn,
+#sl-upgrade-panel.theme-light .sl-up-webapp,
+#sl-upgrade-panel.theme-light .sl-up-theme-row,
+#sl-upgrade-panel.theme-light .sl-up-settings-card {
+    background: #ffffff !important;
+    border-color: #ece6d6 !important;
+}
+#sl-upgrade-panel.theme-light .sl-up-plans-card { background: #f5efe1 !important; }
+#sl-upgrade-panel.theme-light .sl-up-plan-card { background: #ffffff !important; border-color: #ece6d6 !important; }
+#sl-upgrade-panel.theme-light .sl-up-conn-name,
+#sl-upgrade-panel.theme-light .sl-up-title,
+#sl-upgrade-panel.theme-light .sl-up-webapp-title,
+#sl-upgrade-panel.theme-light .sl-up-feature-name,
+#sl-upgrade-panel.theme-light .sl-up-plan-name-tag,
+#sl-upgrade-panel.theme-light .sl-up-plan-price,
+#sl-upgrade-panel.theme-light .sl-up-card-title.centered,
+#sl-upgrade-panel.theme-light .sl-up-settings-heading,
+#sl-upgrade-panel.theme-light .sl-up-toggle-name { color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-sub,
+#sl-upgrade-panel.theme-light .sl-up-webapp-sub,
+#sl-upgrade-panel.theme-light .sl-up-feature-desc,
+#sl-upgrade-panel.theme-light .sl-up-fineprint,
+#sl-upgrade-panel.theme-light .sl-up-footer,
+#sl-upgrade-panel.theme-light .sl-up-show-features,
+#sl-upgrade-panel.theme-light .sl-up-settings-sub,
+#sl-upgrade-panel.theme-light .sl-up-toggle-desc,
+#sl-upgrade-panel.theme-light .sl-up-conn-label,
+#sl-upgrade-panel.theme-light .sl-up-card-title { color: #6b6353 !important; }
+#sl-upgrade-panel.theme-light .sl-up-plan-old { color: #b8ad96 !important; }
+#sl-upgrade-panel.theme-light .sl-up-plan-period { color: #8a8170 !important; }
+#sl-upgrade-panel.theme-light .sl-up-toggle-row { border-bottom-color: #ece6d6 !important; }
+#sl-upgrade-panel.theme-light .sl-up-switch { background: #d6cfbe !important; }
+#sl-upgrade-panel.theme-light .sl-up-switch.on { background: #f59e0b !important; }
+#sl-upgrade-panel.theme-light .sl-up-quick-link { color: #0A66C2 !important; }
+#sl-upgrade-panel.theme-light .sl-up-quick-link:hover { background: rgba(10,102,194,0.08) !important; }
+#sl-upgrade-panel.theme-light .sl-up-quick-link.danger { color: #ef4444 !important; }
+#sl-upgrade-panel.theme-light .sl-up-quick-link.danger:hover { background: rgba(239,68,68,0.10) !important; }
+#sl-upgrade-panel.theme-light .sl-up-theme-btn { color: #6b6353 !important; }
+#sl-upgrade-panel.theme-light .sl-up-theme-btn:hover { color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-theme-btn.selected { color: #f59e0b !important; }
+
+/* System = follow OS preference (dim by default, switch to light when OS prefers light) */
+@media (prefers-color-scheme: light) {
+    #sl-upgrade-panel.theme-system { background: #fdf6ec !important; color: #1a1a2e !important; }
+    #sl-upgrade-panel.theme-system .sl-up-header { background: #ffffff !important; border-bottom: 1px solid #ece6d6 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-brand { color: #1a1a2e !important; }
+    #sl-upgrade-panel.theme-system .sl-up-icon-btn { background: rgba(0,0,0,0.04) !important; color: #6b6353 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-close { background: rgba(0,0,0,0.06) !important; color: #6b6353 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-body { background: #fdf6ec !important; }
+    #sl-upgrade-panel.theme-system .sl-up-card,
+    #sl-upgrade-panel.theme-system .sl-up-conn,
+    #sl-upgrade-panel.theme-system .sl-up-webapp,
+    #sl-upgrade-panel.theme-system .sl-up-theme-row,
+    #sl-upgrade-panel.theme-system .sl-up-settings-card {
+        background: #ffffff !important;
+        border-color: #ece6d6 !important;
+    }
+    #sl-upgrade-panel.theme-system .sl-up-plans-card { background: #f5efe1 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-plan-card { background: #ffffff !important; border-color: #ece6d6 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-conn-name,
+    #sl-upgrade-panel.theme-system .sl-up-title,
+    #sl-upgrade-panel.theme-system .sl-up-webapp-title,
+    #sl-upgrade-panel.theme-system .sl-up-feature-name,
+    #sl-upgrade-panel.theme-system .sl-up-plan-name-tag,
+    #sl-upgrade-panel.theme-system .sl-up-plan-price,
+    #sl-upgrade-panel.theme-system .sl-up-card-title.centered,
+    #sl-upgrade-panel.theme-system .sl-up-settings-heading,
+    #sl-upgrade-panel.theme-system .sl-up-toggle-name { color: #1a1a2e !important; }
+    #sl-upgrade-panel.theme-system .sl-up-toggle-row { border-bottom-color: #ece6d6 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-switch { background: #d6cfbe !important; }
+    #sl-upgrade-panel.theme-system .sl-up-quick-link { color: #0A66C2 !important; }
+}

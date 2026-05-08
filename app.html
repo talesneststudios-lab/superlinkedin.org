@@ -8652,7 +8652,14 @@
         }
 
         async function removeProfile(linkedinId, name) {
-            if (!confirm(`Remove "${name}" from your linked profiles? Their data will be disconnected from your account.`)) return;
+            const displayName = name || 'this profile';
+            const confirmed = await showNotify(
+                'Remove linked profile?',
+                `${displayName} will be unlinked from your workspace and won't be able to post until you sign back in as that account. Their queue and history are kept in our database.`,
+                'warning',
+                { confirm: true, confirmText: 'Remove', cancelText: 'Keep linked', danger: true }
+            );
+            if (!confirmed) return;
             try {
                 const res = await fetch('/api/profiles/remove', {
                     method: 'POST',
@@ -8660,7 +8667,7 @@
                     body: JSON.stringify({ linkedinId }),
                 });
                 if (res.ok) {
-                    showNotify('Removed', `${name} has been removed from your profiles.`, 'success');
+                    showNotify('Removed', `${displayName} has been removed from your profiles.`, 'success');
                     await loadProfiles();
                     loadLinkedProfilesSettings();
                     if (profilesData.activeProfileId !== linkedinId) return;
