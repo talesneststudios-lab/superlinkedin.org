@@ -301,9 +301,121 @@ app.use(express.static(path.join(__dirname), {
 }));
 
 // Serve dashboard
-app.get('/app', (req, res) => {
+app.get('/app', async (req, res) => {
+    // If the visitor arrived via a team invite link, capture the code into the
+    // session and route them through OAuth (or accept the invite immediately if
+    // they're already logged in). This MUST happen before app.html is served,
+    // otherwise the dashboard's loadUser() will see paid=false on a fresh
+    // account and bounce the invitee to /upgrade.
+    if (req.query.invite) {
+        req.session.inviteCode = String(req.query.invite);
+    }
+
+    if (req.session.inviteCode) {
+        if (!req.session.user) {
+            console.log('[Invite] Anonymous visitor with invite code, redirecting to LinkedIn auth');
+            return res.redirect('/auth/linkedin');
+        }
+        try {
+            const result = await acceptPendingInvite(req);
+            if (result && result.accepted) {
+                console.log(`[Invite] Already-logged-in user ${req.session.user.name} accepted invite from ${result.inviterId}`);
+            }
+        } catch (err) {
+            console.error('[Invite] acceptPendingInvite failed:', err.message);
+        }
+        return res.redirect('/app');
+    }
+
     res.sendFile(path.join(__dirname, 'app.html'));
 });
+
+// Look up the primary account that issued an invite code. Falls back to a
+// DynamoDB scan if the in-memory cache is cold (e.g. after a server restart).
+if (!global._inviteCache) global._inviteCache = {};
+async function findInviterByCode(code) {
+    if (!code) return null;
+    if (global._inviteCache[code]) return global._inviteCache[code];
+    try {
+        const result = await ddb.send(new ScanCommand({
+            TableName: DYNAMO_TABLE,
+            ProjectionExpression: 'linkedinId, teamMembers',
+        }));
+        for (const item of (result.Items || [])) {
+            const members = item.teamMembers || [];
+            if (members.some(m => m && m.inviteCode === code)) {
+                global._inviteCache[code] = item.linkedinId;
+                return item.linkedinId;
+            }
+        }
+    } catch (err) {
+        console.error('[Invite] findInviterByCode scan error:', err.message);
+    }
+    return null;
+}
+
+// Attach the currently-logged-in profile to the inviter's workspace as a
+// team member. Idempotent: re-running it just refreshes the membership row.
+async function acceptPendingInvite(req) {
+    const code = req.session && req.session.inviteCode;
+    if (!code || !req.session.user) return { accepted: false, reason: 'no_invite_or_user' };
+
+    const inviterId = await findInviterByCode(code);
+    if (!inviterId) {
+        console.warn('[Invite] No inviter found for code', code);
+        delete req.session.inviteCode;
+        return { accepted: false, reason: 'unknown_code' };
+    }
+
+    const inviter = await dbGetUser(inviterId);
+    if (!inviter) {
+        delete req.session.inviteCode;
+        return { accepted: false, reason: 'inviter_missing' };
+    }
+
+    const profileId = req.session.user.linkedinId;
+
+    // Don't let the inviter accept their own invite.
+    if (profileId === inviterId) {
+        delete req.session.inviteCode;
+        return { accepted: false, reason: 'self_invite' };
+    }
+
+    const members = inviter.teamMembers || [];
+    const idx = members.findIndex(m => m && m.inviteCode === code);
+    if (idx === -1) {
+        delete req.session.inviteCode;
+        return { accepted: false, reason: 'invite_revoked' };
+    }
+
+    members[idx] = {
+        ...members[idx],
+        status: 'active',
+        linkedinId: profileId,
+        name: req.session.user.name || members[idx].name,
+        picture: req.session.user.picture || members[idx].picture,
+        joinedAt: members[idx].joinedAt || new Date().toISOString(),
+    };
+    await dbUpdateFields(inviterId, { teamMembers: members });
+
+    // Tag the joining profile so /api/me can inherit the inviter's paid plan
+    // (see the primaryId branch in /api/me).
+    await dbUpdateFields(profileId, {
+        parentAccountId: inviterId,
+        invitedVia: code,
+        invitedAt: members[idx].invitedAt || new Date().toISOString(),
+    });
+
+    req.session.primaryAccountId = inviterId;
+    req.session.activeProfileId = profileId;
+    if (req.session.user) {
+        req.session.user.parentAccountId = inviterId;
+    }
+    delete req.session.inviteCode;
+
+    console.log(`[Invite] ${req.session.user.name} (${profileId}) joined workspace of ${inviter.name} (${inviterId}) as team member`);
+    return { accepted: true, inviterId, member: members[idx] };
+}
 
 // Serve playbook (logged-in users)
 app.get('/playbook', (req, res) => {
@@ -604,11 +716,36 @@ app.get('/auth/linkedin/callback', async (req, res) => {
 
         delete req.session.oauthState;
 
-        const isPaid = req.session.user.paid || (parentId && (await dbGetUser(parentId))?.paid);
-        console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!isPaid} | onboarded=${!!req.session.user.onboardingComplete}`);
+        // If the visitor arrived through a team-invite link, attach this
+        // freshly-authenticated profile to the inviter's workspace BEFORE we
+        // decide where to send them. The invitee then inherits the inviter's
+        // paid plan via parentAccountId (see /api/me) and skips /upgrade.
+        let inviteAccepted = false;
+        if (req.session.inviteCode) {
+            try {
+                const r = await acceptPendingInvite(req);
+                inviteAccepted = !!(r && r.accepted);
+            } catch (err) {
+                console.error('[Invite] OAuth-callback acceptPendingInvite error:', err.message);
+            }
+        }
+
+        // Re-resolve paid status: acceptPendingInvite may have just set
+        // parentAccountId so we need to look that up again rather than relying
+        // on the stale `parentId` captured before invite acceptance.
+        const effectiveParentId = req.session.primaryAccountId && req.session.primaryAccountId !== profile.sub
+            ? req.session.primaryAccountId
+            : null;
+        const isPaid = req.session.user.paid || (effectiveParentId && (await dbGetUser(effectiveParentId))?.paid);
+        console.log(`User signed in: ${profile.name} (${profile.email}) | paid=${!!isPaid} | onboarded=${!!req.session.user.onboardingComplete} | invite=${inviteAccepted}`);
 
         if (req.session.user.onboardingComplete && isPaid) {
             res.redirect('/app');
+        } else if (inviteAccepted) {
+            // New team members always go through onboarding regardless of
+            // their personal paid status, since billing is handled by the
+            // inviter's account.
+            res.redirect('/onboarding');
         } else if (req.session.user.onboardingComplete && !isPaid) {
             res.redirect('/upgrade');
         } else {
@@ -3346,6 +3483,8 @@ app.post('/api/team/invite', async (req, res) => {
     const inviteCode = crypto.randomBytes(16).toString('hex');
     members.push({ email, role: role || 'editor', status: 'invited', inviteCode, invitedAt: new Date().toISOString() });
     await dbUpdateFields(primaryId, { teamMembers: members });
+    if (!global._inviteCache) global._inviteCache = {};
+    global._inviteCache[inviteCode] = primaryId;
     const inviteLink = `${APP_BASE}/app?invite=${inviteCode}`;
     res.json({ members, inviteLink });
 });
@@ -3354,9 +3493,22 @@ app.delete('/api/team/members/:email', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
     const primaryId = getPrimaryAccountId(req.session);
     const user = await dbGetUser(primaryId);
-    let members = (user && user.teamMembers) || [];
-    members = members.filter(m => m.email !== req.params.email);
+    const before = (user && user.teamMembers) || [];
+    const removed = before.filter(m => m.email === req.params.email);
+    const members = before.filter(m => m.email !== req.params.email);
     await dbUpdateFields(primaryId, { teamMembers: members });
+    // Invalidate any cached invite codes belonging to the removed members so
+    // a future click on the link can't silently re-attach them.
+    if (global._inviteCache) {
+        removed.forEach(m => { if (m && m.inviteCode) delete global._inviteCache[m.inviteCode]; });
+    }
+    // If this member had already accepted, sever the parent link on their
+    // profile so they stop inheriting our paid plan.
+    for (const m of removed) {
+        if (m && m.linkedinId) {
+            try { await dbUpdateFields(m.linkedinId, { parentAccountId: null, invitedVia: null }); } catch {}
+        }
+    }
     res.json({ members });
 });
 

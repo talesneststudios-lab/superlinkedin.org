@@ -1893,6 +1893,8 @@
             transition: background 0.2s;
         }
         .notify-btn-primary:hover { background: #0977d4; }
+        .notify-btn-primary.danger { background: #ef4444; }
+        .notify-btn-primary.danger:hover { background: #dc2626; }
         .notify-btn-secondary {
             padding: 10px 24px;
             background: var(--bg-white);
@@ -4142,9 +4144,17 @@
             border-bottom: 1px solid var(--border);
             cursor: pointer;
             transition: background 0.15s;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
         }
 
         .compose-draft-item:hover { background: var(--bg); }
+
+        .compose-draft-body {
+            flex: 1;
+            min-width: 0;
+        }
 
         .compose-draft-text {
             font-size: 0.85rem;
@@ -4155,11 +4165,39 @@
             -webkit-box-orient: vertical;
             overflow: hidden;
             margin-bottom: 4px;
+            white-space: pre-wrap;
+            word-break: break-word;
         }
 
         .compose-draft-meta {
             font-size: 0.72rem;
             color: var(--text-muted);
+        }
+
+        .compose-draft-delete {
+            flex-shrink: 0;
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            line-height: 1;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.55;
+            transition: opacity 0.15s, background 0.15s, color 0.15s, border-color 0.15s;
+        }
+
+        .compose-draft-item:hover .compose-draft-delete { opacity: 1; }
+
+        .compose-draft-delete:hover {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.25);
         }
 
         .compose-char-count {
@@ -7837,7 +7875,18 @@
         }
 
         async function clearPendingBulkDms() {
-            if (!confirm('Cancel all queued bulk DMs? Sent messages stay in your history.')) return;
+            const pending = (bulkDmsState.queue || []).filter(q => q.status === 'pending' || q.status === 'sending').length;
+            const confirmed = await showNotify(
+                'Cancel pending bulk DMs?',
+                pending > 0
+                    ? `You have ${pending} queued message${pending === 1 ? '' : 's'} waiting to send. Cancel all of them? Already-sent messages will stay in your history.`
+                    : 'There are no pending messages to cancel.',
+                pending > 0 ? 'warning' : 'info',
+                pending > 0
+                    ? { confirm: true, confirmText: 'Yes, cancel all', cancelText: 'Keep them', danger: true }
+                    : null
+            );
+            if (pending === 0 || !confirmed) return;
             try {
                 const res = await fetch('/api/bulk-dms/clear', { method: 'POST' });
                 if (res.ok) await loadBulkDms();
@@ -8030,7 +8079,9 @@
                 const max = profilesData.maxProfiles || 3;
                 const tier = (profilesData.planTier || 'pro').toUpperCase();
                 const members = membersData.members || [];
-                const totalUsed = profiles.length + members.filter(m => m.status === 'active').length;
+                // Each invited or active member reserves a slot, matching the
+                // server-side limit check in /api/team/invite.
+                const totalUsed = profiles.length + members.length;
 
                 document.getElementById('teamSlotsBadge').textContent = `${totalUsed} / ${max} slots used (${tier})`;
 
@@ -10941,8 +10992,11 @@
 
             const actions = document.getElementById('notifyActions');
             if (options && options.confirm) {
-                actions.innerHTML = `<button class="notify-btn-secondary" onclick="resolveNotify(false)">Cancel</button>
-                    <button class="notify-btn-primary" onclick="resolveNotify(true)">${options.confirmText || 'Yes'}</button>`;
+                const cancelLabel = options.cancelText || 'Cancel';
+                const confirmLabel = options.confirmText || 'Yes';
+                const danger = options.danger ? 'danger' : '';
+                actions.innerHTML = `<button class="notify-btn-secondary" onclick="resolveNotify(false)">${cancelLabel}</button>
+                    <button class="notify-btn-primary ${danger}" onclick="resolveNotify(true)">${confirmLabel}</button>`;
             } else {
                 actions.innerHTML = '<button class="notify-btn-primary" onclick="closeNotify()">OK</button>';
             }
@@ -11132,11 +11186,15 @@
                 el.innerHTML = '<div class="compose-drafts-empty">No drafts yet. Write something and save it as a draft.</div>';
                 return;
             }
-            el.innerHTML = drafts.map((d, i) => {
+            el.innerHTML = drafts.map((d) => {
                 const realIndex = queue.indexOf(d);
                 return `<div class="compose-draft-item" onclick="loadDraft(${realIndex})">
-                    <div class="compose-draft-text">${d.text}</div>
-                    <div class="compose-draft-meta">${d.date || 'Just now'}</div>
+                    <div class="compose-draft-body">
+                        <div class="compose-draft-text">${escapeHtml(d.text || '')}</div>
+                        <div class="compose-draft-meta">${d.date || 'Just now'}</div>
+                    </div>
+                    <button type="button" class="compose-draft-delete" title="Delete draft"
+                        onclick="event.stopPropagation(); deleteComposeItem(${realIndex});">&#128465;</button>
                 </div>`;
             }).join('');
         }
@@ -11173,6 +11231,16 @@
             document.getElementById('composeTextarea').value = item.text;
             updateComposeCharCount();
             switchComposeTab('compose', document.querySelector('.compose-tab[data-ctab="compose"]'));
+        }
+
+        // Wrapper around removeFromQueue() that refreshes the compose-side
+        // tabs (drafts/scheduled/sent) since they live in the right panel and
+        // are not redrawn by renderQueue() alone.
+        async function deleteComposeItem(index) {
+            await removeFromQueue(index);
+            renderComposeDrafts();
+            renderComposeScheduled();
+            renderComposeSent();
         }
 
         // Init
