@@ -1,8 +1,0 @@
-﻿Path-aware two-host routing: www = marketing, app = dashboard
-
-- server.js: replace single-canonical-host middleware with a path-aware one. APP_PATH_PREFIXES (/app, /auth, /api, /checkout, /billing, /onboarding, /upgrade, /playbook, /logout) are 301-redirected to APP_HOST; everything else (landing, marketing pages) is redirected to MARKETING_HOST. Apex (superlinkedin.org) is also routed to the appropriate subdomain.
-- server.js: introduce APP_HOST / MARKETING_HOST / APP_BASE / MARKETING_BASE constants (env-overridable) and use them for referral and invite links so referrals land on www and invites land on app.
-- .env.example: document the two-host setup with APP_HOST, MARKETING_HOST, and COOKIE_DOMAIN=.superlinkedin.org so sessions span both subdomains.
-
-Pairs with App Runner having both www and app as Active custom domains.
-LinkedIn Developer Portal must list https://app.superlinkedin.org/auth/linkedin/callback as an authorized redirect URL.

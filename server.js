@@ -1203,6 +1203,56 @@ async function getCreditsForSession(session) {
     return getUserCreditsInfo(primaryUser);
 }
 
+/** Monthly engage-action limits by plan (display + future enforcement). */
+const ENGAGE_MONTHLY_QUOTA = { free: 15, pro: 40, advanced: 75, ultra: 300 };
+
+function countPostedThisCalendarMonth(user) {
+    const queue = (user && user.queue) || [];
+    const now = new Date();
+    return queue.filter(q => {
+        if (q.status !== 'posted') return false;
+        const d = q.postedAt ? new Date(q.postedAt) : null;
+        if (!d || isNaN(d.getTime())) return false;
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }).length;
+}
+
+function getEngageUsedThisMonth(user) {
+    const n = user && user.engageActionsThisMonth;
+    if (typeof n === 'number' && !isNaN(n)) return n;
+    return 0;
+}
+
+function getNextMonthlyBoundaryMs() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 1, 0, 0, 0, 0).getTime();
+}
+
+function getNextDailyBoundaryMs() {
+    const next = new Date();
+    next.setDate(next.getDate() + 1);
+    next.setHours(0, 0, 0, 0);
+    return next.getTime();
+}
+
+function getNextAiCreditResetMs(info, primaryUser) {
+    const limits = info.limits;
+    const cp = limits.creditPeriod;
+    if (cp === 'trial' && info.trialEndsAt) {
+        return new Date(info.trialEndsAt).getTime();
+    }
+    if (cp === 'day') {
+        return getNextDailyBoundaryMs();
+    }
+    if (cp === 'month') {
+        return getNextMonthlyBoundaryMs();
+    }
+    return getNextMonthlyBoundaryMs();
+}
+
+/** One-time bonus pool shown in green (missions, promos). Missions grant 200 via reduced usage — this is the display figure. */
+const MISSIONS_BONUS_CREDITS = 200;
+
 app.get('/api/credits', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
 
@@ -1217,6 +1267,21 @@ app.get('/api/credits', async (req, res) => {
         await dbUpdateFields(primaryId || primaryUser.linkedinId, { aiCreditsUsed: 0, aiCreditsResetAt: primaryUser.aiCreditsResetAt });
     }
 
+    const tier = info.tier;
+    const engageCap = ENGAGE_MONTHLY_QUOTA[tier] ?? ENGAGE_MONTHLY_QUOTA.pro;
+    const engageUsed = getEngageUsedThisMonth(primaryUser);
+    const engageRem = Math.max(0, engageCap - engageUsed);
+
+    const postsCap = info.limits.postsPerMonth;
+    const postsUsed = postsCap != null ? countPostedThisCalendarMonth(primaryUser) : null;
+    const postsRem = postsCap != null ? Math.max(0, postsCap - postsUsed) : null;
+
+    const bonusOneTime = (primaryUser.missionsCompleted ? MISSIONS_BONUS_CREDITS : 0)
+        + (typeof primaryUser.promoBonusCredits === 'number' ? primaryUser.promoBonusCredits : 0);
+
+    const nextAiResetMs = getNextAiCreditResetMs(info, primaryUser);
+    const nextEngagePostResetMs = getNextMonthlyBoundaryMs();
+
     res.json({
         planTier: info.tier,
         planName: info.onTrial ? 'Free Trial' : (info.trialExpired ? 'Trial Expired' : (PLANS[(primaryUser.plan || 'pro_monthly')] || PLANS.pro_monthly).name),
@@ -1230,6 +1295,15 @@ app.get('/api/credits', async (req, res) => {
         trialExpired: info.trialExpired || false,
         trialEndsAt: info.trialEndsAt || null,
         features: info.limits.features,
+        bonusCreditsOneTime: bonusOneTime,
+        missionsCompleted: !!primaryUser.missionsCompleted,
+        engageQuota: engageCap,
+        engageUsed,
+        engageRemaining: engageRem,
+        postsUsed,
+        postsRemaining: postsRem,
+        nextAiCreditResetAt: new Date(nextAiResetMs).toISOString(),
+        nextQuotaResetAt: new Date(nextEngagePostResetMs).toISOString(),
     });
 });
 
@@ -2843,19 +2917,27 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
     const today = now.split('T')[0];
 
     if (followers !== null && followers !== undefined) {
-        updates.analyticsFollowers = followers;
+        // Defensive floor: a value < 5 almost never reflects a real
+        // connection count and is usually a stray "1 follower" widget
+        // captured from the LinkedIn DOM. Skip it so a stuck low value
+        // can't get persisted from a single bad scrape.
+        const numFollowers = Number(followers);
+        if (Number.isFinite(numFollowers) && numFollowers >= 5) {
+            updates.analyticsFollowers = numFollowers;
 
-        // Append to followers history
-        const user = await dbGetUser(linkedinId);
-        const history = (user && user.analyticsFollowersHistory) || [];
-        const lastEntry = history[history.length - 1];
-        if (!lastEntry || lastEntry.date !== today) {
-            history.push({ date: today, count: followers });
-            if (history.length > 365) history.splice(0, history.length - 365);
+            const user = await dbGetUser(linkedinId);
+            const history = (user && user.analyticsFollowersHistory) || [];
+            const lastEntry = history[history.length - 1];
+            if (!lastEntry || lastEntry.date !== today) {
+                history.push({ date: today, count: numFollowers });
+                if (history.length > 365) history.splice(0, history.length - 365);
+            } else {
+                lastEntry.count = numFollowers;
+            }
+            updates.analyticsFollowersHistory = history;
         } else {
-            lastEntry.count = followers;
+            console.log('[Sync] Ignoring suspicious low follower count:', followers, 'for', linkedinId);
         }
-        updates.analyticsFollowersHistory = history;
     }
 
     if (posts && posts.length > 0) {
@@ -2894,16 +2976,24 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         }
 
         if (dashboardStats.followers && !updates.analyticsFollowersHistory) {
-            updates.analyticsFollowers = dashboardStats.followers;
-            const history = (user && user.analyticsFollowersHistory) || [];
-            const lastEntry = history[history.length - 1];
-            if (!lastEntry || lastEntry.date !== today) {
-                history.push({ date: today, count: dashboardStats.followers });
-                if (history.length > 365) history.splice(0, history.length - 365);
+            // Same defensive floor as above – analytics dashboards sometimes
+            // surface "1 new follower this week" widgets which we don't want
+            // to confuse for the total count.
+            const dashFollowers = Number(dashboardStats.followers);
+            if (Number.isFinite(dashFollowers) && dashFollowers >= 5) {
+                updates.analyticsFollowers = dashFollowers;
+                const history = (user && user.analyticsFollowersHistory) || [];
+                const lastEntry = history[history.length - 1];
+                if (!lastEntry || lastEntry.date !== today) {
+                    history.push({ date: today, count: dashFollowers });
+                    if (history.length > 365) history.splice(0, history.length - 365);
+                } else {
+                    lastEntry.count = dashFollowers;
+                }
+                updates.analyticsFollowersHistory = history;
             } else {
-                lastEntry.count = dashboardStats.followers;
+                console.log('[Sync] Ignoring suspicious dashboardStats.followers:', dashboardStats.followers, 'for', linkedinId);
             }
-            updates.analyticsFollowersHistory = history;
         }
     }
 
@@ -3193,8 +3283,12 @@ app.get('/api/analytics/summary', authExtension, async (req, res) => {
         ? (totalEng / Math.max(totalImpressions, 1) * 100)
         : 0;
 
-    // Prefer the followers count from the profile page scrape over the dashboard
-    const followers = user.analyticsFollowers || dashboard.followers || 0;
+    // Prefer the followers count from the profile page scrape over the dashboard.
+    // Any value < 5 is almost certainly a stale bad scrape (e.g. a stray
+    // "1 follower" Pages widget) – return 0 instead so the popup doesn't
+    // mislead until a real /mynetwork/ scrape replaces it.
+    const rawFollowers = user.analyticsFollowers || dashboard.followers || 0;
+    const followers = (Number(rawFollowers) >= 5) ? Number(rawFollowers) : 0;
 
     res.json({
         followers,
@@ -3725,6 +3819,24 @@ app.get('/api/v1/analytics', apiKeyAuth, (req, res) => {
 
 // ---------- DM ENDPOINTS ----------
 
+/** Most recent activity time for a conversation (for sorting lists newest-first). */
+function dmConversationRecencyMs(c) {
+    let best = 0;
+    if (c && c.lastMessageAt) {
+        const p = new Date(c.lastMessageAt).getTime();
+        if (!isNaN(p)) best = Math.max(best, p);
+    }
+    const msgs = (c && c.messages) || [];
+    for (let i = msgs.length - 1; i >= 0; i--) {
+        const ts = msgs[i] && msgs[i].timestamp;
+        if (ts) {
+            const p = new Date(ts).getTime();
+            if (!isNaN(p)) { best = Math.max(best, p); break; }
+        }
+    }
+    return best;
+}
+
 app.get('/api/dms', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
     const user = await dbGetUser(req.session.user.linkedinId);
@@ -3739,6 +3851,7 @@ app.get('/api/dms', async (req, res) => {
         if (name.length < 2) return false;
         return true;
     });
+    filtered.sort((a, b) => dmConversationRecencyMs(b) - dmConversationRecencyMs(a));
     res.json({ conversations: filtered });
 });
 
@@ -3788,7 +3901,17 @@ app.post('/api/dms/ai-reply', async (req, res) => {
         brief: 'Reply concisely in 1-2 short sentences.',
         'follow-up': 'Write a polite follow-up message checking in.',
     };
-    const systemPrompt = `You write LinkedIn DM replies. ${styleMap[style] || styleMap.professional} Keep it natural and under 150 words.`;
+    const senderName = (user.name || req.session.user.name || 'there').trim();
+    const signOffRules = `You are writing as "${senderName}" (the SuperLinkedIn user sending this DM). If you end with a sign-off, use exactly "${senderName}" — their real first and last name. Never use placeholders like [Your Name], [Name], brackets, or "Your Name" in the signature. The recipient is ${conv.participantName || 'the other person'}.`;
+    const systemPrompt = `You write LinkedIn DM replies. ${styleMap[style] || styleMap.professional} ${signOffRules} Keep it natural and under 150 words.`;
+
+    const stripDmPlaceholders = (text, realName) => {
+        if (!text || !realName) return text;
+        let out = text;
+        out = out.replace(/\[(?:Your\s*)?Name\]/gi, realName);
+        out = out.replace(/\{your\s*name\}/gi, realName);
+        return out;
+    };
 
     try {
         const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -3798,13 +3921,14 @@ app.post('/api/dms/ai-reply', async (req, res) => {
                 model: 'gpt-4o-mini', max_tokens: 250,
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `Here is the recent conversation with ${conv.participantName}:\n\n${recentMsgs}\n\nWrite a reply.` },
+                    { role: 'user', content: `Recent conversation with ${conv.participantName || 'this contact'}:\n\n${recentMsgs}\n\nWrite the next reply from ${senderName} (the person sending from SuperLinkedIn). End with a normal closing line signed "${senderName}" if appropriate.` },
                 ],
             }),
         });
         const data = await aiRes.json();
         await consumeCredit(req.session, 1);
-        res.json({ reply: data.choices?.[0]?.message?.content || '' });
+        const raw = data.choices?.[0]?.message?.content || '';
+        res.json({ reply: stripDmPlaceholders(raw, senderName) });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -3882,6 +4006,8 @@ function renderBulkDmTemplate(template, recipient) {
     const first = name.split(/\s+/)[0] || name;
     const handle = (recipient.handle || '').trim().replace(/^@?/, '@');
     return String(template || '')
+        .replace(/\[full_name\]/gi, name || 'there')
+        .replace(/\[first_name\]/gi, first || 'there')
         .replace(/\[name\]/gi, name || 'there')
         .replace(/\[first\]/gi, first || 'there')
         .replace(/\[handle\]/gi, handle || '');
@@ -3915,6 +4041,83 @@ function bulkDmCounts(history) {
 function nextSendDelay() {
     return BULK_DM_MIN_INTERVAL_MS + Math.floor(Math.random() * (BULK_DM_MAX_INTERVAL_MS - BULK_DM_MIN_INTERVAL_MS));
 }
+
+/** AI-generated DM template (uses [first_name], [full_name], [handle] placeholders) */
+app.post('/api/bulk-dms/ai-generate', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    const credits = await getCreditsForSession(req.session);
+    if (credits.remaining < 1) return res.json({ error: 'No AI credits remaining.' });
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') return res.json({ error: 'OpenAI API key not configured.' });
+
+    const { tone } = req.body || {};
+    const user = await dbGetUser(req.session.user.linkedinId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    const aboutYou = user.aboutYou || '';
+    const customRules = (user.customRules || '').slice(0, 800);
+    const interests = (user.interests || []).join(', ');
+    const writingProfile = user.writingProfile || {};
+    const topTags = Object.entries(writingProfile).sort((a, b) => b[1] - a[1]).map(e => e[0]).slice(0, 5);
+
+    const toneMap = {
+        auto: topTags.length ? `voice leaning toward: ${topTags.join(', ')}` : 'professional, authentic',
+        professional: 'professional, polished, concise',
+        casual: 'casual, warm, conversational',
+        motivational: 'motivational, uplifting',
+        storytelling: 'personal, story-led',
+        educational: 'helpful, educational',
+        contrarian: 'bold, memorable',
+        humorous: 'humorous, light',
+    };
+    const toneLine = toneMap[tone] || toneMap.auto;
+    const senderName = (user.name || req.session.user.name || 'there').trim();
+
+    const systemPrompt = `You write LinkedIn direct message TEMPLATES for bulk personalized outreach. Output ONLY the message body text — no title, no quotation marks, no markdown code fences.
+
+The message MUST include at least one of these exact tokens for the recipient: [first_name], [full_name], or [handle] — square brackets as shown. You may use more than one. Do not use real example names for recipients; only these placeholders for names/handles.
+
+Keep the message at or under ${BULK_DM_MAX_LENGTH} characters. Avoid hashtags unless essential.`;
+
+    const userPrompt = `Write one LinkedIn DM template to send to many connections.
+
+Tone: ${toneLine}.
+You are writing AS: ${senderName}.
+${aboutYou ? `About the sender: ${aboutYou}\n` : ''}${interests ? `Topics/interests: ${interests}\n` : ''}${customRules ? `User rules (follow when compatible): ${customRules}\n` : ''}
+Make it read naturally when [first_name], [full_name], and [handle] are replaced per recipient.`;
+
+    try {
+        const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                max_tokens: 550,
+                temperature: 0.75,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    { role: 'user', content: userPrompt },
+                ],
+            }),
+        });
+        const data = await aiRes.json();
+        let message = (data.choices?.[0]?.message?.content || '').trim();
+        if (!message) {
+            return res.json({ error: 'AI returned empty text' });
+        }
+        if ((message.startsWith('"') && message.endsWith('"')) || (message.startsWith("'") && message.endsWith("'"))) {
+            message = message.slice(1, -1).trim();
+        }
+        if (message.length > BULK_DM_MAX_LENGTH) {
+            message = message.substring(0, BULK_DM_MAX_LENGTH - 3) + '...';
+        }
+        await consumeCredit(req.session, 1);
+        res.json({ message });
+    } catch (err) {
+        console.error('bulk-dms ai-generate', err);
+        res.json({ error: 'Failed to generate message' });
+    }
+});
 
 app.get('/api/bulk-dms', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });

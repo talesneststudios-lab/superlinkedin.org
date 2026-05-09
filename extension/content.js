@@ -380,6 +380,9 @@
             const combined = contexts.join(' ');
             for (const [keyword, key] of Object.entries(labelMap)) {
                 if (combined.includes(keyword) && !stats[key]) {
+                    // 'followers' values < 5 are almost always widget noise
+                    // (e.g. a "1 new follower" panel). Skip them.
+                    if (key === 'followers' && num < 5) break;
                     stats[key] = num;
                     break;
                 }
@@ -401,7 +404,11 @@
                 const m = bodyText.match(re);
                 if (m) {
                     const v = parseNumber(m[1]);
-                    if (v > 0) stats[key] = v;
+                    // 'followers' is heavily polluted by widgets like "1 new
+                    // follower this week" — require >= 5 to consider it the
+                    // real total. Other stats can be any positive value.
+                    const minVal = (key === 'followers') ? 5 : 1;
+                    if (v >= minVal) stats[key] = v;
                 }
             }
         });

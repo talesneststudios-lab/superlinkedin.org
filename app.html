@@ -19,6 +19,8 @@
             --sidebar-text: #a0a0a0;
             --sidebar-active: #ffffff;
             --sidebar-hover: rgba(255,255,255,0.05);
+            /* Nav row hover: lifted dark grey pill (distinct from --sidebar-bg) */
+            --sidebar-nav-hover-bg: #242424;
             --sidebar-section: #6b6b6b;
             --text-primary: #1a1a2e;
             --text-secondary: #555566;
@@ -31,6 +33,23 @@
             --red: #ef4444;
             --orange: #f59e0b;
             --radius: 12px;
+            /* Bottom account strip (credits + profile + links) — warm dark grey */
+            --sidebar-account-bg: #1e1c1a;
+            --sidebar-account-card: #2a2724;
+            --sidebar-width: 220px;
+            --sidebar-popup-max: 216px;
+            /* Light edge for flyouts (match main sidebar divider) */
+            --sidebar-popup-border: rgba(255, 255, 255, 0.1);
+            /* Main column: centered content band inside the area right of the sidebar */
+            --main-content-max-width: 1040px;
+            /* Primary headings: Direct Messages, Context Settings, Analytics, etc. */
+            --page-title-font-size: 1.95rem;
+            /* Scrollbars: dark track, pill thumb (emoji picker, DMs, bulk DMs, main area) */
+            --sl-scrollbar-size: 12px;
+            --sl-scrollbar-track: #e8e8ed;
+            --sl-scrollbar-thumb: #a8adb8;
+            --sl-scrollbar-thumb-hover: #8b9099;
+            --sl-scrollbar-btn: #c5c9d1;
         }
 
         :root.dark-mode, :root.dark-mode body {
@@ -45,6 +64,10 @@
             --accent-light: rgba(10,102,194,0.15);
             --queue-slot-bg: #1c1c1c;
             --queue-slot-border: #262626;
+            --sl-scrollbar-track: #2e2e32;
+            --sl-scrollbar-thumb: #7d8088;
+            --sl-scrollbar-thumb-hover: #969aa3;
+            --sl-scrollbar-btn: #9ca3af;
         }
         .dark-mode .card { box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
         .dark-mode input, .dark-mode select, .dark-mode textarea {
@@ -52,7 +75,10 @@
             border-color: #262626 !important;
             color: var(--text-primary) !important;
         }
-        .dark-mode .compose-panel { background: #181818; border-color: #262626; }
+        .dark-mode .compose-panel {
+            background: #181818;
+            border-left-color: rgba(255, 255, 255, 0.1);
+        }
         .dark-mode .home-steps-card { box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
         .dark-mode .home-post-card { box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
         .dark-mode .home-mission { border-color: #262626; }
@@ -93,6 +119,168 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
+        /* App scrollbars: narrow dark track, pill thumb; Firefox + WebKit (incl. emoji picker & DMs) */
+        html, body, .main-content, .emoji-picker-popup, .dm-conv-list, .dm-messages,
+        .dm-ai-menu-inner, .bulk-dms-picker-list, textarea.dm-reply-textarea,
+        textarea.bulk-dms-textarea, #bulkDmsPickerManual, .compose-textarea,
+        .compose-body, .ai-improve-menu,
+        .media-link-popup, .sched-modal {
+            scrollbar-width: thin;
+            scrollbar-color: var(--sl-scrollbar-thumb) var(--sl-scrollbar-track);
+        }
+        html::-webkit-scrollbar,
+        body::-webkit-scrollbar,
+        .main-content::-webkit-scrollbar,
+        .compose-body::-webkit-scrollbar,
+        .emoji-picker-popup::-webkit-scrollbar,
+        .dm-conv-list::-webkit-scrollbar,
+        .dm-messages::-webkit-scrollbar,
+        .dm-ai-menu-inner::-webkit-scrollbar,
+        .bulk-dms-picker-list::-webkit-scrollbar,
+        textarea.dm-reply-textarea::-webkit-scrollbar,
+        textarea.bulk-dms-textarea::-webkit-scrollbar,
+        #bulkDmsPickerManual::-webkit-scrollbar,
+        .compose-textarea::-webkit-scrollbar,
+        .ai-improve-menu::-webkit-scrollbar,
+        .media-link-popup::-webkit-scrollbar,
+        .sched-modal::-webkit-scrollbar {
+            width: var(--sl-scrollbar-size);
+            height: var(--sl-scrollbar-size);
+        }
+        html::-webkit-scrollbar-track,
+        body::-webkit-scrollbar-track,
+        .main-content::-webkit-scrollbar-track,
+        .compose-body::-webkit-scrollbar-track,
+        .emoji-picker-popup::-webkit-scrollbar-track,
+        .dm-conv-list::-webkit-scrollbar-track,
+        .dm-messages::-webkit-scrollbar-track,
+        .dm-ai-menu-inner::-webkit-scrollbar-track,
+        .bulk-dms-picker-list::-webkit-scrollbar-track,
+        textarea.dm-reply-textarea::-webkit-scrollbar-track,
+        textarea.bulk-dms-textarea::-webkit-scrollbar-track,
+        #bulkDmsPickerManual::-webkit-scrollbar-track,
+        .compose-textarea::-webkit-scrollbar-track,
+        .ai-improve-menu::-webkit-scrollbar-track,
+        .media-link-popup::-webkit-scrollbar-track,
+        .sched-modal::-webkit-scrollbar-track {
+            background: var(--sl-scrollbar-track);
+            border-radius: 999px;
+        }
+        html::-webkit-scrollbar-thumb,
+        body::-webkit-scrollbar-thumb,
+        .main-content::-webkit-scrollbar-thumb,
+        .compose-body::-webkit-scrollbar-thumb,
+        .emoji-picker-popup::-webkit-scrollbar-thumb,
+        .dm-conv-list::-webkit-scrollbar-thumb,
+        .dm-messages::-webkit-scrollbar-thumb,
+        .dm-ai-menu-inner::-webkit-scrollbar-thumb,
+        .bulk-dms-picker-list::-webkit-scrollbar-thumb,
+        textarea.dm-reply-textarea::-webkit-scrollbar-thumb,
+        textarea.bulk-dms-textarea::-webkit-scrollbar-thumb,
+        #bulkDmsPickerManual::-webkit-scrollbar-thumb,
+        .compose-textarea::-webkit-scrollbar-thumb,
+        .ai-improve-menu::-webkit-scrollbar-thumb,
+        .media-link-popup::-webkit-scrollbar-thumb,
+        .sched-modal::-webkit-scrollbar-thumb {
+            background: var(--sl-scrollbar-thumb);
+            border-radius: 999px;
+            border: 3px solid var(--sl-scrollbar-track);
+            background-clip: padding-box;
+        }
+        html::-webkit-scrollbar-thumb:hover,
+        body::-webkit-scrollbar-thumb:hover,
+        .main-content::-webkit-scrollbar-thumb:hover,
+        .compose-body::-webkit-scrollbar-thumb:hover,
+        .emoji-picker-popup::-webkit-scrollbar-thumb:hover,
+        .dm-conv-list::-webkit-scrollbar-thumb:hover,
+        .dm-messages::-webkit-scrollbar-thumb:hover,
+        .dm-ai-menu-inner::-webkit-scrollbar-thumb:hover,
+        .bulk-dms-picker-list::-webkit-scrollbar-thumb:hover,
+        textarea.dm-reply-textarea::-webkit-scrollbar-thumb:hover,
+        textarea.bulk-dms-textarea::-webkit-scrollbar-thumb:hover,
+        #bulkDmsPickerManual::-webkit-scrollbar-thumb:hover,
+        .compose-textarea::-webkit-scrollbar-thumb:hover,
+        .ai-improve-menu::-webkit-scrollbar-thumb:hover,
+        .media-link-popup::-webkit-scrollbar-thumb:hover,
+        .sched-modal::-webkit-scrollbar-thumb:hover {
+            background: var(--sl-scrollbar-thumb-hover);
+            border: 3px solid var(--sl-scrollbar-track);
+            background-clip: padding-box;
+        }
+        html::-webkit-scrollbar-button:single-button:vertical:decrement,
+        body::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .main-content::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .compose-body::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .emoji-picker-popup::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .dm-conv-list::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .dm-messages::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .dm-ai-menu-inner::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .bulk-dms-picker-list::-webkit-scrollbar-button:single-button:vertical:decrement,
+        textarea.dm-reply-textarea::-webkit-scrollbar-button:single-button:vertical:decrement,
+        textarea.bulk-dms-textarea::-webkit-scrollbar-button:single-button:vertical:decrement,
+        #bulkDmsPickerManual::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .compose-textarea::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .ai-improve-menu::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .media-link-popup::-webkit-scrollbar-button:single-button:vertical:decrement,
+        .sched-modal::-webkit-scrollbar-button:single-button:vertical:decrement {
+            height: 12px;
+            background: var(--sl-scrollbar-track);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 15l6-6 6 6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        html::-webkit-scrollbar-button:single-button:vertical:increment,
+        body::-webkit-scrollbar-button:single-button:vertical:increment,
+        .main-content::-webkit-scrollbar-button:single-button:vertical:increment,
+        .compose-body::-webkit-scrollbar-button:single-button:vertical:increment,
+        .emoji-picker-popup::-webkit-scrollbar-button:single-button:vertical:increment,
+        .dm-conv-list::-webkit-scrollbar-button:single-button:vertical:increment,
+        .dm-messages::-webkit-scrollbar-button:single-button:vertical:increment,
+        .dm-ai-menu-inner::-webkit-scrollbar-button:single-button:vertical:increment,
+        .bulk-dms-picker-list::-webkit-scrollbar-button:single-button:vertical:increment,
+        textarea.dm-reply-textarea::-webkit-scrollbar-button:single-button:vertical:increment,
+        textarea.bulk-dms-textarea::-webkit-scrollbar-button:single-button:vertical:increment,
+        #bulkDmsPickerManual::-webkit-scrollbar-button:single-button:vertical:increment,
+        .compose-textarea::-webkit-scrollbar-button:single-button:vertical:increment,
+        .ai-improve-menu::-webkit-scrollbar-button:single-button:vertical:increment,
+        .media-link-popup::-webkit-scrollbar-button:single-button:vertical:increment,
+        .sched-modal::-webkit-scrollbar-button:single-button:vertical:increment {
+            height: 12px;
+            background: var(--sl-scrollbar-track);
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: center;
+        }
+        html::-webkit-scrollbar-corner,
+        body::-webkit-scrollbar-corner,
+        .main-content::-webkit-scrollbar-corner,
+        .compose-body::-webkit-scrollbar-corner,
+        .emoji-picker-popup::-webkit-scrollbar-corner { background: var(--sl-scrollbar-track); }
+
+        .modal {
+            scrollbar-width: thin;
+            scrollbar-color: var(--sl-scrollbar-thumb) var(--sl-scrollbar-track);
+        }
+        .modal::-webkit-scrollbar {
+            width: var(--sl-scrollbar-size);
+            height: var(--sl-scrollbar-size);
+        }
+        .modal::-webkit-scrollbar-track {
+            background: var(--sl-scrollbar-track);
+            border-radius: 999px;
+        }
+        .modal::-webkit-scrollbar-thumb {
+            background: var(--sl-scrollbar-thumb);
+            border-radius: 999px;
+            border: 3px solid var(--sl-scrollbar-track);
+            background-clip: padding-box;
+        }
+        .modal::-webkit-scrollbar-thumb:hover {
+            background: var(--sl-scrollbar-thumb-hover);
+            border: 3px solid var(--sl-scrollbar-track);
+            background-clip: padding-box;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg);
@@ -103,7 +291,7 @@
 
         /* SIDEBAR */
         .sidebar {
-            width: 240px;
+            width: var(--sidebar-width);
             background: var(--sidebar-bg);
             display: flex;
             flex-direction: column;
@@ -114,6 +302,7 @@
             z-index: 100;
             overflow: visible;
             transition: width 0.2s ease;
+            border-right: 1px solid var(--sidebar-popup-border);
         }
 
         /* Collapsed sidebar (icons only) */
@@ -151,7 +340,8 @@
         .sidebar.collapsed .sidebar-bottom { padding: 8px 8px; }
         .sidebar.collapsed .sidebar-credits { justify-content: center; padding: 8px; }
         .sidebar.collapsed .sidebar-user { justify-content: center; padding: 8px; }
-        .sidebar.collapsed .nav-lock-icon { display: none; }
+        /* !important: carousel lock sets inline display in updateCarouselNavLock; must stay hidden when rail is collapsed */
+        .sidebar.collapsed .nav-lock-icon { display: none !important; }
 
         /* Tooltip on hover for icons-only nav items */
         .sidebar.collapsed .nav-item { position: relative; }
@@ -210,7 +400,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: var(--sidebar-bg);
+            background: var(--sidebar-account-bg);
             border: 1px solid rgba(255,255,255,0.12);
             border-left: none;
             border-top-right-radius: 6px;
@@ -288,7 +478,7 @@
             align-items: center;
             gap: 10px;
             padding: 9px 20px;
-            color: var(--sidebar-text);
+            color: var(--sidebar-active);
             font-size: 0.85rem;
             font-weight: 500;
             cursor: pointer;
@@ -297,20 +487,48 @@
         }
 
         .nav-item:hover {
-            background: var(--sidebar-hover);
+            background: var(--sidebar-nav-hover-bg);
             color: var(--sidebar-active);
         }
 
-        .nav-item.active {
+        /* Top-level links (Home, Queue, …): inset rounded hover pill */
+        .sidebar-nav > .nav-item {
+            border-radius: 8px;
+            margin: 3px 8px;
+            width: auto;
+        }
+        /* Scoped to direct children so generic .nav-item.active never ties with :hover (same specificity). */
+        .sidebar-nav > .nav-item:hover {
+            background: var(--sidebar-nav-hover-bg);
+            color: var(--sidebar-active);
+        }
+        .sidebar-nav > .nav-item.active {
             color: var(--accent);
             background: rgba(10, 102, 194, 0.14);
             font-weight: 700;
         }
+        .sidebar-nav > .nav-item.active:hover {
+            background: var(--sidebar-nav-hover-bg);
+            color: var(--accent);
+        }
 
         .nav-item .nav-icon {
             width: 20px;
+            min-width: 20px;
             text-align: center;
             font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: inherit;
+            line-height: 0;
+        }
+        .nav-icon-svg {
+            width: 1.05rem;
+            height: 1.05rem;
+            flex-shrink: 0;
+            display: block;
+            color: inherit;
         }
 
         .nav-section {
@@ -360,23 +578,37 @@
             text-align: left;
             transition: background 0.15s;
         }
-        .nav-section-header:hover { background: var(--sidebar-hover); }
+        .nav-section-header:hover { background: var(--sidebar-nav-hover-bg); }
         .nav-section-header .nav-section-icon {
             width: 20px;
+            min-width: 20px;
             text-align: center;
             font-size: 1rem;
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--section-color);
+            line-height: 0;
         }
         .nav-section-header .nav-section-label {
             flex: 1;
             min-width: 0;
         }
         .nav-section-header .nav-section-chevron {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             font-size: 0.75rem;
             color: var(--section-color);
             opacity: 0.85;
             transition: transform 0.2s ease;
             flex-shrink: 0;
+            line-height: 0;
+        }
+        .nav-section-header .nav-section-chevron .nav-icon-svg {
+            width: 0.85rem;
+            height: 0.85rem;
         }
         .nav-group.collapsed .nav-section-chevron { transform: rotate(-90deg); }
 
@@ -401,7 +633,8 @@
 
         .nav-section-items .nav-item {
             padding: 7px 12px;
-            border-radius: 6px;
+            border-radius: 8px;
+            color: var(--sidebar-active);
         }
         /* Active sub-item inherits its parent section's color (blue for Create,
            green for Engage, purple for CRM, amber for Reports). */
@@ -423,16 +656,18 @@
         }
         .nav-section-items .nav-item:hover {
             color: var(--section-color);
-            background: rgba(255, 255, 255, 0.04);
+            background: var(--sidebar-nav-hover-bg);
         }
         .nav-section-items .nav-item.active:hover {
             color: var(--section-color);
-            background: color-mix(in srgb, var(--section-color) 22%, transparent);
+            background: color-mix(in srgb, var(--section-color) 18%, var(--sidebar-nav-hover-bg));
         }
 
         .sidebar-bottom {
-            border-top: 1px solid rgba(255,255,255,0.06);
-            padding: 12px 16px;
+            border-top: 1px solid rgba(255,255,255,0.07);
+            padding: 14px 16px 16px;
+            background: var(--sidebar-account-bg);
+            flex-shrink: 0;
         }
 
         .sidebar-credits {
@@ -440,24 +675,31 @@
             align-items: center;
             gap: 8px;
             padding: 8px 12px;
-            background: rgba(255,255,255,0.04);
+            background: var(--sidebar-account-card);
+            border: 1px solid rgba(255,255,255,0.06);
             border-radius: 8px;
             margin-bottom: 10px;
             cursor: pointer;
             position: relative;
-            transition: background 0.2s;
+            transition: background 0.2s, border-color 0.2s;
         }
-        .sidebar-credits:hover { background: rgba(255,255,255,0.08); }
+        .sidebar-credits:hover {
+            background: #302c28;
+            border-color: rgba(255,255,255,0.09);
+        }
 
         .sidebar-credits .credits-icon { font-size: 1rem; }
         .sidebar-credits span { font-size: 0.78rem; color: var(--sidebar-text); }
 
-        /* Credits hover popup — dark theme, appears above */
+        /* Credits hover popup — width stays inside sidebar; light border matches rail */
         .credits-popup {
             display: none;
             position: absolute;
-            left: 8px;
-            right: 8px;
+            left: 0;
+            right: auto;
+            width: min(var(--sidebar-popup-max), 100%);
+            max-width: 100%;
+            box-sizing: border-box;
             bottom: 100%;
             padding-bottom: 12px;
             z-index: 300;
@@ -465,14 +707,15 @@
         .sidebar-credits:hover .credits-popup { display: block; }
 
         .credits-popup-inner {
-            background: #1e1e2e;
-            border: 1px solid rgba(255,255,255,0.08);
+            background: var(--sidebar-account-bg);
+            border: 1px solid var(--sidebar-popup-border);
             border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            padding: 18px;
-            line-height: 1.5;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.55);
+            padding: 0;
+            line-height: 1.45;
             color: #fff;
             position: relative;
+            overflow: hidden;
         }
 
         .credits-popup-inner::after {
@@ -482,86 +725,107 @@
             bottom: -6px;
             width: 12px;
             height: 12px;
-            background: #1e1e2e;
-            border-right: 1px solid rgba(255,255,255,0.08);
-            border-bottom: 1px solid rgba(255,255,255,0.08);
+            background: var(--sidebar-account-bg);
+            border-right: 1px solid var(--sidebar-popup-border);
+            border-bottom: 1px solid var(--sidebar-popup-border);
             transform: rotate(45deg);
         }
 
+        .credits-popup-section-pad {
+            padding: 14px 16px;
+        }
+
+        .credits-popup-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.08);
+            margin: 0;
+        }
+
         .credits-popup-title {
-            font-size: 0.85rem;
-            font-weight: 700;
-            color: rgba(255,255,255,0.6);
-            margin-bottom: 14px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.45);
+            margin-bottom: 10px;
+            letter-spacing: 0.02em;
         }
 
         .credits-popup-section {
-            margin-bottom: 16px;
+            margin-bottom: 0;
         }
         .credits-popup-section-title {
-            font-size: 0.75rem;
+            font-size: 0.65rem;
             font-weight: 700;
             color: rgba(255,255,255,0.4);
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 6px;
-            margin-bottom: 6px;
+            letter-spacing: 0.55px;
+            margin-bottom: 8px;
         }
 
         .credits-popup-row {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 5px 0;
-            font-size: 0.8rem;
+            padding: 4px 0;
+            font-size: 0.78rem;
             line-height: 1.4;
+            gap: 10px;
         }
         .credits-popup-row-label {
-            color: rgba(255,255,255,0.6);
+            color: rgba(255,255,255,0.55);
+            flex-shrink: 0;
         }
         .credits-popup-row-value {
             font-weight: 700;
             color: #fff;
+            text-align: right;
+        }
+        .credits-popup-row-value.credits-bonus {
+            color: #22c55e;
+            font-weight: 800;
         }
 
         .credits-popup-note {
-            font-size: 0.75rem;
-            color: #f97316;
-            line-height: 1.5;
-            margin-bottom: 12px;
-            padding-top: 6px;
-            border-top: 1px solid rgba(255,255,255,0.06);
+            font-size: 0.72rem;
+            color: #60a5fa;
+            line-height: 1.45;
+            margin: 0;
+            padding: 12px 16px;
         }
-
         .credits-popup-upgrade {
             display: block;
-            width: 100%;
-            padding: 9px;
-            background: rgba(255,255,255,0.08);
+            width: calc(100% - 32px);
+            margin: 0 16px 16px;
+            padding: 10px 12px;
+            background: var(--accent);
             color: #fff;
-            border: 1px solid rgba(255,255,255,0.12);
+            border: none;
             border-radius: 8px;
             font-family: inherit;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 700;
             text-align: center;
             text-decoration: none;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: opacity 0.2s, filter 0.2s;
         }
-        .credits-popup-upgrade:hover { background: rgba(255,255,255,0.14); }
+        .credits-popup-upgrade:hover { opacity: 0.92; filter: brightness(1.05); }
 
         .sidebar-user {
             display: flex;
             align-items: center;
             gap: 10px;
-            padding: 8px 4px;
+            padding: 8px 10px;
             cursor: pointer;
             border-radius: 8px;
-            transition: background 0.2s;
+            transition: background 0.2s, border-color 0.2s;
             position: relative;
+            background: var(--sidebar-account-card);
+            border: 1px solid rgba(255,255,255,0.06);
         }
-        .sidebar-user:hover { background: rgba(255,255,255,0.06); }
+        .sidebar-user:hover {
+            background: #302c28;
+            border-color: rgba(255,255,255,0.09);
+        }
 
         .sidebar-user-arrow {
             margin-left: auto;
@@ -575,16 +839,27 @@
             display: none;
             position: absolute;
             left: 0;
-            right: 0;
+            right: auto;
             bottom: calc(100% + 6px);
-            background: #1e1e2e;
-            border: 1px solid rgba(255,255,255,0.1);
+            width: min(var(--sidebar-popup-max), 100%);
+            max-width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            background: var(--sidebar-account-bg);
+            border: 1px solid var(--sidebar-popup-border);
             border-radius: 10px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.4);
             z-index: 400;
             overflow: hidden;
+            padding-bottom: 4px;
         }
         .sidebar-user.menu-open .sidebar-user-menu { display: block; }
+
+        .sidebar.collapsed .credits-popup,
+        .sidebar.collapsed .sidebar-user-menu {
+            width: min(var(--sidebar-popup-max), calc(100vw - 80px));
+            max-width: min(var(--sidebar-popup-max), calc(100vw - 80px));
+        }
 
         .sidebar-user-menu-item {
             display: flex;
@@ -650,6 +925,115 @@
             padding: 2px 4px 4px;
         }
 
+        /* SuperX-style user menu */
+        .sidebar-user-handle-row {
+            display: flex; align-items: center; gap: 6px;
+            min-width: 0;
+        }
+        .sidebar-user-handle-row .sidebar-user-handle {
+            min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        .sidebar-user-plan {
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 0.55rem; font-weight: 800; letter-spacing: 0.4px;
+            padding: 1px 6px; border-radius: 4px;
+            background: rgba(239,68,68,0.18); color: #fca5a5;
+            text-transform: uppercase;
+            flex-shrink: 0;
+        }
+        .sidebar-user-plan.plan-pro     { background: rgba(239,68,68,0.18);  color: #fca5a5; }
+        .sidebar-user-plan.plan-advanced{ background: rgba(168,85,247,0.18); color: #d8b4fe; }
+        .sidebar-user-plan.plan-ultra   { background: rgba(249,115,22,0.18); color: #fdba74; }
+        .sidebar-user-plan.plan-free    { background: rgba(148,163,184,0.18); color: #cbd5e1; }
+        .sidebar-user-plan.plan-team    { background: rgba(34,197,94,0.18);  color: #86efac; }
+
+        .user-menu-active {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 14px;
+            background: linear-gradient(135deg, rgba(124, 45, 18, 0.38) 0%, rgba(30, 28, 26, 0.98) 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .user-menu-active-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 800; font-size: 0.7rem;
+            overflow: hidden; flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.06);
+        }
+        .user-menu-active-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-menu-active-info { flex: 1; min-width: 0; }
+        .user-menu-active-name {
+            font-size: 0.85rem; font-weight: 700; color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .user-menu-active-handle {
+            font-size: 0.7rem; color: rgba(255,255,255,0.55);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .user-menu-section { padding: 6px 0; }
+        .user-menu-section + .user-menu-section { border-top: 1px solid rgba(255,255,255,0.06); }
+        .user-menu-section-title {
+            font-size: 0.6rem; font-weight: 700;
+            color: rgba(255,255,255,0.4);
+            text-transform: uppercase; letter-spacing: 0.6px;
+            padding: 8px 14px 4px;
+        }
+
+        .user-menu-other-account {
+            display: flex; align-items: center; gap: 10px;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+        .user-menu-other-account:hover { background: rgba(255,255,255,0.06); }
+        .user-menu-other-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: 0.6rem;
+            overflow: hidden; flex-shrink: 0;
+        }
+        .user-menu-other-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .user-menu-other-info { flex: 1; min-width: 0; }
+        .user-menu-other-name {
+            font-size: 0.78rem; font-weight: 600; color: #fff;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .user-menu-other-handle {
+            font-size: 0.66rem; color: rgba(255,255,255,0.45);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .sidebar-user-menu-item.add-acct-item { color: #f97316; font-weight: 600; }
+        .sidebar-user-menu-item.add-acct-item .menu-icon { color: #f97316; }
+        .sidebar-user-menu-item.logout-item { color: rgba(255,255,255,0.85); }
+
+        .user-menu-theme {
+            display: flex; gap: 6px;
+            padding: 4px 12px 8px;
+        }
+        .user-menu-theme-btn {
+            flex: 1;
+            display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            padding: 8px 10px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: rgba(255,255,255,0.7);
+            font-size: 0.78rem; font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .user-menu-theme-btn:hover { background: rgba(255,255,255,0.04); color: #fff; }
+        .user-menu-theme-btn.selected {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.2);
+            color: #fff;
+        }
+        .user-menu-theme-btn .menu-icon { font-size: 0.85rem; width: auto; }
+
         /* Carousel slide preview cards */
         .crs-slide {
             flex-shrink: 0;
@@ -688,17 +1072,42 @@
         .crs-slide.crs-cta .crs-slide-title { color: #fff; font-size: 1.1rem; }
         .crs-slide.crs-cta .crs-slide-text { color: rgba(255,255,255,0.85); }
 
-        #carouselSlideStrip::-webkit-scrollbar { height: 6px; }
-        #carouselSlideStrip::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+        #carouselSlideStrip {
+            scrollbar-width: thin;
+            scrollbar-color: var(--sl-scrollbar-thumb) var(--sl-scrollbar-track);
+        }
+        #carouselSlideStrip::-webkit-scrollbar { height: var(--sl-scrollbar-size); }
+        #carouselSlideStrip::-webkit-scrollbar-track {
+            background: var(--sl-scrollbar-track);
+            border-radius: 999px;
+        }
+        #carouselSlideStrip::-webkit-scrollbar-thumb {
+            background: var(--sl-scrollbar-thumb);
+            border-radius: 999px;
+            border: 2px solid var(--sl-scrollbar-track);
+            background-clip: padding-box;
+        }
+        #carouselSlideStrip::-webkit-scrollbar-thumb:hover {
+            background: var(--sl-scrollbar-thumb-hover);
+        }
 
-        .crs-nav-locked {
-            display: flex; align-items: center; gap: 4px;
-            font-size: 0.7rem; color: rgba(255,255,255,0.5);
-        }
+        .crs-nav-locked { display: inline-flex; align-items: center; justify-content: center; }
         .nav-lock-icon {
-            font-size: 0.65rem; color: rgba(255,255,255,0.4); margin-left: auto;
+            margin-left: auto;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: #dc2626;
         }
-        .nav-lock-icon.hidden { display: none; }
+        .nav-lock-icon .nav-lock-svg {
+            width: 0.82rem;
+            height: 0.82rem;
+            stroke-width: 1.65;
+            display: block;
+        }
+        .nav-lock-icon.hidden { display: none !important; }
+        .nav-item-gated { cursor: pointer; }
 
         .empty-state {
             text-align: center; padding: 60px 20px; color: var(--text-muted);
@@ -738,10 +1147,19 @@
             border-bottom-color: var(--accent);
         }
         .engage-tab-lock {
-            font-size: 0.7rem;
-            opacity: 0.7;
+            display: inline-flex;
+            align-items: center;
+            margin-left: 4px;
+            color: #dc2626;
+            vertical-align: middle;
         }
-        .engage-tab-lock.hidden { display: none; }
+        .engage-tab-lock .nav-lock-svg {
+            width: 0.82rem;
+            height: 0.82rem;
+            stroke-width: 1.65;
+            display: block;
+        }
+        .engage-tab-lock.hidden { display: none !important; }
         .engage-panel { display: none; }
         .engage-panel.active { display: block; }
 
@@ -1229,13 +1647,48 @@
         }
         .dm-ai-dropdown { position: relative; display: inline-block; }
         .dm-ai-btn {
-            padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card);
-            font-family: inherit; font-size: 0.8rem; font-weight: 600; cursor: pointer;
-            color: var(--text-primary); transition: all 0.2s; white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: transparent;
+            font-family: inherit;
+            font-size: 0.7rem;
+            font-weight: 800;
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: background 0.15s, color 0.15s, border-color 0.15s, opacity 0.2s;
+            white-space: nowrap;
+            line-height: 0;
         }
-        .dm-ai-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .dm-ai-btn .compose-tool-icon-svg {
+            width: 1.1rem;
+            height: 1.1rem;
+            flex-shrink: 0;
+            display: block;
+            color: inherit;
+        }
+        .dm-ai-btn .dm-ai-btn-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            color: inherit;
+            line-height: 1;
+            letter-spacing: 0.02em;
+        }
+        .dm-ai-btn:hover {
+            background: var(--bg);
+            color: var(--text-primary);
+            border-color: var(--border);
+        }
         .dm-ai-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        .dm-ai-btn:disabled:hover { border-color: var(--border); color: var(--text-primary); }
+        .dm-ai-btn:disabled:hover {
+            border-color: var(--border);
+            color: var(--text-muted);
+            background: transparent;
+        }
         .dm-reply-textarea:disabled { background: var(--bg-card); color: var(--text-muted); cursor: not-allowed; }
         .dm-ai-menu {
             position: absolute; bottom: 100%; right: 0;
@@ -1338,12 +1791,31 @@
 
         .bulk-dms-label-row {
             display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 12px;
+            margin-bottom: 12px; flex-wrap: wrap; gap: 10px;
         }
         .bulk-dms-label-row h3 {
             font-size: 1rem; font-weight: 800;
         }
         .bulk-dms-counter { font-size: 0.78rem; color: var(--text-muted); }
+        .bulk-dms-message-toolbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        .bulk-dms-ai-tone {
+            padding: 6px 10px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.78rem;
+            font-weight: 600;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            max-width: 220px;
+            cursor: pointer;
+        }
 
         .bulk-dms-recipients {
             display: flex; flex-wrap: wrap; gap: 6px; min-height: 38px;
@@ -1520,7 +1992,9 @@
         .sidebar-user-handle { font-size: 0.68rem; color: var(--sidebar-text); }
 
         .sidebar-links {
-            padding: 8px 0 0;
+            padding: 10px 0 0;
+            margin-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.06);
         }
 
         .sidebar-link {
@@ -1540,7 +2014,7 @@
 
         /* MAIN */
         .main {
-            margin-left: 240px;
+            margin-left: var(--sidebar-width);
             flex: 1;
             min-height: 100vh;
             overflow-x: hidden;
@@ -1550,6 +2024,11 @@
 
         .main-content {
             padding: 28px 32px;
+            max-width: var(--main-content-max-width);
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+            box-sizing: border-box;
         }
 
         /* PAGE CONTAINERS */
@@ -1591,7 +2070,7 @@
         }
         .page-header h1,
         .page-header h2 {
-            font-size: 1.6rem;
+            font-size: var(--page-title-font-size);
             font-weight: 800;
             line-height: 1.2;
             margin: 0 0 6px;
@@ -2714,7 +3193,7 @@
             margin-bottom: 16px;
         }
         .queue-title {
-            font-size: 1.6rem;
+            font-size: var(--page-title-font-size);
             font-weight: 900;
             color: var(--text-primary);
         }
@@ -2975,7 +3454,7 @@
             margin-bottom: 20px;
         }
 
-        .analytics-header h2 { font-size: 1.5rem; font-weight: 900; }
+        .analytics-header h2 { font-size: var(--page-title-font-size); font-weight: 900; }
 
         .analytics-period-btn {
             padding: 7px 16px;
@@ -3597,7 +4076,7 @@
         .sched-confirm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* READY TO POST PAGE */
-        .rtp-header h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 2px; }
+        .rtp-header h2 { font-size: var(--page-title-font-size); font-weight: 800; margin-bottom: 2px; }
         .rtp-header p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; }
 
         .rtp-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 24px; }
@@ -3668,8 +4147,14 @@
         }
 
         /* INSPIRATION PAGE */
-        .insp-header h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 2px; }
-        .insp-header p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px; }
+        .insp-header h2 {
+            font-size: var(--page-title-font-size);
+            font-weight: 800;
+            line-height: 1.2;
+            margin: 0 0 6px;
+            color: var(--text-primary);
+        }
+        .insp-header p { font-size: 0.88rem; color: var(--text-muted); margin: 0 0 16px; }
 
         .insp-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--border); margin-bottom: 20px; }
         .insp-tab {
@@ -4031,6 +4516,18 @@
             font-size: 1rem;
             color: var(--text-muted);
             transition: all 0.15s;
+            line-height: 0;
+        }
+        .compose-tool-btn b,
+        .compose-tool-btn i { color: inherit; font-weight: 800; font-size: 0.82rem; }
+        .compose-tool-btn i { font-style: italic; font-weight: 600; }
+
+        .compose-tool-icon-svg {
+            width: 1.1rem;
+            height: 1.1rem;
+            flex-shrink: 0;
+            display: block;
+            color: inherit;
         }
 
         .compose-tool-btn:hover {
@@ -4048,9 +4545,10 @@
             border: none; background: transparent; border-radius: 6px;
             cursor: pointer; font-size: 1.1rem; color: var(--text-muted);
             transition: all 0.15s;
+            line-height: 0;
         }
-        .ai-improve-btn:hover { background: rgba(124,58,237,0.12); color: #7c3aed; }
-        .ai-improve-btn.active { background: rgba(124,58,237,0.15); color: #7c3aed; }
+        .ai-improve-btn:hover { background: var(--bg); color: var(--text-primary); }
+        .ai-improve-btn.active { background: var(--bg); color: var(--text-primary); }
 
         .ai-improve-menu {
             display: none; position: absolute; bottom: 42px; left: 0;
@@ -4077,16 +4575,22 @@
         .ai-improve-sep { height: 1px; background: var(--border); margin: 6px 0; }
 
         .compose-tool-btn.ai-btn {
-            background: linear-gradient(135deg, #7c3aed, var(--accent));
-            color: #fff;
+            background: transparent;
+            color: var(--text-muted);
             font-size: 0.7rem;
             font-weight: 800;
             width: auto;
             padding: 0 10px;
-            gap: 4px;
+            gap: 6px;
+            display: inline-flex;
+            align-items: center;
         }
 
-        .compose-tool-btn.ai-btn:hover { opacity: 0.88; }
+        .compose-tool-btn.ai-btn:hover {
+            background: var(--bg);
+            color: var(--text-primary);
+            opacity: 1;
+        }
 
         .emoji-picker-popup {
             display: none; position: absolute; bottom: 42px; left: 0;
@@ -4135,7 +4639,30 @@
             margin-bottom: 8px;
         }
 
-        .compose-schedule-row .sched-icon { font-size: 0.9rem; }
+        .compose-schedule-row .sched-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            color: inherit;
+            line-height: 0;
+        }
+        .compose-schedule-row .sched-icon .compose-tool-icon-svg {
+            width: 0.95rem;
+            height: 0.95rem;
+        }
+
+        .compose-advanced-toggle .arrow {
+            display: inline-flex;
+            align-items: center;
+            line-height: 0;
+            color: var(--text-muted);
+            transition: transform 0.2s;
+        }
+        .compose-advanced-toggle .arrow .compose-tool-icon-svg {
+            width: 0.85rem;
+            height: 0.85rem;
+        }
 
         .compose-advanced-toggle {
             display: flex;
@@ -4149,7 +4676,6 @@
             color: var(--text-secondary);
         }
 
-        .compose-advanced-toggle .arrow { transition: transform 0.2s; }
         .compose-advanced-toggle.open .arrow { transform: rotate(180deg); }
 
         .compose-advanced-body {
@@ -4284,9 +4810,9 @@
             #planTestimonials { grid-template-columns: 1fr !important; }
             .sidebar {
                 position: fixed;
-                left: -240px;
+                left: calc(-1 * var(--sidebar-width));
                 top: 0;
-                width: 240px;
+                width: var(--sidebar-width);
                 z-index: 1000;
                 transition: left 0.3s ease;
             }
@@ -4347,89 +4873,104 @@
 
         <nav class="sidebar-nav">
             <a class="nav-item active" data-page="home" data-label="Home" onclick="showPage('home')">
-                <span class="nav-icon">&#127968;</span> <span>Home</span>
+                <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg></span>
+                <span>Home</span>
             </a>
             <a class="nav-item" data-page="queue" data-label="Queue" onclick="showPage('queue')">
-                <span class="nav-icon">&#128197;</span> <span>Queue</span>
+                <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+                <span>Queue</span>
             </a>
             <a class="nav-item" data-page="analytics" data-label="Analytics" onclick="showPage('analytics')">
-                <span class="nav-icon">&#128200;</span> <span>Analytics</span>
+                <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
+                <span>Analytics</span>
             </a>
             <a class="nav-item" data-page="context" data-label="Context" onclick="showPage('context')">
-                <span class="nav-icon">&#128218;</span> <span>Context</span>
+                <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016 17h12a2.5 2.5 0 012.5 2.5"/><path d="M6 17V3a2 2 0 012-2h6l4 4v12"/><path d="M14 21v-4a2 2 0 00-2-2H8a2 2 0 00-2 2v4"/></svg></span>
+                <span>Context</span>
             </a>
 
             <div class="nav-divider"></div>
 
             <div class="nav-group" data-group="create" data-color="blue">
                 <button class="nav-section-header" type="button" onclick="toggleNavGroup('create')">
-                    <span class="nav-section-icon">&#9997;</span>
+                    <span class="nav-section-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
                     <span class="nav-section-label">Create</span>
-                    <span class="nav-section-chevron">&#9662;</span>
+                    <span class="nav-section-chevron" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
                 </button>
                 <div class="nav-section-items">
                     <a class="nav-item nav-sub-item" data-page="readytopost" data-label="Ready to Post" onclick="showPage('readytopost')">
-                        <span class="nav-icon">&#9997;</span> <span>Ready to Post</span>
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+                        <span>Ready to Post</span>
                     </a>
                     <a class="nav-item nav-sub-item" data-page="virallibrary" data-label="Viral Library" onclick="navGated('viral_library','virallibrary')">
-                        <span class="nav-icon">&#128293;</span> <span>Viral Library</span> <span class="nav-lock-icon" data-gate="viral_library">&#128274;</span>
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0012 12a4 4 0 10-4-4 1 1 0 015 3.5"/><path d="M12 2c.5 2.5 2 4 2 6a6 6 0 11-12 0c0-2 1.5-4 2-6"/></svg></span>
+                        <span>Viral Library</span> <span class="nav-lock-icon" data-gate="viral_library"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                     </a>
                     <a class="nav-item nav-sub-item" data-page="create" data-label="AI Writer" onclick="showPage('create')">
-                        <span class="nav-icon">&#129302;</span> <span>AI Writer</span>
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a7 7 0 019 9.5 3.5 3.5 0 01-1.5 2.5L18 21l-4.5-2.5a7 7 0 11-1.5-15.5z"/><path d="M8 12h.01M12 12h.01M16 12h.01"/></svg></span>
+                        <span>AI Writer</span>
                     </a>
                     <a class="nav-item nav-sub-item" data-page="carousel" data-label="Carousel" onclick="handleCarouselNav()" id="navCarousel">
-                        <span class="nav-icon">&#127912;</span> <span>Carousel</span> <span id="carouselLockIcon" class="crs-nav-locked" style="display:none;">&#128274;</span>
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/></svg></span>
+                        <span>Carousel</span> <span id="carouselLockIcon" class="nav-lock-icon crs-nav-locked" style="display:none;"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                     </a>
                 </div>
             </div>
 
             <div class="nav-group" data-group="engage" data-color="green">
                 <button class="nav-section-header" type="button" onclick="toggleNavGroup('engage')">
-                    <span class="nav-section-icon">&#128172;</span>
+                    <span class="nav-section-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
                     <span class="nav-section-label">Engage</span>
-                    <span class="nav-section-chevron">&#9662;</span>
+                    <span class="nav-section-chevron" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
                 </button>
                 <div class="nav-section-items">
                     <a class="nav-item nav-sub-item" data-engage-tab="discover" data-label="Discover" onclick="showPage('discover')">
-                        <span class="nav-icon">&#128269;</span> <span>Discover</span>
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg></span>
+                        <span>Discover</span>
                     </a>
-                    <a class="nav-item nav-sub-item" data-engage-tab="mentions" data-label="Mentions" onclick="showPage('mentions')">
-                        <span class="nav-icon">&#128172;</span> <span>Mentions</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
+                    <a class="nav-item nav-sub-item" data-engage-tab="mentions" data-label="Mentions" onclick="navGatedEngageNav('mentions'); return false;">
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M16 8v5h5"/></svg></span>
+                        <span>Mentions</span> <span class="nav-lock-icon" data-gate="engage_engine"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                     </a>
-                    <a class="nav-item nav-sub-item" data-engage-tab="engagereplies" data-label="Replies" onclick="showPage('engagereplies')">
-                        <span class="nav-icon">&#128172;</span> <span>Replies</span> <span class="nav-lock-icon" data-gate="engage_engine">&#128274;</span>
+                    <a class="nav-item nav-sub-item" data-engage-tab="engagereplies" data-label="Replies" onclick="navGatedEngageNav('engagereplies'); return false;">
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a4 4 0 01-4 4H8l-5 3v-3a4 4 0 014-4h10a4 4 0 004-4V7a4 4 0 00-4-4H6a4 4 0 00-4 4"/></svg></span>
+                        <span>Replies</span> <span class="nav-lock-icon" data-gate="engage_engine"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                     </a>
-                    <a class="nav-item nav-sub-item" data-engage-tab="autoengage" data-label="Auto-Engage" onclick="showPage('autoengage')">
-                        <span class="nav-icon">&#9889;</span> <span>Auto-Engage</span> <span class="nav-lock-icon" data-gate="auto_repost">&#128274;</span>
+                    <a class="nav-item nav-sub-item" data-engage-tab="autoengage" data-label="Auto-Engage" onclick="navGatedEngageNav('autoengage'); return false;">
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg></span>
+                        <span>Auto-Engage</span> <span class="nav-lock-icon" data-gate="auto_repost"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                     </a>
                 </div>
             </div>
 
             <div class="nav-group" data-group="crm" data-color="purple">
                 <button class="nav-section-header" type="button" onclick="toggleNavGroup('crm')">
-                    <span class="nav-section-icon">&#128101;</span>
+                    <span class="nav-section-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg></span>
                     <span class="nav-section-label">CRM</span>
-                    <span class="nav-section-chevron">&#9662;</span>
+                    <span class="nav-section-chevron" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
                 </button>
                 <div class="nav-section-items">
                     <a class="nav-item nav-sub-item" data-page="dms" data-label="DMs" onclick="showPage('dms')">
-                        <span class="nav-icon">&#9993;</span> <span>DMs</span>
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><path d="M22 6l-10 7L2 6"/></svg></span>
+                        <span>DMs</span>
                     </a>
                     <a class="nav-item nav-sub-item" data-page="bulkdms" data-label="Bulk DMs" onclick="showPage('bulkdms')">
-                        <span class="nav-icon">&#128227;</span> <span>Bulk DMs</span>
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11V9a4 4 0 014-4h10a4 4 0 014 4v2"/><path d="M3 11v6a4 4 0 004 4h10a4 4 0 004-4v-6"/><path d="M3 11h18"/></svg></span>
+                        <span>Bulk DMs</span>
                     </a>
                 </div>
             </div>
 
             <div class="nav-group" data-group="reports" data-color="amber">
                 <button class="nav-section-header" type="button" onclick="toggleNavGroup('reports')">
-                    <span class="nav-section-icon">&#128202;</span>
+                    <span class="nav-section-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17l5-5-5-5"/><path d="M13 17H7"/></svg></span>
                     <span class="nav-section-label">Reports</span>
-                    <span class="nav-section-chevron">&#9662;</span>
+                    <span class="nav-section-chevron" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
                 </button>
                 <div class="nav-section-items">
                     <a class="nav-item nav-sub-item" data-page="reports" data-label="White-Label" onclick="navGated('white_label','reports')">
-                        <span class="nav-icon">&#128202;</span> <span>White-Label</span> <span class="nav-lock-icon" data-gate="white_label">&#128274;</span>
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18 17l5-5-5-5"/><path d="M13 17H7"/></svg></span>
+                        <span>White-Label</span> <span class="nav-lock-icon" data-gate="white_label"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                     </a>
                 </div>
             </div>
@@ -4442,49 +4983,66 @@
 
                 <div class="credits-popup">
                     <div class="credits-popup-inner">
-                    <div class="credits-popup-title">AI Credits</div>
+                        <div class="credits-popup-section-pad">
+                            <div class="credits-popup-title" id="creditsPopupAiHeading">Credits for AI-powered features</div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label" id="creditsLimitLabel">Plan limit</span>
+                                <span class="credits-popup-row-value" id="popupDailyLimit">500</span>
+                            </div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label" id="creditsUsedLabel">Used</span>
+                                <span class="credits-popup-row-value" id="popupUsedToday">0</span>
+                            </div>
+                            <div class="credits-popup-row" id="creditsBonusRow">
+                                <span class="credits-popup-row-label">Bonus credits</span>
+                                <span class="credits-popup-row-value credits-bonus" id="popupBonusCredits">+0</span>
+                            </div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label">Available</span>
+                                <span class="credits-popup-row-value" id="popupCreditsTotal">500</span>
+                            </div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label">Resets in</span>
+                                <span class="credits-popup-row-value" id="popupCreditsResetIn">—</span>
+                            </div>
+                        </div>
 
-                    <div class="credits-popup-section">
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Plan limit:</span>
-                            <span class="credits-popup-row-value" id="popupDailyLimit">500/month</span>
+                        <div class="credits-popup-divider"></div>
+                        <div class="credits-popup-section-pad">
+                            <div class="credits-popup-section-title">Engage quota</div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label">Used</span>
+                                <span class="credits-popup-row-value" id="popupEngageUsed">0 / 75</span>
+                            </div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label">Remaining</span>
+                                <span class="credits-popup-row-value" id="popupEngageRemaining">75</span>
+                            </div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label">Resets</span>
+                                <span class="credits-popup-row-value" id="popupEngageReset">—</span>
+                            </div>
                         </div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Used:</span>
-                            <span class="credits-popup-row-value" id="popupUsedToday">0</span>
-                        </div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Remaining:</span>
-                            <span class="credits-popup-row-value" id="popupCreditsTotal">500</span>
-                        </div>
-                    </div>
 
-                    <div class="credits-popup-section">
-                        <div class="credits-popup-section-title">Usage</div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">AI credits:</span>
-                            <span class="credits-popup-row-value" id="creditsAIPosts">0 / 500</span>
+                        <div class="credits-popup-divider" id="creditsPostSectionDivider"></div>
+                        <div class="credits-popup-section-pad" id="creditsPostSection">
+                            <div class="credits-popup-section-title">Post quota</div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label">Used</span>
+                                <span class="credits-popup-row-value" id="popupPostsUsed">0 / 50</span>
+                            </div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label">Remaining</span>
+                                <span class="credits-popup-row-value" id="popupPostsRemaining">50</span>
+                            </div>
+                            <div class="credits-popup-row">
+                                <span class="credits-popup-row-label">Resets</span>
+                                <span class="credits-popup-row-value" id="popupPostsReset">—</span>
+                            </div>
                         </div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Available:</span>
-                            <span class="credits-popup-row-value" id="creditsAnalytics">500</span>
-                        </div>
-                    </div>
 
-                    <div class="credits-popup-section">
-                        <div class="credits-popup-section-title">Plan Details</div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Posts published:</span>
-                            <span class="credits-popup-row-value" id="creditsPublished">0</span>
-                        </div>
-                        <div class="credits-popup-row">
-                            <span class="credits-popup-row-label">Plan:</span>
-                            <span class="credits-popup-row-value" id="creditsAIWriter">Pro (3 profiles)</span>
-                        </div>
-                    </div>
-
-                    <div class="credits-popup-note">Upgrade your plan for more AI credits and connected profiles.</div>
-                    <a class="credits-popup-upgrade" href="/upgrade">Skip Trial &amp; Upgrade</a>
+                        <p class="credits-popup-note" id="creditsTrialNote" style="display:none;">Trial limits are reduced. Your limits will increase when you subscribe.</p>
+                        <a class="credits-popup-upgrade" href="/upgrade">Skip Trial &amp; Upgrade</a>
                     </div>
                 </div>
             </div>
@@ -4493,24 +5051,56 @@
                 <div class="sidebar-user-avatar" id="sidebarAvatar"></div>
                 <div class="sidebar-user-info">
                     <div class="sidebar-user-name" id="sidebarName">Loading...</div>
-                    <div class="sidebar-user-handle" id="sidebarHandle">@user</div>
+                    <div class="sidebar-user-handle-row">
+                        <span class="sidebar-user-handle" id="sidebarHandle">@user</span>
+                        <span class="sidebar-user-plan" id="sidebarPlan" style="display:none;">PRO</span>
+                    </div>
                 </div>
                 <span class="sidebar-user-arrow">&#9650;</span>
                 <div class="sidebar-user-menu" onclick="event.stopPropagation()">
-                    <div class="sidebar-profiles-section" id="sidebarProfilesList"></div>
-                    <div class="sidebar-user-menu-divider"></div>
+                    <div class="user-menu-active" id="userMenuActive">
+                        <div class="user-menu-active-avatar" id="userMenuActiveAvatar"></div>
+                        <div class="user-menu-active-info">
+                            <div class="user-menu-active-name" id="userMenuActiveName">--</div>
+                            <div class="user-menu-active-handle" id="userMenuActiveHandle">@--</div>
+                        </div>
+                    </div>
+
+                    <div class="user-menu-section" id="userMenuOtherAccountsSection" style="display:none;">
+                        <div class="user-menu-section-title">YOUR ACCOUNTS</div>
+                        <div id="userMenuOtherAccountsList"></div>
+                    </div>
+
+                    <a class="sidebar-user-menu-item add-acct-item" onclick="showAddAccountModal();document.querySelector('.sidebar-user').classList.remove('menu-open');">
+                        <span class="menu-icon">&#10010;</span> Add Account
+                    </a>
+
+                    <a class="sidebar-user-menu-item" href="https://www.linkedin.com/company/120934318/" target="_blank" rel="noopener">
+                        <span class="menu-icon"><svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path fill="#0A66C2" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg></span> Follow us
+                    </a>
+
+                    <a class="sidebar-user-menu-item" href="/playbook" target="_blank" rel="noopener">
+                        <span class="menu-icon">&#128101;</span> Join the community
+                    </a>
+
                     <a class="sidebar-user-menu-item" onclick="showPage('settings');document.querySelector('.sidebar-user').classList.remove('menu-open')">
                         <span class="menu-icon">&#9881;</span> Account Settings
                     </a>
-                    <a class="sidebar-user-menu-item" href="https://chromewebstore.google.com/detail/superlinkedin/cnfplhhdohdnmnbajindhokfpanmfblc" target="_blank" rel="noopener">
-                        <span class="menu-icon">&#128268;</span> Chrome Extension
-                    </a>
-                    <a class="sidebar-user-menu-item" onclick="showAddAccountModal()" style="color:#f97316;">
-                        <span class="menu-icon" style="color:#f97316;">&#10010;</span> Add Account
-                    </a>
-                    <div class="sidebar-user-menu-divider"></div>
-                    <a class="sidebar-user-menu-item" href="/auth/logout">
-                        <span class="menu-icon">&#128682;</span> Sign Out
+
+                    <div class="user-menu-section">
+                        <div class="user-menu-section-title">THEME</div>
+                        <div class="user-menu-theme">
+                            <button type="button" class="user-menu-theme-btn" data-theme="light" onclick="setSidebarTheme('light')">
+                                <span class="menu-icon">&#9728;</span> Light
+                            </button>
+                            <button type="button" class="user-menu-theme-btn selected" data-theme="dark" onclick="setSidebarTheme('dark')">
+                                <span class="menu-icon">&#9790;</span> Dark
+                            </button>
+                        </div>
+                    </div>
+
+                    <a class="sidebar-user-menu-item logout-item" href="/auth/logout">
+                        <span class="menu-icon">&#10148;</span> Logout
                     </a>
                 </div>
             </div>
@@ -5454,7 +6044,7 @@
                     <!-- Upgrade overlay for non-carousel plans -->
                     <div id="carouselUpgradeOverlay" style="display:none;">
                         <div class="card" style="padding:48px;text-align:center;">
-                            <div style="font-size:3rem;margin-bottom:16px;">&#128274;</div>
+                            <div style="margin-bottom:16px;display:flex;justify-content:center;color:#dc2626;"><svg style="width:3.25rem;height:3.25rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
                             <h2 style="font-size:1.3rem;font-weight:800;margin-bottom:8px;">Carousel Posts — Advanced & Ultra</h2>
                             <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.6;margin-bottom:20px;">Create stunning multi-slide PDF carousels with AI. Upgrade to Advanced or Ultra to unlock this feature.</p>
                             <button onclick="showPage('settings');document.querySelectorAll('.settings-tab').forEach((t,i)=>{if(i===2)switchSettingsTab('plans',t)});" style="padding:12px 32px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;">Upgrade Plan</button>
@@ -5594,15 +6184,15 @@
 
                     <div class="engage-tabs-row">
                         <div class="engage-tabs" role="tablist">
-                            <button class="engage-tab active" data-tab="discover" onclick="switchEngageTab('discover')">Discover</button>
-                            <button class="engage-tab" data-tab="mentions" data-gate="engage_engine" onclick="switchEngageTab('mentions')">
-                                Mentions <span class="engage-tab-lock" data-gate="engage_engine">&#128274;</span>
+                            <button type="button" class="engage-tab active" data-tab="discover" onclick="switchEngageTab('discover')">Discover</button>
+                            <button class="engage-tab" type="button" data-tab="mentions" data-gate="engage_engine" onclick="switchEngageTab('mentions')">
+                                Mentions <span class="engage-tab-lock" data-gate="engage_engine"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                             </button>
-                            <button class="engage-tab" data-tab="engagereplies" data-gate="engage_engine" onclick="switchEngageTab('engagereplies')">
-                                Replies <span class="engage-tab-lock" data-gate="engage_engine">&#128274;</span>
+                            <button class="engage-tab" type="button" data-tab="engagereplies" data-gate="engage_engine" onclick="switchEngageTab('engagereplies')">
+                                Replies <span class="engage-tab-lock" data-gate="engage_engine"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                             </button>
-                            <button class="engage-tab" data-tab="autoengage" data-gate="auto_repost" onclick="switchEngageTab('autoengage')">
-                                Auto-Engage <span class="engage-tab-lock" data-gate="auto_repost">&#128274;</span>
+                            <button class="engage-tab" type="button" data-tab="autoengage" data-gate="auto_repost" onclick="switchEngageTab('autoengage')">
+                                Auto-Engage <span class="engage-tab-lock" data-gate="auto_repost"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                             </button>
                         </div>
                         <button class="engage-filters-btn" type="button" onclick="toggleDiscoverFilters()">
@@ -5847,7 +6437,10 @@
                                     <textarea id="dmReplyInput" placeholder="Select a conversation to start replying..." rows="4" class="dm-reply-textarea" disabled></textarea>
                                     <div class="dm-compose-actions">
                                         <div class="dm-ai-dropdown">
-                                            <button class="dm-ai-btn" id="dmAiBtn" type="button" title="AI Smart Reply" disabled>&#9889; AI</button>
+                                            <button class="dm-ai-btn" id="dmAiBtn" type="button" title="AI Smart Reply" disabled>
+                                                <svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                                <span class="dm-ai-btn-label">AI</span>
+                                            </button>
                                             <div class="dm-ai-menu" id="dmAiMenu">
                                                 <div class="dm-ai-menu-inner">
                                                     <button onclick="dmAiReply('professional')">&#128188; Professional</button>
@@ -5929,13 +6522,28 @@
                             <div class="card" style="padding:18px 20px;margin-bottom:16px;">
                                 <div class="bulk-dms-label-row">
                                     <h3>Message</h3>
-                                    <span class="bulk-dms-counter"><span id="bulkDmsCharCount">0</span> chars</span>
+                                    <div class="bulk-dms-message-toolbar">
+                                        <select id="bulkDmsAiTone" class="bulk-dms-ai-tone" title="Tone for AI-generated template (matches Create post)" aria-label="AI tone for generated message">
+                                            <option value="auto">Auto (match my style)</option>
+                                            <option value="professional">Professional</option>
+                                            <option value="casual">Casual & Friendly</option>
+                                            <option value="motivational">Motivational</option>
+                                            <option value="storytelling">Storytelling</option>
+                                            <option value="educational">Educational</option>
+                                            <option value="contrarian">Contrarian / Hot Take</option>
+                                            <option value="humorous">Humorous</option>
+                                        </select>
+                                        <button type="button" id="bulkDmsAiBtn" class="compose-tool-btn ai-btn" onclick="generateBulkDmWithAi()" title="Generate message template with AI">
+                                            <svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span>AI</span>
+                                        </button>
+                                        <span class="bulk-dms-counter"><span id="bulkDmsCharCount">0</span> chars</span>
+                                    </div>
                                 </div>
-                                <textarea id="bulkDmsMessage" class="bulk-dms-textarea" rows="6" placeholder="Hey [first], thanks for connecting! I wanted to reach out..." oninput="updateBulkDmPreview()"></textarea>
+                                <textarea id="bulkDmsMessage" class="bulk-dms-textarea" rows="6" placeholder="Hey [first_name], thanks for connecting! I wanted to reach out..." oninput="updateBulkDmPreview()"></textarea>
                                 <div class="bulk-dms-vars">
                                     <span class="bulk-dms-vars-label">Variables:</span>
-                                    <button class="bulk-dms-var-chip" onclick="insertBulkDmVar('[name]')" title="Full name (e.g. John Doe)">[name]</button>
-                                    <button class="bulk-dms-var-chip" onclick="insertBulkDmVar('[first]')" title="First name only (e.g. John)">[first]</button>
+                                    <button class="bulk-dms-var-chip" onclick="insertBulkDmVar('[full_name]')" title="Full name (e.g. John Doe)">[full_name]</button>
+                                    <button class="bulk-dms-var-chip" onclick="insertBulkDmVar('[first_name]')" title="First name only (e.g. John)">[first_name]</button>
                                     <button class="bulk-dms-var-chip" onclick="insertBulkDmVar('[handle]')" title="LinkedIn handle (e.g. @johndoe)">[handle]</button>
                                 </div>
                             </div>
@@ -5961,7 +6569,7 @@
                                 <h4 style="font-size:0.95rem;font-weight:700;margin-bottom:8px;">Pro Tips</h4>
                                 <ul style="font-size:0.82rem;color:var(--text-secondary);padding-left:18px;line-height:1.7;">
                                     <li>DMs are sent once every 1&ndash;2 minutes to avoid spam detection and rate limits.</li>
-                                    <li>Use <code>[name]</code>, <code>[first]</code>, and <code>[handle]</code> to personalize each message.</li>
+                                    <li>Use <code>[full_name]</code>, <code>[first_name]</code>, and <code>[handle]</code> to personalize each message.</li>
                                     <li>Keep a LinkedIn Messaging tab open in the same browser; the extension delivers each DM automatically when its turn arrives.</li>
                                     <li>Each recipient can only receive one bulk DM from your account per 24 hours.</li>
                                 </ul>
@@ -6161,13 +6769,13 @@
                 Generating with AI...
             </div>
             <div class="compose-toolbar">
-                <button class="compose-tool-btn" title="Attach image" onclick="document.getElementById('composeFileInput').click()">&#128247;</button>
+                <button class="compose-tool-btn" title="Attach image" onclick="document.getElementById('composeFileInput').click()" type="button" aria-label="Attach image"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg></button>
                 <input type="file" id="composeFileInput" accept="image/*" style="display:none;" onchange="handleComposeAttachment(this)">
-                <button class="compose-tool-btn" title="Emoji" onclick="toggleEmojiPicker(this,'composeTextarea')">&#128522;</button>
-                <button class="compose-tool-btn" title="Bold" onclick="unicodeFormat('bold','composeTextarea')"><b>B</b></button>
-                <button class="compose-tool-btn" title="Italic" onclick="unicodeFormat('italic','composeTextarea')"><i>I</i></button>
+                <button class="compose-tool-btn" title="Emoji" onclick="toggleEmojiPicker(this,'composeTextarea')" type="button" aria-label="Insert emoji"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></button>
+                <button class="compose-tool-btn" title="Bold" onclick="unicodeFormat('bold','composeTextarea')" type="button" aria-label="Bold"><b>B</b></button>
+                <button class="compose-tool-btn" title="Italic" onclick="unicodeFormat('italic','composeTextarea')" type="button" aria-label="Italic"><i>I</i></button>
                 <div class="ai-improve-wrap">
-                    <button class="ai-improve-btn" onclick="toggleAiMenu('composeAiMenu', this)" title="Improve writing with AI">&#10024;</button>
+                    <button class="ai-improve-btn" onclick="toggleAiMenu('composeAiMenu', this)" title="Improve writing with AI" type="button" aria-label="Improve writing with AI"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 01-1.275 1.275L3 12l5.813 1.912a2 2 0 011.275 1.275L12 21l1.912-5.813a2 2 0 011.275-1.275L21 12l-5.813-1.912a2 2 0 01-1.275-1.275L12 3Z"/></svg></button>
                     <div class="ai-improve-menu menu-up" id="composeAiMenu">
                         <div class="ai-improve-item" onclick="aiImprove('grammar','composeTextarea')"><span class="ai-icon">&#9998;</span> Improve grammar</div>
                         <div class="ai-improve-item" onclick="aiImprove('translate','composeTextarea')"><span class="ai-icon">&#127760;</span> Translate to English</div>
@@ -6185,10 +6793,10 @@
                         <div class="ai-improve-item" onclick="aiImprove('concise','composeTextarea')"><span class="ai-icon">&#9986;</span> Concise</div>
                     </div>
                 </div>
-                <button class="compose-tool-btn ai-btn" onclick="generateInCompose()" title="Generate with AI">&#129302; AI</button>
-                <button class="compose-tool-btn" title="Quote">&#10078;</button>
+                <button class="compose-tool-btn ai-btn" onclick="generateInCompose()" title="Generate with AI" type="button"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span>AI</span></button>
+                <button class="compose-tool-btn" title="Quote" type="button" aria-label="Quote"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21c3 0 4-2 4-5V9H3v12z"/><path d="M15 21c3 0 4-2 4-5V9h-4v12z"/></svg></button>
                 <div style="flex:1;"></div>
-                <button class="compose-tool-btn" onclick="openSchedPopup('compose')" title="Schedule Post">&#128197;</button>
+                <button class="compose-tool-btn" onclick="openSchedPopup('compose')" title="Schedule Post" type="button" aria-label="Schedule post"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button>
             </div>
         </div>
 
@@ -6215,12 +6823,12 @@
 
         <div class="compose-footer">
             <div class="compose-schedule-row">
-                <span class="sched-icon">&#128197;</span>
+                <span class="sched-icon" aria-hidden="true"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
                 <span id="composeScheduleTime">Schedule at 01:00 PM</span>
             </div>
-            <div class="compose-advanced-toggle" onclick="toggleAdvanced(this)">
+            <div class="compose-advanced-toggle" onclick="toggleAdvanced(this)" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleAdvanced(this);}">
                 Advanced settings
-                <span class="arrow">&#9660;</span>
+                <span class="arrow" aria-hidden="true"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
             </div>
             <div class="compose-advanced-body" id="composeAdvanced">
                 <label style="font-size:0.78rem;font-weight:600;color:var(--text-secondary);display:block;margin-bottom:6px;">AI Tone / Style</label>
@@ -6565,6 +7173,20 @@
         </div>
     </div>
 
+    <!-- UPGRADE REQUIRED (gated features) -->
+    <div class="modal-overlay hidden" id="upgradeRequiredModal" role="dialog" aria-modal="true" aria-labelledby="upgradeRequiredTitle" onclick="if(event.target===this)closeUpgradeRequiredModal()">
+        <div class="modal" style="max-width:420px;" onclick="event.stopPropagation()">
+            <button type="button" class="modal-close" onclick="closeUpgradeRequiredModal()" aria-label="Close">&times;</button>
+            <div style="text-align:center;margin-bottom:4px;">
+                <div style="display:flex;justify-content:center;color:#dc2626;margin-bottom:14px;"><svg style="width:2.75rem;height:2.75rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></div>
+                <h2 id="upgradeRequiredTitle" style="font-size:1.15rem;font-weight:800;margin-bottom:10px;">Upgrade required</h2>
+                <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;margin:0 0 22px;">This feature is available on a higher plan. Open <strong>Account Settings</strong> and choose <strong>Plans</strong> to compare options and upgrade.</p>
+            </div>
+            <button type="button" onclick="goToPlansFromUpgradeModal()" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;margin-bottom:10px;">View plans</button>
+            <button type="button" onclick="closeUpgradeRequiredModal()" style="width:100%;padding:12px;background:transparent;color:var(--text-secondary);border:1px solid var(--border);border-radius:10px;font-family:inherit;font-weight:600;font-size:0.88rem;cursor:pointer;">Not now</button>
+        </div>
+    </div>
+
     <!-- ENGAGE COMING SOON MODAL -->
     <div class="modal-overlay hidden" id="engageDisclaimerModal" onclick="if(event.target===this)document.getElementById('engageDisclaimerModal').classList.add('hidden')">
         <div class="modal" style="max-width:440px;">
@@ -6644,6 +7266,28 @@
 
         let _userFeatures = [];
 
+        function showUpgradeRequiredModal() {
+            const el = document.getElementById('upgradeRequiredModal');
+            if (el) el.classList.remove('hidden');
+        }
+
+        function closeUpgradeRequiredModal() {
+            const el = document.getElementById('upgradeRequiredModal');
+            if (el) el.classList.add('hidden');
+        }
+
+        function goToPlansFromUpgradeModal() {
+            closeUpgradeRequiredModal();
+            showPage('settings');
+            document.querySelectorAll('.settings-tab').forEach((t, i) => { if (i === 2) switchSettingsTab('plans', t); });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            const m = document.getElementById('upgradeRequiredModal');
+            if (m && !m.classList.contains('hidden')) closeUpgradeRequiredModal();
+        });
+
         async function loadUserFeatures() {
             try {
                 const res = await fetch('/api/credits');
@@ -6662,13 +7306,29 @@
             document.querySelectorAll('.engage-tab-lock[data-gate]').forEach(el => {
                 el.classList.toggle('hidden', _userFeatures.includes(el.dataset.gate));
             });
+            updateGatedNavAria();
+        }
+
+        function updateGatedNavAria() {
+            document.querySelectorAll('.nav-lock-icon[data-gate]').forEach(lock => {
+                const nav = lock.closest('.nav-item');
+                if (!nav) return;
+                if (!lock.classList.contains('hidden')) {
+                    nav.classList.add('nav-item-gated');
+                    const label = nav.dataset.label || '';
+                    if (label) nav.setAttribute('aria-label', `${label}, upgrade required to unlock`);
+                } else {
+                    nav.classList.remove('nav-item-gated');
+                    nav.removeAttribute('aria-label');
+                }
+            });
         }
 
         function navGated(feature, page) {
             if (_userFeatures.includes(feature)) {
                 showPage(page);
             } else {
-                showNotify('Upgrade Required', `This feature requires an upgraded plan. Visit Account Settings > Plans to upgrade.`, 'warning');
+                showUpgradeRequiredModal();
             }
         }
 
@@ -7687,6 +8347,8 @@
             const first = (name.split(/\s+/)[0] || name);
             const handle = (recipient.handle || '').trim().replace(/^@?/, '@');
             return String(template || '')
+                .replace(/\[full_name\]/gi, name || 'there')
+                .replace(/\[first_name\]/gi, first || 'there')
                 .replace(/\[name\]/gi, name || 'there')
                 .replace(/\[first\]/gi, first || 'there')
                 .replace(/\[handle\]/gi, handle || '');
@@ -7721,9 +8383,21 @@
             const btn = document.getElementById('bulkDmsSendBtn');
             const ta = document.getElementById('bulkDmsMessage');
             if (!btn || !ta) return;
-            const has = bulkDmsState.recipients.length > 0 && ta.value.trim().length > 0 && !bulkDmsState.paused;
-            btn.disabled = !has;
             const remainingDay = Math.max(0, bulkDmsState.limits.daily - bulkDmsState.counts.today);
+            const remainingMonth = Math.max(0, bulkDmsState.limits.monthly - bulkDmsState.counts.month);
+            const hasQuota = remainingDay > 0 && remainingMonth > 0;
+            const hasContent = bulkDmsState.recipients.length > 0 && ta.value.trim().length > 0;
+            const has = hasContent && !bulkDmsState.paused && hasQuota;
+            btn.disabled = !has;
+            if (hasContent && bulkDmsState.paused) {
+                btn.title = 'Sending is paused — click Resume sending to enable Send DMs.';
+            } else if (hasContent && !hasQuota) {
+                btn.title = 'Daily or monthly bulk DM limit reached. Try again later or check limits.';
+            } else if (!hasContent) {
+                btn.title = 'Add at least one recipient and a message to send.';
+            } else {
+                btn.title = '';
+            }
             btn.textContent = has
                 ? `Send DMs (${Math.min(bulkDmsState.recipients.length, remainingDay)})`
                 : 'Send DMs';
@@ -7752,6 +8426,33 @@
             updateBulkDmSendBtnState();
         }
 
+        async function generateBulkDmWithAi() {
+            const ta = document.getElementById('bulkDmsMessage');
+            const btn = document.getElementById('bulkDmsAiBtn');
+            const toneEl = document.getElementById('bulkDmsAiTone');
+            const tone = toneEl ? toneEl.value : 'auto';
+            if (!ta) return;
+            if (btn) btn.disabled = true;
+            try {
+                const res = await fetch('/api/bulk-dms/ai-generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tone }),
+                });
+                const data = await res.json();
+                if (data.message) {
+                    trackCredit('aiWriter');
+                    ta.value = data.message;
+                    updateBulkDmPreview();
+                } else {
+                    showNotify('Generation failed', data.error || 'Could not generate. Check AI credits and Context settings.', 'error');
+                }
+            } catch {
+                showNotify('AI unavailable', 'Try again in a moment.', 'error');
+            }
+            if (btn) btn.disabled = false;
+        }
+
         function insertBulkDmVar(token) {
             const ta = document.getElementById('bulkDmsMessage');
             if (!ta) return;
@@ -7774,20 +8475,31 @@
             renderBulkDmRecipients();
         }
 
-        function openBulkDmRecipientPicker() {
+        async function openBulkDmRecipientPicker() {
             const list = document.getElementById('bulkDmsPickerConvList');
-            const conversations = (typeof _dmConversations !== 'undefined' && _dmConversations) ? _dmConversations : [];
+            const overlay = document.getElementById('bulkDmsPickerOverlay');
+            if (overlay) overlay.classList.add('open');
+            if (list) {
+                list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:0.82rem;">Loading conversations…</div>';
+            }
+            try {
+                await loadDms();
+            } catch (e) {}
+            const conversations = _dmConversations || [];
             if (list) {
                 if (!conversations.length) {
-                    list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:0.82rem;">No conversations to pick from. Sync DMs first or paste contacts manually below.</div>';
+                    list.innerHTML = '<div style="padding:14px;color:var(--text-muted);font-size:0.82rem;">No conversations to pick from. Open <strong>Direct Messages</strong> once to sync from the extension, or paste contacts manually below.</div>';
                 } else {
-                    list.innerHTML = conversations.slice(0, 50).map((c, i) => {
+                    const sorted = conversations.slice().sort((a, b) => dmTimestampValue(b) - dmTimestampValue(a));
+                    const top = sorted.slice(0, 50);
+                    list.innerHTML = top.map((c) => {
                         const initials = ((c.participantName || '?').split(/\s+/).map(w => w[0]).join('') || '?').substring(0, 2).toUpperCase();
                         const avatar = c.participantPicture
                             ? `<span class="chip-avatar"><img src="${escapeHtml(c.participantPicture)}" alt=""></span>`
                             : `<span class="chip-avatar">${initials}</span>`;
+                        const idAttr = String(c.id || '').replace(/"/g, '&quot;');
                         return `<label class="bulk-dms-picker-item">
-                            <input type="checkbox" data-idx="${i}">
+                            <input type="checkbox" data-conv-id="${idAttr}">
                             ${avatar}
                             <span style="flex:1;">${escapeHtml(c.participantName || '')}</span>
                         </label>`;
@@ -7796,17 +8508,15 @@
             }
             const manual = document.getElementById('bulkDmsPickerManual');
             if (manual) manual.value = '';
-            document.getElementById('bulkDmsPickerOverlay').classList.add('open');
         }
         function closeBulkDmRecipientPicker() {
             document.getElementById('bulkDmsPickerOverlay').classList.remove('open');
         }
         function confirmBulkDmRecipients() {
-            const conversations = (typeof _dmConversations !== 'undefined' && _dmConversations) ? _dmConversations : [];
             const checks = document.querySelectorAll('#bulkDmsPickerConvList input[type="checkbox"]:checked');
             checks.forEach(ch => {
-                const i = parseInt(ch.getAttribute('data-idx'), 10);
-                const c = conversations[i];
+                const id = ch.getAttribute('data-conv-id');
+                const c = id && _dmConversations.find(x => x.id === id);
                 if (!c) return;
                 const handle = (c.participantUrl || '').split('/in/')[1];
                 const name = c.participantName || '';
@@ -7943,7 +8653,7 @@
             } catch (err) {
                 if (status) { status.textContent = err.message || String(err); status.className = 'bulk-dms-status err'; }
             } finally {
-                if (btn) btn.disabled = false;
+                updateBulkDmSendBtnState();
             }
         }
 
@@ -8046,6 +8756,7 @@
         async function loadBulkDmsPage() {
             renderBulkDmRecipients();
             updateBulkDmPreview();
+            try { await loadDms(); } catch (e) {}
             await loadBulkDms();
             ensureBulkDmsTick();
         }
@@ -8057,36 +8768,91 @@
                 const res = await fetch('/api/profiles');
                 if (res.ok) profilesData = await res.json();
             } catch {}
-            renderProfilesList();
+            renderUserMenu();
         }
 
-        function renderProfilesList() {
-            const container = document.getElementById('sidebarProfilesList');
-            if (!container) return;
-            const { profiles, activeProfileId } = profilesData;
+        function _initials(name) {
+            return (name || '?').split(/\s+/).filter(Boolean).map(w => w[0]).join('').substring(0, 2).toUpperCase();
+        }
+        function _handleFromName(name) {
+            return '@' + (name || 'user').toLowerCase().replace(/[^a-z0-9]+/g, '');
+        }
+        function _avatarHtml(profile) {
+            return profile && profile.picture
+                ? `<img src="${profile.picture}" alt="${escapeHtml(profile.name || '')}">`
+                : escapeHtml(_initials(profile && profile.name));
+        }
 
-            // Replace-mode: there's only ever one posting profile in the
-            // workspace, so the list/switcher is hidden. Use "Switch
-            // LinkedIn" in the user menu to swap accounts.
-            if (profiles.length <= 1) {
-                container.innerHTML = '';
-                return;
+        function renderUserMenu() {
+            const { profiles = [], activeProfileId } = profilesData || {};
+            const active = profiles.find(p => p.linkedinId === activeProfileId)
+                || (currentUser ? { linkedinId: currentUser.linkedinId, name: currentUser.name, picture: currentUser.picture } : null);
+
+            // Active account header inside the menu
+            const activeName = active && active.name ? active.name : (currentUser && currentUser.name) || '--';
+            const activeHandle = _handleFromName(activeName);
+            const avatarEl = document.getElementById('userMenuActiveAvatar');
+            if (avatarEl) avatarEl.innerHTML = _avatarHtml(active || { name: activeName, picture: currentUser && currentUser.picture });
+            const nameEl = document.getElementById('userMenuActiveName');
+            if (nameEl) nameEl.textContent = activeName;
+            const handleEl = document.getElementById('userMenuActiveHandle');
+            if (handleEl) handleEl.textContent = activeHandle;
+
+            // YOUR ACCOUNTS section: shown when logged in as the parent
+            // (owner) and there are other linked profiles to switch to.
+            // Children should only see their own account — detect this
+            // via the active profile's parentAccountId pointing to a
+            // different user.
+            const isChild = !!(currentUser
+                && currentUser.parentAccountId
+                && currentUser.parentAccountId !== currentUser.linkedinId
+                && currentUser.primaryAccountId
+                && currentUser.primaryAccountId !== currentUser.linkedinId);
+            const others = profiles.filter(p => p.linkedinId !== activeProfileId);
+            const section = document.getElementById('userMenuOtherAccountsSection');
+            const list = document.getElementById('userMenuOtherAccountsList');
+            if (section && list) {
+                if (!isChild && others.length > 0) {
+                    section.style.display = '';
+                    list.innerHTML = others.map(p => {
+                        const initials = escapeHtml(_initials(p.name));
+                        const avatar = p.picture
+                            ? `<img src="${p.picture}" alt="${escapeHtml(p.name || '')}">`
+                            : initials;
+                        return `<div class="user-menu-other-account" data-linkedin-id="${escapeHtml(p.linkedinId)}">
+                            <div class="user-menu-other-avatar">${avatar}</div>
+                            <div class="user-menu-other-info">
+                                <div class="user-menu-other-name">${escapeHtml(p.name || 'Unknown')}</div>
+                                <div class="user-menu-other-handle">${escapeHtml(_handleFromName(p.name))}</div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                    list.querySelectorAll('.user-menu-other-account').forEach(el => {
+                        el.addEventListener('click', () => switchProfile(el.dataset.linkedinId));
+                    });
+                } else {
+                    section.style.display = 'none';
+                    list.innerHTML = '';
+                }
             }
 
-            let html = `<div class="sidebar-profiles-title">Profile</div>`;
-            profiles.forEach(p => {
-                const isActive = p.linkedinId === activeProfileId;
-                const initials = (p.name || '?').split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase();
-                const avatarContent = p.picture
-                    ? `<img src="${p.picture}" alt="${p.name || ''}">`
-                    : initials;
-                html += `<div class="sidebar-profile-item ${isActive ? 'active' : ''}" onclick="switchProfile('${p.linkedinId}')">
-                    <div class="sidebar-profile-avatar-sm">${avatarContent}</div>
-                    <span class="sidebar-profile-name">${p.name || 'Unknown'}</span>
-                    ${isActive ? '<span class="sidebar-profile-badge">&#9679;</span>' : ''}
-                </div>`;
+            // Sync the THEME toggle with current dark-mode state.
+            const isDark = document.documentElement.classList.contains('dark-mode');
+            document.querySelectorAll('.user-menu-theme-btn').forEach(btn => {
+                btn.classList.toggle('selected',
+                    (btn.dataset.theme === 'dark' && isDark) ||
+                    (btn.dataset.theme === 'light' && !isDark));
             });
-            container.innerHTML = html;
+        }
+
+        function setSidebarTheme(theme) {
+            const enabled = theme === 'dark';
+            try { toggleDarkMode(enabled); } catch {}
+            const cb = document.getElementById('darkModeToggle');
+            if (cb) cb.checked = enabled;
+            document.querySelectorAll('.user-menu-theme-btn').forEach(btn => {
+                btn.classList.toggle('selected', btn.dataset.theme === theme);
+            });
         }
 
         async function switchProfile(linkedinId) {
@@ -8101,7 +8867,7 @@
                     const data = await res.json();
                     currentUser = data.user;
                     profilesData.activeProfileId = linkedinId;
-                    renderProfilesList();
+                    renderUserMenu();
                     updateUserUI();
                     loadQueue();
                     updateCreditsPopup();
@@ -8114,13 +8880,41 @@
         function updateUserUI() {
             if (!currentUser) return;
             document.getElementById('sidebarName').textContent = currentUser.name || '';
-            document.getElementById('sidebarHandle').textContent = '@' + (currentUser.name || '').toLowerCase().replace(/\s+/g, '');
+            document.getElementById('sidebarHandle').textContent = _handleFromName(currentUser.name);
             const avatarEl = document.getElementById('sidebarAvatar');
             if (currentUser.picture) {
                 avatarEl.innerHTML = `<img src="${currentUser.picture}" alt="${currentUser.name}">`;
             } else {
-                avatarEl.textContent = (currentUser.name || '?').split(' ').map(n => n[0]).join('').toUpperCase();
+                avatarEl.textContent = _initials(currentUser.name);
             }
+
+            // Plan badge on the bottom user button (PRO / ULTRA / ADVANCED / FREE / TEAM).
+            const planEl = document.getElementById('sidebarPlan');
+            if (planEl) {
+                const planRaw = String(
+                    currentUser.planTier || currentUser.plan || ''
+                ).toLowerCase();
+                let planLabel = '';
+                let planClass = '';
+                if (planRaw.includes('ultra'))         { planLabel = 'ULTRA';    planClass = 'plan-ultra'; }
+                else if (planRaw.includes('advanced')) { planLabel = 'ADVANCED'; planClass = 'plan-advanced'; }
+                else if (planRaw.includes('pro'))      { planLabel = 'PRO';      planClass = 'plan-pro'; }
+                else if (planRaw.includes('team'))     { planLabel = 'TEAM';     planClass = 'plan-team'; }
+                else if (planRaw && !planRaw.includes('free') && !planRaw.includes('trial')) {
+                    planLabel = planRaw.toUpperCase();
+                    planClass = 'plan-pro';
+                }
+                planEl.className = 'sidebar-user-plan ' + planClass;
+                if (planLabel) {
+                    planEl.textContent = planLabel;
+                    planEl.style.display = '';
+                } else {
+                    planEl.textContent = '';
+                    planEl.style.display = 'none';
+                }
+            }
+
+            renderUserMenu();
         }
 
         async function showAddAccountModal() {
@@ -8989,25 +9783,114 @@
             } catch {}
         }
 
-        let creditsData = { planTier: 'pro', planName: 'SuperLinkedIn Pro', creditPeriod: 'month', aiCreditsTotal: 500, aiCreditsUsed: 0, aiCreditsRemaining: 500, maxProfiles: 3 };
+        let creditsData = {
+            planTier: 'pro', planName: 'SuperLinkedIn Pro', creditPeriod: 'month',
+            aiCreditsTotal: 500, aiCreditsUsed: 0, aiCreditsRemaining: 500, maxProfiles: 3,
+            bonusCreditsOneTime: 0, missionsCompleted: false,
+            engageQuota: 40, engageUsed: 0, engageRemaining: 40,
+            postsPerMonth: null, postsUsed: null, postsRemaining: null,
+            onTrial: false, trialExpired: false, trialEndsAt: null,
+            nextAiCreditResetAt: null, nextQuotaResetAt: null,
+        };
+
+        function formatCreditsResetCountdown(iso) {
+            if (!iso) return '—';
+            const t = new Date(iso).getTime();
+            const diff = t - Date.now();
+            if (isNaN(diff) || diff <= 0) return 'soon';
+            const h = Math.floor(diff / 3600000);
+            const m = Math.floor((diff % 3600000) / 60000);
+            const d = Math.floor(diff / 86400000);
+            if (d >= 2) return d + 'd';
+            if (h >= 24) return Math.floor(h / 24) + 'd';
+            if (h > 0) return h + 'h ' + m + 'm';
+            return Math.max(1, m) + 'm';
+        }
+
+        function formatQuotaDays(iso) {
+            if (!iso) return '—';
+            const diff = new Date(iso).getTime() - Date.now();
+            if (isNaN(diff) || diff <= 0) return '0d';
+            return Math.ceil(diff / 86400000) + 'd';
+        }
 
         async function updateCreditsPopup() {
             try {
                 const res = await fetch('/api/credits');
-                if (res.ok) creditsData = await res.json();
+                if (res.ok) {
+                    creditsData = await res.json();
+                    if (Array.isArray(creditsData.features)) _userFeatures = creditsData.features;
+                    updateNavLocks();
+                }
             } catch {}
 
-            const published = queue.filter(q => q.status === 'posted').length;
-            const periodLabel = creditsData.creditPeriod === 'trial' ? ' (trial)' : (creditsData.creditPeriod === 'day' ? '/day' : '/month');
+            const period = creditsData.creditPeriod || 'month';
+            const limitLabelEl = document.getElementById('creditsLimitLabel');
+            if (limitLabelEl) {
+                if (period === 'day') limitLabelEl.textContent = 'Daily limit';
+                else if (period === 'trial') limitLabelEl.textContent = 'Trial allowance';
+                else limitLabelEl.textContent = 'Monthly limit';
+            }
+            const usedLabelEl = document.getElementById('creditsUsedLabel');
+            if (usedLabelEl) {
+                if (period === 'day') usedLabelEl.textContent = 'Used today';
+                else if (period === 'trial') usedLabelEl.textContent = 'Used';
+                else usedLabelEl.textContent = 'Used this month';
+            }
 
             document.getElementById('creditsCount').textContent = creditsData.aiCreditsRemaining;
-            document.getElementById('popupDailyLimit').textContent = creditsData.aiCreditsTotal + periodLabel;
+            document.getElementById('popupDailyLimit').textContent = creditsData.aiCreditsTotal;
             document.getElementById('popupUsedToday').textContent = creditsData.aiCreditsUsed;
             document.getElementById('popupCreditsTotal').textContent = creditsData.aiCreditsRemaining;
-            document.getElementById('creditsAIPosts').textContent = creditsData.aiCreditsUsed + ' / ' + creditsData.aiCreditsTotal;
-            document.getElementById('creditsAnalytics').textContent = creditsData.aiCreditsRemaining;
-            document.getElementById('creditsPublished').textContent = published;
-            document.getElementById('creditsAIWriter').textContent = creditsData.planName + ' (' + creditsData.maxProfiles + ' profiles)';
+
+            const bonus = creditsData.bonusCreditsOneTime || 0;
+            const bonusRow = document.getElementById('creditsBonusRow');
+            const bonusEl = document.getElementById('popupBonusCredits');
+            if (bonusRow && bonusEl) {
+                if (bonus > 0) {
+                    bonusRow.style.display = 'flex';
+                    bonusEl.textContent = '+' + bonus;
+                } else {
+                    bonusRow.style.display = 'none';
+                }
+            }
+
+            document.getElementById('popupCreditsResetIn').textContent =
+                formatCreditsResetCountdown(creditsData.nextAiCreditResetAt);
+
+            const egU = document.getElementById('popupEngageUsed');
+            const egR = document.getElementById('popupEngageRemaining');
+            const engageCap = creditsData.engageQuota ?? 0;
+            const engageUsed = creditsData.engageUsed ?? 0;
+            const engageRem = creditsData.engageRemaining ?? Math.max(0, engageCap - engageUsed);
+            if (egU) egU.textContent = engageUsed + ' / ' + engageCap;
+            if (egR) egR.textContent = String(engageRem);
+            document.getElementById('popupEngageReset').textContent = formatQuotaDays(creditsData.nextQuotaResetAt);
+
+            const postCap = creditsData.postsPerMonth;
+            const postSection = document.getElementById('creditsPostSection');
+            const postDivider = document.getElementById('creditsPostSectionDivider');
+            if (postSection && postDivider) {
+                if (postCap != null && creditsData.postsUsed != null && creditsData.postsRemaining != null) {
+                    postDivider.style.display = '';
+                    postSection.style.display = '';
+                    document.getElementById('popupPostsUsed').textContent =
+                        creditsData.postsUsed + ' / ' + postCap;
+                    document.getElementById('popupPostsRemaining').textContent = String(creditsData.postsRemaining);
+                    document.getElementById('popupPostsReset').textContent = formatQuotaDays(creditsData.nextQuotaResetAt);
+                } else {
+                    postDivider.style.display = 'none';
+                    postSection.style.display = 'none';
+                }
+            }
+
+            const trialNote = document.getElementById('creditsTrialNote');
+            if (trialNote) {
+                trialNote.style.display = (creditsData.onTrial && !creditsData.trialExpired) ? '' : 'none';
+            }
+
+            const heading = document.getElementById('creditsPopupAiHeading');
+            if (heading) heading.textContent = 'Credits for AI-powered features';
 
             // Show trial banner
             let trialBanner = document.getElementById('trialBanner');
@@ -9052,11 +9935,24 @@
         const ENGAGE_TABS = { discover: { gate: null }, mentions: { gate: 'engage_engine' }, engagereplies: { gate: 'engage_engine' }, autoengage: { gate: 'auto_repost' } };
         let _currentEngageTab = 'discover';
 
+        function navGatedEngageNav(tab) {
+            if (!ENGAGE_TABS[tab]) {
+                showPage('engage');
+                return;
+            }
+            const cfg = ENGAGE_TABS[tab];
+            if (cfg.gate && Array.isArray(_userFeatures) && !_userFeatures.includes(cfg.gate)) {
+                showUpgradeRequiredModal();
+                return;
+            }
+            showPage(tab);
+        }
+
         function switchEngageTab(tab, opts) {
             if (!ENGAGE_TABS[tab]) tab = 'discover';
             const cfg = ENGAGE_TABS[tab];
             if (cfg.gate && Array.isArray(_userFeatures) && !_userFeatures.includes(cfg.gate)) {
-                showNotify('Upgrade Required', 'This feature requires an upgraded plan. Visit Account Settings > Plans to upgrade.', 'warning');
+                showUpgradeRequiredModal();
                 return;
             }
 
@@ -11683,11 +12579,9 @@
         let carouselSlides = [];
 
         function handleCarouselNav() {
-            const features = creditsData.features || [];
+            const features = creditsData.features || _userFeatures || [];
             if (!features.includes('carousel')) {
-                showPage('carousel');
-                document.getElementById('carouselUpgradeOverlay').style.display = '';
-                document.getElementById('carouselCreatorContent').style.display = 'none';
+                showUpgradeRequiredModal();
                 return;
             }
             showPage('carousel');
@@ -11696,9 +12590,20 @@
         }
 
         function updateCarouselNavLock() {
-            const features = creditsData.features || [];
+            const features = creditsData.features || _userFeatures || [];
             const lockIcon = document.getElementById('carouselLockIcon');
-            if (lockIcon) lockIcon.style.display = features.includes('carousel') ? 'none' : 'inline-flex';
+            const nav = document.getElementById('navCarousel');
+            const locked = !features.includes('carousel');
+            if (lockIcon) lockIcon.style.display = locked ? 'inline-flex' : 'none';
+            if (nav) {
+                if (locked) {
+                    nav.classList.add('nav-item-gated');
+                    nav.setAttribute('aria-label', 'Carousel, upgrade required to unlock');
+                } else {
+                    nav.classList.remove('nav-item-gated');
+                    nav.removeAttribute('aria-label');
+                }
+            }
         }
 
         async function generateCarouselSlides() {
