@@ -1323,26 +1323,90 @@ const POSTS_REF = [
     { body: "<p>Starting a business can be painful.</p><p>You feel lost 97% of the time – the ups and downs are gut-wrenching.</p><p>I wish I had a cheat sheet of principles for my first startup.</p><p>So I wrote one.</p><p>Here are 40+ learnings about entrepreneurship that took me 10 years to figure out:</p>" },
 ];
 
+function plainTextFromOnboardingPostHtml(html) {
+    return String(html || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+function likedOnboardingBodiesFromWritingDNA(writingDNA) {
+    const rows = Array.isArray(writingDNA) ? writingDNA : [];
+    return rows.map((p) => {
+        const ref = POSTS_REF[p.index];
+        return ref ? plainTextFromOnboardingPostHtml(ref.body) : '';
+    }).filter(Boolean);
+}
+
+/** One-time onboarding: distill liked sample posts into a reusable style directive for downstream post AI */
+async function synthesizeOnboardingAiWritingStylePrompt(apiKey, writingDNA) {
+    const bodies = likedOnboardingBodiesFromWritingDNA(writingDNA);
+    if (!bodies.length) return '';
+
+    const postsBlock = bodies.map((b, i) => `---\nSample ${i + 1}:\n${b}`).join('\n');
+    try {
+        const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: 'gpt-4o-mini',
+                temperature: 0.35,
+                max_tokens: 500,
+                messages: [
+                    {
+                        role: 'system',
+                        content: [
+                            'You analyze LinkedIn-style posts a new creator liked during onboarding.',
+                            'Produce a compact style guide another AI must follow when drafting LinkedIn posts in this person\'s voice.',
+                            '',
+                            'Output:',
+                            '- Short bullets and tight sentences only (stay under ~1800 characters).',
+                            '- Cover tone, rhythm, paragraphing, hooks/closings, lists vs prose, vulnerability, humor, questions, framing, formatting habits (line breaks), and thematic leanings.',
+                            '- Generalize patterns only — do NOT copy recognizable phrases from the samples.',
+                            '- Do not say "onboarding", "samples", or "the user liked".',
+                            '- Output ONLY the style guide text.',
+                        ].join('\n'),
+                    },
+                    { role: 'user', content: `Posts they preferred (plain text):\n\n${postsBlock}` },
+                ],
+            }),
+        });
+        const data = await aiRes.json();
+        let text = (data.choices?.[0]?.message?.content || '').trim();
+        if (text.length > 2500) text = text.slice(0, 2497) + '...';
+        return text;
+    } catch (err) {
+        console.error('[onboarding] synthesize aiWritingStylePrompt failed:', err.message);
+        return '';
+    }
+}
+
 app.post('/api/onboarding/writing-dna', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
 
-    const { likedPosts } = req.body;
-    req.session.user.writingDNA = likedPosts || [];
+    const likedPosts = Array.isArray(req.body.likedPosts) ? req.body.likedPosts : [];
+    req.session.user.writingDNA = likedPosts;
 
-    const allTags = (likedPosts || []).flatMap(p => p.tags || []);
+    const allTags = likedPosts.flatMap(p => p.tags || []);
     const tagCounts = {};
     allTags.forEach(tag => { tagCounts[tag] = (tagCounts[tag] || 0) + 1; });
     req.session.user.writingProfile = tagCounts;
 
+    let aiWritingStylePrompt = '';
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (likedPosts.length && apiKey && apiKey !== 'sk-your-openai-api-key-here') {
+        aiWritingStylePrompt = await synthesizeOnboardingAiWritingStylePrompt(apiKey, likedPosts);
+    }
+
+    req.session.user.aiWritingStylePrompt = aiWritingStylePrompt;
+
     await dbUpdateFields(req.session.user.linkedinId, {
         writingDNA: req.session.user.writingDNA,
         writingProfile: tagCounts,
+        aiWritingStylePrompt,
     });
 
-    console.log(`Writing DNA saved for ${req.session.user.name}:`, tagCounts);
-    res.json({ success: true, profile: tagCounts });
+    console.log(`Writing DNA saved for ${req.session.user.name}:`, tagCounts, aiWritingStylePrompt ? `(style prompt ${aiWritingStylePrompt.length} chars)` : '(no style prompt)');
+    res.json({ success: true, profile: tagCounts, aiWritingStylePrompt: !!aiWritingStylePrompt });
 });
 
 app.post('/api/onboarding/creators', async (req, res) => {
@@ -1478,13 +1542,15 @@ app.post('/api/onboarding/profile', async (req, res) => {
     res.json({ success: true });
 });
 
-app.get('/api/onboarding/writing-dna', (req, res) => {
+app.get('/api/onboarding/writing-dna', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
+    const db = await dbGetUser(req.session.user.linkedinId) || {};
     res.json({
-        writingDNA: req.session.user.writingDNA || [],
-        writingProfile: req.session.user.writingProfile || {},
+        writingDNA: db.writingDNA || req.session.user.writingDNA || [],
+        writingProfile: db.writingProfile || req.session.user.writingProfile || {},
+        hasAiWritingStyle: !!(db.aiWritingStylePrompt && String(db.aiWritingStylePrompt).trim()),
     });
 });
 
@@ -1718,6 +1784,24 @@ app.post('/api/publish-with-image', upload.single('image'), async (req, res) => 
 
 // ---------- AI & QUEUE ----------
 
+async function hydrateSessionUserFromDb(sessionUser) {
+    if (!sessionUser || !sessionUser.linkedinId) return sessionUser;
+    const dbUser = await dbGetUser(sessionUser.linkedinId);
+    if (!dbUser) return sessionUser;
+    return { ...sessionUser, ...dbUser };
+}
+
+/** Prefer GPT-distilled onboarding style; fall back to raw liked post excerpts */
+function onboardingStyleInjectionForAi(user, rawSnippetLimit = 5) {
+    const condensed = (user.aiWritingStylePrompt || '').trim();
+    if (condensed) {
+        return `\n\nONBOARDING WRITING STYLE (match this author's voice and structure):\n${condensed}`;
+    }
+    const raw = likedOnboardingBodiesFromWritingDNA(user.writingDNA || []).slice(0, rawSnippetLimit);
+    if (!raw.length) return '';
+    return `\n\nWRITING DNA: The user liked these sample posts during onboarding. Use them as reference for the user's preferred writing style, tone, structure, and format:\n${raw.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
+}
+
 app.post('/api/ai/generate-posts', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
@@ -1733,17 +1817,13 @@ app.post('/api/ai/generate-posts', async (req, res) => {
         return res.json({ posts: [] });
     }
 
-    const user = req.session.user;
+    const user = await hydrateSessionUserFromDb(req.session.user);
     const writingProfile = user.writingProfile || {};
     const topTags = Object.entries(writingProfile).sort((a, b) => b[1] - a[1]).map(e => e[0]).slice(0, 5);
     const aboutYou = user.aboutYou || '';
 
     const creators = (user.favoriteCreators || []).map(c => c.name).filter(Boolean);
-    const writingDNA = user.writingDNA || [];
-    const likedPostBodies = writingDNA.map(p => {
-        const post = POSTS_REF[p.index];
-        return post ? post.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : null;
-    }).filter(Boolean).slice(0, 5);
+    const onboardingStyle = onboardingStyleInjectionForAi(user, 5);
 
     const customRules = user.customRules || '';
     const interests = (user.interests || []).join(', ');
@@ -1773,7 +1853,7 @@ app.post('/api/ai/generate-posts', async (req, res) => {
     }
 
     if (creators.length) systemPrompt += `\n\nWRITING STYLE: Study and mimic the writing style of these LinkedIn creators the user admires: ${creators.join(', ')}. Write as if the user were influenced by their voice, structure, and tone.`;
-    if (likedPostBodies.length) systemPrompt += `\n\nWRITING DNA: The user liked these sample posts during onboarding. Use them as reference for the user's preferred writing style, tone, structure, and format:\n${likedPostBodies.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
+    if (onboardingStyle) systemPrompt += onboardingStyle;
     if (products.length) systemPrompt += `\n\nPRODUCT PROMOTION: The user has these products/services. Naturally weave mentions or value propositions of these into the posts where relevant (not every post needs to mention them, but at least one should):\n${productsList}`;
 
     systemPrompt += `\n\nIMPORTANT: Each post MUST be directly inspired by its corresponding inspiration post below. Take the core idea, theme, or message from each inspiration and rewrite it in the user's own voice and style. The connection between the inspiration and the generated post must be obvious.`;
@@ -1866,10 +1946,11 @@ async function resolveUserFromReq(req) {
 }
 
 app.post('/api/ai/write', async (req, res) => {
-    const user = await resolveUserFromReq(req);
+    let user = await resolveUserFromReq(req);
     if (!user) {
         return res.status(401).json({ error: 'Not authenticated' });
     }
+    user = await hydrateSessionUserFromDb(user);
 
     const fakeSession = { user };
     const credits = await getCreditsForSession(fakeSession);
@@ -1888,11 +1969,7 @@ app.post('/api/ai/write', async (req, res) => {
     const aboutYou = user.aboutYou || '';
 
     const creators = (user.favoriteCreators || []).map(c => c.name).filter(Boolean);
-    const writingDNA = user.writingDNA || [];
-    const likedPostBodies = writingDNA.map(p => {
-        const post = POSTS_REF[p.index];
-        return post ? post.body.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim() : null;
-    }).filter(Boolean).slice(0, 3);
+    const onboardingStyle = onboardingStyleInjectionForAi(user, 3);
 
     const products = (user.products || []).filter(p => p.name || p.description);
     const productsList = products.map(p => {
@@ -1930,7 +2007,7 @@ app.post('/api/ai/write', async (req, res) => {
     }
 
     if (creators.length) systemContent += `\n\nWRITING STYLE: Mimic the writing style of these LinkedIn creators: ${creators.join(', ')}. Match their voice, structure, and tone.`;
-    if (likedPostBodies.length) systemContent += `\n\nWRITING DNA: Use these posts the user liked as reference for their preferred style:\n${likedPostBodies.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
+    if (onboardingStyle) systemContent += onboardingStyle;
     if (products.length) systemContent += `\n\nPRODUCT PROMOTION: Naturally weave in the user's product/service where relevant: ${productsList}`;
 
     const topicHint = extPrompt ? `\nTopic/prompt from user: ${extPrompt}` : '';
@@ -1986,7 +2063,7 @@ app.post('/api/ai/generate-product-posts', async (req, res) => {
         return res.json({ posts: [] });
     }
 
-    const user = req.session.user;
+    const user = await hydrateSessionUserFromDb(req.session.user);
     const aboutYou = user.aboutYou || '';
     const products = (user.products || []).filter(p => p.name || p.description);
 
@@ -2002,9 +2079,11 @@ app.post('/api/ai/generate-product-posts', async (req, res) => {
 
     const customRules = user.customRules || '';
     const creators = (user.favoriteCreators || []).map(c => c.name).filter(Boolean);
+    const onboardingStyle = onboardingStyleInjectionForAi(user, 5);
 
     let systemPrompt = `You are a LinkedIn content strategist specializing in product marketing. Generate 3 unique LinkedIn posts that promote the user's products/services in a natural, value-driven way. Each post should feel like genuine advice or a story, not a hard sell. Return ONLY a JSON array of 3 strings.`;
     if (creators.length) systemPrompt += `\n\nWRITING STYLE: Mimic the style of: ${creators.join(', ')}.`;
+    if (onboardingStyle) systemPrompt += onboardingStyle;
     if (customRules) {
         systemPrompt += `\n\nMANDATORY RULES (override everything else):\n${customRules}`;
         const cm = customRules.match(/(\d+)\s*char/i);
@@ -2257,7 +2336,7 @@ app.post('/api/ai/generate-carousel', async (req, res) => {
     const { topic, slideCount = 8, style = 'professional' } = req.body;
     if (!topic) return res.status(400).json({ error: 'Topic is required' });
 
-    const user = req.session.user;
+    const user = await hydrateSessionUserFromDb(req.session.user);
     const aboutYou = user.aboutYou || '';
     const customRules = user.customRules || '';
 
@@ -2270,6 +2349,7 @@ app.post('/api/ai/generate-carousel', async (req, res) => {
 
     const styleGuide = styleDescriptions[style] || styleDescriptions.professional;
     const count = Math.min(Math.max(parseInt(slideCount) || 8, 4), 15);
+    const onboardCarouselStyle = onboardingStyleInjectionForAi(user, 5);
 
     const systemPrompt = `You are a LinkedIn carousel content expert. Create a ${count}-slide carousel about the given topic.
 
@@ -2285,7 +2365,7 @@ Slide structure:
 
 Style: ${styleGuide}
 ${customRules ? `\nUser rules: ${customRules}` : ''}
-${aboutYou ? `\nAbout the author: ${aboutYou}` : ''}
+${aboutYou ? `\nAbout the author: ${aboutYou}` : ''}${onboardCarouselStyle || ''}
 
 Return ONLY the JSON array, no markdown, no explanation.`;
 
@@ -4072,6 +4152,7 @@ app.post('/api/bulk-dms/ai-generate', async (req, res) => {
     };
     const toneLine = toneMap[tone] || toneMap.auto;
     const senderName = (user.name || req.session.user.name || 'there').trim();
+    const dmOnboardingStyle = onboardingStyleInjectionForAi(user, 3);
 
     const systemPrompt = `You write LinkedIn direct message TEMPLATES for bulk personalized outreach. Output ONLY the message body text — no title, no quotation marks, no markdown code fences.
 
@@ -4083,7 +4164,7 @@ Keep the message at or under ${BULK_DM_MAX_LENGTH} characters. Avoid hashtags un
 
 Tone: ${toneLine}.
 You are writing AS: ${senderName}.
-${aboutYou ? `About the sender: ${aboutYou}\n` : ''}${interests ? `Topics/interests: ${interests}\n` : ''}${customRules ? `User rules (follow when compatible): ${customRules}\n` : ''}
+${aboutYou ? `About the sender: ${aboutYou}\n` : ''}${interests ? `Topics/interests: ${interests}\n` : ''}${customRules ? `User rules (follow when compatible): ${customRules}\n` : ''}${dmOnboardingStyle ? `${dmOnboardingStyle.replace(/^\n+/, '')}\n` : ''}
 Make it read naturally when [first_name], [full_name], and [handle] are replaced per recipient.`;
 
     try {

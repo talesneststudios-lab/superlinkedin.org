@@ -244,33 +244,37 @@ function renderFollowerChart(history) {
 
 async function aiAction(type) {
     const textarea = document.getElementById('aiTextarea');
-    const resultDiv = document.getElementById('aiResult');
-    const resultText = document.getElementById('aiResultText');
     const loadingDiv = document.getElementById('aiLoading');
+    const loadingLabel = document.getElementById('aiLoadingLabel');
+    const statusEl = document.getElementById('aiAssistStatus');
     const text = textarea.value.trim();
+
+    if (statusEl) statusEl.textContent = '';
 
     if (type !== 'generate' && !text) {
         textarea.style.borderColor = '#ef4444';
-        setTimeout(() => textarea.style.borderColor = '', 2000);
+        setTimeout(() => { textarea.style.borderColor = ''; }, 2000);
         return;
     }
 
-    resultDiv.style.display = 'none';
     loadingDiv.style.display = 'flex';
+    if (loadingLabel) loadingLabel.textContent = type === 'generate' ? 'Generating...' : 'Improving...';
+    textarea.setAttribute('aria-busy', 'true');
 
     try {
         const { authToken } = await chrome.storage.local.get('authToken');
         if (!authToken) {
             loadingDiv.style.display = 'none';
-            resultDiv.style.display = 'block';
-            resultText.textContent = 'Please connect your account first.';
+            textarea.removeAttribute('aria-busy');
+            if (statusEl) statusEl.textContent = 'Please connect your account first.';
             return;
         }
 
         const endpoint = type === 'generate' ? '/api/ai/write' : '/api/ai/improve';
+        const improveAction = type === 'improve' ? 'engaging' : type;
         const body = type === 'generate'
-            ? { prompt: text || 'Write me an engaging LinkedIn post about professional growth' }
-            : { text, style: type };
+            ? { tone: 'auto', prompt: text || 'Write me an engaging LinkedIn post about professional growth' }
+            : { text, action: improveAction };
 
         const res = await fetch(`${API_BASE}${endpoint}`, {
             method: 'POST',
@@ -283,21 +287,36 @@ async function aiAction(type) {
 
         const data = await res.json();
         loadingDiv.style.display = 'none';
-        resultDiv.style.display = 'block';
-        resultText.textContent = data.text || data.result || data.error || 'No result';
+        textarea.removeAttribute('aria-busy');
+
+        // /api/ai/write returns { post }; /api/ai/improve returns { text }
+        const generated = (data.post || data.text || data.result || '').trim();
+        const errMsg = (data.error || '').trim();
+
+        if (generated) {
+            textarea.value = generated;
+            if (statusEl) statusEl.textContent = errMsg || '';
+            textarea.focus();
+        } else if (errMsg) {
+            if (statusEl) statusEl.textContent = errMsg;
+        } else {
+            if (statusEl) statusEl.textContent = 'No result returned. Try again.';
+        }
     } catch (err) {
         loadingDiv.style.display = 'none';
-        resultDiv.style.display = 'block';
-        resultText.textContent = 'Error: Could not connect to server.';
+        textarea.removeAttribute('aria-busy');
+        if (statusEl) statusEl.textContent = 'Could not reach the server. Check your connection and try again.';
     }
 }
 
 function copyAiResult() {
-    const text = document.getElementById('aiResultText').textContent;
+    const text = document.getElementById('aiTextarea').value;
     navigator.clipboard.writeText(text).then(() => {
-        const btn = document.querySelector('.ai-btn.small');
-        btn.textContent = 'Copied!';
-        setTimeout(() => btn.innerHTML = '&#128203; Copy', 1500);
+        const btn = document.getElementById('btnAiCopy');
+        const prev = btn.innerHTML;
+        btn.innerHTML = '&#10003;';
+        btn.title = 'Copied';
+        setTimeout(() => { btn.innerHTML = prev; btn.title = 'Copy post'; }, 1500);
     });
 }
 

@@ -382,14 +382,13 @@
         }
         .sidebar-create-btn-icon:hover { background: var(--accent-hover); }
 
-        /* Sidebar collapse toggle button — tab handle sticking out the right edge */
-        .sidebar-user-row {
-            display: flex;
-            align-items: center;
-            gap: 4px;
+        /* Sidebar collapse toggle — tab handle beside Learn/Help & Referral (not user row) */
+        .sidebar-links-wrap {
             position: relative;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255,255,255,0.06);
         }
-        .sidebar-user-row .sidebar-user { flex: 1; min-width: 0; }
         .sidebar-toggle {
             position: absolute;
             right: -28px;
@@ -1351,13 +1350,63 @@
         .discover-topic-chip {
             display: inline-flex;
             align-items: center;
-            gap: 4px;
-            padding: 4px 10px;
+            gap: 2px;
+            padding: 3px 4px 3px 10px;
             background: rgba(10,102,194,0.12);
             color: var(--accent);
             border-radius: 999px;
             font-size: 0.78rem;
             font-weight: 600;
+        }
+        .discover-topic-chip-label {
+            line-height: 1.35;
+            padding: 2px 0;
+        }
+        .discover-topic-chip-remove {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            margin: 0;
+            padding: 0;
+            border: none;
+            border-radius: 50%;
+            background: transparent;
+            color: inherit;
+            font-size: 14px;
+            line-height: 1;
+            font-weight: 700;
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.12s ease, background 0.12s ease, color 0.12s ease, visibility 0.12s;
+        }
+        .discover-topic-chip:hover .discover-topic-chip-remove,
+        .discover-topic-chip:focus-within .discover-topic-chip-remove {
+            opacity: 1;
+            visibility: visible;
+        }
+        .discover-topic-chip-remove:hover {
+            background: rgba(239,68,68,0.22);
+            color: #ef4444;
+        }
+        .discover-topic-chip-remove:focus-visible {
+            opacity: 1;
+            visibility: visible;
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
+        }
+        /* Touch devices: keep remove control reachable without hover */
+        @media (hover: none), (pointer: coarse) {
+            .discover-topic-chip-remove {
+                opacity: 0.65;
+                visibility: visible;
+            }
+            .discover-topic-chip-remove:active {
+                opacity: 1;
+            }
         }
         .discover-topics-edit-btn {
             padding: 6px 12px;
@@ -1991,10 +2040,10 @@
         .sidebar-user-name { font-size: 0.78rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .sidebar-user-handle { font-size: 0.68rem; color: var(--sidebar-text); }
 
-        .sidebar-links {
-            padding: 10px 0 0;
-            margin-top: 10px;
-            border-top: 1px solid rgba(255,255,255,0.06);
+        .sidebar-links-wrap .sidebar-links {
+            padding: 0;
+            margin: 0;
+            border-top: none;
         }
 
         .sidebar-link {
@@ -2110,6 +2159,168 @@
         }
 
         .modal-overlay.hidden { display: none; }
+
+        /* Engage — first-use acknowledgement */
+        .engage-disclaimer-modal.modal {
+            max-width: 480px;
+            padding: 28px 26px 26px;
+        }
+        .engage-disclaimer-head {
+            padding-right: 28px;
+            margin-bottom: 12px;
+        }
+        .engage-disclaimer-title {
+            font-size: 1.28rem;
+            font-weight: 800;
+            color: var(--text-primary);
+            line-height: 1.25;
+            margin: 0 0 10px;
+            text-align: left !important;
+        }
+        .engage-disclaimer-intro {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            margin: 0;
+            text-align: left;
+        }
+        .engage-disclaimer-warn {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.38);
+            border-radius: 12px;
+            padding: 14px 14px;
+            margin-bottom: 18px;
+        }
+        .engage-disclaimer-warn-icon {
+            flex-shrink: 0;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: rgba(245, 158, 11, 0.25);
+            color: #d97706;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 1rem;
+            line-height: 1;
+        }
+        .engage-disclaimer-warn-text {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            line-height: 1.55;
+            font-weight: 600;
+            margin: 0;
+        }
+        .engage-disclaimer-list {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            line-height: 1.65;
+            padding-left: 22px;
+            margin: 0 0 22px;
+            text-align: left;
+        }
+        .engage-disclaimer-list li { margin-bottom: 8px; }
+        .engage-disclaimer-list li:last-child { margin-bottom: 0; }
+
+        /* CRM (DM / Bulk DM) — first-use messaging disclaimer (dark panel) */
+        #crmDisclaimerModal.modal-overlay {
+            background: rgba(0, 0, 0, 0.72) !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-modal.modal {
+            max-width: 460px !important;
+            padding: 28px 26px 24px !important;
+            background: #1e1b1a !important;
+            border: 1px solid #3f3834 !important;
+            border-radius: 16px !important;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45) !important;
+        }
+        #crmDisclaimerModal .modal-close {
+            color: #a8a29e !important;
+        }
+        #crmDisclaimerModal .modal-close:hover {
+            color: #f5f5f4 !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-head {
+            padding-right: 28px !important;
+            margin-bottom: 14px !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-title {
+            font-size: 1.32rem !important;
+            font-weight: 800 !important;
+            color: #fafaf9 !important;
+            margin: 0 0 10px !important;
+            text-align: left !important;
+            line-height: 1.25 !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-intro {
+            font-size: 0.92rem !important;
+            color: #a8a29e !important;
+            margin: 0 !important;
+            line-height: 1.55 !important;
+            text-align: left !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-warn {
+            display: flex !important;
+            gap: 12px !important;
+            align-items: flex-start !important;
+            background: #362f2a !important;
+            border: 1px solid #5c4518 !important;
+            border-radius: 12px !important;
+            padding: 14px !important;
+            margin-bottom: 18px !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-warn-icon {
+            flex-shrink: 0 !important;
+            width: 28px !important;
+            height: 28px !important;
+            border-radius: 50% !important;
+            background: rgba(251, 191, 36, 0.2) !important;
+            color: #fbbf24 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            font-weight: 900 !important;
+            font-size: 1rem !important;
+            line-height: 1 !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-warn-text {
+            flex: 1 !important;
+            font-size: 0.9rem !important;
+            color: #fde68a !important;
+            font-weight: 600 !important;
+            line-height: 1.5 !important;
+            margin: 0 !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-list {
+            margin: 0 0 24px !important;
+            padding-left: 22px !important;
+            font-size: 0.89rem !important;
+            color: #a8a29e !important;
+            line-height: 1.65 !important;
+            text-align: left !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-list li {
+            margin-bottom: 10px !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-btn {
+            width: 100% !important;
+            padding: 14px 18px !important;
+            background: #ffffff !important;
+            color: #0a0a0a !important;
+            border: none !important;
+            border-radius: 999px !important;
+            font-family: inherit !important;
+            font-weight: 800 !important;
+            font-size: 0.95rem !important;
+            cursor: pointer !important;
+        }
+        #crmDisclaimerModal .crm-disclaimer-btn:hover {
+            filter: brightness(0.94) !important;
+        }
 
         .modal {
             background: var(--bg-white);
@@ -5046,7 +5257,6 @@
                     </div>
                 </div>
             </div>
-            <div class="sidebar-user-row">
             <div class="sidebar-user" onclick="this.classList.toggle('menu-open')">
                 <div class="sidebar-user-avatar" id="sidebarAvatar"></div>
                 <div class="sidebar-user-info">
@@ -5104,10 +5314,10 @@
                     </a>
                 </div>
             </div>
+            <div class="sidebar-links-wrap">
             <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar" aria-label="Collapse sidebar">
                 <span class="sidebar-toggle-icon">&#10094;</span>
             </button>
-            </div>
             <div class="sidebar-links">
                 <a class="sidebar-link" data-label="Learn / Help" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='block'?'none':'block'" style="cursor:pointer;"><span class="sidebar-link-icon">&#10067;</span><span class="sidebar-link-label">Learn / Help</span></a>
                 <div class="sidebar-help-submenu" style="display:none;padding:4px 0 4px 20px;">
@@ -5115,6 +5325,7 @@
                     <a class="sidebar-link" href="mailto:info@superlinkedin.org?subject=SuperLinkedIn%20Support%20Request" style="font-size:0.72rem;padding:4px 0;"><span class="sidebar-link-icon">&#128172;</span><span class="sidebar-link-label">Get Support</span></a>
                 </div>
                 <a class="sidebar-link" data-label="Earn 40% Referral" onclick="openReferralPopup()" style="cursor:pointer;"><span class="sidebar-link-icon">&#127873;</span><span class="sidebar-link-label">Earn 40% Referral</span></a>
+            </div>
             </div>
         </div>
     </aside>
@@ -7187,17 +7398,51 @@
         </div>
     </div>
 
-    <!-- ENGAGE COMING SOON MODAL -->
-    <div class="modal-overlay hidden" id="engageDisclaimerModal" onclick="if(event.target===this)document.getElementById('engageDisclaimerModal').classList.add('hidden')">
-        <div class="modal" style="max-width:440px;">
-            <div style="text-align:center;margin-bottom:20px;">
-                <div style="font-size:2.5rem;margin-bottom:12px;" id="engageModalIcon">&#128172;</div>
-                <h2 style="font-size:1.2rem;font-weight:800;margin-bottom:8px;" id="engageModalTitle">Coming Soon</h2>
-                <p style="font-size:0.88rem;color:var(--text-secondary);line-height:1.6;" id="engageModalDesc">This feature is currently under development.</p>
+    <!-- Engage — first-time use acknowledgement -->
+    <div class="modal-overlay hidden" id="engageDisclaimerModal" role="dialog" aria-modal="true" aria-labelledby="engageDisclaimerTitle"
+         onclick="if(event.target===this)cancelEngageDisclaimerModal()">
+        <div class="modal engage-disclaimer-modal" onclick="event.stopPropagation()">
+            <button type="button" class="modal-close" onclick="cancelEngageDisclaimerModal()" aria-label="Close">&times;</button>
+            <div class="engage-disclaimer-head">
+                <h2 class="engage-disclaimer-title" id="engageDisclaimerTitle">Before you use Engage</h2>
+                <p class="engage-disclaimer-intro">Engage helps you draft and post comments and replies using your connected LinkedIn account. By using Discover, Mentions, Replies, or Auto-Engage, you agree to the following:</p>
             </div>
-            <ul style="font-size:0.82rem;color:var(--text-secondary);line-height:1.7;padding-left:20px;margin-bottom:20px;" id="engageModalList"></ul>
-            <p style="font-size:0.82rem;color:var(--text-muted);text-align:center;margin-bottom:18px;">We'll notify you as soon as this feature is available.</p>
-            <button onclick="document.getElementById('engageDisclaimerModal').classList.add('hidden')" style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;transition:background 0.2s;">Got It</button>
+            <div class="engage-disclaimer-warn" role="alert">
+                <span class="engage-disclaimer-warn-icon" aria-hidden="true">!</span>
+                <p class="engage-disclaimer-warn-text">Spammy, automated, or obviously inauthentic activity can lead to action on your LinkedIn account under LinkedIn&rsquo;s Professional Community Policies and automated-abuse rules. You are solely responsible for what you post.</p>
+            </div>
+            <ul class="engage-disclaimer-list">
+                <li>All replies must be genuine, relevant, and written in your own voice.</li>
+                <li>AI-generated suggestions must be reviewed and meaningfully edited before posting. Do not post AI output verbatim, especially across many threads.</li>
+                <li>You will not use unauthorized scripts, bots, or third-party automation alongside Engage in ways that violate LinkedIn&rsquo;s terms.</li>
+                <li>Reply activity may be logged or reviewed. SuperLinkedIn may suspend accounts that show patterns inconsistent with these rules or LinkedIn&rsquo;s policies.</li>
+                <li>Daily and plan-based limits apply to replies and automated actions.</li>
+            </ul>
+            <button type="button" class="engage-disclaimer-accept" onclick="confirmEngageDisclaimerModal()"
+                    style="width:100%;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;">I understand</button>
+        </div>
+    </div>
+
+    <!-- CRM — first-time DM / bulk acknowledgment -->
+    <div class="modal-overlay hidden" id="crmDisclaimerModal" role="dialog" aria-modal="true" aria-labelledby="crmDisclaimerTitle"
+         onclick="if(event.target===this)cancelCrmDisclaimerModal()">
+        <div class="modal engage-disclaimer-modal crm-disclaimer-modal" onclick="event.stopPropagation()">
+            <button type="button" class="modal-close" onclick="cancelCrmDisclaimerModal()" aria-label="Close">&times;</button>
+            <div class="crm-disclaimer-head">
+                <h2 class="crm-disclaimer-title" id="crmDisclaimerTitle">Before you send DMs</h2>
+                <p class="crm-disclaimer-intro">This feature sends or queues messages using your LinkedIn account. Bulk messages are delivered through SuperLinkedIn&rsquo;s paced sender — please review the points below:</p>
+            </div>
+            <div class="crm-disclaimer-warn" role="alert">
+                <span class="crm-disclaimer-warn-icon" aria-hidden="true">!</span>
+                <p class="crm-disclaimer-warn-text">Unwanted or spammy outreach may result in restriction or suspension of your LinkedIn account under LinkedIn&rsquo;s policies. You alone are responsible for every message.</p>
+            </div>
+            <ul class="crm-disclaimer-list">
+                <li>Bulk DM sends from SuperLinkedIn are spaced about <strong style="color:#e7e5e4;">1&ndash;2 minutes apart</strong> to reduce rate-limit risk.</li>
+                <li>Delivery respects LinkedIn&rsquo;s rules and each member&rsquo;s messaging preferences (connections, Message requests, Premium features, Open Profile/InMail).</li>
+                <li>For prospecting outreach, only message people where you have a lawful basis — for example documented consent or a clear expectation of relevance (and never purchased lists scraped without permission).</li>
+                <li>DM and Bulk DM usage counts toward your plan quotas and documented daily/monthly caps.</li>
+            </ul>
+            <button type="button" class="crm-disclaimer-btn" onclick="confirmCrmDisclaimerModal()">I understand</button>
         </div>
     </div>
 
@@ -7208,60 +7453,112 @@
     <script>
         let currentUser = null;
         let queue = [];
-        const ENGAGE_FEATURES = {
-            discover: {
-                icon: '&#128269;',
-                title: 'Discover',
-                desc: 'Browse trending posts from your LinkedIn network. Scroll your LinkedIn feed with the extension active to populate this section.',
-                items: [
-                    'See trending posts and topics from your network',
-                    'Engage directly with AI-powered replies',
-                    'Use popular posts as content inspiration',
-                    'Track what\'s working in your industry',
-                ],
-            },
-            mentions: {
-                icon: '&#128172;',
-                title: 'Mentions Coming Soon',
-                desc: 'The Mentions feature is currently under development. Soon you\'ll be able to:',
-                items: [
-                    'See all posts that mention you in one place',
-                    'Get notified instantly when you\'re tagged',
-                    'Reply to mentions directly from SuperLinkedIn',
-                    'Track mention sentiment and engagement',
-                ],
-            },
-            lists: {
-                icon: '&#128203;',
-                title: 'Lists Coming Soon',
-                desc: 'The Lists feature is currently under development. Soon you\'ll be able to:',
-                items: [
-                    'Create custom lists of LinkedIn connections',
-                    'Organize leads, prospects, and collaborators',
-                    'Track engagement from specific list members',
-                    'Set up automated interactions per list',
-                ],
-            },
-            replies: {
-                icon: '&#128172;',
-                title: 'Replies Coming Soon',
-                desc: 'The Replies feature is currently under development. Soon you\'ll be able to:',
-                items: [
-                    'View and manage all replies to your posts',
-                    'Use AI-powered smart replies to respond faster',
-                    'Filter replies by sentiment and engagement',
-                    'Bulk-reply to drive more conversation',
-                ],
-            },
-        };
+        const ENGAGE_FIRST_USE_KEY = 'superlinkedin_engageFirstUse_v1';
+        let _engageDisclaimerSessionAccepted = false;
+        let _engageDisclaimerPending = null;
 
-        function showEngageDisclaimer(feature) {
-            const cfg = ENGAGE_FEATURES[feature] || ENGAGE_FEATURES.discover;
-            document.getElementById('engageModalIcon').innerHTML = cfg.icon;
-            document.getElementById('engageModalTitle').textContent = cfg.title;
-            document.getElementById('engageModalDesc').textContent = cfg.desc;
-            document.getElementById('engageModalList').innerHTML = cfg.items.map(i => `<li>${i}</li>`).join('');
-            document.getElementById('engageDisclaimerModal').classList.remove('hidden');
+        function hasAcceptedEngageDisclaimer() {
+            if (_engageDisclaimerSessionAccepted) return true;
+            try {
+                return localStorage.getItem(ENGAGE_FIRST_USE_KEY) === '1';
+            } catch {
+                return false;
+            }
+        }
+
+        function persistEngageDisclaimerAcceptance() {
+            try {
+                localStorage.setItem(ENGAGE_FIRST_USE_KEY, '1');
+            } catch {
+                _engageDisclaimerSessionAccepted = true;
+            }
+        }
+
+        function openEngageDisclaimerModal() {
+            const el = document.getElementById('engageDisclaimerModal');
+            if (el) el.classList.remove('hidden');
+        }
+
+        function hideEngageDisclaimerModal() {
+            const el = document.getElementById('engageDisclaimerModal');
+            if (el) el.classList.add('hidden');
+        }
+
+        function requestEngageDisclaimerThen(fn) {
+            if (!fn) return;
+            if (hasAcceptedEngageDisclaimer()) {
+                fn();
+                return;
+            }
+            _engageDisclaimerPending = fn;
+            openEngageDisclaimerModal();
+        }
+
+        function confirmEngageDisclaimerModal() {
+            persistEngageDisclaimerAcceptance();
+            hideEngageDisclaimerModal();
+            const run = _engageDisclaimerPending;
+            _engageDisclaimerPending = null;
+            if (run) run();
+        }
+
+        function cancelEngageDisclaimerModal() {
+            _engageDisclaimerPending = null;
+            hideEngageDisclaimerModal();
+        }
+
+        const CRM_FIRST_USE_KEY = 'superlinkedin_crmFirstUse_v1';
+        let _crmDisclaimerSessionAccepted = false;
+        let _crmDisclaimerPending = null;
+
+        function hasAcceptedCrmDisclaimer() {
+            if (_crmDisclaimerSessionAccepted) return true;
+            try {
+                return localStorage.getItem(CRM_FIRST_USE_KEY) === '1';
+            } catch {
+                return false;
+            }
+        }
+
+        function persistCrmDisclaimerAcceptance() {
+            try {
+                localStorage.setItem(CRM_FIRST_USE_KEY, '1');
+            } catch {
+                _crmDisclaimerSessionAccepted = true;
+            }
+        }
+
+        function openCrmDisclaimerModal() {
+            const el = document.getElementById('crmDisclaimerModal');
+            if (el) el.classList.remove('hidden');
+        }
+
+        function hideCrmDisclaimerModal() {
+            const el = document.getElementById('crmDisclaimerModal');
+            if (el) el.classList.add('hidden');
+        }
+
+        function requestCrmDisclaimerThen(fn) {
+            if (!fn) return;
+            if (hasAcceptedCrmDisclaimer()) {
+                fn();
+                return;
+            }
+            _crmDisclaimerPending = fn;
+            openCrmDisclaimerModal();
+        }
+
+        function confirmCrmDisclaimerModal() {
+            persistCrmDisclaimerAcceptance();
+            hideCrmDisclaimerModal();
+            const run = _crmDisclaimerPending;
+            _crmDisclaimerPending = null;
+            if (run) run();
+        }
+
+        function cancelCrmDisclaimerModal() {
+            _crmDisclaimerPending = null;
+            hideCrmDisclaimerModal();
         }
 
         let _userFeatures = [];
@@ -7286,6 +7583,10 @@
             if (e.key !== 'Escape') return;
             const m = document.getElementById('upgradeRequiredModal');
             if (m && !m.classList.contains('hidden')) closeUpgradeRequiredModal();
+            const ed = document.getElementById('engageDisclaimerModal');
+            if (ed && !ed.classList.contains('hidden')) cancelEngageDisclaimerModal();
+            const crm = document.getElementById('crmDisclaimerModal');
+            if (crm && !crm.classList.contains('hidden')) cancelCrmDisclaimerModal();
         });
 
         async function loadUserFeatures() {
@@ -7416,14 +7717,50 @@
                 .slice(0, 20);
         }
 
+        function removeDiscoverTopic(topic) {
+            const topics = getDiscoverTopics().filter(x => x !== topic);
+            setDiscoverTopics(topics);
+            renderDiscoverTopicsBar();
+            loadDiscover();
+        }
+
+        /** Event delegation once: removes topic when chip remove is clicked */
+        (function bindDiscoverTopicChipRemove() {
+            const bar = document.getElementById('discoverTopicsBar');
+            if (!bar || bar.dataset.discoverChipBound === '1') return;
+            bar.dataset.discoverChipBound = '1';
+            bar.addEventListener('click', (e) => {
+                const btn = e.target.closest('.discover-topic-chip-remove');
+                if (!btn) return;
+                e.preventDefault();
+                const encoded = btn.getAttribute('data-topic');
+                if (encoded == null) return;
+                let topic;
+                try {
+                    topic = decodeURIComponent(encoded);
+                } catch {
+                    topic = encoded;
+                }
+                removeDiscoverTopic(topic);
+            });
+        })();
+
         function renderDiscoverTopicsBar() {
             const topics = getDiscoverTopics();
             const bar = document.getElementById('discoverTopicsBar');
             const chips = document.getElementById('discoverTopicsChips');
             if (!bar || !chips) return;
-            if (!topics.length) { bar.classList.add('hidden'); return; }
+            if (!topics.length) {
+                chips.innerHTML = '';
+                bar.classList.add('hidden');
+                return;
+            }
             bar.classList.remove('hidden');
-            chips.innerHTML = topics.map(t => `<span class="discover-topic-chip">#${escapeHtml(t)}</span>`).join('');
+            chips.innerHTML = topics.map((t) => {
+                const enc = encodeURIComponent(t);
+                return `<span class="discover-topic-chip"><span class="discover-topic-chip-label">#${escapeHtml(t)}</span>` +
+                    `<button type="button" class="discover-topic-chip-remove" data-topic="${enc}" aria-label="Remove topic" title="Remove">&#215;</button></span>`;
+            }).join('');
         }
 
         function startDiscovering() {
@@ -8387,10 +8724,11 @@
             const remainingMonth = Math.max(0, bulkDmsState.limits.monthly - bulkDmsState.counts.month);
             const hasQuota = remainingDay > 0 && remainingMonth > 0;
             const hasContent = bulkDmsState.recipients.length > 0 && ta.value.trim().length > 0;
-            const has = hasContent && !bulkDmsState.paused && hasQuota;
+            // Pausing only stops delivery (/api/bulk-dms/next-due); enqueue is still allowed so users can start a new batch.
+            const has = hasContent && hasQuota;
             btn.disabled = !has;
             if (hasContent && bulkDmsState.paused) {
-                btn.title = 'Sending is paused — click Resume sending to enable Send DMs.';
+                btn.title = 'Sending is paused — you can still queue messages; they will send after you click Resume sending.';
             } else if (hasContent && !hasQuota) {
                 btn.title = 'Daily or monthly bulk DM limit reached. Try again later or check limits.';
             } else if (!hasContent) {
@@ -9934,6 +10272,7 @@
         // Maps the legacy page names to their new tab inside the Engage page
         const ENGAGE_TABS = { discover: { gate: null }, mentions: { gate: 'engage_engine' }, engagereplies: { gate: 'engage_engine' }, autoengage: { gate: 'auto_repost' } };
         let _currentEngageTab = 'discover';
+        let _suppressEngageTabSync = false;
 
         function navGatedEngageNav(tab) {
             if (!ENGAGE_TABS[tab]) {
@@ -9956,30 +10295,43 @@
                 return;
             }
 
-            _currentEngageTab = tab;
-            document.querySelectorAll('.engage-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-            document.querySelectorAll('.engage-panel').forEach(p => p.classList.toggle('active', p.id === 'engagePanel-' + tab));
+            const applyEngageTab = () => {
+                _currentEngageTab = tab;
+                document.querySelectorAll('.engage-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+                document.querySelectorAll('.engage-panel').forEach(p => p.classList.toggle('active', p.id === 'engagePanel-' + tab));
 
-            document.querySelectorAll('.nav-item[data-engage-tab]').forEach(n => {
-                n.classList.toggle('active', n.dataset.engageTab === tab);
-            });
+                document.querySelectorAll('.nav-item[data-engage-tab]').forEach(n => {
+                    n.classList.toggle('active', n.dataset.engageTab === tab);
+                });
 
-            if (!opts || opts.updateHash !== false) {
-                location.hash = tab === 'discover' ? 'engage' : 'engage/' + tab;
-            }
+                if (!opts || opts.updateHash !== false) {
+                    location.hash = tab === 'discover' ? 'engage' : 'engage/' + tab;
+                }
 
-            if (tab === 'discover') loadDiscover();
-            else if (tab === 'mentions') loadMentions();
-            else if (tab === 'engagereplies') loadEngageReplies();
-            else if (tab === 'autoengage') loadAutoEngage();
+                if (tab === 'discover') loadDiscover();
+                else if (tab === 'mentions') loadMentions();
+                else if (tab === 'engagereplies') loadEngageReplies();
+                else if (tab === 'autoengage') loadAutoEngage();
+            };
+
+            requestEngageDisclaimerThen(applyEngageTab);
         }
 
-        function showPage(page, updateHash) {
+        function showPage(page, updateHash, pageOpts) {
+            pageOpts = pageOpts || {};
             // Backward-compat: redirect legacy engage sub-pages to the consolidated Engage page.
             if (ENGAGE_TABS[page]) {
                 const targetTab = page;
-                showPage('engage', updateHash);
+                _suppressEngageTabSync = true;
+                showPage('engage', updateHash, pageOpts);
+                _suppressEngageTabSync = false;
                 switchEngageTab(targetTab, { updateHash: updateHash !== false });
+                return;
+            }
+
+            const isCrmDisclosurePage = page === 'dms' || page === 'bulkdms';
+            if (isCrmDisclosurePage && !pageOpts.skipCrmDisclaimer) {
+                requestCrmDisclaimerThen(() => showPage(page, updateHash, Object.assign({}, pageOpts, { skipCrmDisclaimer: true })));
                 return;
             }
 
@@ -10000,7 +10352,7 @@
             if (page === 'context') loadContextPage();
             if (page === 'settings') loadSettingsPage();
             if (page === 'virallibrary') loadViralLibrary();
-            if (page === 'engage') switchEngageTab(_currentEngageTab, { updateHash: false });
+            if (page === 'engage' && !_suppressEngageTabSync) switchEngageTab(_currentEngageTab, { updateHash: false });
             if (page === 'engagelists') loadEngageLists();
             if (page === 'teammembers') loadTeamMembers();
             if (page === 'sharedqueue') loadSharedQueue();
@@ -10025,8 +10377,11 @@
 
         window.addEventListener('hashchange', () => {
             const r = getPageFromHash();
+            const isEngage = r.page === 'engage';
+            if (isEngage) _suppressEngageTabSync = true;
             showPage(r.page, false);
-            if (r.page === 'engage' && r.engageTab) switchEngageTab(r.engageTab, { updateHash: false });
+            if (isEngage) _suppressEngageTabSync = false;
+            if (isEngage && r.engageTab) switchEngageTab(r.engageTab, { updateHash: false });
         });
 
         // Modal
@@ -12805,8 +13160,11 @@
             if (startRoute.page === 'carousel') {
                 handleCarouselNav();
             } else if (startRoute.page !== 'home') {
+                const isEngage = startRoute.page === 'engage';
+                if (isEngage) _suppressEngageTabSync = true;
                 showPage(startRoute.page, false);
-                if (startRoute.page === 'engage' && startRoute.engageTab) {
+                if (isEngage) _suppressEngageTabSync = false;
+                if (isEngage && startRoute.engageTab) {
                     switchEngageTab(startRoute.engageTab, { updateHash: false });
                 }
             }

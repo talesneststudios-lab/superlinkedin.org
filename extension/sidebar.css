@@ -11,34 +11,34 @@
     display: flex; flex-direction: column;
     color: #1a1a2e;
     overflow: hidden;
+    zoom: 1.12;
 }
 #sl-sidebar.open { right: 0; }
 
 #sl-sidebar * { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ── Sidebar Header ── */
+/* Feature flags (Settings → slUpFeatures): content.js toggles .sl-feature-hidden */
+#sl-sidebar .sl-feature-hidden {
+    display: none !important;
+}
+
+/* ── Sidebar top bar (close only — no logo) ── */
 .sl-sb-header {
-    display: flex; align-items: center; gap: 10px;
-    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 11px 14px;
     border-bottom: 1px solid #e5e5ea;
     flex-shrink: 0;
-    background: linear-gradient(135deg, #0A66C2, #1a7fd4);
+    background: #f8fafc;
 }
-.sl-sb-logo {
-    width: 34px; height: 34px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 900; font-size: 0.85rem; color: #fff;
-}
-.sl-sb-brand { font-weight: 800; font-size: 1.05rem; flex: 1; color: #fff; }
 .sl-sb-close {
-    width: 30px; height: 30px; border: none; background: rgba(255,255,255,0.2);
-    border-radius: 6px; cursor: pointer; font-size: 1.1rem;
+    width: 32px; height: 32px; border: 1px solid #e5e7eb; background: #fff;
+    border-radius: 8px; cursor: pointer; font-size: 1.2rem; line-height: 1;
     display: flex; align-items: center; justify-content: center;
-    color: #fff; transition: all 0.2s;
+    color: #64748b; transition: all 0.2s;
 }
-.sl-sb-close:hover { background: rgba(255,255,255,0.35); }
+.sl-sb-close:hover { background: #f1f5f9; color: #0A66C2; border-color: #0A66C2; }
 
 /* ── Sidebar Tabs ── */
 .sl-sb-tabs {
@@ -285,13 +285,14 @@
     height: 100vh !important;
     background: #0c1119 !important;
     box-shadow: -8px 0 32px rgba(0,0,0,0.55) !important;
-    z-index: 99997 !important;
+    z-index: 100050 !important;
     display: flex !important;
     flex-direction: column !important;
     transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1) !important;
     font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif !important;
     color: #e7eaf0 !important;
     overflow: hidden !important;
+    zoom: 1.12 !important;
 }
 #sl-upgrade-panel.open { right: 0 !important; }
 #sl-upgrade-panel,
@@ -303,34 +304,62 @@
 
 #sl-upgrade-panel button { background: none; border: none; }
 
-/* Header */
+/* Header (no SL logo — contextual title only in Settings) */
 .sl-up-header {
     display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
     padding: 14px 16px !important;
     background: #131a25 !important;
     border-bottom: 1px solid #1f2733 !important;
     flex-shrink: 0 !important;
 }
-.sl-up-logo {
-    width: 30px !important;
-    height: 30px !important;
-    background: linear-gradient(135deg, #0A66C2, #5B9BD5) !important;
-    border-radius: 8px !important;
+.sl-up-header-title {
+    flex: 1 !important;
+    min-width: 0 !important;
+    font-weight: 800 !important;
+    font-size: 1.08rem !important;
+    color: #f1f3f8 !important;
+    line-height: 1.2 !important;
+}
+.sl-up-header-actions {
     display: flex !important;
     align-items: center !important;
-    justify-content: center !important;
-    font-weight: 900 !important;
-    font-size: 0.7rem !important;
-    color: #fff !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
 }
-.sl-up-brand {
+
+.sl-up-header-start {
     flex: 1 !important;
-    font-weight: 800 !important;
-    font-size: 1rem !important;
-    color: #f1f3f8 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
 }
+
+/* Account row lives in header: plan badge + Settings together */
+.sl-up-toolbar-tail {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    flex-shrink: 0 !important;
+}
+
+#sl-upgrade-panel .sl-up-conn.sl-up-toolbar-conn {
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    flex: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+}
+
+#sl-upgrade-panel .sl-up-conn.sl-up-toolbar-conn.muted {
+    border: none !important;
+}
+
 .sl-up-close {
     width: 28px !important;
     height: 28px !important;
@@ -891,26 +920,31 @@
 #sl-upgrade-panel.theme-dark .sl-up-toggle-row { border-bottom-color: #161616 !important; }
 #sl-upgrade-panel.theme-dark .sl-up-switch { background: #232323 !important; }
 #sl-upgrade-panel.theme-dark .sl-up-switch.on { background: #f59e0b !important; }
+/* Header toolbar account row stays flush on header bg */
+#sl-upgrade-panel.theme-dark .sl-up-conn.sl-up-toolbar-conn {
+    background: transparent !important;
+    border: none !important;
+}
 
 /* Light = cream/white */
-#sl-upgrade-panel.theme-light { background: #fdf6ec !important; color: #1a1a2e !important; }
-#sl-upgrade-panel.theme-light .sl-up-header { background: #ffffff !important; border-bottom: 1px solid #ece6d6 !important; }
-#sl-upgrade-panel.theme-light .sl-up-brand { color: #1a1a2e !important; }
-#sl-upgrade-panel.theme-light .sl-up-icon-btn { background: rgba(0,0,0,0.04) !important; color: #6b6353 !important; }
-#sl-upgrade-panel.theme-light .sl-up-icon-btn:hover { background: rgba(0,0,0,0.08) !important; color: #1a1a2e !important; }
-#sl-upgrade-panel.theme-light .sl-up-close { background: rgba(0,0,0,0.06) !important; color: #6b6353 !important; }
+#sl-upgrade-panel.theme-light { background: #ffffff !important; color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-header { background: #ffffff !important; border-bottom: 1px solid #e5e7eb !important; }
+#sl-upgrade-panel.theme-light .sl-up-header-title { color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-icon-btn { background: rgba(0,0,0,0.05) !important; color: #475569 !important; }
+#sl-upgrade-panel.theme-light .sl-up-icon-btn:hover { background: rgba(0,0,0,0.1) !important; color: #1a1a2e !important; }
+#sl-upgrade-panel.theme-light .sl-up-close { background: rgba(0,0,0,0.06) !important; color: #475569 !important; }
 #sl-upgrade-panel.theme-light .sl-up-close:hover { background: rgba(0,0,0,0.12) !important; color: #1a1a2e !important; }
-#sl-upgrade-panel.theme-light .sl-up-body { background: #fdf6ec !important; }
+#sl-upgrade-panel.theme-light .sl-up-body { background: #ffffff !important; }
 #sl-upgrade-panel.theme-light .sl-up-card,
 #sl-upgrade-panel.theme-light .sl-up-conn,
 #sl-upgrade-panel.theme-light .sl-up-webapp,
 #sl-upgrade-panel.theme-light .sl-up-theme-row,
 #sl-upgrade-panel.theme-light .sl-up-settings-card {
     background: #ffffff !important;
-    border-color: #ece6d6 !important;
+    border-color: #e5e7eb !important;
 }
-#sl-upgrade-panel.theme-light .sl-up-plans-card { background: #f5efe1 !important; }
-#sl-upgrade-panel.theme-light .sl-up-plan-card { background: #ffffff !important; border-color: #ece6d6 !important; }
+#sl-upgrade-panel.theme-light .sl-up-plans-card { background: #f9fafb !important; border: 1px solid #eef2f6 !important; }
+#sl-upgrade-panel.theme-light .sl-up-plan-card { background: #ffffff !important; border-color: #e5e7eb !important; }
 #sl-upgrade-panel.theme-light .sl-up-conn-name,
 #sl-upgrade-panel.theme-light .sl-up-title,
 #sl-upgrade-panel.theme-light .sl-up-webapp-title,
@@ -929,38 +963,42 @@
 #sl-upgrade-panel.theme-light .sl-up-settings-sub,
 #sl-upgrade-panel.theme-light .sl-up-toggle-desc,
 #sl-upgrade-panel.theme-light .sl-up-conn-label,
-#sl-upgrade-panel.theme-light .sl-up-card-title { color: #6b6353 !important; }
-#sl-upgrade-panel.theme-light .sl-up-plan-old { color: #b8ad96 !important; }
-#sl-upgrade-panel.theme-light .sl-up-plan-period { color: #8a8170 !important; }
-#sl-upgrade-panel.theme-light .sl-up-toggle-row { border-bottom-color: #ece6d6 !important; }
-#sl-upgrade-panel.theme-light .sl-up-switch { background: #d6cfbe !important; }
+#sl-upgrade-panel.theme-light .sl-up-card-title { color: #64748b !important; }
+#sl-upgrade-panel.theme-light .sl-up-plan-old { color: #94a3b8 !important; }
+#sl-upgrade-panel.theme-light .sl-up-plan-period { color: #64748b !important; }
+#sl-upgrade-panel.theme-light .sl-up-toggle-row { border-bottom-color: #e5e7eb !important; }
+#sl-upgrade-panel.theme-light .sl-up-switch { background: #cbd5e1 !important; }
 #sl-upgrade-panel.theme-light .sl-up-switch.on { background: #f59e0b !important; }
 #sl-upgrade-panel.theme-light .sl-up-quick-link { color: #0A66C2 !important; }
 #sl-upgrade-panel.theme-light .sl-up-quick-link:hover { background: rgba(10,102,194,0.08) !important; }
 #sl-upgrade-panel.theme-light .sl-up-quick-link.danger { color: #ef4444 !important; }
 #sl-upgrade-panel.theme-light .sl-up-quick-link.danger:hover { background: rgba(239,68,68,0.10) !important; }
-#sl-upgrade-panel.theme-light .sl-up-theme-btn { color: #6b6353 !important; }
+#sl-upgrade-panel.theme-light .sl-up-theme-btn { color: #64748b !important; }
 #sl-upgrade-panel.theme-light .sl-up-theme-btn:hover { color: #1a1a2e !important; }
 #sl-upgrade-panel.theme-light .sl-up-theme-btn.selected { color: #f59e0b !important; }
+#sl-upgrade-panel.theme-light .sl-up-conn.sl-up-toolbar-conn {
+    background: transparent !important;
+    border: none !important;
+}
 
 /* System = follow OS preference (dim by default, switch to light when OS prefers light) */
 @media (prefers-color-scheme: light) {
-    #sl-upgrade-panel.theme-system { background: #fdf6ec !important; color: #1a1a2e !important; }
-    #sl-upgrade-panel.theme-system .sl-up-header { background: #ffffff !important; border-bottom: 1px solid #ece6d6 !important; }
-    #sl-upgrade-panel.theme-system .sl-up-brand { color: #1a1a2e !important; }
-    #sl-upgrade-panel.theme-system .sl-up-icon-btn { background: rgba(0,0,0,0.04) !important; color: #6b6353 !important; }
-    #sl-upgrade-panel.theme-system .sl-up-close { background: rgba(0,0,0,0.06) !important; color: #6b6353 !important; }
-    #sl-upgrade-panel.theme-system .sl-up-body { background: #fdf6ec !important; }
+    #sl-upgrade-panel.theme-system { background: #ffffff !important; color: #1a1a2e !important; }
+    #sl-upgrade-panel.theme-system .sl-up-header { background: #ffffff !important; border-bottom: 1px solid #e5e7eb !important; }
+    #sl-upgrade-panel.theme-system .sl-up-header-title { color: #1a1a2e !important; }
+    #sl-upgrade-panel.theme-system .sl-up-icon-btn { background: rgba(0,0,0,0.05) !important; color: #475569 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-close { background: rgba(0,0,0,0.06) !important; color: #475569 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-body { background: #ffffff !important; }
     #sl-upgrade-panel.theme-system .sl-up-card,
     #sl-upgrade-panel.theme-system .sl-up-conn,
     #sl-upgrade-panel.theme-system .sl-up-webapp,
     #sl-upgrade-panel.theme-system .sl-up-theme-row,
     #sl-upgrade-panel.theme-system .sl-up-settings-card {
         background: #ffffff !important;
-        border-color: #ece6d6 !important;
+        border-color: #e5e7eb !important;
     }
-    #sl-upgrade-panel.theme-system .sl-up-plans-card { background: #f5efe1 !important; }
-    #sl-upgrade-panel.theme-system .sl-up-plan-card { background: #ffffff !important; border-color: #ece6d6 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-plans-card { background: #f9fafb !important; border: 1px solid #eef2f6 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-plan-card { background: #ffffff !important; border-color: #e5e7eb !important; }
     #sl-upgrade-panel.theme-system .sl-up-conn-name,
     #sl-upgrade-panel.theme-system .sl-up-title,
     #sl-upgrade-panel.theme-system .sl-up-webapp-title,
@@ -970,7 +1008,26 @@
     #sl-upgrade-panel.theme-system .sl-up-card-title.centered,
     #sl-upgrade-panel.theme-system .sl-up-settings-heading,
     #sl-upgrade-panel.theme-system .sl-up-toggle-name { color: #1a1a2e !important; }
-    #sl-upgrade-panel.theme-system .sl-up-toggle-row { border-bottom-color: #ece6d6 !important; }
-    #sl-upgrade-panel.theme-system .sl-up-switch { background: #d6cfbe !important; }
+    #sl-upgrade-panel.theme-system .sl-up-sub,
+    #sl-upgrade-panel.theme-system .sl-up-webapp-sub,
+    #sl-upgrade-panel.theme-system .sl-up-feature-desc,
+    #sl-upgrade-panel.theme-system .sl-up-fineprint,
+    #sl-upgrade-panel.theme-system .sl-up-footer,
+    #sl-upgrade-panel.theme-system .sl-up-show-features,
+    #sl-upgrade-panel.theme-system .sl-up-settings-sub,
+    #sl-upgrade-panel.theme-system .sl-up-toggle-desc,
+    #sl-upgrade-panel.theme-system .sl-up-conn-label,
+    #sl-upgrade-panel.theme-system .sl-up-card-title { color: #64748b !important; }
+    #sl-upgrade-panel.theme-system .sl-up-plan-old { color: #94a3b8 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-plan-period { color: #64748b !important; }
+    #sl-upgrade-panel.theme-system .sl-up-toggle-row { border-bottom-color: #e5e7eb !important; }
+    #sl-upgrade-panel.theme-system .sl-up-switch { background: #cbd5e1 !important; }
     #sl-upgrade-panel.theme-system .sl-up-quick-link { color: #0A66C2 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-quick-link:hover { background: rgba(10,102,194,0.08) !important; }
+    #sl-upgrade-panel.theme-system .sl-up-quick-link.danger { color: #ef4444 !important; }
+    #sl-upgrade-panel.theme-system .sl-up-quick-link.danger:hover { background: rgba(239,68,68,0.10) !important; }
+    #sl-upgrade-panel.theme-system .sl-up-conn.sl-up-toolbar-conn {
+        background: transparent !important;
+        border: none !important;
+    }
 }

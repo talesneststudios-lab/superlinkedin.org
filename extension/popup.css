@@ -211,23 +211,45 @@ body {
 }
 
 /* ── AI Tools ── */
+.ai-editor-wrap { position: relative; margin-top: 2px; }
 .ai-textarea {
-    width: 100%; height: 80px; padding: 10px; border: 1px solid #ddd;
+    width: 100%; min-height: 112px; max-height: 220px; padding: 10px; border: 1px solid #ddd;
     border-radius: 8px; font-family: inherit; font-size: 0.82rem; resize: vertical;
     outline: none; transition: border 0.2s; line-height: 1.4;
 }
 .ai-textarea:focus { border-color: #0A66C2; }
-.ai-actions { display: flex; gap: 6px; margin-top: 8px; }
+.ai-loading-overlay {
+    position: absolute; inset: 0;
+    display: none; align-items: center; justify-content: center; gap: 8px;
+    background: rgba(255,255,255,0.9); border-radius: 8px;
+    color: #0A66C2; font-size: 0.78rem; font-weight: 600;
+}
+.ai-actions { display: flex; gap: 6px; margin-top: 8px; align-items: stretch; }
 .ai-btn {
-    flex: 1; padding: 8px; border: none; border-radius: 8px;
-    font-family: inherit; font-size: 0.78rem; font-weight: 700;
+    flex: 1; padding: 8px 6px; border: none; border-radius: 8px;
+    font-family: inherit; font-size: 0.76rem; font-weight: 700;
     cursor: pointer; transition: all 0.2s;
     background: #0A66C2; color: #fff;
 }
 .ai-btn:hover { background: #0977d4; }
 .ai-btn.secondary { background: #f0f0f3; color: #333; }
 .ai-btn.secondary:hover { background: #e0e0e5; }
-.ai-btn.small { flex: none; padding: 6px 14px; font-size: 0.72rem; }
+.ai-btn.icon-only {
+    flex: 0 0 42px;
+    padding: 8px;
+    border: 1px solid #d7dee6;
+    background: #fff;
+    color: #0A66C2;
+}
+.ai-btn.icon-only:hover { background: #f0f7ff; border-color: #0A66C2; }
+.ai-assist-status {
+    min-height: 18px;
+    margin-top: 6px;
+    font-size: 0.72rem;
+    color: #ef4444;
+    line-height: 1.35;
+}
+.ai-assist-status:empty { display: none; }
 
 .ai-quick-grid {
     display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;
@@ -239,18 +261,6 @@ body {
 }
 .ai-quick-btn:hover { border-color: #0A66C2; color: #0A66C2; background: #f0f7ff; }
 
-.ai-result {
-    margin-top: 12px; padding: 10px; background: #f0f7ff; border: 1px solid #c7dcf0;
-    border-radius: 8px;
-}
-.ai-result-text {
-    font-size: 0.8rem; color: #333; line-height: 1.45; margin-bottom: 8px;
-    max-height: 120px; overflow-y: auto; white-space: pre-wrap;
-}
-.ai-loading {
-    display: flex; align-items: center; gap: 8px; padding: 12px;
-    color: #0A66C2; font-size: 0.8rem; font-weight: 600; justify-content: center;
-}
 .spinner {
     width: 16px; height: 16px; border: 2px solid #0A66C2; border-top-color: transparent;
     border-radius: 50%; animation: spin 0.8s linear infinite;

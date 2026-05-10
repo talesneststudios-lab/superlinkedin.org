@@ -8,6 +8,79 @@
     let sidebarData = { followers: 0, posts: [], topPosts: [], totalLikes: 0,
         totalComments: 0, totalReposts: 0, totalImpressions: 0 };
 
+    const SL_FEATURE_KEYS = ['home', 'composer', 'activities', 'posts', 'engage', 'timelines', 'chat'];
+
+    /** Merge persisted slUpFeatures with defaults (missing keys = on). */
+    function mergeSlFeatures(raw) {
+        const o = raw && typeof raw === 'object' ? raw : {};
+        const out = {};
+        SL_FEATURE_KEYS.forEach((k) => {
+            out[k] = Object.prototype.hasOwnProperty.call(o, k) ? !!o[k] : true;
+        });
+        return out;
+    }
+
+    let slF = mergeSlFeatures(null);
+
+    function slOn(key) {
+        return slF[key] !== false;
+    }
+
+    function refreshSlFeaturesFromStorage() {
+        try {
+            chrome.storage.local.get(['slUpFeatures'], (res) => {
+                slF = mergeSlFeatures(res && res.slUpFeatures);
+                applySlFeatureVisibility();
+            });
+        } catch {
+            applySlFeatureVisibility();
+        }
+    }
+
+    /** Show/hide sidebar regions and tabs based on Settings toggles */
+    function applySlFeatureVisibility() {
+        const sb = document.getElementById('sl-sidebar');
+        if (!sb) return;
+
+        sb.querySelectorAll('[data-sl-f]').forEach((el) => {
+            const key = el.getAttribute('data-sl-f');
+            const on = key && slOn(key);
+            el.classList.toggle('sl-feature-hidden', !on);
+        });
+
+        sb.querySelectorAll('[data-sl-f-tabs]').forEach((el) => {
+            const keys = (el.getAttribute('data-sl-f-tabs') || '').split(',').map((s) => s.trim()).filter(Boolean);
+            const on = keys.some((k) => slOn(k));
+            el.classList.toggle('sl-feature-hidden', !on);
+        });
+
+        const tabs = Array.from(sb.querySelectorAll('.sl-sb-tab'));
+        if (tabs.length && !tabs.some((t) => !t.classList.contains('sl-feature-hidden'))) {
+            tabs[0].classList.remove('sl-feature-hidden');
+        }
+
+        let activeTab = sb.querySelector('.sl-sb-tab.active');
+        if (!activeTab || activeTab.classList.contains('sl-feature-hidden')) {
+            const firstVisible = tabs.find((t) => !t.classList.contains('sl-feature-hidden'));
+            if (firstVisible) {
+                sb.querySelectorAll('.sl-sb-tab').forEach((t) => t.classList.remove('active'));
+                sb.querySelectorAll('.sl-sb-panel').forEach((p) => p.classList.remove('active'));
+                firstVisible.classList.add('active');
+                const pid = capitalize(firstVisible.dataset.panel);
+                const panel = sb.querySelector('#slPanel' + pid);
+                if (panel) panel.classList.add('active');
+            }
+        }
+    }
+
+    try {
+        chrome.storage.onChanged.addListener((changes, area) => {
+            if (area !== 'local' || !changes.slUpFeatures) return;
+            slF = mergeSlFeatures(changes.slUpFeatures.newValue);
+            applySlFeatureVisibility();
+        });
+    } catch { /* invalidated context */ }
+
     // ── Number parsing ──
     function parseNumber(text) {
         if (!text) return 0;
@@ -55,6 +128,50 @@
         // card on the left; allow it ONLY when the number looks plausible.
         const onFeedOrSettings = /\/(feed|notifications|jobs|messaging)(\/|$)/i.test(path);
 
+        // 0a) Links to the official Connections hub — LinkedIn repeats this
+        //     in nav / trays on almost every route; notifications/messaging
+        //     pages often omit the identity module but still expose this href.
+        const linkSel = [
+            'a[href*="mynetwork/invite-connect/connections"]',
+            'a[href*="/invite-connect/connections/"]',
+            'a[href*="network-manager/connections"]',
+        ].join(', ');
+        for (const a of document.querySelectorAll(linkSel)) {
+            const bits = [(a.innerText || ''), (a.textContent || ''), (a.getAttribute('aria-label') || '')].join('\n');
+            let m = bits.match(/([\d][\d,.]*\s*[KMB]?)\s*connections?\b/i);
+            if (!m) {
+                m = bits.match(/connections?[:\s]+\s*([\d][\d,.]*\s*[KMB]?)/i);
+            }
+            if (m) {
+                const n = parseNumber(m[1]);
+                if (n >= 5) return n;
+            }
+            let el = a;
+            for (let d = 0; d < 5 && el; d++) {
+                const t = (el.innerText || '').replace(/\s+/g, ' ');
+                const inner = t.match(/([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i);
+                if (inner) {
+                    const n = parseNumber(inner[1]);
+                    if (n >= 5) return n;
+                }
+                el = el.parentElement;
+            }
+        }
+
+        // 0b) Toolbar / mega-menu controls often expose "732 connections" only
+        //     on aria-label, not plain text beside the avatar.
+        const ariaJunk = /\b(mutual connections|degree connection|followers only|following|manage your network|invite)\b/i;
+        for (const el of document.querySelectorAll('[aria-label]')) {
+            const lbl = (el.getAttribute('aria-label') || '').trim();
+            if (!lbl || ariaJunk.test(lbl)) continue;
+            if (/\bin common\b|\bdegrees\b/i.test(lbl)) continue;
+            const m = lbl.match(/([\d][\d,.]*\s*[KMB]?)\s*connections?\b/i);
+            if (m) {
+                const n = parseNumber(m[1]);
+                if (n >= 10) return n;
+            }
+        }
+
         // 1) My Network page — most reliable: the "Connections" tile shows
         //    the total count directly.
         if (onMyNetwork) {
@@ -97,11 +214,11 @@
         //    >= 10, otherwise we'll keep grabbing "1 follower" from the
         //    "Add to your feed" Pages widget.
         if (onFeedOrSettings) {
-            const sidebars = document.querySelectorAll(
-                '.feed-identity-module, .scaffold-layout__sidebar, .global-nav__me, aside'
+            const sideRoots = document.querySelectorAll(
+                '#global-nav, .feed-identity-module, .feed-identity-module__profile-card, .scaffold-layout__sidebar, .scaffold-layout__aside, .global-nav__me, aside'
             );
-            for (const side of sidebars) {
-                const text = (side.innerText || '').substring(0, 2000);
+            for (const side of sideRoots) {
+                const text = (side.innerText || '').substring(0, 6000);
                 const cm = text.match(/([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i);
                 if (cm) {
                     const n = parseNumber(cm[1]);
@@ -122,20 +239,20 @@
     // requiring the user to visit /analytics/.
     function scrapeFeedSidebarStats() {
         const result = {};
-        const card = document.querySelector(
-            '.feed-identity-module, .feed-identity-module__profile-card, .scaffold-layout__sidebar'
-        ) || document.body;
+        const card =
+            document.querySelector('.feed-identity-module, .feed-identity-module__profile-card') ||
+            document.querySelector('.scaffold-layout__sidebar .feed-identity-module') ||
+            document.querySelector('.scaffold-layout__sidebar');
         if (!card) return null;
-        const text = (card.innerText || '').replace(/\u00a0/g, ' ').substring(0, 4000);
+        const text = (card.innerText || '').replace(/\u00a0/g, ' ').substring(0, 5000);
 
-        // Pattern: "Profile viewers\n18" or "Profile viewers 18"
-        const pv = text.match(/Profile\s+viewers?[\s:]*(\d[\d,.]*[KMB]?)/i);
+        // Label-first: avoids matching viewers count as impressions (digits before "Post impressions").
+        const pv = text.match(/\b[Pp]rofile\s+[Vv]iewers?\b[^\d]{0,20}(\d[\d,.]*[KMB]?)\b/i);
         if (pv) {
             const n = parseNumber(pv[1]);
             if (n > 0) result.profileViews = n;
         }
-        // Pattern: "Post impressions\n24" or "Post impressions 24"
-        const pi = text.match(/Post\s+impressions?[\s:]*(\d[\d,.]*[KMB]?)/i);
+        const pi = text.match(/\b[Pp]ost\s+[Ii]mpressions?\b[^\d]{0,20}(\d[\d,.]*[KMB]?)\b/i);
         if (pi) {
             const n = parseNumber(pi[1]);
             if (n > 0) result.postImpressions = n;
@@ -349,7 +466,6 @@
 
         // === STRATEGY A: Walk DOM leaf nodes to find standalone numbers near labels ===
         const labelMap = {
-            'impression': 'postImpressions',
             'follower': 'followers',
             'profile view': 'profileViews',
             'search appear': 'searchAppearances',
@@ -360,7 +476,7 @@
 
         document.querySelectorAll('p, span, div, h1, h2, h3, h4, strong, b, li, td').forEach(el => {
             const text = (el.textContent || '').trim();
-            if (!/^\d[\d,.]*[KMB]?$/.test(text)) return;
+            if (!/^\d[\d,.]*[KMB]?\+?$/.test(text)) return;
             if (el.querySelector('p, span, div, h1, h2, h3, h4')) return;
 
             const num = parseNumber(text);
@@ -377,24 +493,26 @@
             const ps = el.previousElementSibling;
             if (ps) contexts.push((ps.textContent || '').toLowerCase());
 
-            const combined = contexts.join(' ');
+            const combined = contexts.join('\n');
             for (const [keyword, key] of Object.entries(labelMap)) {
                 if (combined.includes(keyword) && !stats[key]) {
                     // 'followers' values < 5 are almost always widget noise
                     // (e.g. a "1 new follower" panel). Skip them.
                     if (key === 'followers' && num < 5) break;
+                    if (key === 'profileViews' && !/\bprofile\s+viewers?\b/i.test(combined)) break;
                     stats[key] = num;
                     break;
                 }
             }
         });
 
-        // === STRATEGY B: Regex on full page text with flexible whitespace ===
-        const flexWS = '[\\s\\u00a0\\n\\r]{0,15}';
+        // === STRATEGY B: Regex on full page text ===
+        const flexWS = '[\\s\\u00a0\\n\\r]{0,40}';
+        const lblNum = '[\\s\\u00a0\\n\\r:•·|\\-]{0,12}';
         const fwdPatterns = [
-            { key: 'postImpressions', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '(?:Post )?[Ii]mpressions?', 'i') },
+            { key: 'postImpressions', re: new RegExp('\\b[Pp]ost\\s+[Ii]mpressions?' + lblNum + '(\\d[\\d,.]*[KMB]?)\\b') },
             { key: 'followers', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '(?:Total )?[Ff]ollowers?', 'i') },
-            { key: 'profileViews', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '[Pp]rofile viewers?', 'i') },
+            { key: 'profileViews', re: new RegExp('\\b[Pp]rofile\\s+[Vv]iewers?' + lblNum + '(\\d[\\d,.]*[KMB]?)\\b') },
             { key: 'searchAppearances', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '[Ss]earch appear', 'i') },
             { key: 'membersReached', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '[Mm]embers?' + flexWS + 'reached', 'i') },
             { key: 'socialEngagements', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '[Ss]ocial engagements?', 'i') },
@@ -415,7 +533,7 @@
 
         // === STRATEGY C: Reverse patterns (label before number) ===
         const revPatterns = [
-            { key: 'postImpressions', re: new RegExp('[Ii]mpressions?' + flexWS + '(\\d[\\d,.]*[KMB]?)', 'i') },
+            // Do not match bare "… impressions 12" — that often belongs to unrelated modules.
             { key: 'membersReached', re: new RegExp('[Mm]embers?' + flexWS + 'reached' + flexWS + '(\\d[\\d,.]*[KMB]?)', 'i') },
             { key: 'socialEngagements', re: new RegExp('[Ss]ocial engagements?' + flexWS + '(\\d[\\d,.]*[KMB]?)', 'i') },
         ];
@@ -475,30 +593,31 @@
         const data = { url, timestamp: new Date().toISOString() };
 
         // ── Connections / followers ──
-        // scrapeFollowers() handles its own page-eligibility check (mynetwork
-        // is preferred, /in/<vanity>/ is next, then a strict feed/sidebar
-        // fallback). Always call it so the stat refreshes when the user
-        // visits any of those pages, not only /in/.
+        // When "Home" is on: scrape follower/connection counts on eligible URLs.
         if (url.includes('/in/')) {
             const ownProfile = await isOwnProfile();
             if (ownProfile) {
-                const followers = scrapeFollowers();
-                if (followers !== null) {
-                    data.followers = followers;
-                    sidebarData.followers = followers;
-                }
                 const profile = scrapeProfileInfo();
                 data.profile = profile;
-                console.log('[SuperLinkedIn] Own profile detected, scraped followers:', followers);
+                if (slOn('home')) {
+                    const followers = scrapeFollowers();
+                    if (followers !== null) {
+                        data.followers = followers;
+                        sidebarData.followers = followers;
+                    }
+                }
+                console.log('[SuperLinkedIn] Own profile detected, scraped followers:', data.followers);
             } else {
                 console.log('[SuperLinkedIn] Visiting another profile, skipping follower/stats sync');
             }
         } else if (url.includes('/mynetwork') || url.includes('/feed') || url.includes('/notifications') || url.includes('/jobs') || url.includes('/messaging')) {
-            const followers = scrapeFollowers();
-            if (followers !== null) {
-                data.followers = followers;
-                sidebarData.followers = followers;
-                console.log('[SuperLinkedIn] Connections scraped from', url.substring(0, 80), '=>', followers);
+            if (slOn('home')) {
+                const followers = scrapeFollowers();
+                if (followers !== null) {
+                    data.followers = followers;
+                    sidebarData.followers = followers;
+                    console.log('[SuperLinkedIn] Connections scraped from', url.substring(0, 80), '=>', followers);
+                }
             }
         }
 
@@ -507,7 +626,7 @@
         // surfaces on its own analytics dashboard, just for the last 7 days.
         // Scrape them here so the popup updates without waiting for the user
         // to visit the analytics dashboard.
-        if (url.includes('/feed')) {
+        if (url.includes('/feed') && slOn('home')) {
             const feedStats = scrapeFeedSidebarStats();
             if (feedStats && (feedStats.postImpressions || feedStats.profileViews)) {
                 data.dashboardStats = Object.assign({}, data.dashboardStats || {}, feedStats);
@@ -515,9 +634,8 @@
                 console.log('[SuperLinkedIn] Feed sidebar stats scraped:', feedStats);
             }
         }
-
         const isAnalyticsPage = url.includes('/dashboard') || url.includes('/analytics') || url.includes('/creator');
-        if (isAnalyticsPage) {
+        if (isAnalyticsPage && slOn('activities')) {
             const dashboardStats = scrapeAnalyticsDashboard();
             if (dashboardStats) {
                 data.dashboardStats = Object.assign({}, data.dashboardStats || {}, dashboardStats);
@@ -531,7 +649,7 @@
             }
         }
 
-        const shouldScrapePosts = url.includes('/feed') || url.includes('/posts/') || (url.includes('/in/') && data.profile);
+        const shouldScrapePosts = slOn('posts') && (url.includes('/feed') || url.includes('/posts/') || (url.includes('/in/') && data.profile));
         if (shouldScrapePosts) {
             const posts = await scrapePostMetrics();
             if (posts.length > 0) {
@@ -540,7 +658,7 @@
             }
         }
 
-        if (url.includes('/feed')) {
+        if (url.includes('/feed') && slOn('timelines')) {
             const networkPosts = await scrapeFeedPosts();
             if (networkPosts.length > 0) {
                 data.feedPosts = networkPosts;
@@ -548,7 +666,7 @@
             }
         }
 
-        if (url.includes('/messaging')) {
+        if (url.includes('/messaging') && slOn('engage')) {
             const dmData = await scrapeMessaging();
             if (dmData && dmData.conversations.length > 0) {
                 data.dms = dmData;
@@ -559,6 +677,9 @@
                 return;
             }
         }
+
+        if (!slOn('timelines')) delete data.feedPosts;
+        if (!slOn('engage')) delete data.dms;
 
         if (data.followers !== undefined || (data.posts && data.posts.length > 0) || data.dashboardStats || data.dms || data.feedPosts) {
             console.log('[SuperLinkedIn] Scraped data:', JSON.stringify(data.dashboardStats || {}), 'posts:', (data.posts || []).length);
@@ -590,7 +711,9 @@
         sidebarData.totalLikes = sidebarData.posts.reduce((s, p) => s + p.likes, 0);
         sidebarData.totalComments = sidebarData.posts.reduce((s, p) => s + p.comments, 0);
         sidebarData.totalReposts = sidebarData.posts.reduce((s, p) => s + p.reposts, 0);
-        sidebarData.totalImpressions = sidebarData.posts.reduce((s, p) => s + p.impressions, 0);
+        // Do not derive total impressions from scraped feed posts — those cards
+        // rarely expose per-post counts, so this zeroed/replaced accurate 7-day
+        // "Post impressions" from scrapeFeedSidebarStats / analytics dashboards.
     }
 
     // ── Sidebar UI ──
@@ -608,91 +731,95 @@
         sb.id = 'sl-sidebar';
         sb.innerHTML = `
             <div class="sl-sb-header">
-                <div class="sl-sb-logo">SL</div>
-                <span class="sl-sb-brand">SuperLinkedIn</span>
-                <button class="sl-sb-close" id="slSbClose">&times;</button>
+                <button class="sl-sb-close" id="slSbClose" title="Close sidebar" aria-label="Close sidebar">&times;</button>
             </div>
 
             <div class="sl-sb-tabs">
-                <button class="sl-sb-tab active" data-panel="analytics">Analytics</button>
-                <button class="sl-sb-tab" data-panel="aitools">AI Tools</button>
-                <button class="sl-sb-tab" data-panel="inspiration">Tips</button>
+                <button type="button" class="sl-sb-tab active" data-panel="analytics" data-sl-f-tabs="home,posts,activities">Analytics</button>
+                <button type="button" class="sl-sb-tab" data-panel="aitools" data-sl-f-tabs="composer,chat">AI Tools</button>
+                <button type="button" class="sl-sb-tab" data-panel="inspiration" data-sl-f-tabs="timelines">Tips</button>
             </div>
 
             <div class="sl-sb-body">
                 <!-- Analytics Panel -->
                 <div class="sl-sb-panel active" id="slPanelAnalytics">
-                    <div class="sl-section-title">Overview</div>
-                    <div class="sl-stats-row">
-                        <div class="sl-stat-box">
-                            <div class="sl-stat-val" id="slStatFollowers">--</div>
-                            <div class="sl-stat-lbl">Connections</div>
-                        </div>
-                        <div class="sl-stat-box">
-                            <div class="sl-stat-val" id="slStatPosts">--</div>
-                            <div class="sl-stat-lbl">Posts</div>
-                        </div>
-                        <div class="sl-stat-box">
-                            <div class="sl-stat-val" id="slStatEng">--</div>
-                            <div class="sl-stat-lbl">Engagement</div>
-                        </div>
-                    </div>
-
-                    <div class="sl-section-title">Top Posts</div>
-                    <div class="sl-top-posts" id="slTopPosts">
-                        <div class="sl-empty-state">
-                            <div class="sl-empty-icon">&#128202;</div>
-                            <div class="sl-empty-text">Scroll your feed to collect post analytics</div>
+                    <div data-sl-f="home">
+                        <div class="sl-section-title">Overview</div>
+                        <div class="sl-stats-row">
+                            <div class="sl-stat-box">
+                                <div class="sl-stat-val" id="slStatFollowers">--</div>
+                                <div class="sl-stat-lbl">Connections</div>
+                            </div>
+                            <div class="sl-stat-box">
+                                <div class="sl-stat-val" id="slStatPosts">--</div>
+                                <div class="sl-stat-lbl">Posts</div>
+                            </div>
+                            <div class="sl-stat-box">
+                                <div class="sl-stat-val" id="slStatEng">--</div>
+                                <div class="sl-stat-lbl">Engagement</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="sl-section-title">Engagement Breakdown</div>
-                    <div class="sl-eng-section">
-                        <div class="sl-eng-row">
-                            <span class="sl-eng-label">&#128077; Likes</span>
-                            <div class="sl-eng-bar-wrap"><div class="sl-eng-bar likes" id="slEngLikes" style="width:0%"></div></div>
-                            <span class="sl-eng-val" id="slEngLikesVal">0</span>
-                        </div>
-                        <div class="sl-eng-row">
-                            <span class="sl-eng-label">&#128172; Comments</span>
-                            <div class="sl-eng-bar-wrap"><div class="sl-eng-bar comments" id="slEngComments" style="width:0%"></div></div>
-                            <span class="sl-eng-val" id="slEngCommentsVal">0</span>
-                        </div>
-                        <div class="sl-eng-row">
-                            <span class="sl-eng-label">&#128257; Reposts</span>
-                            <div class="sl-eng-bar-wrap"><div class="sl-eng-bar reposts" id="slEngReposts" style="width:0%"></div></div>
-                            <span class="sl-eng-val" id="slEngRepostsVal">0</span>
-                        </div>
-                        <div class="sl-eng-row">
-                            <span class="sl-eng-label">&#128065; Views</span>
-                            <div class="sl-eng-bar-wrap"><div class="sl-eng-bar views" id="slEngViews" style="width:0%"></div></div>
-                            <span class="sl-eng-val" id="slEngViewsVal">0</span>
+                    <div data-sl-f="posts">
+                        <div class="sl-section-title">Top Posts</div>
+                        <div class="sl-top-posts" id="slTopPosts">
+                            <div class="sl-empty-state">
+                                <div class="sl-empty-icon">&#128202;</div>
+                                <div class="sl-empty-text">Scroll your feed to collect post analytics</div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="sl-section-title">Profile Interactions</div>
-                    <div class="sl-profile-section" id="slProfileSection">
-                        <div class="sl-empty-state">
-                            <div class="sl-empty-icon">&#128100;</div>
-                            <div class="sl-empty-text">Visit your profile to see interactions</div>
+                    <div data-sl-f="activities">
+                        <div class="sl-section-title">Engagement Breakdown</div>
+                        <div class="sl-eng-section">
+                            <div class="sl-eng-row">
+                                <span class="sl-eng-label">&#128077; Likes</span>
+                                <div class="sl-eng-bar-wrap"><div class="sl-eng-bar likes" id="slEngLikes" style="width:0%"></div></div>
+                                <span class="sl-eng-val" id="slEngLikesVal">0</span>
+                            </div>
+                            <div class="sl-eng-row">
+                                <span class="sl-eng-label">&#128172; Comments</span>
+                                <div class="sl-eng-bar-wrap"><div class="sl-eng-bar comments" id="slEngComments" style="width:0%"></div></div>
+                                <span class="sl-eng-val" id="slEngCommentsVal">0</span>
+                            </div>
+                            <div class="sl-eng-row">
+                                <span class="sl-eng-label">&#128257; Reposts</span>
+                                <div class="sl-eng-bar-wrap"><div class="sl-eng-bar reposts" id="slEngReposts" style="width:0%"></div></div>
+                                <span class="sl-eng-val" id="slEngRepostsVal">0</span>
+                            </div>
+                            <div class="sl-eng-row">
+                                <span class="sl-eng-label">&#128065; Views</span>
+                                <div class="sl-eng-bar-wrap"><div class="sl-eng-bar views" id="slEngViews" style="width:0%"></div></div>
+                                <span class="sl-eng-val" id="slEngViewsVal">0</span>
+                            </div>
+                        </div>
+
+                        <div class="sl-section-title">Profile Interactions</div>
+                        <div class="sl-profile-section" id="slProfileSection">
+                            <div class="sl-empty-state">
+                                <div class="sl-empty-icon">&#128100;</div>
+                                <div class="sl-empty-text">Visit your profile to see interactions</div>
+                            </div>
                         </div>
                     </div>
 
                     <div class="sl-section-title">Quick Actions</div>
                     <div class="sl-quick-actions">
-                        <a class="sl-action-card" href="${API_BASE}/app" target="_blank">
+                        <a class="sl-action-card" data-sl-f="home" href="${API_BASE}/app" target="_blank">
                             <span class="sl-action-icon">&#128200;</span>
                             <span class="sl-action-label">Dashboard</span>
                         </a>
-                        <a class="sl-action-card" href="${API_BASE}/app#queue" target="_blank">
+                        <a class="sl-action-card" data-sl-f="composer" href="${API_BASE}/app#queue" target="_blank">
                             <span class="sl-action-icon">&#128197;</span>
                             <span class="sl-action-label">Queue</span>
                         </a>
-                        <a class="sl-action-card" href="${API_BASE}/app#analytics" target="_blank">
+                        <a class="sl-action-card" data-sl-f="activities" href="${API_BASE}/app#analytics" target="_blank">
                             <span class="sl-action-icon">&#128202;</span>
                             <span class="sl-action-label">Analytics</span>
                         </a>
-                        <a class="sl-action-card" href="${API_BASE}/app#dms" target="_blank">
+                        <a class="sl-action-card" data-sl-f="engage" href="${API_BASE}/app#dms" target="_blank">
                             <span class="sl-action-icon">&#128172;</span>
                             <span class="sl-action-label">DMs</span>
                         </a>
@@ -808,16 +935,23 @@
     function toggleSidebar() {
         createSidebar();
         const sb = document.getElementById('sl-sidebar');
-        const toggle = document.getElementById('sl-toggle-btn');
         sidebarOpen = !sidebarOpen;
         sb.classList.toggle('open', sidebarOpen);
-        toggle.classList.toggle('shifted', sidebarOpen);
-        toggle.classList.toggle('active', sidebarOpen);
+        refreshToggleDockState();
         if (sidebarOpen) updateSidebarUI();
     }
 
     // ── Upgrade Panel (opened from the floating SL button) ──
     let upgradePanelOpen = false;
+
+    /** Keep SL FAB shifted/highlighted whenever sidebar OR upgrade panel is open — avoid overlap with either panel */
+    function refreshToggleDockState() {
+        const toggle = document.getElementById('sl-toggle-btn');
+        if (!toggle) return;
+        const dockedAside = !!(sidebarOpen || upgradePanelOpen);
+        toggle.classList.toggle('shifted', dockedAside);
+        toggle.classList.toggle('active', dockedAside);
+    }
 
     function createUpgradePanel() {
         if (document.getElementById('sl-upgrade-panel')) return;
@@ -826,36 +960,39 @@
         panel.id = 'sl-upgrade-panel';
         panel.innerHTML = `
             <div class="sl-up-header">
-                <div class="sl-up-logo">SL</div>
-                <span class="sl-up-brand" id="slUpHeaderTitle">SuperLinkedIn</span>
-                <button class="sl-up-icon-btn" id="slUpSettingsBtn" title="Settings" aria-label="Settings">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                </button>
-                <button class="sl-up-icon-btn" id="slUpBackBtn" title="Back" aria-label="Back" style="display:none;">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
-                </button>
-                <button class="sl-up-close" id="slUpClose" aria-label="Close">&times;</button>
-            </div>
-
-            <div class="sl-up-body" id="slUpBody">
-                <div class="sl-up-view" id="slUpViewMain">
-                    <div id="slUpConnBanner" class="sl-up-conn connected" style="display:none;">
+                <div class="sl-up-header-start" id="slUpHeaderStart">
+                    <div id="slUpConnBanner" class="sl-up-conn sl-up-toolbar-conn connected" style="display:none;">
                         <span class="sl-up-dot"></span>
                         <div class="sl-up-conn-text">
                             <div class="sl-up-conn-label">CONNECTED AS</div>
                             <div class="sl-up-conn-name" id="slUpUserName">--</div>
                         </div>
-                        <span class="sl-up-plan" id="slUpPlanBadge">PRO</span>
+                        <div class="sl-up-toolbar-tail">
+                            <span class="sl-up-plan" id="slUpPlanBadge">PRO</span>
+                            <button type="button" class="sl-up-icon-btn" id="slUpSettingsBtn" title="Settings" aria-label="Settings">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                            </button>
+                        </div>
                     </div>
-
-                    <div id="slUpLoggedOut" class="sl-up-conn muted" style="display:none;">
+                    <div id="slUpLoggedOut" class="sl-up-conn sl-up-toolbar-conn muted" style="display:none;">
                         <span class="sl-up-dot offline"></span>
                         <div class="sl-up-conn-text">
                             <div class="sl-up-conn-label">NOT CONNECTED</div>
                             <a href="#" id="slUpSignIn" class="sl-up-link">Sign in to your dashboard &rarr;</a>
                         </div>
                     </div>
+                    <span class="sl-up-header-title" id="slUpHeaderTitle" style="display: none;"></span>
+                </div>
+                <div class="sl-up-header-actions">
+                    <button type="button" class="sl-up-icon-btn" id="slUpBackBtn" title="Back" aria-label="Back" style="display:none;">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <button type="button" class="sl-up-close" id="slUpClose" aria-label="Close">&times;</button>
+                </div>
+            </div>
 
+            <div class="sl-up-body" id="slUpBody">
+                <div class="sl-up-view" id="slUpViewMain">
                     <div class="sl-up-hero">
                         <span class="sl-up-pill">NEW RELEASE</span>
                         <h2 class="sl-up-title">Introducing SuperLinkedIn 2.0</h2>
@@ -1049,10 +1186,13 @@
             </div>
         `;
         document.body.appendChild(panel);
+        applyUpgradeTheme('light');
 
         const headerTitle = panel.querySelector('#slUpHeaderTitle');
         const settingsBtn = panel.querySelector('#slUpSettingsBtn');
         const backBtn = panel.querySelector('#slUpBackBtn');
+        const connBannerEl = panel.querySelector('#slUpConnBanner');
+        const loggedOutEl = panel.querySelector('#slUpLoggedOut');
         const viewMain = panel.querySelector('#slUpViewMain');
         const viewSettings = panel.querySelector('#slUpViewSettings');
         const body = panel.querySelector('#slUpBody');
@@ -1060,18 +1200,21 @@
         const showSettingsView = () => {
             viewMain.style.setProperty('display', 'none', 'important');
             viewSettings.style.setProperty('display', 'block', 'important');
-            settingsBtn.style.setProperty('display', 'none', 'important');
+            if (connBannerEl) connBannerEl.style.setProperty('display', 'none', 'important');
+            if (loggedOutEl) loggedOutEl.style.setProperty('display', 'none', 'important');
             backBtn.style.setProperty('display', 'flex', 'important');
             headerTitle.textContent = 'Settings';
+            headerTitle.style.display = '';
             body.scrollTop = 0;
         };
         const showMainView = () => {
             viewSettings.style.setProperty('display', 'none', 'important');
             viewMain.style.setProperty('display', 'block', 'important');
-            settingsBtn.style.setProperty('display', 'flex', 'important');
             backBtn.style.setProperty('display', 'none', 'important');
-            headerTitle.textContent = 'SuperLinkedIn';
+            headerTitle.textContent = '';
+            headerTitle.style.display = 'none';
             body.scrollTop = 0;
+            refreshUpgradePanelStatus();
         };
 
         settingsBtn.addEventListener('click', showSettingsView);
@@ -1117,13 +1260,13 @@
         const themeButtons = panel.querySelectorAll('.sl-up-theme-btn[data-theme]');
         themeButtons.forEach(btn => {
             btn.addEventListener('click', () => {
-                const theme = btn.dataset.theme || 'dim';
+                const theme = btn.dataset.theme || 'light';
                 applyUpgradeTheme(theme);
                 try { chrome.storage.local.set({ slUpTheme: theme }); } catch {}
             });
         });
 
-        // Feature toggles (UI-only, persisted to chrome.storage)
+        // Feature toggles → chrome.storage.slUpFeatures; drives sidebar visibility + scraping
         const switches = panel.querySelectorAll('.sl-up-switch[data-feature]');
         switches.forEach(sw => {
             sw.addEventListener('click', () => {
@@ -1131,9 +1274,12 @@
                 const feature = sw.dataset.feature;
                 try {
                     chrome.storage.local.get(['slUpFeatures'], (res) => {
-                        const features = (res && res.slUpFeatures) || {};
-                        features[feature] = on;
-                        chrome.storage.local.set({ slUpFeatures: features });
+                        const features = mergeSlFeatures(res && res.slUpFeatures);
+                        if (feature) features[feature] = on;
+                        chrome.storage.local.set({ slUpFeatures: features }, () => {
+                            slF = mergeSlFeatures(features);
+                            applySlFeatureVisibility();
+                        });
                     });
                 } catch {}
             });
@@ -1142,17 +1288,17 @@
         // Restore saved theme + toggles
         try {
             chrome.storage.local.get(['slUpTheme', 'slUpFeatures'], (res) => {
-                const theme = (res && res.slUpTheme) || 'dim';
+                const theme = (res && res.slUpTheme) || 'light';
                 applyUpgradeTheme(theme);
-                if (res && res.slUpFeatures) {
-                    Object.entries(res.slUpFeatures).forEach(([feature, on]) => {
-                        const sw = panel.querySelector(`.sl-up-switch[data-feature="${feature}"]`);
-                        if (sw) sw.classList.toggle('on', !!on);
-                    });
-                }
+                slF = mergeSlFeatures(res && res.slUpFeatures);
+                SL_FEATURE_KEYS.forEach((feat) => {
+                    const sw = panel.querySelector(`.sl-up-switch[data-feature="${feat}"]`);
+                    if (sw) sw.classList.toggle('on', !!slF[feat]);
+                });
+                applySlFeatureVisibility();
             });
         } catch {
-            applyUpgradeTheme('dim');
+            applyUpgradeTheme('light');
         }
     }
 
@@ -1218,13 +1364,9 @@
     function toggleUpgradePanel() {
         createUpgradePanel();
         const panel = document.getElementById('sl-upgrade-panel');
-        const toggle = document.getElementById('sl-toggle-btn');
         upgradePanelOpen = !upgradePanelOpen;
         panel.classList.toggle('open', upgradePanelOpen);
-        if (toggle) {
-            toggle.classList.toggle('shifted', upgradePanelOpen);
-            toggle.classList.toggle('active', upgradePanelOpen);
-        }
+        refreshToggleDockState();
         if (upgradePanelOpen) refreshUpgradePanelStatus();
     }
 
@@ -1746,6 +1888,7 @@
     function init() {
         if (!isExtensionValid()) return;
         createSidebar();
+        refreshSlFeaturesFromStorage();
         setTimeout(runScrape, SCRAPE_DELAY);
 
         _urlObserver = new MutationObserver(() => {

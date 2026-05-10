@@ -134,30 +134,28 @@
             <!-- AI Tools Tab -->
             <div class="tab-panel" id="panelAi">
                 <div class="section-title">AI Post Writer</div>
-                <textarea class="ai-textarea" id="aiTextarea" placeholder="Write or paste your post here..."></textarea>
-                <div class="ai-actions">
-                    <button class="ai-btn" id="btnAiGenerate">&#129302; Generate Post</button>
-                    <button class="ai-btn secondary" id="btnAiImprove">&#10024; Improve</button>
+                <div class="ai-editor-wrap">
+                    <textarea class="ai-textarea" id="aiTextarea" placeholder="Write or paste your post here... Generated drafts appear here too."></textarea>
+                    <div id="aiLoading" class="ai-loading-overlay" style="display:none;" aria-busy="true">
+                        <div class="spinner"></div>
+                        <span id="aiLoadingLabel">Generating...</span>
+                    </div>
                 </div>
+                <div class="ai-actions">
+                    <button type="button" class="ai-btn" id="btnAiGenerate">&#129302; Generate Post</button>
+                    <button type="button" class="ai-btn secondary" id="btnAiImprove">&#10024; Improve</button>
+                    <button type="button" class="ai-btn icon-only" id="btnAiCopy" title="Copy post">&#128203;</button>
+                </div>
+                <p id="aiAssistStatus" class="ai-assist-status" role="status" aria-live="polite"></p>
 
                 <div class="section-title" style="margin-top:14px;">Quick Improve</div>
                 <div class="ai-quick-grid">
-                    <button class="ai-quick-btn" data-action="grammar">&#9998; Grammar</button>
-                    <button class="ai-quick-btn" data-action="translate">&#127760; Translate</button>
-                    <button class="ai-quick-btn" data-action="hook">&#10024; Hook</button>
-                    <button class="ai-quick-btn" data-action="concise">&#9986; Concise</button>
-                    <button class="ai-quick-btn" data-action="engaging">&#128171; Engaging</button>
-                    <button class="ai-quick-btn" data-action="humorous">&#128514; Humorous</button>
-                </div>
-
-                <div id="aiResult" class="ai-result" style="display:none;">
-                    <div class="section-title">Result</div>
-                    <div class="ai-result-text" id="aiResultText"></div>
-                    <button class="ai-btn small" id="btnAiCopy">&#128203; Copy</button>
-                </div>
-
-                <div id="aiLoading" class="ai-loading" style="display:none;">
-                    <div class="spinner"></div> Generating...
+                    <button type="button" class="ai-quick-btn" data-action="grammar">&#9998; Grammar</button>
+                    <button type="button" class="ai-quick-btn" data-action="translate">&#127760; Translate</button>
+                    <button type="button" class="ai-quick-btn" data-action="hook">&#10024; Hook</button>
+                    <button type="button" class="ai-quick-btn" data-action="concise">&#9986; Concise</button>
+                    <button type="button" class="ai-quick-btn" data-action="engaging">&#128171; Engaging</button>
+                    <button type="button" class="ai-quick-btn" data-action="humorous">&#128514; Humorous</button>
                 </div>
             </div>
 
