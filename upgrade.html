@@ -250,8 +250,9 @@
 
         .plan-price {
             display: flex;
-            align-items: baseline;
-            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px 8px;
             margin-bottom: 4px;
         }
 
@@ -285,6 +286,23 @@
             font-size: 0.8rem;
             font-weight: 700;
             color: var(--green);
+        }
+
+        .plan-price .plan-discount-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            line-height: 1.25;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.14);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            box-sizing: border-box;
         }
 
         .plan-desc {
@@ -532,11 +550,11 @@
                 <div class="card-badge discount">Early Discount!</div>
                 <div class="plan-name">Advanced</div>
                 <div class="plan-price">
+                    <span class="old-price" data-monthly="$49" data-yearly="$39">$49</span>
                     <span class="currency">$</span>
                     <span class="amount" data-monthly="39" data-yearly="29">39</span>
                     <span class="period">/mo</span>
-                    <span class="old-price" data-monthly="$49" data-yearly="$39">$49</span>
-                    <span class="discount-label">-20% OFF</span>
+                    <span class="plan-discount-badge">-20% OFF</span>
                 </div>
                 <div class="plan-desc">Grow and monetize at full speed with AI</div>
                 <div class="plan-sub">Launch offer (regular price at $49/month)</div>
@@ -598,10 +616,11 @@
                         <li><span class="check">&#10003;</span> 100 bulk DMs/day</li>
                         <li><span class="check">&#10003;</span> 2,500 Engage credits/month</li>
                         <li><span class="check">&#10003;</span> 5x Ready to Post regenerations</li>
+                        <li><span class="check">&#10003;</span> Image posts (AI Image Studio)</li>
                         <li><span class="check">&#10003;</span> AI Image Studio (topic + style, server-side generation)</li>
                     </ul>
                 </div>
-                <div class="more-features" onclick="toggleMore('ultraMore', this)">+ 5 more features</div>
+                <div class="more-features" onclick="toggleMore('ultraMore', this)">+ 6 more features</div>
 
                 <a href="#" class="plan-btn outline" onclick="startCheckout('ultra'); return false;">Start 3-Day Free Trial <span class="arrow">&rarr;</span></a>
                 <div class="plan-note">cancel any time &middot; 100% content ownership</div>

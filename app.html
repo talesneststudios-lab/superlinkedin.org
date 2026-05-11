@@ -5966,11 +5966,11 @@
                                 <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:#ef4444;color:#fff;font-size:0.68rem;font-weight:800;padding:4px 14px;border-radius:12px;text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;">Early Discount!</div>
                                 <div style="font-size:0.78rem;font-weight:800;color:#f97316;text-transform:uppercase;letter-spacing:1px;margin-bottom:6px;">ADVANCED</div>
                                 <div style="font-size:0.82rem;font-weight:600;color:var(--text-secondary);margin-bottom:16px;">Grow and monetize at full speed</div>
-                                <div style="margin-bottom:4px;">
-                                    <span style="font-size:0.82rem;color:var(--text-muted);vertical-align:top;">$</span>
+                                <div style="margin-bottom:4px;display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;">
+                                    <span style="font-size:0.92rem;color:var(--text-muted);text-decoration:line-through;font-weight:600;" id="planPriceAdvOld">$49</span>
+                                    <span style="font-size:0.82rem;color:var(--text-muted);">$</span>
                                     <span style="font-size:2.5rem;font-weight:900;line-height:1;" id="planPriceAdvNum">39</span>
-                                    <span style="font-size:0.82rem;color:var(--text-muted);text-decoration:line-through;margin-left:4px;" id="planPriceAdvOld">$49</span>
-                                    <span style="font-size:0.72rem;color:#ef4444;font-weight:700;margin-left:4px;" id="planPriceAdvDiscount">-20% OFF</span>
+                                    <span id="planPriceAdvDiscount" style="display:inline-flex;align-items:center;padding:3px 8px;border-radius:6px;font-size:0.72rem;font-weight:800;line-height:1.25;white-space:nowrap;letter-spacing:0.02em;text-transform:uppercase;color:#ef4444;background:rgba(239,68,68,0.14);border:1px solid rgba(239,68,68,0.4);box-sizing:border-box;">-20% OFF</span>
                                     <span style="font-size:0.82rem;color:var(--text-muted);" id="planPriceAdvPeriod">/mo</span>
                                 </div>
                                 <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:20px;" id="planPriceAdvSub">Launch offer (regular price at $49/month)</div>
@@ -6009,6 +6009,7 @@
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Team collaboration tools</div>
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> White-label reporting</div>
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> API access</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Image posts (AI Image Studio)</div>
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> AI Image Studio (describe + generate images for LinkedIn)</div>
                                 </div>
                                 <button onclick="startCheckout('ultra')" id="planBtnUltra" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--text-primary);transition:0.15s;">Contact Sales</button>
@@ -6385,7 +6386,7 @@
             <div class="page" id="page-aiimage">
                 <div class="page-header">
                     <h2>AI Image Studio</h2>
-                    <p>Create LinkedIn-ready images from a short description — Ultra plan only (<span style="opacity:0.85;">8 credits</span> per image).</p>
+                    <p>Create LinkedIn-ready images from a short description — Ultra plan only (<span style="opacity:0.85;">10 credits</span> per image).</p>
                 </div>
                 <div style="max-width:840px;margin:0 auto;">
                     <div id="aiImageUpgradeOverlay" class="card" style="display:none;padding:40px;text-align:center;">
@@ -6415,7 +6416,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <button type="button" onclick="generateAiImage()" id="aiImageGenerateBtn" style="width:100%;padding:11px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.9rem;cursor:pointer;">&#9889; Generate image (8 credits)</button>
+                                    <button type="button" onclick="generateAiImage()" id="aiImageGenerateBtn" style="width:100%;padding:11px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.9rem;cursor:pointer;">&#9889; Generate image</button>
                                 </div>
                             </div>
 
@@ -6440,7 +6441,7 @@
 
                             <div id="aiImagePostDraft" style="display:none;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);text-align:left;">
                                 <div style="font-size:0.88rem;font-weight:800;color:var(--text-primary);margin-bottom:8px;">Review &amp; publish</div>
-                                <p style="font-size:0.76rem;color:var(--text-muted);line-height:1.45;margin-bottom:14px;">Edit the caption, then publish to LinkedIn. Regenerate uses AI credits: caption is 1 credit; a new image is 8 credits.</p>
+                                <p style="font-size:0.76rem;color:var(--text-muted);line-height:1.45;margin-bottom:14px;">Edit the caption, then publish to LinkedIn. Regenerate uses AI credits: caption is 1 credit; a new image is 10 credits.</p>
                                 <div style="display:grid;gap:14px;">
                                     <div style="border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--bg-secondary);text-align:center;">
                                         <img id="aiImageDraftPreview" src="" alt="Draft image" style="max-width:100%;width:min(360px,100%);height:auto;border-radius:8px;display:block;margin:0 auto;">
@@ -6458,7 +6459,7 @@
                                     </div>
                                     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
                                         <button type="button" onclick="draftRegenerateAiImageCaption()" id="btnAiDraftRegenCaption" style="padding:9px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.78rem;cursor:pointer;color:var(--text-primary);">&#10024; Regenerate caption (1 credit)</button>
-                                        <button type="button" onclick="draftRegenerateAiImageForPost()" id="btnAiDraftRegenImage" style="padding:9px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.78rem;cursor:pointer;color:var(--text-primary);">&#9889; Regenerate image (8 credits)</button>
+                                        <button type="button" onclick="draftRegenerateAiImageForPost()" id="btnAiDraftRegenImage" style="padding:9px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.78rem;cursor:pointer;color:var(--text-primary);">&#9889; Regenerate image</button>
                                     </div>
                                     <div>
                                         <button type="button" onclick="publishAiStudioDraftToLinkedin()" id="btnAiDraftPublish" style="padding:12px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:800;font-size:0.88rem;cursor:pointer;">Publish to LinkedIn</button>
@@ -9633,7 +9634,7 @@
                 document.getElementById('planPriceAdvPeriod').textContent = '/mo';
                 document.getElementById('planPriceAdvOld').textContent = '$49';
                 document.getElementById('planPriceAdvOld').style.display = '';
-                document.getElementById('planPriceAdvDiscount').textContent = '-29% OFF';
+                document.getElementById('planPriceAdvDiscount').textContent = '-20% OFF';
                 document.getElementById('planPriceAdvDiscount').style.display = '';
                 document.getElementById('planPriceAdvSub').textContent = 'Billed yearly ($420/year)';
                 document.getElementById('planPriceUltraNum').textContent = '159';
@@ -13305,7 +13306,7 @@
                 syncAiImageDraftPreviewFromMain();
                 await updateCreditsPopup();
                 await loadAiImageHistoryGrid();
-                showNotify('New image ready', '8 credits used. Caption unchanged — tap regenerate caption if you want fresh text.', 'success');
+                showNotify('New image ready', '10 credits used. Caption unchanged — tap regenerate caption if you want fresh text.', 'success');
             } catch {
                 showNotify('Error', 'Network error while generating.', 'error');
             } finally {

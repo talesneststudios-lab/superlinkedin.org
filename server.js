@@ -45,8 +45,8 @@ async function dbFindByEmail(email) {
     try {
         const result = await ddb.send(new ScanCommand({
             TableName: DYNAMO_TABLE,
-            FilterExpression: 'email = :email',
-            ExpressionAttributeValues: { ':email': email },
+            FilterExpression: 'email = :email AND (attribute_not_exists(pendingTeamInvite) OR pendingTeamInvite = :f)',
+            ExpressionAttributeValues: { ':email': email, ':f': false },
         }));
         return (result.Items && result.Items[0]) || null;
     } catch (err) {
@@ -388,6 +388,14 @@ async function acceptPendingInvite(req) {
         return { accepted: false, reason: 'invite_revoked' };
     }
 
+    const expectedInviteEmail = normalizeInviteEmail(members[idx].email || '');
+    const resolvedEmail = normalizeInviteEmail((req.session.user && req.session.user.email) || '');
+    if (expectedInviteEmail && resolvedEmail && expectedInviteEmail !== resolvedEmail) {
+        console.warn('[Invite] Email mismatch for invite code — expected %s got %s', expectedInviteEmail, resolvedEmail || '(missing)');
+        delete req.session.inviteCode;
+        return { accepted: false, reason: 'email_mismatch' };
+    }
+
     members[idx] = {
         ...members[idx],
         status: 'active',
@@ -404,7 +412,11 @@ async function acceptPendingInvite(req) {
         parentAccountId: inviterId,
         invitedVia: code,
         invitedAt: members[idx].invitedAt || new Date().toISOString(),
+        onboardingComplete: false,
+        onboardingCompletedAt: null,
     });
+
+    await deleteTeamInvitePlaceholder(inviterId, members[idx].email);
 
     req.session.primaryAccountId = inviterId;
     req.session.activeProfileId = profileId;
@@ -415,6 +427,152 @@ async function acceptPendingInvite(req) {
 
     console.log(`[Invite] ${req.session.user.name} (${profileId}) joined workspace of ${inviter.name} (${inviterId}) as team member`);
     return { accepted: true, inviterId, member: members[idx] };
+}
+
+// ---------- TEAM INVITE PENDING RECORDS ----------
+
+/** Lowercase trimmed email — used when matching OAuth profile to owner invites. */
+function normalizeInviteEmail(email) {
+    return String(email || '').trim().toLowerCase();
+}
+
+/**
+ * Dynamo item id for a synthetic "pending teammate" bound to `(ownerLinkedinId, email)`.
+ * OAuth never returns this LinkedIn ID; invites are redeemed into the real LinkedIn profile.
+ */
+function teamInvitePlaceholderLinkedinId(ownerLinkedinId, normEmail) {
+    const h = crypto.createHash('sha256').update(`${ownerLinkedinId}|${normEmail}`).digest('hex').slice(0, 48);
+    return `team-inv-pend:${h}`;
+}
+
+async function upsertTeamInvitePlaceholder(ownerLinkedinId, inviteeEmailNorm, inviteCode, role, invitedAtIso) {
+    const lid = teamInvitePlaceholderLinkedinId(ownerLinkedinId, inviteeEmailNorm);
+    const local = inviteeEmailNorm.includes('@') ? inviteeEmailNorm.split('@')[0] : inviteeEmailNorm;
+    await dbSaveUser({
+        linkedinId: lid,
+        email: inviteeEmailNorm,
+        name: local ? local.charAt(0).toUpperCase() + local.slice(1) : 'Invitee',
+        pendingTeamInvite: true,
+        teamOwnerLinkedinId: ownerLinkedinId,
+        pendingInviteCode: inviteCode,
+        invitedRole: role || 'editor',
+        paid: false,
+        onboardingComplete: false,
+        invitedAt: invitedAtIso || new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+    });
+}
+
+async function deleteTeamInvitePlaceholder(ownerLinkedinId, inviteRawEmail) {
+    const lid = teamInvitePlaceholderLinkedinId(ownerLinkedinId, normalizeInviteEmail(inviteRawEmail));
+    try {
+        await ddb.send(new DeleteCommand({
+            TableName: DYNAMO_TABLE,
+            Key: { linkedinId: lid },
+        }));
+    } catch (err) {
+        console.error('[Team] deleteTeamInvitePlaceholder:', err.message);
+    }
+}
+
+/** All pending-invite stubs for one email (rare duplicates if multiple owners invite same inbox). Newest wins first. */
+async function listPendingTeamInvitesForEmail(normEmail) {
+    if (!normEmail) return [];
+    const matches = [];
+    let start;
+    try {
+        do {
+            const r = await ddb.send(new ScanCommand({
+                TableName: DYNAMO_TABLE,
+                ExclusiveStartKey: start,
+                FilterExpression: 'pendingTeamInvite = :p AND email = :e',
+                ExpressionAttributeValues: { ':p': true, ':e': normEmail },
+            }));
+            start = r.LastEvaluatedKey;
+            (r.Items || []).forEach((it) => matches.push(it));
+        } while (start);
+    } catch (err) {
+        console.error('[Team] listPendingTeamInvitesForEmail:', err.message);
+    }
+    return matches.sort((a, b) => String(b.invitedAt || '').localeCompare(String(a.invitedAt || '')));
+}
+
+async function redeemPendingTeamInviteForOAuth(session, profile, accessToken) {
+    const normEmail = normalizeInviteEmail(profile.email);
+    if (!normEmail || !profile.sub) return false;
+
+    const pendingRows = (await listPendingTeamInvitesForEmail(normEmail))
+        .filter((row) => row.teamOwnerLinkedinId && row.teamOwnerLinkedinId !== profile.sub);
+
+    let inviteLinkedinId = profile.sub;
+
+    for (const pending of pendingRows) {
+        const ownerId = pending.teamOwnerLinkedinId;
+        const owner = await dbGetUser(ownerId);
+        const members = owner && Array.isArray(owner.teamMembers) ? owner.teamMembers : [];
+        const code = pending.pendingInviteCode;
+        const ix = members.findIndex(
+            (m) => m && m.inviteCode === code && normalizeInviteEmail(m.email) === normEmail && m.status === 'invited',
+        );
+        if (ix === -1) {
+            try {
+                await ddb.send(new DeleteCommand({
+                    TableName: DYNAMO_TABLE,
+                    Key: { linkedinId: pending.linkedinId },
+                }));
+            } catch { /* orphaned stub */ }
+            continue;
+        }
+
+        const inviteeRow = await dbGetUser(inviteLinkedinId);
+        if (inviteeRow && inviteeRow.paid === true && !inviteeRow.parentAccountId) {
+            continue;
+        }
+
+        members[ix] = {
+            ...members[ix],
+            status: 'active',
+            linkedinId: inviteLinkedinId,
+            name: profile.name || members[ix].name,
+            picture: profile.picture || members[ix].picture,
+            joinedAt: members[ix].joinedAt || new Date().toISOString(),
+        };
+
+        await dbUpdateFields(ownerId, { teamMembers: members });
+
+        await dbUpdateFields(inviteLinkedinId, {
+            parentAccountId: ownerId,
+            invitedViaTeam: code,
+            invitedAt: pending.invitedAt || new Date().toISOString(),
+            onboardingComplete: false,
+            onboardingCompletedAt: null,
+        });
+
+        try {
+            await ddb.send(new DeleteCommand({
+                TableName: DYNAMO_TABLE,
+                Key: { linkedinId: pending.linkedinId },
+            }));
+        } catch (err) {
+            console.error('[Team] delete stub after redeem:', err.message);
+        }
+
+        console.log(`[Invite] OAuth email redemption: LinkedIn profile ${inviteLinkedinId} joined workspace of ${ownerId}`);
+
+        const merged = await dbGetUser(inviteLinkedinId) || {};
+        session.user = {
+            ...merged,
+            linkedinId: inviteLinkedinId,
+            accessToken,
+            onboardingComplete: false,
+        };
+        session.primaryAccountId = ownerId;
+        session.activeProfileId = inviteLinkedinId;
+
+        return true;
+    }
+
+    return false;
 }
 
 // Serve playbook (logged-in users)
@@ -665,9 +823,6 @@ app.get('/auth/linkedin/callback', async (req, res) => {
         // ── NORMAL LOGIN MODE ──
         const dbUser = await dbGetUser(profile.sub) || {};
 
-        // Check if this profile is a linked child — route to its parent
-        const parentId = dbUser.parentAccountId || null;
-
         req.session.user = {
             ...dbUser,
             linkedinId: profile.sub,
@@ -702,13 +857,33 @@ app.get('/auth/linkedin/callback', async (req, res) => {
             });
         }
 
+        let emailInviteRedeemed = false;
+        if (!req.session.inviteCode) {
+            try {
+                emailInviteRedeemed = await redeemPendingTeamInviteForOAuth(req.session, profile, accessToken);
+            } catch (err) {
+                console.error('[Invite] redeemPendingTeamInviteForOAuth:', err.message);
+            }
+        }
+
+        const refreshed = await dbGetUser(profile.sub) || {};
+        const actingParentId = refreshed.parentAccountId || null;
+        req.session.user = {
+            ...refreshed,
+            linkedinId: profile.sub,
+            name: profile.name,
+            email: profile.email,
+            picture: profile.picture,
+            accessToken,
+        };
+
         // REPLACE MODE: a primary login always pins linkedProfiles to JUST
         // this LinkedIn. If a previous "+ Add Account" had attached child
         // profiles, they get severed here so only the latest signed-in
         // LinkedIn can post. Children are unlinked (parentAccountId cleared)
         // so they can sign in independently later if they choose.
-        if (!parentId && req.session.user.paid) {
-            const previousProfiles = dbUser.linkedProfiles || [];
+        if (!actingParentId && req.session.user.paid) {
+            const previousProfiles = refreshed.linkedProfiles || [];
             const droppedIds = previousProfiles
                 .map(p => p && p.linkedinId)
                 .filter(id => id && id !== profile.sub);
@@ -720,26 +895,35 @@ app.get('/auth/linkedin/callback', async (req, res) => {
                 name: profile.name,
                 email: profile.email,
                 picture: profile.picture,
-                addedAt: dbUser.createdAt || new Date().toISOString(),
+                addedAt: refreshed.createdAt || new Date().toISOString(),
             }];
             await dbUpdateFields(profile.sub, { linkedProfiles: initialProfiles });
             req.session.user.linkedProfiles = initialProfiles;
         }
 
-        req.session.primaryAccountId = parentId || profile.sub;
+        req.session.primaryAccountId = actingParentId || profile.sub;
         req.session.activeProfileId = profile.sub;
 
         delete req.session.oauthState;
 
-        // If the visitor arrived through a team-invite link, attach this
-        // freshly-authenticated profile to the inviter's workspace BEFORE we
-        // decide where to send them. The invitee then inherits the inviter's
-        // paid plan via parentAccountId (see /api/me) and skips /upgrade.
-        let inviteAccepted = false;
+        // Invite link (?invite=) or email-matched pending row attaches this
+        // profile to the owner's workspace before we choose onboarding vs app.
+        let inviteAccepted = emailInviteRedeemed;
         if (req.session.inviteCode) {
             try {
                 const r = await acceptPendingInvite(req);
-                inviteAccepted = !!(r && r.accepted);
+                inviteAccepted = inviteAccepted || !!(r && r.accepted);
+                if (r && r.accepted) {
+                    const u = await dbGetUser(profile.sub) || {};
+                    req.session.user = {
+                        ...u,
+                        linkedinId: profile.sub,
+                        name: profile.name,
+                        email: profile.email,
+                        picture: profile.picture,
+                        accessToken,
+                    };
+                }
             } catch (err) {
                 console.error('[Invite] OAuth-callback acceptPendingInvite error:', err.message);
             }
@@ -2467,7 +2651,7 @@ Return ONLY the JSON array, no markdown, no explanation.`;
 });
 
 /** Credits per AI image (DALL·E-class generation). Ultra-only feature. */
-const AI_IMAGE_CREDIT_COST = 8;
+const AI_IMAGE_CREDIT_COST = 10;
 
 const AI_IMAGE_STYLE_FRAGMENTS = {
     comic: 'comic book art, bold ink outlines, halftone or cel shading, vibrant colors',
@@ -3936,7 +4120,8 @@ app.get('/api/team/members', async (req, res) => {
 app.post('/api/team/invite', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
     const { email, role } = req.body;
-    if (!email) return res.status(400).json({ error: 'Email is required.' });
+    const inviteEmailNorm = normalizeInviteEmail(email);
+    if (!inviteEmailNorm) return res.status(400).json({ error: 'Email is required.' });
     const primaryId = getPrimaryAccountId(req.session);
     const user = await dbGetUser(primaryId);
 
@@ -3950,10 +4135,15 @@ app.post('/api/team/invite', async (req, res) => {
         return res.status(403).json({ error: `You have reached the ${limits.maxProfiles}-member limit for your ${tier.toUpperCase()} plan. Upgrade to add more.` });
     }
 
-    if (members.some(m => m.email === email)) return res.status(400).json({ error: 'This email has already been invited.' });
+    if (members.some(m => m && normalizeInviteEmail(m.email) === inviteEmailNorm)) {
+        return res.status(400).json({ error: 'This email has already been invited.' });
+    }
     const inviteCode = crypto.randomBytes(16).toString('hex');
-    members.push({ email, role: role || 'editor', status: 'invited', inviteCode, invitedAt: new Date().toISOString() });
+    const invitedAt = new Date().toISOString();
+    const roleNorm = role || 'editor';
+    members.push({ email: inviteEmailNorm, role: roleNorm, status: 'invited', inviteCode, invitedAt });
     await dbUpdateFields(primaryId, { teamMembers: members });
+    await upsertTeamInvitePlaceholder(primaryId, inviteEmailNorm, inviteCode, roleNorm, invitedAt);
     if (!global._inviteCache) global._inviteCache = {};
     global._inviteCache[inviteCode] = primaryId;
     const inviteLink = `${APP_BASE}/app?invite=${inviteCode}`;
@@ -3964,10 +4154,12 @@ app.delete('/api/team/members/:email', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
     const primaryId = getPrimaryAccountId(req.session);
     const user = await dbGetUser(primaryId);
+    const targetNorm = normalizeInviteEmail(decodeURIComponent(req.params.email || ''));
     const before = (user && user.teamMembers) || [];
-    const removed = before.filter(m => m.email === req.params.email);
-    const members = before.filter(m => m.email !== req.params.email);
+    const removed = before.filter(m => m && normalizeInviteEmail(m.email) === targetNorm);
+    const members = before.filter(m => !m || normalizeInviteEmail(m.email) !== targetNorm);
     await dbUpdateFields(primaryId, { teamMembers: members });
+    if (removed.length) await deleteTeamInvitePlaceholder(primaryId, removed[0].email);
     // Invalidate any cached invite codes belonging to the removed members so
     // a future click on the link can't silently re-attach them.
     if (global._inviteCache) {
@@ -3988,7 +4180,8 @@ app.put('/api/team/members/:email', async (req, res) => {
     const primaryId = getPrimaryAccountId(req.session);
     const user = await dbGetUser(primaryId);
     const members = (user && user.teamMembers) || [];
-    const member = members.find(m => m.email === req.params.email);
+    const targetNorm = normalizeInviteEmail(decodeURIComponent(req.params.email || ''));
+    const member = members.find(m => m && normalizeInviteEmail(m.email) === targetNorm);
     if (!member) return res.status(404).json({ error: 'Member not found.' });
     if (req.body.role) member.role = req.body.role;
     await dbUpdateFields(primaryId, { teamMembers: members });

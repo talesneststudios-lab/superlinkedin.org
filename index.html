@@ -694,8 +694,9 @@
 
         .pricing-price {
             display: flex;
-            align-items: baseline;
-            gap: 4px;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px 8px;
             margin-bottom: 8px;
         }
 
@@ -723,6 +724,23 @@
             font-size: 1.4rem;
             font-weight: 600;
             margin-right: 4px;
+        }
+
+        .pricing-price .price-discount-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            line-height: 1.25;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+            text-transform: uppercase;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.14);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            box-sizing: border-box;
         }
 
         .pricing-desc {
@@ -1529,9 +1547,10 @@
                     <div class="pricing-tier">Advanced</div>
                     <div class="pricing-name">Grow and monetize at full speed</div>
                     <div class="pricing-price">
-                        <span class="old-price">$59</span>
+                        <span class="old-price">$49</span>
                         <span class="currency">$</span>
-                        <span class="amount">49</span>
+                        <span class="amount">39</span>
+                        <span class="price-discount-badge">-20% OFF</span>
                         <span class="period">/month</span>
                     </div>
                     <div class="pricing-desc">Lock in forever &middot; Limited time offer</div>
@@ -1566,6 +1585,7 @@
                         <li><span class="check">&#10003;</span> Team collaboration tools</li>
                         <li><span class="check">&#10003;</span> White-label reporting</li>
                         <li><span class="check">&#10003;</span> API access</li>
+                        <li><span class="check">&#10003;</span> Image posts (AI Image Studio)</li>
                     </ul>
                     <a href="login.html" class="btn btn-secondary">Contact Sales</a>
                 </div>
