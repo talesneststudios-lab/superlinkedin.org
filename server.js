@@ -3787,6 +3787,46 @@ function summarizePostInteractions(postMetrics) {
     };
 }
 
+/**
+ * AVG engagement uses dashboard numerator + denominator only when BOTH come from analyticsDashboard.
+ * Otherwise use summed post reactions ÷ summed post impressions (tracked cards only).
+ * This avoids bogus rates like 1172% when "social engagements" is dashboard-wide but
+ * impressions fallback is profile views, stale rollups, or a tiny partial sum.
+ */
+function computeAvgEngagementAndDisplayImpressions(postMetrics, analyticsEngagement, analyticsDashboard) {
+    const dash = analyticsDashboard || {};
+    const eng = analyticsEngagement || {};
+    const fromPosts = summarizePostInteractions(postMetrics);
+
+    const hasDashSocial = Object.prototype.hasOwnProperty.call(dash, 'socialEngagements');
+    const socialDash = hasDashSocial ? Number(dash.socialEngagements) : null;
+
+    const hasDashPostImp = Object.prototype.hasOwnProperty.call(dash, 'postImpressions');
+    const dashPostImp = hasDashPostImp ? Number(dash.postImpressions) : null;
+    const dashPostImpOk = dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp > 0;
+
+    let avgEngagement = 0;
+    if (socialDash !== null && Number.isFinite(socialDash) && socialDash >= 0 && dashPostImpOk) {
+        avgEngagement = (socialDash / dashPostImp) * 100;
+    } else {
+        const postInteractions = fromPosts.likes + fromPosts.comments + fromPosts.reposts;
+        avgEngagement = fromPosts.impressionsSum > 0
+            ? (postInteractions / fromPosts.impressionsSum) * 100
+            : 0;
+    }
+
+    let totalImpressions = 0;
+    if (hasDashPostImp && dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp >= 0) {
+        totalImpressions = dashPostImp;
+    } else if (fromPosts.impressionsSum > 0) {
+        totalImpressions = fromPosts.impressionsSum;
+    } else {
+        totalImpressions = Number(eng.impressions) || 0;
+    }
+
+    return { avgEngagement, totalImpressions, fromPosts };
+}
+
 // Analytics summary for extension popup/sidebar (bearer-token auth)
 app.get('/api/analytics/summary', authExtension, async (req, res) => {
     const user = await dbGetUser(req.extUser.linkedinId);
@@ -3805,19 +3845,10 @@ app.get('/api/analytics/summary', authExtension, async (req, res) => {
     const hasDashSocial = dash && Object.prototype.hasOwnProperty.call(dash, 'socialEngagements');
     const socialEngagementsDashboard = hasDashSocial ? (Number(dash.socialEngagements) || 0) : null;
 
-    const fromPosts = summarizePostInteractions(posts);
+    const { avgEngagement, totalImpressions, fromPosts } = computeAvgEngagementAndDisplayImpressions(posts, eng, dash);
     const likesFromPosts = fromPosts.likes;
     const commentsFromPosts = fromPosts.comments;
     const repostsFromPosts = fromPosts.reposts;
-
-    // Prefer LinkedIn's dashboard "Post impressions" when scraped; fallback to summed per-post impressions or persisted engagement rollup.
-    const totalImpressions = dash.postImpressions || eng.impressions || fromPosts.impressionsSum || 0;
-
-    /** Rate uses dashboard social engagements when that metric was scraped; otherwise post-level reactions + replies + reshares only. */
-    const engagementsForRate = hasDashSocial && socialEngagementsDashboard !== null
-        ? socialEngagementsDashboard
-        : (likesFromPosts + commentsFromPosts + repostsFromPosts);
-    const avgEngagement = totalImpressions > 0 ? (engagementsForRate / totalImpressions) * 100 : 0;
 
     // Prefer the followers count from the profile page scrape over the dashboard.
     // Any value < 5 is almost certainly a stale bad scrape (e.g. a stray
