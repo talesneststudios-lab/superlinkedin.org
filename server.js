@@ -2996,16 +2996,28 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
     const now = new Date().toISOString();
     const today = now.split('T')[0];
 
+    const dbSnap = await dbGetUser(linkedinId);
+    let followerAnchor = Number(dbSnap && dbSnap.analyticsFollowers) || 0;
+
+    const rejectsFollowersCliffDrop = (prev, incoming) => {
+        const n = Number(incoming);
+        const p = Number(prev);
+        if (!Number.isFinite(n) || n < 5) return true;
+        if (!Number.isFinite(p) || p < 35) return false;
+        return n <= p && n < p * 0.72 && (p - n) > 55;
+    };
+
     if (followers !== null && followers !== undefined) {
         // Defensive floor: a value < 5 almost never reflects a real
         // connection count and is usually a stray "1 follower" widget
         // captured from the LinkedIn DOM. Skip it so a stuck low value
         // can't get persisted from a single bad scrape.
         const numFollowers = Number(followers);
-        if (Number.isFinite(numFollowers) && numFollowers >= 5) {
+        if (Number.isFinite(numFollowers) && numFollowers >= 5 && !rejectsFollowersCliffDrop(followerAnchor, numFollowers)) {
             updates.analyticsFollowers = numFollowers;
+            followerAnchor = Math.max(followerAnchor, numFollowers);
 
-            const user = await dbGetUser(linkedinId);
+            const user = dbSnap || await dbGetUser(linkedinId);
             const history = (user && user.analyticsFollowersHistory) || [];
             const lastEntry = history[history.length - 1];
             if (!lastEntry || lastEntry.date !== today) {
@@ -3016,7 +3028,7 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
             }
             updates.analyticsFollowersHistory = history;
         } else {
-            console.log('[Sync] Ignoring suspicious low follower count:', followers, 'for', linkedinId);
+            console.log('[Sync] Ignoring follower count from scrape:', followers, 'anchor=', followerAnchor, 'for', linkedinId);
         }
     }
 
@@ -3055,13 +3067,13 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
             }
         }
 
-        if (dashboardStats.followers && !updates.analyticsFollowersHistory) {
-            // Same defensive floor as above – analytics dashboards sometimes
-            // surface "1 new follower this week" widgets which we don't want
-            // to confuse for the total count.
+        if (dashboardStats.followers !== undefined && dashboardStats.followers !== null &&
+            updates.analyticsFollowersHistory === undefined) {
             const dashFollowers = Number(dashboardStats.followers);
-            if (Number.isFinite(dashFollowers) && dashFollowers >= 5) {
+            if (Number.isFinite(dashFollowers) && dashFollowers >= 5 &&
+                !rejectsFollowersCliffDrop(followerAnchor, dashFollowers)) {
                 updates.analyticsFollowers = dashFollowers;
+                followerAnchor = Math.max(followerAnchor, dashFollowers);
                 const history = (user && user.analyticsFollowersHistory) || [];
                 const lastEntry = history[history.length - 1];
                 if (!lastEntry || lastEntry.date !== today) {
@@ -3072,7 +3084,7 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
                 }
                 updates.analyticsFollowersHistory = history;
             } else {
-                console.log('[Sync] Ignoring suspicious dashboardStats.followers:', dashboardStats.followers, 'for', linkedinId);
+                console.log('[Sync] Ignoring dashboardStats.followers:', dashboardStats.followers, 'anchor=', followerAnchor, 'for', linkedinId);
             }
         }
     }

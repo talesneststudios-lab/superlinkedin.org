@@ -7,6 +7,8 @@
     let sidebarOpen = false;
     let sidebarData = { followers: 0, posts: [], topPosts: [], totalLikes: 0,
         totalComments: 0, totalReposts: 0, totalImpressions: 0 };
+    /** Persisted last accepted connection total — stabilizes against bad scrapes across tabs */
+    let connectionsWatermark = 0;
 
     const SL_FEATURE_KEYS = ['home', 'composer', 'activities', 'posts', 'engage', 'timelines', 'chat'];
 
@@ -108,128 +110,170 @@
     }
 
     // ── Scraping ──
-    // Returns the user's CONNECTIONS count (the field is named `followers`
-    // for backwards compatibility with the database schema and existing
-    // dashboard code, but we now look for connections first since that's
-    // what most LinkedIn users actually grow).
+    // CONNECTIONS total (stored as followers for backwards compatibility).
     //
-    // The function only trusts numbers from pages where the LOGGED-IN user's
-    // own profile data is visible — primarily the My Network page or their
-    // own /in/<vanity>/ profile. On the feed and other pages we'd otherwise
-    // pick up "1 follower" widgets ("Add to your feed → Pages"), which is
-    // exactly the bug that was producing the spurious "1 followers" reading.
+    // LinkedIn often shows bogus small counts (“20 mutual…”) or “500+” on
+    // profiles — we gather multiple numeric candidates when possible and
+    // prefer the HIGH TRUST ceiling (exact counts from nav/My Network /
+    // identity card) instead of returning the first DOM hit.
+    const SL_CONNCTX_JUNK = /\b(mutual(?:ly)? connected|degree connection|\d+\s*st\s*degree|\d+(?:nd|rd|th)\s*degree|birthday|celebrate|invite|pending|followers only|following|people you know|grow your network|reach out|recommended|followers you know|invite sent|accepted|withdrawn)\b/i;
+
+    /** Parse connection / follower totals: “732 connections”, “500+ connections”, “1,234 followers”. */
+    function extractConnectionsTotalsFromSnippet(text, minN) {
+        if (!text) return [];
+        const t = text.replace(/\u00a0/g, ' ');
+        const min = typeof minN === 'number' ? minN : 10;
+        const out = [];
+        const add = (raw) => {
+            const n = parseNumber(String(raw || '').split('+')[0].trim());
+            if (Number.isFinite(n) && n >= min) out.push(n);
+        };
+        let m;
+        const rePlus = /\b([\d]{1,3}(?:,[0-9]{3})+|[\d]{2,})\s*\+\s*connections?\b/gi;
+        while ((m = rePlus.exec(t)) !== null) add(m[1]);
+
+        const reConn = /\b([\d]{1,3}(?:,[0-9]{3})+|[\d]{2,})\s+connections?\b/gi;
+        while ((m = reConn.exec(t)) !== null) add(m[1]);
+
+        const reFol = /\b([\d]{1,3}(?:,[0-9]{3})+|[\d]{2,})\s+followers?\b/gi;
+        while ((m = reFol.exec(t)) !== null) add(m[1]);
+
+        return out;
+    }
+
     function scrapeFollowers() {
-        const url = location.href;
         const path = location.pathname;
 
         const onMyNetwork = /\/(mynetwork|my-network)(\/|$)/i.test(path);
         const onOwnProfile = /\/in\/[^/]+\/?(\?|$)/i.test(path);
-        // The settings/feed pages still surface "X connections" in the user
-        // card on the left; allow it ONLY when the number looks plausible.
         const onFeedOrSettings = /\/(feed|notifications|jobs|messaging)(\/|$)/i.test(path);
 
-        // 0a) Links to the official Connections hub — LinkedIn repeats this
-        //     in nav / trays on almost every route; notifications/messaging
-        //     pages often omit the identity module but still expose this href.
+        const highs = []; // authoritative ceilings (explicit totals)
+        const lowers = []; // supplementary — only accepts high floor values
+
+        const pushHigh = (n) => { if (Number.isFinite(n) && n >= 5) highs.push(Math.round(n)); };
+        const pushWeak = (n) => {
+            const v = Math.round(n);
+            if (Number.isFinite(v) && v >= 85) lowers.push(v);
+        };
+
+        // 1) My Network hub — canonical total (allow small totals for new accounts)
+        if (onMyNetwork) {
+            const tile = document.querySelector('a[href*="/mynetwork/invite-connect/connections/"], a[href*="/mynetwork/network-manager/"]');
+            const tileText = (tile && tile.textContent) || '';
+            const tileMatch = tileText.match(/([\d][\d,.]*\s*[KMB]?)/);
+            if (tileMatch) pushHigh(parseNumber(tileMatch[1]));
+            const pageText = (document.querySelector('main')?.innerText || '').substring(0, 8000);
+            extractConnectionsTotalsFromSnippet(pageText, 1).forEach(pushHigh);
+        }
+
+        // 2) Identity / feed sidebar / nav
+        if (onFeedOrSettings || onOwnProfile) {
+            const sideRoots = document.querySelectorAll(
+                '.feed-identity-module, .feed-identity-module__profile-card, ' +
+                '.scaffold-layout__sidebar:not(.mn-abi-form), #global-nav > div, #global-nav, .global-nav__me'
+            );
+            sideRoots.forEach((side) => {
+                const text = (side.innerText || '').replace(/\u00a0/g, ' ').substring(0, 8000);
+                if (SL_CONNCTX_JUNK.test(text)) return;
+                extractConnectionsTotalsFromSnippet(text, 10).forEach(pushHigh);
+            });
+        }
+
+        // 3) Own profile top card (includes “500+ connections”)
+        if (onOwnProfile) {
+            const header = document.querySelector('.pv-top-card, .scaffold-layout__main section, main') || document.body;
+            const headerText = (header.innerText || '').replace(/\u00a0/g, ' ').substring(0, 10000);
+            extractConnectionsTotalsFromSnippet(headerText, 5).forEach(pushHigh);
+        }
+
         const linkSel = [
             'a[href*="mynetwork/invite-connect/connections"]',
             'a[href*="/invite-connect/connections/"]',
             'a[href*="network-manager/connections"]',
         ].join(', ');
+
         for (const a of document.querySelectorAll(linkSel)) {
-            const bits = [(a.innerText || ''), (a.textContent || ''), (a.getAttribute('aria-label') || '')].join('\n');
-            let m = bits.match(/([\d][\d,.]*\s*[KMB]?)\s*connections?\b/i);
-            if (!m) {
-                m = bits.match(/connections?[:\s]+\s*([\d][\d,.]*\s*[KMB]?)/i);
-            }
-            if (m) {
-                const n = parseNumber(m[1]);
-                if (n >= 5) return n;
-            }
-            let el = a;
-            for (let d = 0; d < 5 && el; d++) {
-                const t = (el.innerText || '').replace(/\s+/g, ' ');
-                const inner = t.match(/([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i);
-                if (inner) {
-                    const n = parseNumber(inner[1]);
-                    if (n >= 5) return n;
+            let cage = '';
+            try {
+                let el = a;
+                for (let d = 0; d < 6 && el; d++) {
+                    cage += '\n' + (el.innerText || '');
+                    el = el.parentElement;
                 }
-                el = el.parentElement;
-            }
+            } catch (_) { cage = ''; }
+            if (!cage.trim()) cage = [(a.innerText || ''), (a.getAttribute('aria-label') || '')].join('\n');
+            cage = cage.replace(/\u00a0/g, ' ');
+            if (!cage.trim()) continue;
+            if (SL_CONNCTX_JUNK.test(cage)) continue;
+            const nums = extractConnectionsTotalsFromSnippet(cage, 50);
+            if (!nums.length) continue;
+            const bestLink = Math.max(...nums);
+            if (bestLink >= 50 || onMyNetwork) pushHigh(bestLink);
+            else pushWeak(bestLink);
         }
 
-        // 0b) Toolbar / mega-menu controls often expose "732 connections" only
-        //     on aria-label, not plain text beside the avatar.
-        const ariaJunk = /\b(mutual connections|degree connection|followers only|following|manage your network|invite)\b/i;
+        const ariaJunk = /\b(mutual connections|degree connection|followers only|following|followers you know)\b/i;
         for (const el of document.querySelectorAll('[aria-label]')) {
             const lbl = (el.getAttribute('aria-label') || '').trim();
-            if (!lbl || ariaJunk.test(lbl)) continue;
-            if (/\bin common\b|\bdegrees\b/i.test(lbl)) continue;
-            const m = lbl.match(/([\d][\d,.]*\s*[KMB]?)\s*connections?\b/i);
-            if (m) {
-                const n = parseNumber(m[1]);
-                if (n >= 10) return n;
-            }
-        }
-
-        // 1) My Network page — most reliable: the "Connections" tile shows
-        //    the total count directly.
-        if (onMyNetwork) {
-            const tile = document.querySelector('a[href*="/mynetwork/invite-connect/connections/"], a[href*="/mynetwork/network-manager/"]');
-            const tileText = (tile && tile.textContent) || '';
-            const tileMatch = tileText.match(/([\d][\d,.]*\s*[KMB]?)/);
-            if (tileMatch) {
-                const n = parseNumber(tileMatch[1]);
-                if (n >= 1) return n;
-            }
-            // Generic page-level fallback: "Your connections … 730"
-            const pageText = (document.querySelector('main')?.innerText || '').substring(0, 4000);
-            const pageMatch = pageText.match(/([\d][\d,.]{1,}[KMB]?)\s+connections?\b/i);
-            if (pageMatch) {
-                const n = parseNumber(pageMatch[1]);
-                if (n >= 5) return n;
-            }
-        }
-
-        // 2) Own profile page — "X connections" inline in the profile header.
-        if (onOwnProfile) {
-            const header = document.querySelector('.pv-top-card, .scaffold-layout__main, main') || document.body;
-            const headerText = (header.innerText || '').substring(0, 6000);
-            const cm = headerText.match(/([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i);
-            if (cm) {
-                const n = parseNumber(cm[1]);
-                // 500+ is LinkedIn's display cap, real value lives elsewhere
-                if (n >= 5) return n;
-            }
-            const fm = headerText.match(/([\d][\d,.]*\s*[KMB]?)\s+followers?\b/i);
-            if (fm) {
-                const n = parseNumber(fm[1]);
-                if (n >= 5) return n;
-            }
-        }
-
-        // 3) Feed / settings / messaging — the left-rail "user card" shows
-        //    a profile summary that occasionally includes a count. Only
-        //    accept it when it's specifically labelled CONNECTIONS and is
-        //    >= 10, otherwise we'll keep grabbing "1 follower" from the
-        //    "Add to your feed" Pages widget.
-        if (onFeedOrSettings) {
-            const sideRoots = document.querySelectorAll(
-                '#global-nav, .feed-identity-module, .feed-identity-module__profile-card, .scaffold-layout__sidebar, .scaffold-layout__aside, .global-nav__me, aside'
-            );
-            for (const side of sideRoots) {
-                const text = (side.innerText || '').substring(0, 6000);
-                const cm = text.match(/([\d][\d,.]*\s*[KMB]?)\s+connections?\b/i);
-                if (cm) {
-                    const n = parseNumber(cm[1]);
-                    if (n >= 10) return n;
+            if (!lbl || ariaJunk.test(lbl) || /\bin common\b|\bdegrees\b/i.test(lbl)) continue;
+            if (SL_CONNCTX_JUNK.test(lbl)) continue;
+            const ariaNums = extractConnectionsTotalsFromSnippet(lbl, 10);
+            if (ariaNums.length) {
+                ariaNums.forEach(pushHigh);
+            } else {
+                let m = lbl.match(/([\d][\d,.]*)\s+(?:followers?)\b/i);
+                if (!m) m = lbl.match(/\bfollowers?\s*[•·|\-:]?\s*([\d][\d,.]{1,})\b/i);
+                if (m) {
+                    const n = parseNumber(m[1]);
+                    if (n >= 10) pushHigh(n);
                 }
             }
         }
 
-        // No trustworthy number on this page — leave the existing value
-        // alone rather than overwriting it with garbage.
-        return null;
+        let best = highs.length ? Math.max(...highs) : null;
+        const weakMax = lowers.length ? Math.max(...lowers) : null;
+        if (weakMax !== null) best = Math.max(best || 0, weakMax);
+
+        if (!best || best < 5) return null;
+
+        /** Reject parses that only matched low-trust anchors (typically “20 mutual” style widgets) unless the count itself is plainly a network total */
+        if (best < 80 && highs.length === 0) return null;
+
+        return Math.round(best);
+    }
+
+    async function refreshConnectionsWatermarkFromStorage() {
+        try {
+            const got = await chrome.storage.local.get(['slConnectionsWatermark']);
+            const v = Number(got.slConnectionsWatermark);
+            connectionsWatermark = Number.isFinite(v) && v >= 5 ? v : 0;
+            if ((!Number(sidebarData.followers) || sidebarData.followers < 5) && connectionsWatermark >= 5) {
+                sidebarData.followers = connectionsWatermark;
+            }
+        } catch {
+            connectionsWatermark = 0;
+        }
+    }
+
+    function persistAcceptedConnections(n) {
+        const v = Number(n);
+        if (!Number.isFinite(v) || v < 5) return;
+        connectionsWatermark = v;
+        sidebarData.followers = v;
+        try {
+            chrome.storage.local.set({ slConnectionsWatermark: v });
+        } catch { /* ignore */ }
+    }
+
+    /** Reject bogus drops from flaky scrapes vs what we’ve already synced client-side */
+    function shouldAcceptConnectionsScrape(candidate) {
+        const v = typeof candidate === 'number' ? candidate : parseNumber(String(candidate));
+        const prev = Math.max(Number(sidebarData.followers || 0), Number(connectionsWatermark || 0));
+        if (!Number.isFinite(v) || v < 5) return false;
+        if (prev < 30) return true;
+        if (v <= prev && v < prev * 0.74 && prev - v > 50) return false;
+        return true;
     }
 
     // ── Feed sidebar stats ──
@@ -589,6 +633,7 @@
         }
         try {
         retryCount = retryCount || 0;
+        await refreshConnectionsWatermarkFromStorage();
         const url = window.location.href;
         const data = { url, timestamp: new Date().toISOString() };
 
@@ -601,9 +646,9 @@
                 data.profile = profile;
                 if (slOn('home')) {
                     const followers = scrapeFollowers();
-                    if (followers !== null) {
+                    if (followers !== null && shouldAcceptConnectionsScrape(followers)) {
                         data.followers = followers;
-                        sidebarData.followers = followers;
+                        persistAcceptedConnections(followers);
                     }
                 }
                 console.log('[SuperLinkedIn] Own profile detected, scraped followers:', data.followers);
@@ -613,9 +658,9 @@
         } else if (url.includes('/mynetwork') || url.includes('/feed') || url.includes('/notifications') || url.includes('/jobs') || url.includes('/messaging')) {
             if (slOn('home')) {
                 const followers = scrapeFollowers();
-                if (followers !== null) {
+                if (followers !== null && shouldAcceptConnectionsScrape(followers)) {
                     data.followers = followers;
-                    sidebarData.followers = followers;
+                    persistAcceptedConnections(followers);
                     console.log('[SuperLinkedIn] Connections scraped from', url.substring(0, 80), '=>', followers);
                 }
             }
@@ -639,7 +684,11 @@
             const dashboardStats = scrapeAnalyticsDashboard();
             if (dashboardStats) {
                 data.dashboardStats = Object.assign({}, data.dashboardStats || {}, dashboardStats);
-                if (dashboardStats.followers) sidebarData.followers = dashboardStats.followers;
+                if (dashboardStats.followers !== undefined &&
+                    dashboardStats.followers !== null &&
+                    shouldAcceptConnectionsScrape(Number(dashboardStats.followers))) {
+                    persistAcceptedConnections(Number(dashboardStats.followers));
+                }
                 if (dashboardStats.postImpressions) sidebarData.totalImpressions = dashboardStats.postImpressions;
                 if (dashboardStats.socialEngagements) sidebarData.totalLikes = dashboardStats.socialEngagements;
             } else if (retryCount < 3) {

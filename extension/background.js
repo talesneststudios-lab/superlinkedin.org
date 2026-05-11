@@ -37,7 +37,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
 
     if (msg.type === 'LOGOUT') {
-        chrome.storage.local.remove(['authToken', 'lastSync', 'userName', 'plan', 'ownerLinkedinId', 'ownerName']);
+        chrome.storage.local.remove(['authToken', 'lastSync', 'userName', 'plan', 'ownerLinkedinId', 'ownerName', 'slConnectionsWatermark']);
         sendResponse({ ok: true });
     }
 
@@ -87,7 +87,16 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 function mergeData(payload) {
     if (payload.followers !== undefined && payload.followers !== null) {
-        pendingData.followers = payload.followers;
+        const nf = Number(payload.followers);
+        const pf = pendingData.followers;
+        let reject = false;
+        if (!Number.isFinite(nf) || nf < 5) reject = true;
+        else if (pf !== null && Number.isFinite(pf) && pf >= 35 && nf <= pf &&
+            nf < pf * 0.72 && pf - nf > 55) {
+            reject = true;
+            console.log('[SuperLinkedIn] Pending queue: rejecting cliff follower scrape', nf, 'vs queued', pf);
+        }
+        if (!reject) pendingData.followers = nf;
     }
     if (payload.profile) {
         pendingData.profile = payload.profile;
