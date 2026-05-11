@@ -161,8 +161,9 @@ async function loadAnalytics() {
 
 function renderDefaultAnalytics() {
     const data = { followers: 0, totalPosts: 0, avgEngagement: 0, totalImpressions: 0,
-                   topPosts: [], totalLikes: 0, totalComments: 0, totalReposts: 0,
-                   followerHistory: [] };
+                   topPosts: [], socialEngagementsDashboard: null,
+                   likesFromPosts: 0, totalComments: 0, totalReposts: 0,
+                   followerHistory: [], totalLikes: 0 };
     renderAnalytics(data);
 }
 
@@ -201,19 +202,40 @@ function renderTopPosts(posts) {
 }
 
 function renderEngagementBars(d) {
-    const maxVal = Math.max(d.totalLikes || 0, d.totalComments || 0, d.totalReposts || 0, d.totalImpressions || 0, 1);
+    const dash = d.socialEngagementsDashboard;
+    const hasDash = dash != null && dash !== '' && !Number.isNaN(Number(dash));
+    const dashNum = hasDash ? Number(dash) : 0;
+    const likesP = d.likesFromPosts != null ? d.likesFromPosts : (d.totalLikes || 0);
+    const cmt = d.totalComments || 0;
+    const rps = d.totalReposts || 0;
+    const imp = d.totalImpressions || 0;
 
-    document.getElementById('engLikesBar').style.width = ((d.totalLikes || 0) / maxVal * 100) + '%';
-    document.getElementById('engLikesVal').textContent = formatNum(d.totalLikes || 0);
+    const maxVal = Math.max(dashNum, likesP, cmt, rps, imp, 1);
 
-    document.getElementById('engCommentsBar').style.width = ((d.totalComments || 0) / maxVal * 100) + '%';
-    document.getElementById('engCommentsVal').textContent = formatNum(d.totalComments || 0);
+    const dashRow = document.getElementById('engDashSocialRow');
+    const dashBar = document.getElementById('engDashSocialBar');
+    const dashVal = document.getElementById('engDashSocialVal');
+    if (dashRow && dashBar && dashVal) {
+        if (hasDash) {
+            dashRow.style.display = '';
+            dashBar.style.width = ((dashNum / maxVal) * 100) + '%';
+            dashVal.textContent = formatNum(dashNum);
+        } else {
+            dashRow.style.display = 'none';
+        }
+    }
 
-    document.getElementById('engRepostsBar').style.width = ((d.totalReposts || 0) / maxVal * 100) + '%';
-    document.getElementById('engRepostsVal').textContent = formatNum(d.totalReposts || 0);
+    document.getElementById('engLikesBar').style.width = ((likesP / maxVal) * 100) + '%';
+    document.getElementById('engLikesVal').textContent = formatNum(likesP);
 
-    document.getElementById('engViewsBar').style.width = ((d.totalImpressions || 0) / maxVal * 100) + '%';
-    document.getElementById('engViewsVal').textContent = formatNum(d.totalImpressions || 0);
+    document.getElementById('engCommentsBar').style.width = ((cmt / maxVal) * 100) + '%';
+    document.getElementById('engCommentsVal').textContent = formatNum(cmt);
+
+    document.getElementById('engRepostsBar').style.width = ((rps / maxVal) * 100) + '%';
+    document.getElementById('engRepostsVal').textContent = formatNum(rps);
+
+    document.getElementById('engViewsBar').style.width = ((imp / maxVal) * 100) + '%';
+    document.getElementById('engViewsVal').textContent = formatNum(imp);
 }
 
 function renderFollowerChart(history) {

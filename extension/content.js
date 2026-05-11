@@ -6,7 +6,7 @@
     let lastUrl = '';
     let sidebarOpen = false;
     let sidebarData = { followers: 0, posts: [], topPosts: [], totalLikes: 0,
-        totalComments: 0, totalReposts: 0, totalImpressions: 0 };
+        totalComments: 0, totalReposts: 0, totalImpressions: 0, dashboardSocialEngagements: null };
     /** Persisted last accepted connection total — stabilizes against bad scrapes across tabs */
     let connectionsWatermark = 0;
 
@@ -690,7 +690,9 @@
                     persistAcceptedConnections(Number(dashboardStats.followers));
                 }
                 if (dashboardStats.postImpressions) sidebarData.totalImpressions = dashboardStats.postImpressions;
-                if (dashboardStats.socialEngagements) sidebarData.totalLikes = dashboardStats.socialEngagements;
+                if (Object.prototype.hasOwnProperty.call(dashboardStats, 'socialEngagements')) {
+                    sidebarData.dashboardSocialEngagements = Number(dashboardStats.socialEngagements) || 0;
+                }
             } else if (retryCount < 3) {
                 console.log('[SuperLinkedIn] Analytics page detected but no data found, retry', retryCount + 1, 'of 3 in 5s...');
                 setTimeout(() => runScrape(retryCount + 1), 5000);
@@ -823,23 +825,28 @@
                     <div data-sl-f="activities">
                         <div class="sl-section-title">Engagement Breakdown</div>
                         <div class="sl-eng-section">
+                            <div class="sl-eng-row" id="slEngDashSocialRow" style="display:none;">
+                                <span class="sl-eng-label">Social eng.<small>LinkedIn dashboard</small></span>
+                                <div class="sl-eng-bar-wrap"><div class="sl-eng-bar dashboard-social" id="slEngDashSocial" style="width:0%"></div></div>
+                                <span class="sl-eng-val" id="slEngDashSocialVal">0</span>
+                            </div>
                             <div class="sl-eng-row">
-                                <span class="sl-eng-label">&#128077; Likes</span>
+                                <span class="sl-eng-label">Likes<small>From scraped posts</small></span>
                                 <div class="sl-eng-bar-wrap"><div class="sl-eng-bar likes" id="slEngLikes" style="width:0%"></div></div>
                                 <span class="sl-eng-val" id="slEngLikesVal">0</span>
                             </div>
                             <div class="sl-eng-row">
-                                <span class="sl-eng-label">&#128172; Comments</span>
+                                <span class="sl-eng-label">Comments<small>From scraped posts</small></span>
                                 <div class="sl-eng-bar-wrap"><div class="sl-eng-bar comments" id="slEngComments" style="width:0%"></div></div>
                                 <span class="sl-eng-val" id="slEngCommentsVal">0</span>
                             </div>
                             <div class="sl-eng-row">
-                                <span class="sl-eng-label">&#128257; Reposts</span>
+                                <span class="sl-eng-label">Reposts<small>From scraped posts</small></span>
                                 <div class="sl-eng-bar-wrap"><div class="sl-eng-bar reposts" id="slEngReposts" style="width:0%"></div></div>
                                 <span class="sl-eng-val" id="slEngRepostsVal">0</span>
                             </div>
                             <div class="sl-eng-row">
-                                <span class="sl-eng-label">&#128065; Views</span>
+                                <span class="sl-eng-label">Impressions<small>Dashboard / feed</small></span>
                                 <div class="sl-eng-bar-wrap"><div class="sl-eng-bar views" id="slEngViews" style="width:0%"></div></div>
                                 <span class="sl-eng-val" id="slEngViewsVal">0</span>
                             </div>
@@ -1448,13 +1455,24 @@
             `).join('');
         }
 
-        // Engagement bars
-        const maxEng = Math.max(
-            sidebarData.totalLikes, sidebarData.totalComments,
-            sidebarData.totalReposts, sidebarData.totalImpressions, 1
-        );
-        el('slEngLikes').style.width = (sidebarData.totalLikes / maxEng * 100) + '%';
-        el('slEngLikesVal').textContent = formatNum(sidebarData.totalLikes);
+        // Engagement breakdown (dashboard aggregate vs per-post scraped sums)
+        const dashSoc = sidebarData.dashboardSocialEngagements;
+        const hasDashSoc = dashSoc != null && !Number.isNaN(Number(dashSoc));
+        const dashNum = hasDashSoc ? Number(dashSoc) : 0;
+        const likeSum = sidebarData.totalLikes;
+        const maxEng = Math.max(dashNum, likeSum, sidebarData.totalComments, sidebarData.totalReposts, sidebarData.totalImpressions, 1);
+        const dashRow = el('slEngDashSocialRow');
+        if (dashRow) {
+            if (hasDashSoc) {
+                dashRow.style.display = '';
+                el('slEngDashSocial').style.width = (dashNum / maxEng * 100) + '%';
+                el('slEngDashSocialVal').textContent = formatNum(dashNum);
+            } else {
+                dashRow.style.display = 'none';
+            }
+        }
+        el('slEngLikes').style.width = (likeSum / maxEng * 100) + '%';
+        el('slEngLikesVal').textContent = formatNum(likeSum);
         el('slEngComments').style.width = (sidebarData.totalComments / maxEng * 100) + '%';
         el('slEngCommentsVal').textContent = formatNum(sidebarData.totalComments);
         el('slEngReposts').style.width = (sidebarData.totalReposts / maxEng * 100) + '%';
@@ -1484,10 +1502,10 @@
                             <div class="sl-interact-val">${sidebarData.posts.length}</div>
                             <div class="sl-interact-lbl">Posts Tracked</div>
                         </div>
-                        <div class="sl-interact-item">
-                            <div class="sl-interact-val">${formatNum(sidebarData.totalLikes)}</div>
-                            <div class="sl-interact-lbl">Total Likes</div>
-                        </div>
+                            <div class="sl-interact-item">
+                                <div class="sl-interact-val">${formatNum(sidebarData.totalLikes)}</div>
+                                <div class="sl-interact-lbl">Likes (scraped)</div>
+                            </div>
                         <div class="sl-interact-item">
                             <div class="sl-interact-val">${formatNum(sidebarData.totalImpressions)}</div>
                             <div class="sl-interact-lbl">Impressions</div>

@@ -1802,6 +1802,21 @@ function onboardingStyleInjectionForAi(user, rawSnippetLimit = 5) {
     return `\n\nWRITING DNA: The user liked these sample posts during onboarding. Use them as reference for the user's preferred writing style, tone, structure, and format:\n${raw.map((b, i) => `${i + 1}. "${b}"`).join('\n')}`;
 }
 
+/** Context → products use `title`; onboarding may use `name`. URL-only rows are still valid. */
+function userProductsForPrompt(raw) {
+    const list = Array.isArray(raw) ? raw : [];
+    return list
+        .map(p => {
+            if (!p || typeof p !== 'object') return null;
+            const url = typeof p.url === 'string' ? p.url.trim() : '';
+            const name = String(p.name || p.title || '').trim();
+            const description = typeof p.description === 'string' ? p.description.trim() : '';
+            if (!url && !name && !description) return null;
+            return { url, name, description };
+        })
+        .filter(Boolean);
+}
+
 app.post('/api/ai/generate-posts', async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
@@ -1827,7 +1842,7 @@ app.post('/api/ai/generate-posts', async (req, res) => {
 
     const customRules = user.customRules || '';
     const interests = (user.interests || []).join(', ');
-    const products = (user.products || []).filter(p => p.name || p.description);
+    const products = userProductsForPrompt(user.products);
     const productsList = products.map(p => {
         let s = p.name || p.url;
         if (p.description) s += ` — ${p.description}`;
@@ -1971,7 +1986,7 @@ app.post('/api/ai/write', async (req, res) => {
     const creators = (user.favoriteCreators || []).map(c => c.name).filter(Boolean);
     const onboardingStyle = onboardingStyleInjectionForAi(user, 3);
 
-    const products = (user.products || []).filter(p => p.name || p.description);
+    const products = userProductsForPrompt(user.products);
     const productsList = products.map(p => {
         let s = p.name || p.url;
         if (p.description) s += ` — ${p.description}`;
@@ -2065,7 +2080,7 @@ app.post('/api/ai/generate-product-posts', async (req, res) => {
 
     const user = await hydrateSessionUserFromDb(req.session.user);
     const aboutYou = user.aboutYou || '';
-    const products = (user.products || []).filter(p => p.name || p.description);
+    const products = userProductsForPrompt(user.products);
 
     if (products.length === 0) {
         return res.json({ posts: [], error: 'No products configured. Add products in Context or Onboarding.' });
@@ -3179,20 +3194,16 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         const dashboardImpressions = (dashboardStats && dashboardStats.postImpressions !== undefined)
             ? dashboardStats.postImpressions
             : prevEng.impressions || 0;
-        const dashboardReactions = (dashboardStats && dashboardStats.socialEngagements !== undefined)
-            ? dashboardStats.socialEngagements
-            : null;
         const dashboardMembersReached = (dashboardStats && dashboardStats.membersReached !== undefined)
             ? dashboardStats.membersReached
             : null;
 
         const hasPosts = allPosts.length > 0;
         updates.analyticsEngagement = {
-            likes: hasPosts
-                ? (totalLikes || (dashboardReactions !== null ? dashboardReactions : (prevEng.likes || 0)))
-                : 0,
-            comments: hasPosts ? (totalComments || prevEng.comments || 0) : 0,
-            reposts: hasPosts ? (totalReposts || prevEng.reposts || 0) : 0,
+            // Sum of per-post like counts only; LinkedIn dashboard "social engagements" lives under analyticsDashboard.socialEngagements.
+            likes: hasPosts ? totalLikes : (prevEng.likes || 0),
+            comments: hasPosts ? (totalComments || prevEng.comments || 0) : (prevEng.comments || 0),
+            reposts: hasPosts ? (totalReposts || prevEng.reposts || 0) : (prevEng.reposts || 0),
             impressions: Math.max(dashboardImpressions, totalImpressions),
             totalPosts: allPosts.length,
             membersReached: dashboardMembersReached !== null ? dashboardMembersReached : (prevEng.membersReached || 0),
@@ -3349,6 +3360,17 @@ app.get('/api/analytics', async (req, res) => {
     });
 });
 
+/** Sums interaction counts scraped from visible post cards / stored metrics rows. */
+function summarizePostInteractions(postMetrics) {
+    const posts = Array.isArray(postMetrics) ? postMetrics : [];
+    return {
+        likes: posts.reduce((s, p) => s + (Number(p.likes) || 0), 0),
+        comments: posts.reduce((s, p) => s + (Number(p.comments) || 0), 0),
+        reposts: posts.reduce((s, p) => s + (Number(p.reposts) || 0), 0),
+        impressionsSum: posts.reduce((s, p) => s + (Number(p.impressions) || 0), 0),
+    };
+}
+
 // Analytics summary for extension popup/sidebar (bearer-token auth)
 app.get('/api/analytics/summary', authExtension, async (req, res) => {
     const user = await dbGetUser(req.extUser.linkedinId);
@@ -3363,23 +3385,29 @@ app.get('/api/analytics/summary', authExtension, async (req, res) => {
                        - ((a.likes || 0) + (a.comments || 0) + (a.reposts || 0)))
         .slice(0, 5);
 
-    // Prefer official LinkedIn dashboard values over post-level aggregation.
-    // Dashboard values come from the dedicated analytics/dashboard pages on LinkedIn,
-    // while post-level values are summed from individual visible posts which may be incomplete.
-    const totalImpressions = dashboard.postImpressions || eng.impressions || 0;
-    const totalLikes = dashboard.socialEngagements || eng.likes || 0;
-    const totalComments = eng.comments || 0;
-    const totalReposts = eng.reposts || 0;
-    const totalEng = dashboard.socialEngagements || (totalLikes + totalComments + totalReposts);
-    const avgEngagement = totalImpressions > 0
-        ? (totalEng / Math.max(totalImpressions, 1) * 100)
-        : 0;
+    const dash = dashboard;
+    const hasDashSocial = dash && Object.prototype.hasOwnProperty.call(dash, 'socialEngagements');
+    const socialEngagementsDashboard = hasDashSocial ? (Number(dash.socialEngagements) || 0) : null;
+
+    const fromPosts = summarizePostInteractions(posts);
+    const likesFromPosts = fromPosts.likes;
+    const commentsFromPosts = fromPosts.comments;
+    const repostsFromPosts = fromPosts.reposts;
+
+    // Prefer LinkedIn's dashboard "Post impressions" when scraped; fallback to summed per-post impressions or persisted engagement rollup.
+    const totalImpressions = dash.postImpressions || eng.impressions || fromPosts.impressionsSum || 0;
+
+    /** Rate uses dashboard social engagements when that metric was scraped; otherwise post-level reactions + replies + reshares only. */
+    const engagementsForRate = hasDashSocial && socialEngagementsDashboard !== null
+        ? socialEngagementsDashboard
+        : (likesFromPosts + commentsFromPosts + repostsFromPosts);
+    const avgEngagement = totalImpressions > 0 ? (engagementsForRate / totalImpressions) * 100 : 0;
 
     // Prefer the followers count from the profile page scrape over the dashboard.
     // Any value < 5 is almost certainly a stale bad scrape (e.g. a stray
     // "1 follower" Pages widget) – return 0 instead so the popup doesn't
     // mislead until a real /mynetwork/ scrape replaces it.
-    const rawFollowers = user.analyticsFollowers || dashboard.followers || 0;
+    const rawFollowers = user.analyticsFollowers || dash.followers || 0;
     const followers = (Number(rawFollowers) >= 5) ? Number(rawFollowers) : 0;
 
     res.json({
@@ -3387,10 +3415,20 @@ app.get('/api/analytics/summary', authExtension, async (req, res) => {
         totalPosts: posts.length || (user.queueItems || []).filter(q => q.status === 'posted').length || 0,
         avgEngagement: Math.round(avgEngagement * 10) / 10,
         totalImpressions,
-        totalLikes,
-        totalComments,
-        totalReposts,
-        membersReached: dashboard.membersReached || eng.membersReached || 0,
+
+        /** @deprecated Prefer likesFromPosts + socialEngagementsDashboard — kept for older extension builds */
+        totalLikes: likesFromPosts,
+
+        socialEngagementsDashboard,
+
+        likesFromPosts,
+        commentsFromPosts,
+        repostsFromPosts,
+
+        totalComments: commentsFromPosts,
+        totalReposts: repostsFromPosts,
+
+        membersReached: dash.membersReached || eng.membersReached || 0,
         topPosts,
         followerHistory: user.analyticsFollowersHistory || [],
         plan: user.planTier || user.plan || 'pro',
@@ -3801,9 +3839,19 @@ app.get('/api/reports/generate', async (req, res) => {
     doc.fontSize(16).fillColor(color).text('Overview');
     doc.moveDown(0.5);
     doc.fontSize(11).fillColor('#333');
+    const dash = dashboard || {};
+    const dashSocial = dash && Object.prototype.hasOwnProperty.call(dash, 'socialEngagements')
+        ? (Number(dash.socialEngagements) || 0)
+        : null;
+    const postAgg = summarizePostInteractions(postMetrics);
     doc.text(`Followers: ${followers.toLocaleString()}`);
     doc.text(`Total Impressions: ${impressions.toLocaleString()}`);
-    doc.text(`Social Engagements: ${(dashboard.socialEngagements || engagement.likes || 0).toLocaleString()}`);
+    if (dashSocial !== null) {
+        doc.text(`Social engagements (LinkedIn dashboard — reactions, replies, reshares combined): ${dashSocial.toLocaleString()}`);
+    }
+    doc.text(`Likes (sum on tracked/scraped posts): ${postAgg.likes.toLocaleString()}`);
+    doc.text(`Comments/Replies on tracked posts: ${postAgg.comments.toLocaleString()}`);
+    doc.text(`Reposts on tracked posts: ${postAgg.reposts.toLocaleString()}`);
     doc.text(`Members Reached: ${(dashboard.membersReached || 0).toLocaleString()}`);
     doc.text(`Profile Views: ${(dashboard.profileViews || 0).toLocaleString()}`);
     doc.moveDown(1.5);
@@ -3900,10 +3948,26 @@ app.get('/api/v1/analytics', apiKeyAuth, (req, res) => {
     const u = req.apiUser;
     const dashboard = u.analyticsDashboard || {};
     const engagement = u.analyticsEngagement || {};
+    const postMetrics = u.analyticsPostMetrics || [];
+    const fromPosts = summarizePostInteractions(postMetrics);
+    const hasDashSocial = Object.prototype.hasOwnProperty.call(dashboard, 'socialEngagements');
+    const socialEngagementsDashboard = hasDashSocial ? (Number(dashboard.socialEngagements) || 0) : null;
     res.json({
         followers: dashboard.followers || u.analyticsFollowers || 0,
         impressions: dashboard.postImpressions || engagement.impressions || 0,
-        engagements: dashboard.socialEngagements || engagement.likes || 0,
+
+        /** Combined interaction count from LinkedIn's analytics pages when scraped; null if not synced yet. */
+        socialEngagementsDashboard,
+
+        likesFromPosts: fromPosts.likes,
+        commentsFromPosts: fromPosts.comments,
+        repostsFromPosts: fromPosts.reposts,
+
+        /** @deprecated ambiguous; use socialEngagementsDashboard or sum of *FromPosts fields */
+        engagements: socialEngagementsDashboard != null
+            ? socialEngagementsDashboard
+            : (fromPosts.likes + fromPosts.comments + fromPosts.reposts),
+
         membersReached: dashboard.membersReached || 0,
         profileViews: dashboard.profileViews || 0,
     });
@@ -4095,14 +4159,15 @@ const BULK_DM_PER_RECIPIENT_COOLDOWN_MS = 24 * 60 * 60 * 1000;
 
 function renderBulkDmTemplate(template, recipient) {
     const name = (recipient.name || '').trim();
-    const first = name.split(/\s+/)[0] || name;
-    const handle = (recipient.handle || '').trim().replace(/^@?/, '@');
+    const nameParts = name.split(/\s+/).filter(Boolean);
+    const first = nameParts[0] || name;
+    const last = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
     return String(template || '')
         .replace(/\[full_name\]/gi, name || 'there')
         .replace(/\[first_name\]/gi, first || 'there')
+        .replace(/\[last_name\]/gi, last || '')
         .replace(/\[name\]/gi, name || 'there')
-        .replace(/\[first\]/gi, first || 'there')
-        .replace(/\[handle\]/gi, handle || '');
+        .replace(/\[first\]/gi, first || 'there');
 }
 
 function todayStartIso() {
@@ -4134,7 +4199,7 @@ function nextSendDelay() {
     return BULK_DM_MIN_INTERVAL_MS + Math.floor(Math.random() * (BULK_DM_MAX_INTERVAL_MS - BULK_DM_MIN_INTERVAL_MS));
 }
 
-/** AI-generated DM template (uses [first_name], [full_name], [handle] placeholders) */
+/** AI-generated DM template (uses [first_name], [full_name], [last_name] placeholders) */
 app.post('/api/bulk-dms/ai-generate', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
     const credits = await getCreditsForSession(req.session);
@@ -4168,7 +4233,7 @@ app.post('/api/bulk-dms/ai-generate', async (req, res) => {
 
     const systemPrompt = `You write LinkedIn direct message TEMPLATES for bulk personalized outreach. Output ONLY the message body text — no title, no quotation marks, no markdown code fences.
 
-The message MUST include at least one of these exact tokens for the recipient: [first_name], [full_name], or [handle] — square brackets as shown. You may use more than one. Do not use real example names for recipients; only these placeholders for names/handles.
+The message MUST include at least one of these exact tokens for the recipient: [first_name], [full_name], or [last_name] — square brackets as shown. You may use more than one. Do not use real example names for recipients; only these placeholders for names.
 
 Keep the message at or under ${BULK_DM_MAX_LENGTH} characters. Avoid hashtags unless essential.`;
 
@@ -4177,7 +4242,7 @@ Keep the message at or under ${BULK_DM_MAX_LENGTH} characters. Avoid hashtags un
 Tone: ${toneLine}.
 You are writing AS: ${senderName}.
 ${aboutYou ? `About the sender: ${aboutYou}\n` : ''}${interests ? `Topics/interests: ${interests}\n` : ''}${customRules ? `User rules (follow when compatible): ${customRules}\n` : ''}${dmOnboardingStyle ? `${dmOnboardingStyle.replace(/^\n+/, '')}\n` : ''}
-Make it read naturally when [first_name], [full_name], and [handle] are replaced per recipient.`;
+Make it read naturally when [first_name], [full_name], and [last_name] are replaced per recipient.`;
 
     try {
         const aiRes = await fetch('https://api.openai.com/v1/chat/completions', {
