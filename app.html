@@ -5145,6 +5145,11 @@
                         <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="18" rx="1"/><rect x="14" y="3" width="7" height="11" rx="1"/></svg></span>
                         <span>Carousel</span> <span id="carouselLockIcon" class="nav-lock-icon crs-nav-locked" style="display:none;"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
                     </a>
+                    <a class="nav-item nav-sub-item" data-page="aiimage" data-label="AI Image Studio" onclick="navGated('ai_image_gen','aiimage')">
+                        <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10.5" r="1.5"/><path d="M21 17l-5-5-4 4-3-3-4 7"/></svg></span>
+                        <span>Image</span>
+                        <span class="nav-lock-icon" data-gate="ai_image_gen"><svg class="nav-lock-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg></span>
+                    </a>
                 </div>
             </div>
 
@@ -6004,6 +6009,7 @@
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Team collaboration tools</div>
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> White-label reporting</div>
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> API access</div>
+                                    <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> AI Image Studio (describe + generate images for LinkedIn)</div>
                                 </div>
                                 <button onclick="startCheckout('ultra')" id="planBtnUltra" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--text-primary);transition:0.15s;">Contact Sales</button>
                                 <div style="text-align:center;font-size:0.7rem;color:var(--text-muted);margin-top:8px;">cancel any time &middot; 100% content ownership</div>
@@ -6370,6 +6376,72 @@
                                     <button onclick="publishCarousel()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;">&#128640; Publish to LinkedIn</button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Image Studio (Ultra) -->
+            <div class="page" id="page-aiimage">
+                <div class="page-header">
+                    <h2>AI Image Studio</h2>
+                    <p>Create LinkedIn-ready images from a short description — Ultra plan only (<span style="opacity:0.85;">8 credits</span> per image).</p>
+                </div>
+                <div style="max-width:840px;margin:0 auto;">
+                    <div id="aiImageUpgradeOverlay" class="card" style="display:none;padding:40px;text-align:center;">
+                        <div style="margin-bottom:12px;display:flex;justify-content:center;color:#ea580c;">
+                            <svg style="width:3rem;height:3rem;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+                        </div>
+                        <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:10px;">AI Image Studio — Ultra only</h3>
+                        <p style="font-size:0.9rem;color:var(--text-secondary);line-height:1.55;margin-bottom:20px;">Generate custom images (comic, cartoon, watercolor, &amp; more) from your topic in the background on our servers. Upgrade to Ultra to unlock.</p>
+                        <button onclick="showPage('settings');document.querySelectorAll('.settings-tab').forEach((t,i)=>{if(i===2)switchSettingsTab('plans',t)});" style="padding:11px 28px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;font-size:0.9rem;cursor:pointer;">View Ultra plan</button>
+                    </div>
+                    <div id="aiImageStudioContent" style="display:none;">
+                        <div class="card" style="padding:22px;margin-bottom:16px;">
+                            <label style="font-size:0.76rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:6px;">Describe your image</label>
+                            <textarea id="aiImageTopic" rows="5" maxlength="3500" placeholder="e.g. A confident entrepreneur presenting to a diverse team in a sunlit coworking space, uplifting mood&#10;(Be specific — subject, mood, lighting, key details.)" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;resize:vertical;"></textarea>
+
+                            <div style="margin-top:14px;display:grid;grid-template-columns:1fr 2fr;gap:12px;align-items:end;">
+                                <div>
+                                    <label style="font-size:0.76rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:6px;">Visual style</label>
+                                    <select id="aiImageStyle" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                        <option value="minimal">Minimal / flat vector</option>
+                                        <option value="photorealistic">Photorealistic</option>
+                                        <option value="comic">Comic book</option>
+                                        <option value="cartoon">Cartoon</option>
+                                        <option value="watercolor">Watercolor</option>
+                                        <option value="3d">3D render</option>
+                                        <option value="sketch">Sketch / ink drawing</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button type="button" onclick="generateAiImage()" id="aiImageGenerateBtn" style="width:100%;padding:11px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.9rem;cursor:pointer;">&#9889; Generate image (8 credits)</button>
+                                </div>
+                            </div>
+
+                            <p style="margin-top:12px;font-size:0.74rem;color:var(--text-muted);line-height:1.45;">Generation runs on our servers and may take 15–60 seconds. You can stay on this page or switch tabs; please don’t reload until it finishes.</p>
+
+                            <div id="aiImageGenerating" style="display:none;text-align:center;padding:28px 12px;margin-top:8px;">
+                                <div class="spinner" style="margin:0 auto 12px;"></div>
+                                <div style="font-size:0.88rem;color:var(--accent);font-weight:600;">Creating your image on the server&hellip;</div>
+                            </div>
+
+                            <div id="aiImageResultWrap" style="display:none;margin-top:20px;text-align:center;">
+                                <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px;"><strong>New image</strong> &mdash; right-click or use download.</p>
+                                <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--bg-secondary);display:inline-block;max-width:100%;">
+                                    <img id="aiImageResultImg" src="" alt="" style="max-width:100%;width:min(480px,100%);height:auto;border-radius:6px;display:block;margin:0 auto;">
+                                </div>
+                                <div style="margin-top:12px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+                                    <a id="aiImageDownloadLink" href="#" download="" target="_blank" rel="noopener noreferrer" style="padding:10px 18px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-weight:700;font-size:0.82rem;text-decoration:none;color:var(--text-primary);">Open / download</a>
+                                </div>
+                                <p id="aiImageRevisedPrompt" style="margin-top:12px;font-size:0.72rem;color:var(--text-muted);text-align:left;line-height:1.4;white-space:pre-wrap;"></p>
+                            </div>
+                        </div>
+
+                        <div class="card" style="padding:18px;margin-bottom:16px;">
+                            <h3 style="font-size:0.92rem;font-weight:800;margin:0 0 12px;">Recent images</h3>
+                            <p style="font-size:0.76rem;color:var(--text-muted);margin:-4px 0 12px;">Saved on our side for convenience (URLs may expire depending on provider).</p>
+                            <div id="aiImageHistoryGrid" style="display:flex;gap:12px;flex-wrap:wrap;"></div>
                         </div>
                     </div>
                 </div>
@@ -7636,6 +7708,23 @@
                 el.classList.toggle('hidden', _userFeatures.includes(el.dataset.gate));
             });
             updateGatedNavAria();
+            refreshAiImageGating();
+        }
+
+        /** Ultra-only AI Image Studio: show upgrade card vs creator UI */
+        function refreshAiImageGating() {
+            const feats = creditsData.features || _userFeatures || [];
+            const unlock = feats.includes('ai_image_gen');
+            const overlay = document.getElementById('aiImageUpgradeOverlay');
+            const main = document.getElementById('aiImageStudioContent');
+            if (!overlay || !main) return;
+            if (unlock) {
+                overlay.style.display = 'none';
+                main.style.display = '';
+            } else {
+                overlay.style.display = '';
+                main.style.display = 'none';
+            }
         }
 
         function updateGatedNavAria() {
@@ -10302,7 +10391,7 @@
         }
 
         // Page navigation
-        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', engage: 'Engage', discover: 'Engage', mentions: 'Engage', engagelists: 'Lists', engagereplies: 'Engage', autoengage: 'Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages', bulkdms: 'Bulk Direct Messages' };
+        const PAGE_TITLES = { home: 'Home', queue: 'Queue', analytics: 'Analytics', readytopost: 'Ready to Post', create: 'AI Writer', carousel: 'Carousel Creator', aiimage: 'AI Image Studio', context: 'Context', settings: 'Account Settings', virallibrary: 'Viral Library', engage: 'Engage', discover: 'Engage', mentions: 'Engage', engagelists: 'Lists', engagereplies: 'Engage', autoengage: 'Engage', teammembers: 'Team Members', sharedqueue: 'Shared Queue', reports: 'White-Label Reports', dms: 'Direct Messages', bulkdms: 'Bulk Direct Messages' };
 
         // Maps the legacy page names to their new tab inside the Engage page
         const ENGAGE_TABS = { discover: { gate: null }, mentions: { gate: 'engage_engine' }, engagereplies: { gate: 'engage_engine' }, autoengage: { gate: 'auto_repost' } };
@@ -10394,6 +10483,10 @@
             if (page === 'reports') loadReports();
             if (page === 'dms') loadDms();
             if (page === 'bulkdms') loadBulkDmsPage();
+            if (page === 'aiimage') {
+                refreshAiImageGating();
+                loadAiImageHistoryGrid();
+            }
         }
 
         function getPageFromHash() {
@@ -12987,6 +13080,85 @@
             } catch {}
         }
 
+        // ---------- AI IMAGE STUDIO (Ultra) ----------
+
+        async function loadAiImageHistoryGrid() {
+            const grid = document.getElementById('aiImageHistoryGrid');
+            const feats = creditsData.features || _userFeatures || [];
+            if (!grid || !feats.includes('ai_image_gen')) return;
+            grid.innerHTML = '<span style="font-size:0.8rem;color:var(--text-muted);">Loading&hellip;</span>';
+            try {
+                const res = await fetch('/api/ai/generated-images');
+                const data = await res.json();
+                const items = (data.items || []).slice(0, 16);
+                if (!items.length) {
+                    grid.innerHTML = '<span style="font-size:0.8rem;color:var(--text-muted);">No saved images yet. Generate one above.</span>';
+                    return;
+                }
+                grid.innerHTML = items.map((it) => {
+                    const u = String(it.url || '');
+                    const safeHref = /^https:\/\//i.test(u) ? u : '#';
+                    return `
+                    <a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="border:1px solid var(--border);border-radius:8px;padding:6px;display:block;text-decoration:none;max-width:160px;background:var(--bg-card);" title="${escapeHtml((it.topic || '').slice(0, 140))}">
+                        <img src="${safeHref}" alt="" style="width:144px;height:144px;object-fit:cover;border-radius:6px;display:block;background:var(--bg-secondary);">
+                        <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;line-height:1.2;text-align:center;">${escapeHtml(it.style || 'styled')}</div>
+                    </a>`;
+                }).join('');
+            } catch {
+                grid.innerHTML = '<span style="font-size:0.8rem;color:var(--text-muted);">Could not load history.</span>';
+            }
+        }
+
+        async function generateAiImage() {
+            const feats = creditsData.features || _userFeatures || [];
+            if (!feats.includes('ai_image_gen')) {
+                showNotify('Ultra only', 'AI Image Studio is included with Ultra.', 'error');
+                return;
+            }
+            const ta = document.getElementById('aiImageTopic');
+            const btn = document.getElementById('aiImageGenerateBtn');
+            const styleEl = document.getElementById('aiImageStyle');
+            const loading = document.getElementById('aiImageGenerating');
+            const wrap = document.getElementById('aiImageResultWrap');
+            const topic = ta && ta.value ? ta.value.trim() : '';
+            if (!topic) return showNotify('Describe your image', 'Add what you want to see — topic, mood, setting, colors.', 'error');
+
+            btn.disabled = true;
+            if (loading) loading.style.display = '';
+            if (wrap) wrap.style.display = 'none';
+
+            try {
+                const res = await fetch('/api/ai/generate-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic, style: styleEl ? styleEl.value : 'minimal' }),
+                });
+                const data = await res.json();
+                if (data.error || !data.url) {
+                    showNotify('Generation failed', data.error || 'Could not generate image.', 'error');
+                    return;
+                }
+                const img = document.getElementById('aiImageResultImg');
+                const link = document.getElementById('aiImageDownloadLink');
+                const rev = document.getElementById('aiImageRevisedPrompt');
+                if (img) img.src = data.url;
+                if (link) {
+                    link.href = data.url;
+                    link.setAttribute('download', `superlinkedin-image-${Date.now()}.png`);
+                }
+                if (rev) rev.textContent = data.revisedPrompt ? ('Model recap: ' + data.revisedPrompt) : '';
+                if (wrap) wrap.style.display = '';
+                await updateCreditsPopup();
+                await loadAiImageHistoryGrid();
+                showNotify('Image ready', 'Saved to your studio history. Credits updated.', 'success');
+            } catch {
+                showNotify('Error', 'Network error while generating. Try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                if (loading) loading.style.display = 'none';
+            }
+        }
+
         // ---------- CAROUSEL CREATOR ----------
 
         let carouselSlides = [];
@@ -13217,6 +13389,10 @@
             const startRoute = getPageFromHash();
             if (startRoute.page === 'carousel') {
                 handleCarouselNav();
+            } else if (startRoute.page === 'aiimage') {
+                showPage('aiimage', false);
+                refreshAiImageGating();
+                loadAiImageHistoryGrid();
             } else if (startRoute.page !== 'home') {
                 const isEngage = startRoute.page === 'engage';
                 if (isEngage) _suppressEngageTabSync = true;

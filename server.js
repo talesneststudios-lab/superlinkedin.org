@@ -786,7 +786,7 @@ const PLAN_LIMITS = {
     free:     { aiCredits: TRIAL_CREDITS, creditPeriod: 'trial', maxProfiles: 1, postsPerMonth: null, features: ['schedule', 'basic_analytics'] },
     pro:      { aiCredits: 500, creditPeriod: 'month', maxProfiles: 3,  postsPerMonth: null, features: ['schedule', 'auto_post', 'basic_analytics', 'chrome_extension'] },
     advanced: { aiCredits: 2000, creditPeriod: 'day',  maxProfiles: 5,  postsPerMonth: null, features: ['schedule', 'auto_post', 'advanced_analytics', 'chrome_extension', 'carousel', 'engage_engine', 'auto_repost', 'viral_library'] },
-    ultra:    { aiCredits: 5000, creditPeriod: 'day',  maxProfiles: 15, postsPerMonth: 5000, features: ['schedule', 'auto_post', 'advanced_analytics', 'chrome_extension', 'carousel', 'engage_engine', 'auto_repost', 'viral_library', 'team', 'white_label', 'api_access'] },
+    ultra:    { aiCredits: 5000, creditPeriod: 'day',  maxProfiles: 15, postsPerMonth: 5000, features: ['schedule', 'auto_post', 'advanced_analytics', 'chrome_extension', 'carousel', 'engage_engine', 'auto_repost', 'viral_library', 'team', 'white_label', 'api_access', 'ai_image_gen'] },
 };
 
 function getPlanTier(planKey) {
@@ -2417,6 +2417,114 @@ Return ONLY the JSON array, no markdown, no explanation.`;
     } catch (err) {
         console.error('Carousel generation error:', err);
         res.json({ error: 'Failed to generate carousel.' });
+    }
+});
+
+/** Credits per AI image (DALL·E-class generation). Ultra-only feature. */
+const AI_IMAGE_CREDIT_COST = 8;
+
+const AI_IMAGE_STYLE_FRAGMENTS = {
+    comic: 'comic book art, bold ink outlines, halftone or cel shading, vibrant colors',
+    cartoon: 'cartoon illustration, rounded shapes, expressive simple forms, cheerful palette',
+    photorealistic: 'photorealistic, highly detailed, natural lighting, professional photo look',
+    minimal: 'minimal flat vector illustration, clean geometric shapes, plenty of whitespace, limited palette',
+    watercolor: 'watercolor painting aesthetic, soft bleeding edges, paper texture feel',
+    '3d': '3D CGI render, soft studio lighting, modern product-visual style',
+    sketch: 'pencil sketch or ink drawing, monochrome or light wash, hand-drawn feel',
+};
+
+app.get('/api/ai/generated-images', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'ai_image_gen'))) {
+        return res.status(403).json({ error: 'Ultra plan required.', items: [] });
+    }
+    const user = await dbGetUser(req.session.user.linkedinId);
+    const items = Array.isArray(user?.aiGeneratedImages) ? [...user.aiGeneratedImages].reverse() : [];
+    res.json({ items: items.slice(0, 30) });
+});
+
+app.post('/api/ai/generate-image', async (req, res) => {
+    if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+    if (!(await hasFeature(req.session, 'ai_image_gen'))) {
+        return res.status(403).json({ error: 'AI Image Studio is available on Ultra only. Upgrade to unlock this feature.' });
+    }
+
+    const credits = await getCreditsForSession(req.session);
+    if (credits.remaining < AI_IMAGE_CREDIT_COST) {
+        return res.json({
+            error: `Need at least ${AI_IMAGE_CREDIT_COST} AI credits (${credits.remaining} remaining). Image generation runs in one request on our servers — try again after your quota resets.`,
+        });
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
+        return res.json({ error: 'OpenAI API key not configured.' });
+    }
+
+    const body = req.body || {};
+    const topic = String(body.topic || '').trim().slice(0, 3500);
+    const styleRaw = String(body.style || 'minimal').toLowerCase();
+    if (!topic) return res.status(400).json({ error: 'Describe the subject or scene for your image.' });
+
+    const styleKey = Object.prototype.hasOwnProperty.call(AI_IMAGE_STYLE_FRAGMENTS, styleRaw)
+        ? styleRaw
+        : 'minimal';
+    const styleFragment = AI_IMAGE_STYLE_FRAGMENTS[styleKey];
+
+    const prompt = `${topic}\n\nStyle: ${styleFragment}.\n` +
+        'Professional, suitable as LinkedIn visuals. Avoid clutter, watermark text, logos, or legible copyrighted characters unless the user explicitly asked.';
+
+    try {
+        const response = await fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({
+                model: 'dall-e-3',
+                prompt,
+                n: 1,
+                size: '1024x1024',
+                quality: 'standard',
+                response_format: 'url',
+            }),
+        });
+        const data = await response.json();
+        const errMsg = data.error?.message || (typeof data.error === 'string' ? data.error : null);
+
+        const imageUrl = data.data?.[0]?.url;
+        if (!response.ok || !imageUrl) {
+            console.error('OpenAI images error:', response.status, errMsg || data);
+            return res.json({
+                error: errMsg || 'Image generation failed. Try a different description or simplify the topic.',
+            });
+        }
+
+        const revisedPrompt = data.data?.[0]?.revised_prompt || null;
+
+        await consumeCredit(req.session, AI_IMAGE_CREDIT_COST);
+
+        const linkedinId = req.session.user.linkedinId;
+        const fresh = await dbGetUser(linkedinId);
+        let list = Array.isArray(fresh?.aiGeneratedImages) ? [...fresh.aiGeneratedImages] : [];
+        list.push({
+            url: imageUrl,
+            revisedPrompt,
+            topic,
+            style: styleKey,
+            createdAt: new Date().toISOString(),
+        });
+        if (list.length > 40) list = list.slice(-40);
+        await dbUpdateFields(linkedinId, { aiGeneratedImages: list });
+
+        res.json({
+            url: imageUrl,
+            revisedPrompt,
+            creditsConsumed: AI_IMAGE_CREDIT_COST,
+            style: styleKey,
+            historyPreview: [...list].reverse().slice(0, 12),
+        });
+    } catch (err) {
+        console.error('AI image generation error:', err);
+        res.json({ error: 'Could not generate image. Please try again in a moment.' });
     }
 });
 
