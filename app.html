@@ -2160,6 +2160,11 @@
 
         .modal-overlay.hidden { display: none; }
 
+        /* Alert/confirm dialogs must sit above sched-overlay modals (z-index ~5000) */
+        #notifyModal.modal-overlay {
+            z-index: 6000;
+        }
+
         /* Engage — first-use acknowledgement */
         .engage-disclaimer-modal.modal {
             max-width: 480px;
@@ -9856,21 +9861,15 @@
         }
 
         async function confirmCancelSub() {
+            closeManageSubPopup();
             const confirmed = await showNotify(
-                'Cancel Subscription',
-                'Are you sure you want to cancel your subscription? You will lose access to premium features at the end of your billing period.',
-                'warning',
-                { confirm: true, confirmText: 'Yes, Cancel' }
+                'Cancel subscription',
+                'You\'ll continue to Stripe\'s billing page. From there you can cancel your subscription, change plans, or update your payment—exactly where your card is billed.',
+                'info',
+                { confirm: true, confirmText: 'Continue to Stripe', cancelText: 'Not now' }
             );
             if (!confirmed) return;
-            try {
-                await fetch('/api/subscription/cancel', { method: 'POST' });
-                closeManageSubPopup();
-                showNotify('Cancelled', 'Your subscription has been cancelled. You can still use premium features until the end of your billing period.', 'success');
-                loadSubscriptionInfo();
-            } catch {
-                showNotify('Error', 'Could not cancel subscription. Please try again.', 'error');
-            }
+            await openBillingPortal();
         }
 
         async function checkMissions() {
