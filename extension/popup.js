@@ -1,6 +1,24 @@
 const API_BASE = 'https://app.superlinkedin.org';
 let cachedAnalytics = null;
 
+/** Same keys as sidebar upgrade panel (`content.js`): drives `chrome.storage.local.slUpTheme` */
+const POPUP_THEME_SET = new Set(['light', 'dark', 'dim', 'system']);
+
+function normalizePopupTheme(theme) {
+    return POPUP_THEME_SET.has(theme) ? theme : 'light';
+}
+
+function applyStoredPopupTheme(theme) {
+    document.body.dataset.popupTheme = normalizePopupTheme(theme || 'light');
+}
+
+function refreshPopupThemeButtonSelection(selected) {
+    const s = normalizePopupTheme(selected);
+    document.querySelectorAll('.popup-theme-btn[data-theme]').forEach((b) => {
+        b.classList.toggle('selected', b.dataset.theme === s);
+    });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loginView = document.getElementById('loginView');
     const statusView = document.getElementById('statusView');
@@ -54,6 +72,44 @@ document.addEventListener('DOMContentLoaded', () => {
         chrome.runtime.sendMessage({ type: 'LOGOUT' }, () => showLogin());
     });
 
+    chrome.storage.local.get(['slUpTheme'], (res) => {
+        applyStoredPopupTheme(res && res.slUpTheme);
+    });
+
+    try {
+        chrome.storage.onChanged.addListener((changes, area) => {
+            if (area !== 'local' || !changes.slUpTheme) return;
+            const nv = changes.slUpTheme.newValue;
+            applyStoredPopupTheme(nv);
+            refreshPopupThemeButtonSelection(nv);
+        });
+    } catch { /* extension context */ }
+
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsBackBtn = document.getElementById('settingsBackBtn');
+    const toggleSidebarHdr = document.getElementById('toggleSidebarBtn');
+    if (settingsBtn) settingsBtn.addEventListener('click', openSettingsPanel);
+    if (settingsBackBtn) settingsBackBtn.addEventListener('click', closeSettingsPanel);
+    if (toggleSidebarHdr) toggleSidebarHdr.addEventListener('click', toggleLinkedInSidebar);
+
+    document.querySelectorAll('.popup-theme-btn[data-theme]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const theme = normalizePopupTheme(btn.dataset.theme || 'light');
+            chrome.storage.local.set({ slUpTheme: theme }, () => {
+                applyStoredPopupTheme(theme);
+                refreshPopupThemeButtonSelection(theme);
+            });
+        });
+    });
+
+    const adv = document.getElementById('settingsAdvLink');
+    if (adv) {
+        adv.addEventListener('click', (e) => {
+            e.preventDefault();
+            chrome.tabs.create({ url: `${API_BASE}/app#settings` });
+        });
+    }
+
     // Tab switching
     document.querySelectorAll('.tab[data-tab]').forEach(tab => {
         tab.addEventListener('click', () => switchTab(tab.dataset.tab, tab));
@@ -85,12 +141,17 @@ document.addEventListener('DOMContentLoaded', () => {
         loginView.style.display = 'block';
         statusView.style.display = 'none';
         document.getElementById('headerActions').style.display = 'none';
+        statusView.classList.remove('in-settings');
     }
 
     function showStatus(data) {
         loginView.style.display = 'none';
         statusView.style.display = 'block';
         document.getElementById('headerActions').style.display = 'flex';
+        chrome.storage.local.get(['slUpTheme'], (res) => {
+            const theme = normalizePopupTheme(res && res.slUpTheme);
+            applyStoredPopupTheme(theme);
+        });
         document.getElementById('userName').textContent = data.userName || '--';
 
         if (data.lastSync) {
@@ -98,6 +159,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         loadAnalytics();
+    }
+
+    function openSettingsPanel() {
+        if (!statusView || statusView.style.display === 'none') return;
+        statusView.classList.add('in-settings');
+        chrome.storage.local.get(['slUpTheme'], (res) => {
+            refreshPopupThemeButtonSelection(res && res.slUpTheme);
+        });
+    }
+
+    function closeSettingsPanel() {
+        statusView.classList.remove('in-settings');
     }
 });
 

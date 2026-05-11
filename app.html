@@ -6432,9 +6432,38 @@
                                     <img id="aiImageResultImg" src="" alt="" style="max-width:100%;width:min(480px,100%);height:auto;border-radius:6px;display:block;margin:0 auto;">
                                 </div>
                                 <div style="margin-top:12px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+                                    <button type="button" id="btnAiImageBuildDraft" onclick="toggleAiImagePostDraft()" style="padding:10px 18px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-weight:700;font-size:0.82rem;cursor:pointer;font-family:inherit;">&#128196; Build LinkedIn post draft</button>
                                     <a id="aiImageDownloadLink" href="#" download="" target="_blank" rel="noopener noreferrer" style="padding:10px 18px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-weight:700;font-size:0.82rem;text-decoration:none;color:var(--text-primary);">Open / download</a>
                                 </div>
                                 <p id="aiImageRevisedPrompt" style="margin-top:12px;font-size:0.72rem;color:var(--text-muted);text-align:left;line-height:1.4;white-space:pre-wrap;"></p>
+                            </div>
+
+                            <div id="aiImagePostDraft" style="display:none;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);text-align:left;">
+                                <div style="font-size:0.88rem;font-weight:800;color:var(--text-primary);margin-bottom:8px;">Review &amp; publish</div>
+                                <p style="font-size:0.76rem;color:var(--text-muted);line-height:1.45;margin-bottom:14px;">Edit the caption, then publish to LinkedIn. Regenerate uses AI credits: caption is 1 credit; a new image is 8 credits.</p>
+                                <div style="display:grid;gap:14px;">
+                                    <div style="border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--bg-secondary);text-align:center;">
+                                        <img id="aiImageDraftPreview" src="" alt="Draft image" style="max-width:100%;width:min(360px,100%);height:auto;border-radius:8px;display:block;margin:0 auto;">
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.76rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:6px;">Post caption</label>
+                                        <textarea id="aiImagePostDraftText" rows="8" maxlength="5800" placeholder="Caption shown above your image on LinkedIn&hellip;" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;resize:vertical;"></textarea>
+                                    </div>
+                                    <div>
+                                        <label style="font-size:0.76rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:6px;">Who can see it</label>
+                                        <select id="aiImagePostAudience" style="width:100%;max-width:280px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                            <option value="everyone">Everyone</option>
+                                            <option value="connections">Connections only</option>
+                                        </select>
+                                    </div>
+                                    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                                        <button type="button" onclick="draftRegenerateAiImageCaption()" id="btnAiDraftRegenCaption" style="padding:9px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.78rem;cursor:pointer;color:var(--text-primary);">&#10024; Regenerate caption (1 credit)</button>
+                                        <button type="button" onclick="draftRegenerateAiImageForPost()" id="btnAiDraftRegenImage" style="padding:9px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.78rem;cursor:pointer;color:var(--text-primary);">&#9889; Regenerate image (8 credits)</button>
+                                    </div>
+                                    <div>
+                                        <button type="button" onclick="publishAiStudioDraftToLinkedin()" id="btnAiDraftPublish" style="padding:12px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:800;font-size:0.88rem;cursor:pointer;">Publish to LinkedIn</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -13109,45 +13138,68 @@
             }
         }
 
+        let _aiDraftSyncedCaptionSrc = '';
+
+        function applyAiStudioImageToDom(data) {
+            if (!data || !data.url) return;
+            const img = document.getElementById('aiImageResultImg');
+            const link = document.getElementById('aiImageDownloadLink');
+            const rev = document.getElementById('aiImageRevisedPrompt');
+            if (img) img.src = data.url;
+            if (link) {
+                link.href = data.url;
+                link.setAttribute('download', 'superlinkedin-image-' + Date.now() + '.png');
+            }
+            if (rev) rev.textContent = data.revisedPrompt ? ('Model recap: ' + data.revisedPrompt) : '';
+            const wrap = document.getElementById('aiImageResultWrap');
+            if (wrap) wrap.style.display = '';
+        }
+
+        function syncAiImageDraftPreviewFromMain() {
+            const main = document.getElementById('aiImageResultImg');
+            const pv = document.getElementById('aiImageDraftPreview');
+            if (main && pv && main.src && /^https:/i.test(main.src)) pv.src = main.src;
+        }
+
+        async function requestAiStudioGenerateImage() {
+            const ta = document.getElementById('aiImageTopic');
+            const styleEl = document.getElementById('aiImageStyle');
+            const topic = ta && ta.value ? ta.value.trim() : '';
+            if (!topic) {
+                showNotify('Describe your image', 'Add what you want to see — topic, mood, setting, colors.', 'error');
+                return null;
+            }
+            const res = await fetch('/api/ai/generate-image', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ topic, style: styleEl ? styleEl.value : 'minimal' }),
+            });
+            const data = await res.json();
+            if (data.error || !data.url) {
+                showNotify('Generation failed', data.error || 'Could not generate image.', 'error');
+                return null;
+            }
+            return data;
+        }
+
         async function generateAiImage() {
             const feats = creditsData.features || _userFeatures || [];
             if (!feats.includes('ai_image_gen')) {
                 showNotify('Ultra only', 'AI Image Studio is included with Ultra.', 'error');
                 return;
             }
-            const ta = document.getElementById('aiImageTopic');
             const btn = document.getElementById('aiImageGenerateBtn');
-            const styleEl = document.getElementById('aiImageStyle');
             const loading = document.getElementById('aiImageGenerating');
             const wrap = document.getElementById('aiImageResultWrap');
-            const topic = ta && ta.value ? ta.value.trim() : '';
-            if (!topic) return showNotify('Describe your image', 'Add what you want to see — topic, mood, setting, colors.', 'error');
-
             btn.disabled = true;
             if (loading) loading.style.display = '';
             if (wrap) wrap.style.display = 'none';
-
             try {
-                const res = await fetch('/api/ai/generate-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ topic, style: styleEl ? styleEl.value : 'minimal' }),
-                });
-                const data = await res.json();
-                if (data.error || !data.url) {
-                    showNotify('Generation failed', data.error || 'Could not generate image.', 'error');
-                    return;
-                }
-                const img = document.getElementById('aiImageResultImg');
-                const link = document.getElementById('aiImageDownloadLink');
-                const rev = document.getElementById('aiImageRevisedPrompt');
-                if (img) img.src = data.url;
-                if (link) {
-                    link.href = data.url;
-                    link.setAttribute('download', `superlinkedin-image-${Date.now()}.png`);
-                }
-                if (rev) rev.textContent = data.revisedPrompt ? ('Model recap: ' + data.revisedPrompt) : '';
-                if (wrap) wrap.style.display = '';
+                const data = await requestAiStudioGenerateImage();
+                if (!data) return;
+                applyAiStudioImageToDom(data);
+                const draft = document.getElementById('aiImagePostDraft');
+                if (draft && draft.style.display === 'block') syncAiImageDraftPreviewFromMain();
                 await updateCreditsPopup();
                 await loadAiImageHistoryGrid();
                 showNotify('Image ready', 'Saved to your studio history. Credits updated.', 'success');
@@ -13156,6 +13208,147 @@
             } finally {
                 btn.disabled = false;
                 if (loading) loading.style.display = 'none';
+            }
+        }
+
+        function toggleAiImagePostDraft() {
+            const feats = creditsData.features || _userFeatures || [];
+            if (!feats.includes('ai_image_gen')) {
+                showNotify('Ultra only', 'AI Image Studio is included with Ultra.', 'error');
+                return;
+            }
+            const panel = document.getElementById('aiImagePostDraft');
+            const toggleBtn = document.getElementById('btnAiImageBuildDraft');
+            const mainImg = document.getElementById('aiImageResultImg');
+            if (!panel) return;
+            const srcOk = mainImg && mainImg.getAttribute('src') && /^https:/i.test(String(mainImg.getAttribute('src') || '').trim());
+            if (!srcOk) {
+                showNotify('Generate an image first', 'Create an image above, then build your LinkedIn draft.', 'error');
+                return;
+            }
+            const opening = panel.style.display !== 'block';
+            if (opening) {
+                panel.style.display = 'block';
+                if (toggleBtn) toggleBtn.textContent = 'Hide post draft';
+                syncAiImageDraftPreviewFromMain();
+                const captionTa = document.getElementById('aiImagePostDraftText');
+                const curSrc = mainImg.src;
+                if (captionTa) {
+                    if (_aiDraftSyncedCaptionSrc !== curSrc) {
+                        _aiDraftSyncedCaptionSrc = curSrc;
+                        captionTa.value = '';
+                    }
+                    if (!captionTa.value.trim()) draftRegenerateAiImageCaption();
+                }
+            } else {
+                panel.style.display = 'none';
+                if (toggleBtn) toggleBtn.innerHTML = '&#128196; Build LinkedIn post draft';
+            }
+        }
+
+        async function draftRegenerateAiImageCaption() {
+            const feats = creditsData.features || _userFeatures || [];
+            if (!feats.includes('ai_image_gen')) return;
+            const captionBtn = document.getElementById('btnAiDraftRegenCaption');
+            const taCaption = document.getElementById('aiImagePostDraftText');
+            const topicTa = document.getElementById('aiImageTopic');
+            const topic = topicTa && topicTa.value ? topicTa.value.trim() : '';
+            const revEl = document.getElementById('aiImageRevisedPrompt');
+            let recap = '';
+            if (revEl && revEl.textContent) {
+                recap = revEl.textContent.replace(/^Model recap:\s*/i, '').trim();
+            }
+            const styleSel = document.getElementById('aiImageStyle');
+            const styleLabel = (styleSel && styleSel.options[styleSel.selectedIndex])
+                ? styleSel.options[styleSel.selectedIndex].text
+                : '';
+            let prompt = 'I am posting a LinkedIn update with an AI-generated image.\n';
+            if (topic) prompt += 'My idea / topic for this visual: "' + topic.replace(/"/g, '\'') + '".\n';
+            if (recap) prompt += 'What the image depicts (model recap): ' + recap.slice(0, 1800) + '\n';
+            if (styleLabel) prompt += 'Visual style: ' + styleLabel + '.\n';
+            prompt += 'Write ONE LinkedIn post caption (body text only) that pairs naturally with this image. Professional tone, concise, engaging, ready to publish. Avoid hashtag spam.';
+            if (captionBtn) captionBtn.disabled = true;
+            try {
+                const res = await fetch('/api/ai/write', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tone: 'auto', prompt }),
+                });
+                const data = await res.json();
+                if (data.error || !data.post) {
+                    showNotify('Caption failed', data.error || 'Could not generate caption.', 'error');
+                    return;
+                }
+                if (taCaption) taCaption.value = data.post;
+                await updateCreditsPopup();
+                showNotify('Caption ready', '1 AI credit used. Edit below before publishing.', 'success');
+            } catch {
+                showNotify('Error', 'Network error while writing caption.', 'error');
+            } finally {
+                if (captionBtn) captionBtn.disabled = false;
+            }
+        }
+
+        async function draftRegenerateAiImageForPost() {
+            const feats = creditsData.features || _userFeatures || [];
+            if (!feats.includes('ai_image_gen')) return;
+            const genBtn = document.getElementById('aiImageGenerateBtn');
+            const imgBtn = document.getElementById('btnAiDraftRegenImage');
+            const loading = document.getElementById('aiImageGenerating');
+            imgBtn.disabled = true;
+            if (genBtn) genBtn.disabled = true;
+            if (loading) loading.style.display = '';
+            try {
+                const data = await requestAiStudioGenerateImage();
+                if (!data) return;
+                applyAiStudioImageToDom(data);
+                syncAiImageDraftPreviewFromMain();
+                await updateCreditsPopup();
+                await loadAiImageHistoryGrid();
+                showNotify('New image ready', '8 credits used. Caption unchanged — tap regenerate caption if you want fresh text.', 'success');
+            } catch {
+                showNotify('Error', 'Network error while generating.', 'error');
+            } finally {
+                imgBtn.disabled = false;
+                if (genBtn) genBtn.disabled = false;
+                if (loading) loading.style.display = 'none';
+            }
+        }
+
+        async function publishAiStudioDraftToLinkedin() {
+            const textEl = document.getElementById('aiImagePostDraftText');
+            const text = textEl && textEl.value ? textEl.value.trim() : '';
+            if (!text) {
+                showNotify('Add a caption', 'Write or regenerate a caption before publishing.', 'error');
+                return;
+            }
+            const mainImg = document.getElementById('aiImageResultImg');
+            const imageUrl = mainImg ? mainImg.src : '';
+            if (!/^https:/i.test(imageUrl)) {
+                showNotify('Missing image', 'Generate an image first.', 'error');
+                return;
+            }
+            const audienceEl = document.getElementById('aiImagePostAudience');
+            const audience = audienceEl ? audienceEl.value : 'everyone';
+            const pubBtn = document.getElementById('btnAiDraftPublish');
+            if (pubBtn) pubBtn.disabled = true;
+            try {
+                const res = await fetch('/api/publish-ai-studio-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, audience, imageUrl }),
+                });
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || !data.success) {
+                    showNotify('Publish failed', data.error || 'LinkedIn refused the post.', 'error');
+                    return;
+                }
+                if (data.postUrl) window.open(data.postUrl, '_blank');
+                showNotify('Published', 'Your image post went live on LinkedIn.', 'success');
+            } catch {
+                showNotify('Error', 'Network error while publishing.', 'error');
+            } finally {
+                if (pubBtn) pubBtn.disabled = false;
             }
         }
 

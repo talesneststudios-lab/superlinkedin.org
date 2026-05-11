@@ -1670,6 +1670,121 @@ app.post('/api/publish', async (req, res) => {
 
 // ---------- PUBLISH WITH IMAGE ----------
 
+const AI_STUDIO_MAX_FETCH_IMAGE_BYTES = 10 * 1024 * 1024;
+
+/** Used by /api/publish-ai-studio-image to avoid SSRF while allowing OpenAI-hosted results. */
+function isAllowedAiStudioImageUrl(dbUser, urlStr) {
+    const s = String(urlStr || '').trim();
+    if (!s) return false;
+    let u;
+    try {
+        u = new URL(s);
+    } catch {
+        return false;
+    }
+    if (u.protocol !== 'https:') return false;
+    const list = Array.isArray(dbUser?.aiGeneratedImages) ? dbUser.aiGeneratedImages : [];
+    if (list.some((it) => it && typeof it.url === 'string' && it.url.trim() === s)) return true;
+    const h = u.hostname.toLowerCase();
+    if (/(^|\.)openai\.com$/i.test(h)) return true;
+    if (/(^|\.)blob\.core\.windows\.net$/i.test(h)) return true;
+    if (/(^|\.)azureedge\.net$/i.test(h)) return true;
+    if (/oaidalle|openaiusercontent/i.test(h)) return true;
+    return false;
+}
+
+/** Register LinkedIn asset, upload bytes, publish single-image ugcPost. */
+async function publishLinkedInImageFromBuffer(accessToken, linkedinId, userDisplayName, text, audience, imageBuffer, mimetype) {
+    const personUrn = `urn:li:person:${linkedinId}`;
+    const visibility = audience === 'connections' ? 'CONNECTIONS' : 'PUBLIC';
+    const rawMime = String(mimetype || '').toLowerCase().split(';')[0].trim();
+    const contentType = /^image\/(jpeg|jpg|png|gif|webp)$/.test(rawMime) ? rawMime.replace('image/jpg', 'image/jpeg') : 'image/png';
+
+    const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+            registerUploadRequest: {
+                recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
+                owner: personUrn,
+                serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
+            },
+        }),
+    });
+
+    if (!registerRes.ok) {
+        const errText = await registerRes.text();
+        console.error('LinkedIn register image upload failed:', errText);
+        return { ok: false, status: 500, error: 'Failed to register image upload with LinkedIn.' };
+    }
+
+    const registerData = await registerRes.json();
+    const uploadUrl = registerData.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
+    const asset = registerData.value?.asset;
+
+    if (!uploadUrl || !asset) {
+        return { ok: false, status: 500, error: 'LinkedIn upload registration returned invalid data.' };
+    }
+
+    const uploadRes = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': contentType,
+        },
+        body: imageBuffer,
+    });
+
+    if (!uploadRes.ok) {
+        console.error('LinkedIn image upload failed:', uploadRes.status);
+        return { ok: false, status: 500, error: 'Failed to upload image to LinkedIn.' };
+    }
+
+    const postRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+            'X-Restli-Protocol-Version': '2.0.0',
+        },
+        body: JSON.stringify({
+            author: personUrn,
+            lifecycleState: 'PUBLISHED',
+            specificContent: {
+                'com.linkedin.ugc.ShareContent': {
+                    shareCommentary: { text: text.trim() },
+                    shareMediaCategory: 'IMAGE',
+                    media: [{
+                        status: 'READY',
+                        media: asset,
+                    }],
+                },
+            },
+            visibility: {
+                'com.linkedin.ugc.MemberNetworkVisibility': visibility,
+            },
+        }),
+    });
+
+    if (postRes.ok) {
+        const data = await postRes.json();
+        const postId = data.id;
+        const postUrl = postId ? `https://www.linkedin.com/feed/update/${postId}/` : 'https://www.linkedin.com/feed/';
+        console.log(`Image post published to LinkedIn by ${userDisplayName}: ${postId}`);
+        return { ok: true, postId, postUrl };
+    }
+
+    const errData = await postRes.text();
+    console.error('LinkedIn image post failed:', postRes.status, errData);
+    if (postRes.status === 401) {
+        return { ok: false, status: 401, error: 'LinkedIn access token expired. Please sign out and sign in again.', linkedin401: true };
+    }
+    return { ok: false, status: postRes.status >= 400 && postRes.status < 600 ? postRes.status : 500, error: 'Failed to publish image post to LinkedIn.' };
+}
+
 app.post('/api/publish-with-image', upload.single('image'), async (req, res) => {
     if (!req.session.user) {
         return res.status(401).json({ error: 'Not authenticated' });
@@ -1689,93 +1804,24 @@ app.post('/api/publish-with-image', upload.single('image'), async (req, res) => 
     }
 
     const linkedinId = req.session.user.linkedinId;
-    const personUrn = `urn:li:person:${linkedinId}`;
-    const visibility = audience === 'connections' ? 'CONNECTIONS' : 'PUBLIC';
 
     try {
-        const registerRes = await fetch('https://api.linkedin.com/v2/assets?action=registerUpload', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-            },
-            body: JSON.stringify({
-                registerUploadRequest: {
-                    recipes: ['urn:li:digitalmediaRecipe:feedshare-image'],
-                    owner: personUrn,
-                    serviceRelationships: [{ relationshipType: 'OWNER', identifier: 'urn:li:userGeneratedContent' }],
-                },
-            }),
-        });
-
-        if (!registerRes.ok) {
-            const errText = await registerRes.text();
-            console.error('LinkedIn register image upload failed:', errText);
-            return res.status(500).json({ error: 'Failed to register image upload with LinkedIn.' });
+        const out = await publishLinkedInImageFromBuffer(
+            accessToken,
+            linkedinId,
+            req.session.user.name,
+            text,
+            audience,
+            req.file.buffer,
+            req.file.mimetype || 'image/png',
+        );
+        if (out.ok) {
+            return res.json({ success: true, postId: out.postId, postUrl: out.postUrl });
         }
-
-        const registerData = await registerRes.json();
-        const uploadUrl = registerData.value?.uploadMechanism?.['com.linkedin.digitalmedia.uploading.MediaUploadHttpRequest']?.uploadUrl;
-        const asset = registerData.value?.asset;
-
-        if (!uploadUrl || !asset) {
-            return res.status(500).json({ error: 'LinkedIn upload registration returned invalid data.' });
+        if (out.linkedin401 || out.status === 401) {
+            return res.status(401).json({ error: out.error });
         }
-
-        const uploadRes = await fetch(uploadUrl, {
-            method: 'PUT',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': req.file.mimetype,
-            },
-            body: req.file.buffer,
-        });
-
-        if (!uploadRes.ok) {
-            console.error('LinkedIn image upload failed:', uploadRes.status);
-            return res.status(500).json({ error: 'Failed to upload image to LinkedIn.' });
-        }
-
-        const postRes = await fetch('https://api.linkedin.com/v2/ugcPosts', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`,
-                'X-Restli-Protocol-Version': '2.0.0',
-            },
-            body: JSON.stringify({
-                author: personUrn,
-                lifecycleState: 'PUBLISHED',
-                specificContent: {
-                    'com.linkedin.ugc.ShareContent': {
-                        shareCommentary: { text: text.trim() },
-                        shareMediaCategory: 'IMAGE',
-                        media: [{
-                            status: 'READY',
-                            media: asset,
-                        }],
-                    },
-                },
-                visibility: {
-                    'com.linkedin.ugc.MemberNetworkVisibility': visibility,
-                },
-            }),
-        });
-
-        if (postRes.ok) {
-            const data = await postRes.json();
-            const postId = data.id;
-            const postUrl = postId ? `https://www.linkedin.com/feed/update/${postId}/` : 'https://www.linkedin.com/feed/';
-            console.log(`Image post published to LinkedIn by ${req.session.user.name}: ${postId}`);
-            res.json({ success: true, postId, postUrl });
-        } else {
-            const errData = await postRes.text();
-            console.error('LinkedIn image post failed:', postRes.status, errData);
-            if (postRes.status === 401) {
-                return res.status(401).json({ error: 'LinkedIn access token expired. Please sign out and sign in again.' });
-            }
-            res.status(postRes.status).json({ error: 'Failed to publish image post to LinkedIn.' });
-        }
+        return res.status(out.status || 500).json({ error: out.error });
     } catch (err) {
         console.error('LinkedIn image publish error:', err);
         res.status(500).json({ error: 'Could not connect to LinkedIn. Please try again.' });
@@ -2525,6 +2571,84 @@ app.post('/api/ai/generate-image', async (req, res) => {
     } catch (err) {
         console.error('AI image generation error:', err);
         res.json({ error: 'Could not generate image. Please try again in a moment.' });
+    }
+});
+
+app.post('/api/publish-ai-studio-image', async (req, res) => {
+    if (!req.session.user) {
+        return res.status(401).json({ error: 'Not authenticated' });
+    }
+    if (!(await hasFeature(req.session, 'ai_image_gen'))) {
+        return res.status(403).json({ error: 'AI Image Studio is available on Ultra only.' });
+    }
+
+    const { text, audience, imageUrl } = req.body || {};
+    if (!text || !String(text).trim()) {
+        return res.status(400).json({ error: 'Post text is required' });
+    }
+    const normalizedUrl = String(imageUrl || '').trim();
+    if (!normalizedUrl) {
+        return res.status(400).json({ error: 'Image URL is required' });
+    }
+
+    const accessToken = req.session.user.accessToken;
+    if (!accessToken) {
+        return res.status(401).json({ error: 'No LinkedIn access token. Please sign in again.' });
+    }
+
+    const linkedinId = req.session.user.linkedinId;
+    const dbUser = await dbGetUser(linkedinId);
+    if (!isAllowedAiStudioImageUrl(dbUser, normalizedUrl)) {
+        return res.status(400).json({
+            error: 'This image URL is not allowed. Use an image generated in AI Image Studio, or generate a new one.',
+        });
+    }
+
+    try {
+        const imgRes = await fetch(normalizedUrl, {
+            redirect: 'follow',
+            headers: { 'User-Agent': 'SuperLinkedIn/1.0' },
+        });
+        if (!imgRes.ok) {
+            console.error('[AI Studio publish] image fetch failed:', imgRes.status);
+            return res.status(502).json({
+                error: 'Could not download the image — temporary links expire. Regenerate the image and post again.',
+            });
+        }
+        const lenHdr = imgRes.headers.get('content-length');
+        if (lenHdr && Number(lenHdr) > AI_STUDIO_MAX_FETCH_IMAGE_BYTES) {
+            return res.status(413).json({ error: 'Image file is too large.' });
+        }
+        const buf = Buffer.from(await imgRes.arrayBuffer());
+        if (!buf.length || buf.length > AI_STUDIO_MAX_FETCH_IMAGE_BYTES) {
+            return res.status(413).json({ error: 'Image file is too large or empty.' });
+        }
+
+        let mime = (imgRes.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+        if (!/^image\/(jpeg|jpg|png|gif|webp)$/.test(mime)) {
+            mime = 'image/png';
+        }
+
+        const out = await publishLinkedInImageFromBuffer(
+            accessToken,
+            linkedinId,
+            req.session.user.name,
+            String(text),
+            audience,
+            buf,
+            mime,
+        );
+
+        if (out.ok) {
+            return res.json({ success: true, postId: out.postId, postUrl: out.postUrl });
+        }
+        if (out.linkedin401 || out.status === 401) {
+            return res.status(401).json({ error: out.error });
+        }
+        return res.status(out.status || 500).json({ error: out.error || 'Failed to publish.' });
+    } catch (err) {
+        console.error('[AI Studio publish]', err);
+        res.status(500).json({ error: 'Could not publish post. Try again.' });
     }
 });
 

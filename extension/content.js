@@ -77,9 +77,15 @@
 
     try {
         chrome.storage.onChanged.addListener((changes, area) => {
-            if (area !== 'local' || !changes.slUpFeatures) return;
-            slF = mergeSlFeatures(changes.slUpFeatures.newValue);
-            applySlFeatureVisibility();
+            if (area !== 'local') return;
+            if (changes.slUpFeatures) {
+                slF = mergeSlFeatures(changes.slUpFeatures.newValue);
+                applySlFeatureVisibility();
+            }
+            if (changes.slUpTheme) {
+                const t = changes.slUpTheme.newValue || 'light';
+                applyUpgradeTheme(t);
+            }
         });
     } catch { /* invalidated context */ }
 
