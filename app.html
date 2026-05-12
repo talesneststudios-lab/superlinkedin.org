@@ -6870,7 +6870,7 @@
                         <div id="discoverFeed" style="display:flex;flex-direction:column;gap:12px;"></div>
                         <div id="discoverEmpty" class="empty-state" style="display:none;">
                             <div style="font-size:2rem;margin-bottom:10px;">&#128269;</div>
-                            <p>No posts yet for these topics. Scroll through your LinkedIn feed with the SuperLinkedIn extension active and matching posts will appear here.</p>
+                            <p id="discoverEmptyMsg">No posts yet for these topics. Open <strong>linkedin.com/feed</strong> with the SuperLinkedIn extension, enable <strong>Home</strong> in the extension sidebar settings, scroll to load posts, wait for sync (about every 15 minutes), then refresh.</p>
                         </div>
 
                         <!-- Filters drawer -->
@@ -8317,11 +8317,27 @@
                 const res = await fetch('/api/engage/discover');
                 if (!res.ok) { feed.innerHTML = ''; empty.style.display = 'block'; return; }
                 const data = await res.json();
-                let posts = (data.posts || []).filter(p => matchesDiscoverTopics(p, topics));
+                const rawAll = data.posts || [];
+                let posts = rawAll.filter(p => matchesDiscoverTopics(p, topics));
                 posts = applyDiscoverClientFilters(posts);
                 if (!posts.length) {
                     feed.innerHTML = '';
                     empty.style.display = 'block';
+                    const msg = document.getElementById('discoverEmptyMsg');
+                    if (msg) {
+                        if (!rawAll.length) {
+                            msg.innerHTML =
+                                'No feed posts are saved to your account yet. Open <strong>https://www.linkedin.com/feed/</strong> in this browser, keep the <strong>SuperLinkedIn</strong> extension on, and in the extension sidebar turn on <strong>Home</strong> (and <strong>Timelines</strong> if you use it). Scroll so several full posts load, then wait for sync (about every <strong>15 minutes</strong>) or trigger activity on LinkedIn so the extension can scrape—then refresh this page.';
+                        } else {
+                            const safe = topics.map((t) => escapeHtml(t)).join('</strong>, <strong>#');
+                            msg.innerHTML =
+                                'We found <strong>' +
+                                rawAll.length +
+                                '</strong> posts from your LinkedIn feed, but <strong>none</strong> include your topic keyword(s): <strong>#' +
+                                safe +
+                                '</strong>. Topics match plain text in the post (and author name). Try a shorter or broader word (e.g. <em>market</em>, <em>brand</em>) or scroll the feed until posts that mention your topic appear, then sync again.';
+                        }
+                    }
                     return;
                 }
                 empty.style.display = 'none';
@@ -8346,6 +8362,8 @@
         let _engageLoadWatchTimer = null;
         /** Same post often arrives many times (extension polls / retries); avoid repeat toasts & scroll hops. */
         let _engagePostNotifyDedupeKey = '';
+        /** User dismissed Engage preview — ignore extension payloads until Fetch or manual paste resumes. */
+        let _engageExtensionUpdatesSuppressed = false;
         function engagePostPayloadDedupeKey(payload) {
             if (!payload) return '';
             const u = String(payload.url || '').split(/[?#]/)[0];
@@ -8395,6 +8413,7 @@
                 if (ev.source !== window) return;
                 const d = ev.data;
                 if (!d || d.source !== 'superlinkedin-ext' || d.type !== 'ENGAGE_POST_READY' || !d.payload) return;
+                if (_engageExtensionUpdatesSuppressed) return;
                 showEngageFetchedPost(d.payload);
             });
         }
@@ -8414,6 +8433,7 @@
                 linkEl.href = openUrl;
                 linkEl.style.display = '';
             }
+            _engageExtensionUpdatesSuppressed = false;
             _engagePostNotifyDedupeKey = '';
             beginEngageLoadWatchdog();
         }
@@ -8442,6 +8462,7 @@
         }
 
         function dismissEngageFetched() {
+            _engageExtensionUpdatesSuppressed = true;
             _engagePostNotifyDedupeKey = '';
             clearEngageLoadWatchdog();
             const wrap = document.getElementById('engageFetchedWrap');
@@ -8569,6 +8590,7 @@
             if (wrap) wrap.style.display = 'block';
             if (authorEl) authorEl.textContent = 'Pasted post';
             if (postEl) postEl.textContent = t;
+            _engageExtensionUpdatesSuppressed = false;
             showNotify('Saved', 'You can draft a reply or use Generate reply below.', 'success');
         }
 

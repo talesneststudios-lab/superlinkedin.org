@@ -392,8 +392,22 @@
         return posts;
     }
 
+    /** Main feed URLs (posts from others for Discover). */
+    function linkedInPathLooksLikeMainFeed(href) {
+        try {
+            const p = (new URL(href).pathname || '/').replace(/\/+$/, '') || '/';
+            if (p === '/feed' || p.startsWith('/feed/')) return true;
+            if (p === '/' || p === '') return true;
+            return false;
+        } catch (_e) {
+            return false;
+        }
+    }
+
     async function scrapeFeedPosts() {
-        if (!window.location.href.includes('/feed')) return [];
+        const href = window.location.href;
+        if (!/(^|\.)linkedin\.com$/i.test(location.hostname)) return [];
+        if (!linkedInPathLooksLikeMainFeed(href)) return [];
         const posts = [];
         const feedPosts = document.querySelectorAll(
             '.feed-shared-update-v2, [data-urn*="activity"], .occludable-update'
@@ -419,9 +433,11 @@
             if (ownerName && (normalAuthor.includes(ownerName) || ownerName.includes(normalAuthor))) return;
 
             const textEl = post.querySelector(
-                '.feed-shared-text, .update-components-text, .break-words'
+                '.update-components-update-v2__commentary, .feed-shared-update-v2__description, ' +
+                    '.feed-shared-inline-show-more-text, .feed-shared-text, .update-components-text, ' +
+                    '.attributed-text-segment-list__content, .break-words[dir="ltr"], span.break-words'
             );
-            const postText = textEl ? textEl.textContent.trim().substring(0, 300) : '';
+            const postText = textEl ? textEl.textContent.trim().substring(0, 1200) : '';
             if (!postText || postText.length < 10) return;
 
             const key = postText.substring(0, 80).toLowerCase();
@@ -896,7 +912,7 @@
             }
         }
 
-        if (url.includes('/feed') && slOn('timelines')) {
+        if (linkedInPathLooksLikeMainFeed(url) && (slOn('timelines') || slOn('home'))) {
             const networkPosts = await scrapeFeedPosts();
             if (networkPosts.length > 0) {
                 data.feedPosts = networkPosts;
@@ -916,7 +932,7 @@
             }
         }
 
-        if (!slOn('timelines')) delete data.feedPosts;
+        if (!slOn('timelines') && !slOn('home')) delete data.feedPosts;
         if (!slOn('engage')) delete data.dms;
 
         if (data.followers !== undefined || (data.posts && data.posts.length > 0) || data.dashboardStats || data.dms || data.feedPosts) {
@@ -2153,7 +2169,34 @@
 
     function nearestUpdateShell(node) {
         if (!node) return null;
-        return node.closest('.feed-shared-update-v2, [class*="feed-shared-update"], article, [data-view-name*="feed-detail"]');
+        return node.closest(
+            '.feed-shared-update-v2, [class*="feed-shared-update"], article, [data-view-name*="feed-detail"], div[data-view-name*="activity"]'
+        );
+    }
+
+    function scrollIntoViewQuick(el) {
+        if (!el) return;
+        try {
+            el.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' });
+        } catch (_e) {
+            try {
+                el.scrollIntoView(true);
+            } catch (__e) {}
+        }
+    }
+
+    function isExcludedComposerEl(el) {
+        if (!el || !el.closest) return true;
+        if (
+            el.closest('.msg-form') ||
+            el.closest('.msg-overlay') ||
+            el.closest('[class*="search-typeahead"]') ||
+            el.closest('.share-creation-sharing') ||
+            el.closest('[data-view-name="share-generic"]')
+        ) {
+            return true;
+        }
+        return false;
     }
 
     function findComposerInScope(scope) {
@@ -2165,13 +2208,20 @@
             '.comments-comment-box__comment-texteditor [contenteditable="true"]',
             'form.comments-comment-box__form [contenteditable="true"]',
             '[class*="comments-comment-box"] [contenteditable="true"]',
-            'div[role="textbox"][placeholder*="Comment" i]',
+            '.comments-comments-list ~ * [contenteditable="true"][role="textbox"]',
+            'div[data-placeholder*="comment" i][contenteditable="true"]',
+            'div.ql-editor[contenteditable="true"]',
+            '.ql-editor[contenteditable="true"]',
+            'div[role="textbox"][contenteditable="true"]',
+            'textarea[placeholder*="comment" i]',
+            'textarea[placeholder*="add a reply" i]',
         ];
         for (let c = 0; c < chains.length; c++) {
             const list = scope.querySelectorAll(chains[c]);
             for (let i = 0; i < list.length; i++) {
                 const el = list[i];
-                if (uiVisible(el)) return el;
+                if (!uiVisible(el) || isExcludedComposerEl(el)) continue;
+                return el;
             }
         }
         return null;
@@ -2180,20 +2230,51 @@
     async function maybeRevealCommentComposer(card) {
         if (!card) return;
         if (findComposerInScope(card)) return;
-        const buttons = card.querySelectorAll('button');
-        for (let i = 0; i < buttons.length; i++) {
-            const b = buttons[i];
-            if (b.disabled || !uiVisible(b)) continue;
-            const a = String(b.getAttribute('aria-label') || '').toLowerCase();
-            const t = String(b.textContent || '').trim().toLowerCase();
-            const isReply = /\breply\b/.test(a);
-            const isComment = /\bcomment\b/.test(a) || t === 'comment' || /\bcomments?\s*\(?\d+/i.test(t);
-            if (!isComment || isReply) continue;
+        const candidates = [...card.querySelectorAll('button, [role="button"], .artdeco-button')];
+        const tryClick = async (btn) => {
+            if (!btn || btn.disabled || !uiVisible(btn)) return false;
             try {
-                b.click();
-                await new Promise((r) => setTimeout(r, 600));
+                btn.click();
+                await new Promise((r) => setTimeout(r, 700));
+                return true;
+            } catch (_e) {
+                return false;
+            }
+        };
+        /** 1) Prefer aria-labels that start with or contain “comment”, not standalone “reply” */
+        for (let i = 0; i < candidates.length; i++) {
+            const b = candidates[i];
+            const a = String(b.getAttribute('aria-label') || '').trim().toLowerCase();
+            const t = String(b.innerText || b.textContent || '').trim().toLowerCase();
+            if (/^reply\b/i.test(a) && !/\bcomment\b/i.test(a)) continue;
+            if (
+                /^comment\b/.test(a) ||
+                a.includes('comment on') ||
+                a.includes('comments') ||
+                a === 'open comments' ||
+                t === 'comment' ||
+                /^comment\b/i.test(t) ||
+                /\bcomments?\s*[·.]?\s*\d+/i.test(t)
+            ) {
+                if (/message|send in a DM|invite/i.test(a)) continue;
+                await tryClick(b);
                 return;
-            } catch (_e) {}
+            }
+        }
+        /** 2) Social bar — only triggers that mention Comment (avoid Like/Repost). */
+        const socBtns = card.querySelectorAll(
+            '.social-details-social-activity button, .feed-shared-social-action-bar button, [class*="social-details-social-actions"] button, [class*="social-action-bar"] button'
+        );
+        for (let s = 0; s < socBtns.length; s++) {
+            const b = socBtns[s];
+            const ax = String(b.getAttribute('aria-label') || '').toLowerCase();
+            const ti = String(b.innerText || b.textContent || '').trim().toLowerCase();
+            if (/\breply\b/i.test(ax) && !/\bcomment\b/i.test(ax)) continue;
+            if (/\b(like|react|celebrate|support|love|funny|insightful|send in a dm|share|repost)\b/i.test(ax)) continue;
+            if (/\bcomment\b/i.test(ax) || /^comment\b/i.test(ti) || /^\d+\s*comments?\b/i.test(ti)) {
+                await tryClick(b);
+                return;
+            }
         }
     }
 
@@ -2216,32 +2297,137 @@
         return out;
     }
 
+    function collectComposerCandidates(root) {
+        const r = root || document;
+        const chains = [
+            '.comments-comment-texteditor [contenteditable="true"]',
+            '.comments-comment-box__form-container [contenteditable="true"]',
+            '[class*="comment-texteditor"] [contenteditable="true"]',
+            '[class*="comments-comment-item"] form [contenteditable="true"][role="textbox"]',
+            'div[role="textbox"][contenteditable="true"]',
+            'div.ql-editor[contenteditable="true"], .ql-editor[contenteditable]',
+            'textarea[placeholder*="comment" i]',
+            'textarea[placeholder*="reply" i]',
+        ];
+        const found = [];
+        const seen = new Set();
+        for (let ci = 0; ci < chains.length; ci++) {
+            const list = r.querySelectorAll(chains[ci]);
+            for (let j = 0; j < list.length; j++) {
+                const el = list[j];
+                if (!uiVisible(el) || isExcludedComposerEl(el)) continue;
+                /** Skip tiny decoration editables */
+                const box = el.getBoundingClientRect();
+                if (box.height < 10 && box.width < 28) continue;
+                if (!seen.has(el)) {
+                    seen.add(el);
+                    found.push(el);
+                }
+            }
+        }
+        return found;
+    }
+
+    function proximityPickEditor(editors, anchorEl) {
+        if (!editors.length) return null;
+        if (!anchorEl) return editors[0];
+        const ar = anchorEl.getBoundingClientRect();
+        let best = null;
+        let bestScore = Infinity;
+        for (let i = 0; i < editors.length; i++) {
+            const el = editors[i];
+            const er = el.getBoundingClientRect();
+            const below = Math.max(0, er.top - ar.bottom);
+            if (er.bottom < ar.top - 200) continue;
+            if (below > 3800 && editors.length > 1) continue;
+            const horiz = Math.abs(er.left + er.width / 2 - (ar.left + ar.width / 2));
+            const score = below + horiz * 0.06;
+            if (score < bestScore) {
+                bestScore = score;
+                best = el;
+            }
+        }
+        return best || editors[0];
+    }
+
     async function resolveEngageCommentEditor(activityId) {
         const anchors = activityAnchorNodes(activityId);
         for (let i = 0; i < anchors.length; i++) {
-            const shell = nearestUpdateShell(anchors[i]) || anchors[i];
-            await maybeRevealCommentComposer(shell);
-            const ed = findComposerInScope(shell);
+            const anch = anchors[i];
+            scrollIntoViewQuick(anch);
+            await new Promise((r) => setTimeout(r, 350));
+
+            let shell = nearestUpdateShell(anch);
+            if (!shell) shell = anch;
+            scrollIntoViewQuick(shell);
+            await new Promise((r) => setTimeout(r, 200));
+
+            if (!findComposerInScope(shell)) {
+                await maybeRevealCommentComposer(shell);
+            }
+            if (!findComposerInScope(shell)) {
+                /** Second pass after layout */
+                scrollIntoViewQuick(shell);
+                await new Promise((r) => setTimeout(r, 400));
+                await maybeRevealCommentComposer(shell);
+            }
+
+            let ed = findComposerInScope(shell);
+            if (ed) return ed;
+
+            const poolShell = collectComposerCandidates(shell);
+            ed = proximityPickEditor(poolShell, anch);
             if (ed) return ed;
         }
-        if (pageUrlShowsActivity(activityId)) {
-            let ed = await waitForSelector(
-                '.comments-comment-texteditor [contenteditable="true"], .comments-comment-box__form-container [contenteditable="true"]',
-                4000
-            );
-            if (ed) return ed;
-            const cards = document.querySelectorAll('.feed-shared-update-v2');
-            for (let j = 0; j < cards.length; j++) {
-                await maybeRevealCommentComposer(cards[j]);
-                ed = findComposerInScope(cards[j]);
+
+        if (!pageUrlShowsActivity(activityId)) return null;
+
+        for (let wave = 0; wave < 4; wave++) {
+            if (anchors[0]) {
+                scrollIntoViewQuick(anchors[0]);
+                await new Promise((r) => setTimeout(r, 400));
+                const shell = nearestUpdateShell(anchors[0]) || document.querySelector('main') || document.body;
+                await maybeRevealCommentComposer(shell);
+                await new Promise((r) => setTimeout(r, 500));
+                let ed = findComposerInScope(shell);
+                if (ed) return ed;
+                ed = proximityPickEditor(collectComposerCandidates(document), anchors[0]);
                 if (ed) return ed;
             }
-            const detail = document.querySelector('main [data-view-name*="feed-detail"], .scaffold-layout__detail main');
+
+            const cards = document.querySelectorAll('.feed-shared-update-v2, article[data-id], main article[data-urn*="activity"]');
+            for (let k = 0; k < Math.min(cards.length, 12); k++) {
+                const c = cards[k];
+                scrollIntoViewQuick(c);
+                await new Promise((r) => setTimeout(r, 120));
+                await maybeRevealCommentComposer(c);
+                const edLocal = findComposerInScope(c);
+                if (edLocal) return edLocal;
+            }
+
+            const detail = document.querySelector('main, .scaffold-layout__detail');
             if (detail) {
                 await maybeRevealCommentComposer(detail);
-                ed = findComposerInScope(detail);
-                if (ed) return ed;
+                const broad = proximityPickEditor(collectComposerCandidates(detail), anchors[0] || null);
+                if (broad) return broad;
             }
+
+            const waited = await waitForSelector(
+                '.comments-comment-texteditor [contenteditable="true"], ' +
+                    '.comments-comment-box__form-container [contenteditable="true"], ' +
+                    'div[role="textbox"][contenteditable="true"], ' +
+                    '.ql-editor[contenteditable="true"]',
+                wave === 0 ? 5200 : 1400
+            );
+            if (waited && !isExcludedComposerEl(waited)) {
+                if (!anchors.length) return waited;
+                const merged = [...new Set([waited].concat(collectComposerCandidates(document)))];
+                const cand = proximityPickEditor(merged, anchors[0]);
+                if (cand) return cand;
+                return waited;
+            }
+
+            await new Promise((r) => setTimeout(r, 700));
         }
         return null;
     }
@@ -2249,19 +2435,70 @@
     function fillCommentEditor(editor, text) {
         const txt = String(text || '').trim();
         if (!txt) throw new Error('Empty comment.');
+        scrollIntoViewQuick(editor);
         editor.focus();
+
         if (editor.tagName === 'TEXTAREA') {
-            editor.value = txt;
+            try {
+                const desc = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value');
+                if (desc && desc.set) desc.set.call(editor, txt);
+                else editor.value = txt;
+            } catch (_e) {
+                editor.value = txt;
+            }
             editor.dispatchEvent(new Event('input', { bubbles: true }));
             editor.dispatchEvent(new Event('change', { bubbles: true }));
             return;
         }
+
         editor.innerHTML = '';
-        const p = document.createElement('p');
-        p.textContent = txt;
-        editor.appendChild(p);
+
+        let inserted = false;
         try {
-            editor.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }));
+            if (typeof document.execCommand === 'function' && document.queryCommandSupported?.('insertText')) {
+                inserted = document.execCommand('insertText', false, txt);
+            }
+        } catch (_e) {}
+
+        if (!inserted) {
+            editor.textContent = txt;
+            if (!editor.textContent || editor.textContent.length < txt.length) {
+                const p = document.createElement('p');
+                p.textContent = txt;
+                editor.innerHTML = '';
+                editor.appendChild(p);
+            }
+        }
+
+        try {
+            editor.dispatchEvent(
+                new InputEvent('input', { bubbles: true, cancelable: true, inputType: 'insertText', data: txt })
+            );
+        } catch (_e) {
+            editor.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        try {
+            editor.dispatchEvent(new Event('change', { bubbles: true }));
+        } catch (_e) {}
+        try {
+            editor.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: '', code: '' }));
+        } catch (_e) {}
+    }
+
+    function reinforceComposerInput(editor, textSnippet) {
+        const snip = String(textSnippet || '').trim();
+        if (!snip) return;
+        editor.focus();
+        try {
+            const range = document.createRange();
+            range.selectNodeContents(editor);
+            range.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } catch (_e) {}
+        try {
+            editor.dispatchEvent(new InputEvent('input', { bubbles: true, inputType: 'insertText', data: snip.slice(-1) }));
         } catch (_e) {
             editor.dispatchEvent(new Event('input', { bubbles: true }));
         }
@@ -2270,43 +2507,97 @@
     function nearestSubmitAncestors(editor) {
         const list = [];
         let n = editor;
-        for (let d = 0; d < 12 && n; d++) {
+        for (let d = 0; d < 22 && n; d++) {
             list.push(n);
             n = n.parentElement;
         }
         return list;
     }
 
+    function isDomClickableButton(btn) {
+        if (!btn || btn.tagName !== 'BUTTON') return false;
+        if (btn.hasAttribute('disabled')) return false;
+        if (btn.getAttribute('aria-disabled') === 'true') return false;
+        if (btn.classList.contains('artdeco-button--disabled') || btn.matches?.('.artdeco-button[disabled]')) return false;
+        return true;
+    }
+
+    /** Prefer enabled; some LinkedIn builds lag updating aria-disabled after paste. */
+    function isDomProbablyPostable(btn) {
+        if (!btn || btn.tagName !== 'BUTTON') return false;
+        if (btn.hasAttribute('disabled')) return false;
+        return true;
+    }
+
+    function submitButtonLooksLikePost(btn) {
+        if (!btn || !uiVisible(btn)) return false;
+        const t = String(btn.innerText || btn.textContent || '').replace(/\s+/g, ' ').trim().toLowerCase();
+        const al = String(btn.getAttribute('aria-label') || '').trim().toLowerCase();
+        const cls = String(btn.className || '').toLowerCase();
+        if (/discard|cancel|delete|remove/i.test(al) || /\b(cancel|discard)\b/i.test(t)) return false;
+        if (cls.includes('comments-comment') && cls.includes('submit')) return true;
+        if (t === 'comment' || t === 'post') return true;
+        if (/\b(post|submit)\s+(comment|reply)\b/.test(al)) return true;
+        if (/\bpublish comment\b/.test(al)) return true;
+        if (/\bcomment-box\b/.test(cls) && /\b(post|comment)\b/.test(t)) return true;
+        return false;
+    }
+
+    function scoreSubmitDistance(editorRect, btn) {
+        const br = btn.getBoundingClientRect();
+        return Math.abs(editorRect.bottom - br.top) + Math.abs(editorRect.left - br.left) * 0.04;
+    }
+
+    function pickNearestSubmitCandidate(editor, pool) {
+        const er = editor.getBoundingClientRect();
+        let best = null;
+        let bestS = Infinity;
+        for (let i = 0; i < pool.length; i++) {
+            const btn = pool[i];
+            if (!submitButtonLooksLikePost(btn)) continue;
+            const s = scoreSubmitDistance(er, btn);
+            if (s < bestS) {
+                bestS = s;
+                best = btn;
+            }
+        }
+        return best;
+    }
+
+    function collectSubmitCandidates(editor) {
+        const ancestors = nearestSubmitAncestors(editor);
+        const seen = new Set();
+        const pool = [];
+        const add = (n) => {
+            if (n && n.tagName === 'BUTTON' && !seen.has(n)) {
+                seen.add(n);
+                pool.push(n);
+            }
+        };
+        for (let i = 0; i < ancestors.length; i++) {
+            ancestors[i].querySelectorAll('button').forEach(add);
+        }
+        const globalSel = [
+            'button.comments-comment-box__submit-button',
+            'button.comments-comment-box__submit-ui-button',
+            'button.comments-comment-box__submit-button--cr',
+            'form.comments-comment-box__form button[type="submit"]',
+            '[class*="comments-comment-box"] button.artdeco-button--primary',
+        ].join(', ');
+        document.querySelectorAll(globalSel).forEach(add);
+        return pool;
+    }
+
     async function acquireCommentSubmitButton(editor) {
         const start = Date.now();
-        const timeout = 8000;
+        const timeout = 16000;
         while (Date.now() - start < timeout) {
-            const ancestors = nearestSubmitAncestors(editor);
-            for (let i = 0; i < ancestors.length; i++) {
-                const s = ancestors[i];
-                const cand = s.querySelector(
-                    'button.comments-comment-box__submit-button:not([disabled]), button.comments-comment-box__submit-ui-button:not([disabled])'
-                );
-                if (cand && uiVisible(cand)) return cand;
-            }
-            const eb = editor.getBoundingClientRect();
-            const pool = Array.from(
-                document.querySelectorAll(
-                    'button.comments-comment-box__submit-button:not([disabled]), button.comments-comment-box__submit-ui-button:not([disabled])'
-                )
-            ).filter(uiVisible);
-            let best = null;
-            let bestDy = Infinity;
-            for (const btn of pool) {
-                const br = btn.getBoundingClientRect();
-                const dy = Math.abs(eb.top - br.top) + Math.abs(eb.bottom - br.top);
-                if (dy < bestDy) {
-                    bestDy = dy;
-                    best = btn;
-                }
-            }
-            if (best) return best;
-            await new Promise((r) => setTimeout(r, 120));
+            const pool = collectSubmitCandidates(editor);
+            let btn = pickNearestSubmitCandidate(editor, pool.filter(isDomClickableButton));
+            if (btn) return btn;
+            btn = pickNearestSubmitCandidate(editor, pool.filter(isDomProbablyPostable));
+            if (btn) return btn;
+            await new Promise((r) => setTimeout(r, 160));
         }
         return null;
     }
@@ -2331,11 +2622,33 @@
                 };
             }
             fillCommentEditor(editor, txt);
-            await new Promise((r) => setTimeout(r, 200));
-            const submit = await acquireCommentSubmitButton(editor);
+            await new Promise((r) => setTimeout(r, 380));
+            let submit = await acquireCommentSubmitButton(editor);
             if (!submit) {
-                return { success: false, error: 'Post button did not activate — LinkedIn may need you to tap in the composer first.' };
+                reinforceComposerInput(editor, txt);
+                await new Promise((r) => setTimeout(r, 500));
+                submit = await acquireCommentSubmitButton(editor);
             }
+            if (!submit) {
+                editor.click();
+                await new Promise((r) => setTimeout(r, 200));
+                fillCommentEditor(editor, txt);
+                await new Promise((r) => setTimeout(r, 500));
+                submit = await acquireCommentSubmitButton(editor);
+            }
+            if (!submit) {
+                return {
+                    success: false,
+                    error:
+                        'Could not find an active Comment/Post button. Click inside the composer on LinkedIn, then try SuperLinkedIn again.',
+                };
+            }
+            try {
+                submit.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
+                submit.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true }));
+                submit.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }));
+                submit.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, cancelable: true }));
+            } catch (_e) {}
             submit.click();
             await new Promise((r) => setTimeout(r, 900));
             return { success: true };
