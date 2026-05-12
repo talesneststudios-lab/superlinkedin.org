@@ -138,6 +138,60 @@ const LINKEDIN = {
     scope: 'openid profile email w_member_social',
 };
 
+/** Marketing REST APIs (documents, posts). Override with LINKEDIN_REST_VERSION if LinkedIn deprecates this month. */
+const LINKEDIN_REST_VERSION = process.env.LINKEDIN_REST_VERSION || '202411';
+
+function linkedinRestHeaders(extra = {}) {
+    return {
+        'X-Restli-Protocol-Version': '2.0.0',
+        'LinkedIn-Version': LINKEDIN_REST_VERSION,
+        ...extra,
+    };
+}
+
+async function linkedInGetDocumentStatus(accessToken, documentUrn) {
+    const encoded = encodeURIComponent(documentUrn);
+    const r = await fetch(`https://api.linkedin.com/rest/documents/${encoded}`, {
+        headers: {
+            Authorization: `Bearer ${accessToken}`,
+            ...linkedinRestHeaders(),
+        },
+    });
+    if (!r.ok) return null;
+    try {
+        return await r.json();
+    } catch {
+        return null;
+    }
+}
+
+/** Wait until PDF upload is processed; posting before AVAILABLE often fails. */
+async function waitLinkedInDocumentReady(accessToken, documentUrn) {
+    const deadline = Date.now() + 60000;
+    let delayMs = 800;
+    while (Date.now() < deadline) {
+        const doc = await linkedInGetDocumentStatus(accessToken, documentUrn);
+        const status = doc && doc.status;
+        if (status === 'AVAILABLE') return { ok: true };
+        if (status === 'PROCESSING_FAILED' || status === 'FAILED') {
+            return { ok: false, error: 'LinkedIn could not process the PDF. Try a smaller carousel or simpler layout.' };
+        }
+        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        delayMs = Math.min(delayMs + 250, 3000);
+    }
+    return { ok: false, error: 'LinkedIn took too long to process the PDF. Try publishing again in a minute.' };
+}
+
+function carouselPdfFilenameTitle(topic) {
+    const baseRaw = String(topic || '')
+        .replace(/[^a-zA-Z0-9\s\-+.]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 72);
+    const base = baseRaw || 'Carousel';
+    return /\.pdf$/i.test(base) ? base : `${base}.pdf`;
+}
+
 function getRedirectUri(req) {
     const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const host = req.headers['x-forwarded-host'] || req.headers.host || new URL(process.env.BASE_URL).host;
@@ -2568,17 +2622,12 @@ app.post('/api/ai/generate-carousel', async (req, res) => {
         return res.status(403).json({ error: 'Carousel is available on Advanced and Ultra plans. Upgrade to access this feature.' });
     }
 
-    const credits = await getCreditsForSession(req.session);
-    if (credits.remaining < 3) {
-        return res.json({ error: `AI credit limit reached (${credits.limits.aiCredits}/${credits.limits.creditPeriod}). Upgrade your plan for more credits.` });
-    }
-
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey || apiKey === 'sk-your-openai-api-key-here') {
         return res.json({ error: 'OpenAI API key not configured' });
     }
 
-    const { topic, slideCount = 8, style = 'professional' } = req.body;
+    const { topic, slideCount = 8, style: styleRaw = 'professional' } = req.body;
     if (!topic) return res.status(400).json({ error: 'Topic is required' });
 
     const user = await hydrateSessionUserFromDb(req.session.user);
@@ -2589,11 +2638,26 @@ app.post('/api/ai/generate-carousel', async (req, res) => {
         professional: 'Clean, corporate style with data-driven insights and clear headings.',
         bold: 'Eye-catching, bold statements with high contrast and punchy one-liners.',
         minimal: 'Minimalist design approach with short text, lots of whitespace, one idea per slide.',
-        colorful: 'Vibrant and energetic tone with metaphors, emojis, and storytelling elements.',
+        colorful: 'Vibrant and energetic tone with metaphors, occasional tasteful emoji, and storytelling.',
+        image_forward: 'Visual-first: every slide should read like a storyboard beat—concrete scenes, objects, and metaphors a designer could illustrate with stock photos, icons, or diagrams. Titles and bullets name what you would *see* on screen.',
+        cartoon_colors: 'Cartoon energy: playful, saturated “Saturday morning” vibe in the language—bouncy verbs, friendly micro-copy, expressive contrast, light humor where it fits. Still professional enough for LinkedIn.',
+        story_arc: 'Strong narrative arc: hook on slide 2, rising insight, subtle tension, payoff before the CTA. Slide titles feel like chapter beats.',
+        data_dense: 'Analytical: numbers, frameworks, “before/after”, short punchy stats-style claims (no fake data—use qualitative rigor if no figures).',
+        editorial: 'Editorial / thought-leadership: contrarian hooks, crisp thesis lines, magazine-like section heads.',
+        pastel_soft: 'Soft and approachable: gentle language, reassuring tone, “coach in your corner” energy—avoid harsh jargon.',
     };
 
-    const styleGuide = styleDescriptions[style] || styleDescriptions.professional;
-    const count = Math.min(Math.max(parseInt(slideCount) || 8, 4), 15);
+    const count = Math.min(Math.max(parseInt(slideCount, 10) || 8, 4), 15);
+
+    const credits = await getCreditsForSession(req.session);
+    if (credits.remaining < count) {
+        return res.json({
+            error: `Need at least ${count} AI credits for ${count} slides (${credits.remaining} remaining). Upgrade your plan or pick fewer slides.`,
+        });
+    }
+
+    const sk = typeof styleRaw === 'string' ? styleRaw.trim() : 'professional';
+    const styleGuide = styleDescriptions[sk] || styleDescriptions.professional;
     const onboardCarouselStyle = onboardingStyleInjectionForAi(user, 5);
 
     const systemPrompt = `You are a LinkedIn carousel content expert. Create a ${count}-slide carousel about the given topic.
@@ -2625,7 +2689,7 @@ Return ONLY the JSON array, no markdown, no explanation.`;
                     { role: 'user', content: `Create a ${count}-slide LinkedIn carousel about: ${topic}` },
                 ],
                 temperature: 0.7,
-                max_tokens: 2000,
+                max_tokens: Math.min(4096, 700 + count * 190),
             }),
         });
 
@@ -2642,8 +2706,14 @@ Return ONLY the JSON array, no markdown, no explanation.`;
 
         if (!slides.length) return res.json({ error: 'No slides generated. Please try a different topic.' });
 
-        await consumeCredit(req.session, 3);
-        res.json({ slides });
+        if (slides.length !== count) {
+            return res.json({
+                error: `The model returned ${slides.length} slides instead of ${count}. Try again, or pick a different slide count or topic.`,
+            });
+        }
+
+        await consumeCredit(req.session, count);
+        res.json({ slides, creditsUsed: count });
     } catch (err) {
         console.error('Carousel generation error:', err);
         res.json({ error: 'Failed to generate carousel.' });
@@ -3048,15 +3118,16 @@ app.post('/api/carousel/publish', async (req, res) => {
         console.log(`[Carousel] PDF generated, size: ${pdfBuffer.length} bytes. Attempting upload for ${linkedinId}`);
 
         let documentUrn = null;
+        const pdfPostTitle = carouselPdfFilenameTitle(title);
 
-        // --- Method 1: New REST Documents API ---
+        // --- Method 1: REST Documents API (PDF → urn:li:document:…) ---
         try {
             const initRes = await fetch('https://api.linkedin.com/rest/documents?action=initializeUpload', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`,
-                    'LinkedIn-Version': '202401',
+                    ...linkedinRestHeaders(),
                 },
                 body: JSON.stringify({
                     initializeUploadRequest: {
@@ -3203,12 +3274,17 @@ app.post('/api/carousel/publish', async (req, res) => {
         // Try new REST Posts API first
         const isDocumentUrn = documentUrn.startsWith('urn:li:document:');
         if (isDocumentUrn) {
+            const readyCheck = await waitLinkedInDocumentReady(accessToken, documentUrn);
+            if (!readyCheck.ok) {
+                console.warn('[Carousel] Proceeding despite document readiness:', readyCheck.error);
+            }
+
             const postRes = await fetch('https://api.linkedin.com/rest/posts', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${accessToken}`,
-                    'LinkedIn-Version': '202401',
+                    ...linkedinRestHeaders(),
                 },
                 body: JSON.stringify({
                     author: personUrn,
@@ -3221,7 +3297,7 @@ app.post('/api/carousel/publish', async (req, res) => {
                     },
                     content: {
                         media: {
-                            title: title || 'Carousel Post',
+                            title: pdfPostTitle,
                             id: documentUrn,
                         },
                     },
@@ -3257,11 +3333,11 @@ app.post('/api/carousel/publish', async (req, res) => {
                     specificContent: {
                         'com.linkedin.ugc.ShareContent': {
                             shareCommentary: { text: text.trim() },
-                            shareMediaCategory: 'ARTICLE',
+                            shareMediaCategory: 'NATIVE_DOCUMENT',
                             media: [{
                                 status: 'READY',
                                 media: documentUrn,
-                                title: { text: title || 'Carousel Post' },
+                                title: { text: pdfPostTitle.slice(0, 200) },
                             }],
                         },
                     },

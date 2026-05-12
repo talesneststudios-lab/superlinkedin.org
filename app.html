@@ -6302,7 +6302,7 @@
             <div class="page" id="page-carousel">
                 <div class="page-header">
                     <h2>Carousel Creator</h2>
-                    <p>Generate beautiful multi-slide PDF carousels with AI.</p>
+                    <p>Generate beautiful multi-slide PDF carousels with AI. Slide generation uses <strong>one AI credit per slide</strong> (matching the slide count you select).</p>
                 </div>
                 <div style="max-width:960px;margin:0 auto;">
                     <!-- Upgrade overlay for non-carousel plans -->
@@ -6322,7 +6322,7 @@
                                 <span style="font-size:1.5rem;">&#127912;</span>
                                 <div>
                                     <h2 style="font-size:1.1rem;font-weight:800;margin:0;">Carousel Creator</h2>
-                                    <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Generate beautiful multi-slide PDF carousels with AI</p>
+                                    <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Multi-slide PDF carousels • <strong id="carouselCreditHint">8</strong> credits for selected slide count (one per slide)</p>
                                 </div>
                             </div>
 
@@ -6334,22 +6334,34 @@
                                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                                     <div>
                                         <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Slides</label>
-                                        <select id="carouselSlideCount" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                        <select id="carouselSlideCount" onchange="updateCarouselCreditHint()" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                            <option value="4">4 slides</option>
                                             <option value="5">5 slides</option>
                                             <option value="6">6 slides</option>
                                             <option value="7">7 slides</option>
                                             <option value="8" selected>8 slides</option>
+                                            <option value="9">9 slides</option>
                                             <option value="10">10 slides</option>
+                                            <option value="11">11 slides</option>
                                             <option value="12">12 slides</option>
+                                            <option value="13">13 slides</option>
+                                            <option value="14">14 slides</option>
+                                            <option value="15">15 slides</option>
                                         </select>
                                     </div>
                                     <div>
                                         <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Style</label>
                                         <select id="carouselStyle" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
                                             <option value="professional">Professional</option>
-                                            <option value="bold">Bold</option>
-                                            <option value="minimal">Minimal</option>
-                                            <option value="colorful">Colorful</option>
+                                            <option value="bold">Bold &amp; punchy</option>
+                                            <option value="minimal">Minimal whitespace</option>
+                                            <option value="colorful">Colorful storytelling</option>
+                                            <option value="image_forward">Style with images (visual metaphors)</option>
+                                            <option value="cartoon_colors">Cartoon colours</option>
+                                            <option value="story_arc">Story arc</option>
+                                            <option value="data_dense">Data-dense insights</option>
+                                            <option value="editorial">Editorial opinion</option>
+                                            <option value="pastel_soft">Soft pastel coach</option>
                                         </select>
                                     </div>
                                 </div>
@@ -6386,13 +6398,24 @@
                             <!-- Actions -->
                             <div class="card" style="padding:16px;margin-top:16px;">
                                 <div style="margin-bottom:12px;">
-                                    <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Post Caption</label>
-                                    <textarea id="carouselCaption" placeholder="Write a caption for your carousel post..." style="width:100%;height:60px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);outline:none;resize:vertical;"></textarea>
+                                    <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Post caption</label>
+                                    <textarea id="carouselCaption" placeholder="Write a caption for your carousel post..." style="width:100%;height:76px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);outline:none;resize:vertical;"></textarea>
+                                    <p style="font-size:0.74rem;color:var(--text-muted);line-height:1.45;margin-top:8px;">AI can draft a caption from your slides. Uses AI credits.</p>
+                                    <div style="margin-top:8px;">
+                                        <button type="button" onclick="regenerateCarouselCaption()" id="btnCarouselRegenCaption" class="ai-draft-regen-btn" style="padding:9px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.78rem;cursor:pointer;color:var(--text-primary);"><svg class="nav-icon-svg ai-draft-regen-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Regenerate caption</span></button>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom:12px;">
+                                    <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Who can see it</label>
+                                    <select id="carouselPostAudience" style="width:100%;max-width:280px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                        <option value="everyone">Everyone</option>
+                                        <option value="connections">Connections only</option>
+                                    </select>
                                 </div>
                                 <div style="display:flex;gap:10px;flex-wrap:wrap;">
                                     <button onclick="downloadCarouselPDF()" style="padding:10px 20px;background:var(--bg-secondary);color:var(--text-primary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;">&#128196; Download PDF</button>
                                     <button onclick="addCarouselToQueue()" style="padding:10px 20px;background:rgba(10,102,194,0.08);color:var(--accent);border:1px solid rgba(10,102,194,0.2);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;">&#128197; Add to Queue</button>
-                                    <button onclick="publishCarousel()" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;display:flex;align-items:center;gap:6px;">&#128640; Publish to LinkedIn</button>
+                                    <button type="button" onclick="publishCarousel()" id="btnCarouselPublish" style="padding:10px 20px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.82rem;cursor:pointer;display:inline-flex;align-items:center;gap:8px;">&#128640; Publish to LinkedIn</button>
                                 </div>
                             </div>
                         </div>
@@ -13436,6 +13459,14 @@
             }
         }
 
+        function updateCarouselCreditHint() {
+            const sel = document.getElementById('carouselSlideCount');
+            const el = document.getElementById('carouselCreditHint');
+            if (!sel || !el) return;
+            const n = parseInt(sel.value, 10);
+            el.textContent = Number.isFinite(n) && n > 0 ? n : 8;
+        }
+
         async function generateCarouselSlides() {
             const topic = document.getElementById('carouselTopic').value.trim();
             if (!topic) return showNotify('Topic Required', 'Please enter a topic for your carousel.', 'error');
@@ -13465,6 +13496,9 @@
                 carouselSlides = data.slides || [];
                 renderCarouselPreview();
                 document.getElementById('carouselSlidesContainer').style.display = '';
+                await updateCreditsPopup();
+                const used = Number(data.creditsUsed) || parseInt(slideCount, 10) || carouselSlides.length;
+                showNotify('Slides ready', used + ' AI credit' + (used !== 1 ? 's' : '') + ' used (one per slide).', 'success');
             } catch (e) {
                 showNotify('Error', 'Failed to generate slides.', 'error');
             } finally {
@@ -13542,6 +13576,61 @@
             strip.scrollBy({ left: 296, behavior: 'smooth' });
         }
 
+        async function regenerateCarouselCaption() {
+            if (!carouselSlides.length) return showNotify('No Slides', 'Generate slides first.', 'error');
+            const features = creditsData.features || _userFeatures || [];
+            if (!features.includes('carousel')) {
+                showUpgradeRequiredModal();
+                return;
+            }
+            const btn = document.getElementById('btnCarouselRegenCaption');
+            const ta = document.getElementById('carouselCaption');
+            if (!btn) return;
+            const topic = document.getElementById('carouselTopic').value.trim();
+            const styleSel = document.getElementById('carouselStyle');
+            const styleLabel = (styleSel && styleSel.options[styleSel.selectedIndex])
+                ? styleSel.options[styleSel.selectedIndex].text
+                : '';
+
+            const summary = carouselSlides.map((s, i) => {
+                const bullets = Array.isArray(s.bulletPoints) ? s.bulletPoints.filter(Boolean).join(' • ') : '';
+                return `${i + 1}. ${(s.title || 'Slide').trim()}${bullets ? ' — ' + bullets : ''}`;
+            }).join('\n');
+
+            let prompt = 'I am posting on LinkedIn as a PDF document carousel (multiple pages in one file).\n';
+            if (topic) prompt += `Overall topic: "${topic.replace(/"/g, '\'')}".\n`;
+            if (styleLabel) prompt += `Slide style: ${styleLabel}.\n`;
+            prompt += 'Slide outline:\n' + summary.slice(0, 3500);
+            prompt += '\n\nWrite ONE LinkedIn post caption (body only) that teases the carousel and invites viewers to open the PDF. Professional, concise, engaging. Avoid hashtag spam.';
+
+            if (!btn.dataset.defaultInner) btn.dataset.defaultInner = btn.innerHTML;
+            btn.disabled = true;
+            btn.setAttribute('aria-busy', 'true');
+            btn.innerHTML = '<span class="ai-draft-regen-loading" style="display:inline-flex;align-items:center;gap:8px;"><span class="spinner" style="width:14px;height:14px;border-width:2px;flex-shrink:0;border-top-color:var(--accent);"></span><span>Writing&hellip;</span></span>';
+
+            try {
+                const res = await fetch('/api/ai/write', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tone: 'auto', prompt }),
+                });
+                const data = await res.json();
+                if (data.error || !data.post) {
+                    showNotify('Caption failed', data.error || 'Could not generate caption.', 'error');
+                    return;
+                }
+                if (ta) ta.value = data.post;
+                await updateCreditsPopup();
+                showNotify('Caption ready', '1 AI credit used. Edit before publishing.', 'success');
+            } catch {
+                showNotify('Error', 'Network error while writing caption.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.removeAttribute('aria-busy');
+                btn.innerHTML = btn.dataset.defaultInner || btn.innerHTML;
+            }
+        }
+
         async function downloadCarouselPDF() {
             if (!carouselSlides.length) return showNotify('No Slides', 'Generate slides first.', 'error');
 
@@ -13586,13 +13675,25 @@
             const caption = document.getElementById('carouselCaption').value.trim();
             if (!caption) return showNotify('Caption Required', 'Add a post caption for your LinkedIn post.', 'error');
 
-            const confirmed = await showNotify('Publish Carousel', 'Publish this carousel to LinkedIn now?', 'info', { confirm: true, confirmText: 'Publish' });
+            const confirmed = await showNotify('Publish Carousel', 'Publish this carousel to LinkedIn with the PDF attached as a document?', 'info', { confirm: true, confirmText: 'Publish' });
             if (!confirmed) return;
 
             const brandColor = document.getElementById('carouselBrandColor').value || '#0A66C2';
             const topic = document.getElementById('carouselTopic').value.trim();
+            const audienceEl = document.getElementById('carouselPostAudience');
+            const audienceRaw = audienceEl ? audienceEl.value : 'everyone';
+            const audience = audienceRaw === 'connections' ? 'connections' : 'public';
+
+            const pubBtn = document.getElementById('btnCarouselPublish');
+            const pubDefaultHtml = pubBtn ? pubBtn.innerHTML : '';
 
             try {
+                if (pubBtn) {
+                    pubBtn.disabled = true;
+                    pubBtn.setAttribute('aria-busy', 'true');
+                    pubBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;"><span class="spinner" style="width:14px;height:14px;border-width:2px;border-top-color:#fff;"></span><span>Publishing&hellip;</span></span>';
+                }
+
                 const res = await fetch('/api/carousel/publish', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -13601,7 +13702,7 @@
                         brandColor,
                         title: topic,
                         text: caption,
-                        audience: 'public',
+                        audience,
                     }),
                 });
                 const data = await res.json();
@@ -13616,11 +13717,18 @@
                     downloadCarouselPDF();
                     updateCreditsPopup();
                 } else if (data.success) {
-                    showNotify('Published!', 'Carousel posted to LinkedIn!', 'success');
+                    if (data.postUrl) window.open(data.postUrl, '_blank');
+                    showNotify('Published!', 'Your carousel PDF was posted to LinkedIn as a document.', 'success');
                     updateCreditsPopup();
                 }
             } catch {
                 showNotify('Error', 'Failed to publish carousel.', 'error');
+            } finally {
+                if (pubBtn) {
+                    pubBtn.disabled = false;
+                    pubBtn.removeAttribute('aria-busy');
+                    pubBtn.innerHTML = pubDefaultHtml;
+                }
             }
         }
 
@@ -13630,6 +13738,7 @@
             updateCreditsPopup();
             checkMissions();
             updateCarouselNavLock();
+            updateCarouselCreditHint();
 
             const startRoute = getPageFromHash();
             if (startRoute.page === 'carousel') {
