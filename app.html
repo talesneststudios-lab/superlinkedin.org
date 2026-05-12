@@ -1089,6 +1089,16 @@
         .crs-slide.crs-cta .crs-slide-title { color: #fff; font-size: 1.1rem; }
         .crs-slide.crs-cta .crs-slide-text { color: rgba(255,255,255,0.85); }
 
+        /*
+         * Cover + body slides default to dark titles. In dark app theme, inherits
+         * would otherwise be white on white/light slide cards / pastel gradients.
+         * Middle-slide titles keep brand color via inline style (higher specificity).
+         * Themes set .crs-cover title colors where the background differs (bold, colorful, …).
+         */
+        .carousel-slide-strip .crs-slide:not(.crs-cta) .crs-slide-title {
+            color: #111827;
+        }
+
         /* Visual themes — preview (PDF uses matching tinted pages on server) */
         .carousel-slide-strip .crs-slide:not(.crs-cta):not(.crs-cover) {
             transition: background 0.2s, border-color 0.2s;
@@ -1389,6 +1399,43 @@
         .engage-ai-toolbar .engage-ai-pill.compose-tool-btn:hover {
             background: var(--bg);
             color: var(--text-primary);
+        }
+
+        .engage-ai-toolbar .ai-improve-wrap .ai-improve-btn.engage-ai-pill {
+            width: auto;
+            height: auto;
+            min-height: 38px;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.78rem;
+            gap: 8px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .engage-ai-toolbar .ai-improve-wrap .compose-tool-icon-svg {
+            width: 1.15rem;
+            height: 1.15rem;
+            flex-shrink: 0;
+        }
+        .engage-ai-toolbar .ai-improve-menu.menu-down {
+            z-index: 400;
+            left: 0;
+        }
+
+        .engage-post-li-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 16px;
+            margin-top: 14px;
+        }
+        .engage-post-li-hint {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            line-height: 1.45;
+            flex: 1;
+            min-width: 200px;
         }
 
         /* Tabs row containing tabs on the left and filters on the right */
@@ -6740,24 +6787,46 @@
                             </div>
                         </div>
                         <div id="engageFetchedPostText" class="engage-fetched-post"></div>
-                        <details style="margin-bottom:12px;font-size:0.8rem;color:var(--text-muted);">
+                        <details id="engageManualPasteDetails" style="margin-bottom:12px;font-size:0.8rem;color:var(--text-muted);">
                             <summary style="cursor:pointer;">Post didn’t load automatically? Paste text from LinkedIn</summary>
                             <textarea id="engageManualPostPaste" class="engage-reply-draft" style="margin-top:8px;min-height:72px;" placeholder="Paste the main post text from LinkedIn here…"></textarea>
                             <button type="button" class="engage-url-fetch-btn" style="margin:4px 0 0 0;display:inline-flex;" onclick="applyManualEngagePaste()">Load pasted text</button>
                         </details>
                         <label class="engage-fetched-draft-label" for="engageReplyDraft">Draft your comment</label>
-                        <textarea id="engageReplyDraft" class="engage-reply-draft" placeholder="Write your reply here (for your notes—we don’t auto-post comments to LinkedIn)…"></textarea>
+                        <textarea id="engageReplyDraft" class="engage-reply-draft" placeholder="Draft your reply, then use Post on LinkedIn below (needs the Chrome extension + this post open on linkedin.com)…"></textarea>
                         <div class="engage-ai-toolbar">
                             <button type="button" class="compose-tool-btn engage-ai-pill" onclick="generateEngageReply()" title="Draft a reply from the post below">
                                 <svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 01-1.275 1.275L3 12l5.813 1.912a2 2 0 011.275 1.275L12 21l1.912-5.813a2 2 0 011.275-1.275L21 12l-5.813-1.912a2 2 0 01-1.275-1.275L12 3Z"/></svg>
                                 <span>Generate reply</span>
                             </button>
-                            <button type="button" class="compose-tool-btn ai-btn engage-ai-pill" onclick="improveEngageReplyDraft()" title="Improve the text in your draft">
-                                <svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
-                                <span>Improve with AI</span>
-                            </button>
+                            <div class="ai-improve-wrap">
+                                <button type="button" class="ai-improve-btn compose-tool-btn ai-btn engage-ai-pill" onclick="toggleAiMenu('engageAiMenu', this)" title="Improve the text in your draft" aria-haspopup="menu" aria-label="Improve with AI menu">
+                                    <svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                    <span>Improve with AI</span>
+                                </button>
+                                <div class="ai-improve-menu menu-down" id="engageAiMenu" role="menu">
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('grammar','engageReplyDraft')"><span class="ai-icon">&#9998;</span> Improve grammar</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('translate','engageReplyDraft')"><span class="ai-icon">&#127760;</span> Translate to English</div>
+                                    <div class="ai-improve-sep"></div>
+                                    <div class="ai-improve-label">Rephrase with</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('hook','engageReplyDraft')"><span class="ai-icon">&#10024;</span> An engaging hook</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('details','engageReplyDraft')"><span class="ai-icon">&#128196;</span> More details</div>
+                                    <div class="ai-improve-sep"></div>
+                                    <div class="ai-improve-label">Make it more</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('engaging','engageReplyDraft')"><span class="ai-icon">&#128171;</span> Engaging</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('humorous','engageReplyDraft')"><span class="ai-icon">&#128514;</span> Humorous</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('creative','engageReplyDraft')"><span class="ai-icon">&#127912;</span> Creative</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('sarcastic','engageReplyDraft')"><span class="ai-icon">&#128527;</span> Sarcastic</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('inspirational','engageReplyDraft')"><span class="ai-icon">&#127775;</span> Inspirational</div>
+                                    <div class="ai-improve-item" role="menuitem" onclick="aiImprove('concise','engageReplyDraft')"><span class="ai-icon">&#9986;</span> Concise</div>
+                                </div>
+                            </div>
                         </div>
-                        <p style="font-size:0.72rem;color:var(--text-muted);margin:10px 0 0;line-height:1.45;">Generate uses the original post; Improve edits what you&apos;ve typed in the draft.</p>
+                        <p style="font-size:0.72rem;color:var(--text-muted);margin:10px 0 0;line-height:1.45;">Generate uses the fetched post text. Improve with AI opens a menu — grammar, translate, rephrase hooks, tones, concise, and more (same tools as Composer).</p>
+                        <div class="engage-post-li-row">
+                            <button type="button" class="engage-url-fetch-btn" onclick="confirmPostEngageCommentToLinkedIn()">Post on LinkedIn</button>
+                            <span class="engage-post-li-hint">Posts your draft comment via the extension in the Chrome tab showing this LinkedIn activity (logged in).</span>
+                        </div>
                     </div>
 
                     <div class="engage-tabs-row">
@@ -8274,6 +8343,51 @@
             } catch { feed.innerHTML = ''; empty.style.display = 'block'; }
         }
 
+        let _engageLoadWatchTimer = null;
+        /** Same post often arrives many times (extension polls / retries); avoid repeat toasts & scroll hops. */
+        let _engagePostNotifyDedupeKey = '';
+        function engagePostPayloadDedupeKey(payload) {
+            if (!payload) return '';
+            const u = String(payload.url || '').split(/[?#]/)[0];
+            const t = String(payload.text || '').trim();
+            return u + '|' + t.length + '|' + t.slice(0, 240);
+        }
+
+        function clearEngageLoadWatchdog() {
+            if (_engageLoadWatchTimer) {
+                clearTimeout(_engageLoadWatchTimer);
+                _engageLoadWatchTimer = null;
+            }
+        }
+        /** If extension never delivers post HTML, unblock the UX after ~22s */
+        function beginEngageLoadWatchdog() {
+            clearEngageLoadWatchdog();
+            _engageLoadWatchTimer = setTimeout(() => {
+                _engageLoadWatchTimer = null;
+                const wrap = document.getElementById('engageFetchedWrap');
+                if (!wrap || wrap.style.display === 'none') return;
+                const auth = document.getElementById('engageFetchedAuthor');
+                if (!auth || auth.textContent !== 'Loading post…') return;
+                auth.textContent = 'Could not auto-import';
+                const postEl = document.getElementById('engageFetchedPostText');
+                if (postEl) {
+                    postEl.textContent = 'Automatic import timed out — copy the visible post body from LinkedIn, open “Post didn’t load automatically?” below, paste there, then tap “Load pasted text”.';
+                }
+                const manual = document.getElementById('engageManualPasteDetails');
+                if (manual) manual.open = true;
+                showNotify('Manual paste', 'We couldn\u2019t read the open LinkedIn tab. Reload the Chrome extension from chrome://extensions, then try Fetch again — or paste the post below.', 'info');
+            }, 22000);
+        }
+
+        function isEngagePostBodyPlaceholder(txt) {
+            const t = (txt || '').trim();
+            if (!t || t.length < 12) return true;
+            if (/^(loading\b|loading\s+text\b)/i.test(t)) return true;
+            if (/loading text from linkedin/i.test(t) || /automatic import timed out/i.test(t)) return true;
+            if (/paste the (?:(?:visible )?)?post\b/i.test(t) && /linkedin/i.test(t) && /manually?\b/i.test(t)) return true;
+            return false;
+        }
+
         function setupEngagePostExtensionListener() {
             if (window.__slEngageExtListen) return;
             window.__slEngageExtListen = true;
@@ -8300,6 +8414,8 @@
                 linkEl.href = openUrl;
                 linkEl.style.display = '';
             }
+            _engagePostNotifyDedupeKey = '';
+            beginEngageLoadWatchdog();
         }
 
         function showEngageFetchedPost(payload) {
@@ -8309,19 +8425,135 @@
             const linkEl = document.getElementById('engageFetchedLink');
             if (!wrap || !postEl || !payload) return;
             wrap.style.display = 'block';
+            clearEngageLoadWatchdog();
             if (authorEl) authorEl.textContent = payload.author || 'LinkedIn post';
             postEl.textContent = payload.text || '';
             if (linkEl && payload.url) {
                 linkEl.href = payload.url;
                 linkEl.style.display = '';
             }
-            wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            showNotify('Post loaded', 'Post text imported. Draft your reply below or use AI Reply.', 'success');
+            const dk = engagePostPayloadDedupeKey(payload);
+            const dup = dk && dk === _engagePostNotifyDedupeKey;
+            if (dk && !dup) _engagePostNotifyDedupeKey = dk;
+            if (!dup) {
+                wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                showNotify('Post loaded', 'Post text imported. Draft below or use Generate reply.', 'success');
+            }
         }
 
         function dismissEngageFetched() {
+            _engagePostNotifyDedupeKey = '';
+            clearEngageLoadWatchdog();
             const wrap = document.getElementById('engageFetchedWrap');
             if (wrap) wrap.style.display = 'none';
+        }
+
+        function engageExtractActivityAndPostUrl() {
+            const linkEl = document.getElementById('engageFetchedLink');
+            const inp = document.getElementById('engageUrlInput');
+            const urls = [linkEl && linkEl.href, inp && inp.value]
+                .map((u) => String(u || '').trim())
+                .filter((u) => u && u !== '#');
+
+            function extractActivityId(raw) {
+                const s = String(raw || '');
+                let m = s.match(/activity[:\-_](\d{10,})/i) || s.match(/activity%3A(\d{10,})/i);
+                if (m) return m[1];
+                m = s.match(/ugcPost[:\-_](\d{10,})/i);
+                if (m) return m[1];
+                if (/\/feed\/update\//i.test(s) || /\/posts\//i.test(s) || /\/embed\//i.test(s)) {
+                    m = s.match(/(\d{15,20})/);
+                    if (m) return m[1];
+                }
+                return '';
+            }
+
+            let postUrl = '';
+            let activityId = '';
+            for (const u of urls) {
+                if (!/linkedin\.com/i.test(u)) continue;
+                activityId = extractActivityId(u);
+                postUrl = u.split(/[?#]/)[0];
+                break;
+            }
+            if (!activityId && urls.length) activityId = extractActivityId(urls[0]);
+            return { activityId: activityId || '', postUrl: postUrl || '' };
+        }
+
+        async function confirmPostEngageCommentToLinkedIn() {
+            const draft = document.getElementById('engageReplyDraft');
+            const text = draft ? draft.value.trim() : '';
+            if (!text) {
+                showNotify('Nothing to post', 'Type your comment in the draft area first.', 'warning');
+                return;
+            }
+            const wrap = document.getElementById('engageFetchedWrap');
+            if (!wrap || wrap.style.display === 'none') {
+                showNotify('Load a post first', 'Fetch or paste the LinkedIn post above, then draft your reply.', 'warning');
+                return;
+            }
+            if (!isExtensionInstalled()) {
+                showNotify(
+                    'Extension required',
+                    'Install the SuperLinkedIn Chrome extension for this browser profile to post comments from Engage.',
+                    'warning'
+                );
+                return;
+            }
+            const postEl = document.getElementById('engageFetchedPostText');
+            const postBody = postEl ? postEl.textContent.trim() : '';
+            if (!postBody || isEngagePostBodyPlaceholder(postBody)) {
+                showNotify('Waiting for post text', 'Load real post body (not the loading hint) before posting a comment.', 'warning');
+                return;
+            }
+            const extracted = engageExtractActivityAndPostUrl();
+            const activityId = extracted.activityId;
+            if (!activityId) {
+                showNotify(
+                    'Missing post identifier',
+                    'Keep the fetched LinkedIn URL (or Fetch again with the full post link) so we can match your open tab.',
+                    'warning'
+                );
+                return;
+            }
+
+            const ok = await showNotify(
+                'Post this comment on LinkedIn?',
+                'SuperLinkedIn will switch to your matching LinkedIn tab, paste your draft into the composer, and click Post.',
+                'info',
+                { confirm: true, confirmText: 'Post on LinkedIn', cancelText: 'Cancel', danger: true }
+            );
+            if (!ok) return;
+
+            const href = document.getElementById('engageFetchedLink')?.getAttribute('href') || '';
+            const normalizedUrl =
+                href && href.startsWith('http')
+                    ? href.split(/[?#]/)[0]
+                    : extracted.postUrl || '';
+
+            try {
+                const resp = await sendToExtension(
+                    {
+                        type: 'ENGAGE_POST_COMMENT',
+                        text,
+                        activityId,
+                        postUrl: normalizedUrl,
+                    },
+                    90000
+                );
+                if (resp && resp.success) {
+                    showNotify('Submitted', 'Check your LinkedIn tab — confirm the comment landed as intended.', 'success');
+                } else {
+                    showNotify(
+                        'Could not post',
+                        (resp && resp.error) ||
+                            'Leave the LinkedIn post fully loaded on screen, optionally click Comment there, then retry.',
+                        'error'
+                    );
+                }
+            } catch {
+                showNotify('Could not post', 'Extension error — reload linkedin.com and try again.', 'error');
+            }
         }
 
         function applyManualEngagePaste() {
@@ -8343,8 +8575,10 @@
         async function generateEngageReply() {
             const postEl = document.getElementById('engageFetchedPostText');
             const postText = postEl ? postEl.textContent.trim() : '';
-            if (!postText) {
-                showNotify('No post text', 'Fetch the post or paste text under “didn\u2019t load automatically”.', 'warning');
+            if (!postText || isEngagePostBodyPlaceholder(postText)) {
+                showNotify('No post text', 'Fetch the post or paste real post text — we can\u2019t generate from placeholders.', 'warning');
+                const det = document.getElementById('engageManualPasteDetails');
+                if (det) det.open = true;
                 return;
             }
             const draft = document.getElementById('engageReplyDraft');
@@ -8359,17 +8593,13 @@
                 if (data.reply) {
                     if (draft) draft.value = String(data.reply).trim();
                     await updateCreditsPopup();
-                    showNotify('Reply ready', 'Inserted in your draft — edit, then paste on LinkedIn.', 'success');
+                    showNotify('Reply ready', 'Inserted in your draft — review, then tap Post on LinkedIn below when ready.', 'success');
                 } else {
                     showNotify('Error', data.error || 'Could not generate reply.', 'error');
                 }
             } catch {
                 showNotify('Error', 'Failed to generate reply.', 'error');
             }
-        }
-
-        async function improveEngageReplyDraft() {
-            await aiImprove('engaging', 'engageReplyDraft');
         }
 
         async function aiReplyFromEngagePanel() {

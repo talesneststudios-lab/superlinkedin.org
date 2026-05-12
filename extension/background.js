@@ -14,7 +14,188 @@ function extractLinkedinActivityId(url) {
     return '';
 }
 
+/**
+ * Serialized into LinkedIn tabs via chrome.scripting — must NOT close over
+ * variables from this service worker file (Chrome copies the function only).
+ */
+function engageInjectCapture(activityId) {
+    const id = String(activityId || '');
+    if (!id) return;
+
+    function decodeHref() {
+        try {
+            return decodeURIComponent(String(window.location.href || ''));
+        } catch (_e) {
+            return String(window.location.href || '');
+        }
+    }
+
+    let href = String(window.location.href || '');
+    let dec = decodeHref();
+    let urlOk =
+        href.indexOf(id) !== -1 ||
+        dec.indexOf(id) !== -1 ||
+        href.indexOf('activity%3A' + id) !== -1 ||
+        href.indexOf('urn%3Ali%3Aactivity%3A' + id) !== -1;
+    try {
+        if (!urlOk && /\/feed\/update\//i.test(href)) {
+            let m =
+                dec.match(/activity(?:%3A|:)(\d{10,})/i) ||
+                dec.match(/urn%3Ali%3Aactivity%3A(\d{10,})/i);
+            if (m && String(m[1]) === id) urlOk = true;
+        }
+    } catch (_e) {}
+    if (!urlOk) return;
+
+    function scrapeAuthor(post) {
+        if (!post) return '';
+        const authorEl = post.querySelector(
+            '.update-components-actor__name .visually-hidden, ' +
+                '.update-components-actor__meta-link .visually-hidden, ' +
+                '.update-components-actor__meta a span[aria-hidden="true"], ' +
+                '.feed-shared-actor__name span[aria-hidden="true"], ' +
+                '.feed-shared-actor__name'
+        );
+        return authorEl ? authorEl.textContent.replace(/\s+/g, ' ').trim() : '';
+    }
+
+    function longestFromRoot(root) {
+        if (!root) return '';
+        const sels =
+            '.update-components-update-v2__commentary, ' +
+            '.feed-shared-update-v2__description, ' +
+            '.feed-shared-inline-show-more-text, ' +
+            '.update-components-text, ' +
+            '.feed-shared-text, ' +
+            '.attributed-text-segment-list__content, ' +
+            'span.break-words[dir="ltr"]';
+        let best = '';
+        try {
+            root.querySelectorAll(sels).forEach(function (el) {
+                const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (/commented\s+on\s+this|^see more$/i.test(t)) return;
+                if (t.length < 16) return;
+                if (el.closest('.comments-comments-list')) return;
+                if (el.closest('[class*="social-details-social-counts"]')) return;
+                if (t.length > best.length) best = t;
+            });
+        } catch (_e) {}
+        return best;
+    }
+
+    const rootsOrdered = [];
+    try {
+        document.querySelectorAll('[data-urn]').forEach(function (el) {
+            const urn = String(el.getAttribute('data-urn') || '');
+            if (urn.indexOf(id) === -1) return;
+            const sel =
+                '.feed-shared-update-v2, [class*="feed-shared-update"], article, div[data-view-name*="feed-detail"]';
+            const card =
+                el.closest(sel) || el.closest('main article') || (el.parentElement && el.parentElement.closest('main'));
+            if (card && rootsOrdered.indexOf(card) === -1) rootsOrdered.push(card);
+        });
+        [
+            document.querySelector('main .feed-shared-update-v2'),
+            document.querySelector('[data-view-name="feed-detail-update"] article'),
+            document.querySelector('main article'),
+            document.querySelector('.scaffold-layout__detail main'),
+        ].forEach(function (n) {
+            if (n && rootsOrdered.indexOf(n) === -1) rootsOrdered.push(n);
+        });
+        document
+            .querySelectorAll(
+                '.feed-shared-update-v2, [data-urn*="activity"], article[data-id], div[data-view-name*="feed-detail"] article'
+            )
+            .forEach(function (n) {
+                if (rootsOrdered.indexOf(n) === -1) rootsOrdered.push(n);
+            });
+    } catch (_e) {}
+
+    let bestText = '';
+    let bestAuthor = '';
+    rootsOrdered.forEach(function (post) {
+        const txt = longestFromRoot(post);
+        if (txt.length > bestText.length) {
+            bestText = txt;
+            bestAuthor = scrapeAuthor(post);
+        }
+    });
+
+    if (bestText.length < 35) {
+        try {
+            const main = document.querySelector('main.scaffold-layout__main, main[role="main"], main');
+            if (main) {
+                main.querySelectorAll('span[dir="ltr"], p').forEach(function (el) {
+                    const t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                    if (t.length < 55) return;
+                    if (/sign in|cookie|try again|© 20/i.test(t)) return;
+                    if (el.closest('nav, footer, form[action*="search"], .global-nav')) return;
+                    if (t.length > bestText.length) bestText = t;
+                });
+            }
+        } catch (_e) {}
+    }
+
+    if (!bestText || bestText.length < 25) return;
+
+    try {
+        chrome.runtime.sendMessage({
+            type: 'ENGAGE_POST_CAPTURED',
+            payload: {
+                author: bestAuthor || '',
+                text: bestText.substring(0, 12000),
+                url: href,
+            },
+        });
+    } catch (_e) {}
+}
+
+function tabUrlLikelyShowsActivity(tabUrl, activityId) {
+    const u = String(tabUrl || '');
+    const id = String(activityId || '');
+    if (!u || !id) return false;
+    if (u.includes(id)) return true;
+    try {
+        const dec = decodeURIComponent(u);
+        if (dec.includes(id)) return true;
+    } catch (_e) {}
+    if (u.includes('activity%3A' + id) || u.includes('urn%3Ali%3Aactivity%3A' + id)) return true;
+    if (/\/feed\/update\//i.test(u) || /\/posts\//i.test(u)) {
+        try {
+            const dec = decodeURIComponent(u);
+            const m = dec.match(/activity(?:%3A|:)(\d{10,})/i) || dec.match(/urn:?li:?activity:?(\d{10,})/i);
+            if (m && String(m[1]) === id) return true;
+        } catch (_e) {}
+    }
+    return false;
+}
+
 let pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null, feedPosts: [] };
+
+/** Inject scraper + nudge content script while Engage fetch is active (slow SPA / selector drift). */
+function armEngageLinkedInTabPoll(activityId) {
+    let n = 0;
+    const max = 52;
+    const isLinkedInTab = (u) => /^https:\/\/([^/]*\.)?linkedin\.com\//i.test(String(u || ''));
+    const tick = () => {
+        chrome.tabs.query({}, (allTabs) => {
+            (allTabs || []).forEach((tab) => {
+                const u = tab.url || '';
+                if (!tab.id || !isLinkedInTab(u) || !tabUrlLikelyShowsActivity(u, activityId)) return;
+                chrome.scripting
+                    .executeScript({
+                        target: { tabId: tab.id },
+                        func: engageInjectCapture,
+                        args: [activityId],
+                    })
+                    .catch(() => {});
+                chrome.tabs.sendMessage(tab.id, { type: 'ENGAGE_FORCE_SCRAPE' }).catch(() => {});
+            });
+        });
+        if (++n < max) setTimeout(tick, 2000);
+    };
+    setTimeout(tick, 400);
+}
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'ANALYTICS_DATA') {
@@ -71,6 +252,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             { engageCapture: { url, activityId, ts: Date.now() } },
             () => {
                 sendResponse({ success: !!activityId, activityId: activityId || null, error: activityId ? null : 'Could not read post id from URL' });
+                if (activityId) armEngageLinkedInTabPoll(activityId);
             }
         );
         return true;
@@ -78,6 +260,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     if (msg.type === 'ENGAGE_POST_CAPTURED') {
         const payload = msg.payload || {};
+        chrome.storage.session.remove('engageCapture', () => {});
         chrome.tabs.query({}, (tabs) => {
             tabs.forEach((tab) => {
                 const u = tab.url || '';
@@ -86,6 +269,58 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             });
         });
         sendResponse({ ok: true });
+        return true;
+    }
+
+    if (msg.type === 'ENGAGE_POST_COMMENT') {
+        const text = String(msg.text || '').trim();
+        const activityId = String(msg.activityId || '').trim();
+        const postUrl = String(msg.postUrl || '').trim();
+        if (!text || !activityId) {
+            sendResponse({ success: false, error: 'Missing comment text or post id.' });
+            return false;
+        }
+        const urlMatchesActivity = (u) => {
+            if (!u) return false;
+            if (u.indexOf(activityId) !== -1) return true;
+            try {
+                return decodeURIComponent(u).indexOf(activityId) !== -1;
+            } catch (_e) {
+                return false;
+            }
+        };
+        const normPath = (u) => {
+            try {
+                return new URL(String(u).split(/[?#]/)[0]).pathname;
+            } catch (_e) {
+                return '';
+            }
+        };
+        const postPath = postUrl ? normPath(postUrl) : '';
+
+        chrome.tabs.query({}, (tabs) => {
+            const liTabs = (tabs || []).filter((t) => /^https:\/\/([^/]+\.)?linkedin\.com\//i.test(t.url || ''));
+            const target =
+                liTabs.find((t) => urlMatchesActivity(t.url || '')) ||
+                (postPath ? liTabs.find((t) => normPath(t.url || '') === postPath) : null);
+
+            if (!target || !target.id) {
+                sendResponse({
+                    success: false,
+                    error:
+                        'No LinkedIn tab found for this post. Open it in Chrome (same profile as the extension), wait until the post loads fully, then try again.',
+                });
+                return;
+            }
+            chrome.tabs.update(target.id, { active: true }, () => {});
+            chrome.tabs.sendMessage(target.id, { type: 'ENGAGE_POST_COMMENT', text, activityId, postUrl }, (response) => {
+                if (chrome.runtime.lastError) {
+                    sendResponse({ success: false, error: chrome.runtime.lastError.message });
+                } else {
+                    sendResponse(response || { success: false, error: 'No response from LinkedIn tab.' });
+                }
+            });
+        });
         return true;
     }
 

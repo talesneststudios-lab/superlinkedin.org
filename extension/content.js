@@ -9,6 +9,8 @@
         totalComments: 0, totalReposts: 0, totalImpressions: 0, dashboardSocialEngagements: null };
     /** Persisted last accepted connection total — stabilizes against bad scrapes across tabs */
     let connectionsWatermark = 0;
+    /** Retry Engage fetch while LinkedIn single-post DOM is still loading */
+    let engageCapturePollTimer = null;
 
     const SL_FEATURE_KEYS = ['home', 'composer', 'activities', 'posts', 'engage', 'timelines', 'chat'];
 
@@ -630,6 +632,116 @@
         }
     }
 
+    function stopEngageCapturePolling() {
+        if (!engageCapturePollTimer) return;
+        clearInterval(engageCapturePollTimer);
+        engageCapturePollTimer = null;
+    }
+
+    function startEngageCapturePollingIfNeeded(cap) {
+        if (!cap || !cap.activityId) return;
+        if (engageCapturePollTimer) return;
+        engageCapturePollTimer = setInterval(() => {
+            tryEngageLinkCapture();
+        }, 2000);
+        setTimeout(() => {
+            stopEngageCapturePolling();
+        }, 120000);
+        console.log('[SuperLinkedIn] Engage: started capture polling for activity', cap.activityId);
+    }
+
+    function scrapeAuthorFromCard(post) {
+        if (!post) return '';
+        const authorEl = post.querySelector(
+            '.update-components-actor__name .visually-hidden, ' +
+            '.update-components-actor__meta-link .visually-hidden, ' +
+            '.update-components-actor__meta a span[aria-hidden="true"], ' +
+            '.update-components-actor__title .visually-hidden, ' +
+            '.feed-shared-actor__name span[aria-hidden="true"], ' +
+            '.feed-shared-actor__name .visually-hidden, ' +
+            '.feed-shared-actor__name'
+        );
+        return authorEl ? authorEl.textContent.replace(/\s+/g, ' ').trim() : '';
+    }
+
+    function longestReadableText(root) {
+        if (!root) return '';
+        const textSelectors =
+            '.update-components-update-v2__commentary, ' +
+            '.feed-shared-update-v2__description, ' +
+            '.feed-shared-inline-show-more-text, ' +
+            '.update-components-text, ' +
+            '.feed-shared-text, ' +
+            '.attributed-text-segment-list__content, ' +
+            'span.break-words[dir="ltr"], span[dir="ltr"]';
+        let best = '';
+        try {
+            root.querySelectorAll(textSelectors).forEach((el) => {
+                let t = (el.textContent || '').replace(/\s+/g, ' ').trim();
+                if (/commented\s+on\s+this|see more|liked by|comments?|reposts?|^·\s|^•\s*$/i.test(t)) return;
+                if (t.length < 18) return;
+                if (el.closest('.comments-comments-list')) return;
+                if (el.closest('[class*="social-details-social-counts"]')) return;
+                if (el.closest('[class*="update-components-mini"]')) return;
+                if (t.length > best.length) best = t;
+            });
+        } catch (e) {}
+        return best;
+    }
+
+    function scrapePostForEngagePanel(activityId) {
+        const rootsOrdered = [];
+
+        try {
+            if (activityId) {
+                document.querySelectorAll('[data-urn]').forEach((el) => {
+                    const urn = String(el.getAttribute('data-urn') || '');
+                    if (!urn.includes(activityId)) return;
+                    const card =
+                        el.closest([
+                            '.feed-shared-update-v2',
+                            '[class*="feed-shared-update"]',
+                            'article[data-id]',
+                            'article',
+                            'div[data-view-name*="feed-detail"]',
+                        ].join(',')) ||
+                        el.closest('main article') ||
+                        (el.parentElement && el.parentElement.closest('main'));
+                    if (card && !rootsOrdered.includes(card)) rootsOrdered.push(card);
+                });
+            }
+
+            [
+                document.querySelector('main .feed-shared-update-v2'),
+                document.querySelector('[data-view-name="feed-detail-update"] article'),
+                document.querySelector('main article'),
+            ].forEach((n) => {
+                if (n && !rootsOrdered.includes(n)) rootsOrdered.push(n);
+            });
+
+            document.querySelectorAll(
+                '.feed-shared-update-v2, [data-urn*="activity"], article[data-id], article.occluded-body, div[data-view-name*="feed-detail"] article'
+            ).forEach((n) => {
+                if (!rootsOrdered.includes(n)) rootsOrdered.push(n);
+            });
+        } catch (e) {}
+
+        let bestPair = null;
+        let bestLen = 0;
+        rootsOrdered.forEach((post) => {
+            const txt = longestReadableText(post);
+            const len = txt.length;
+            if (len >= 12 && len > bestLen) {
+                bestPair = {
+                    author: scrapeAuthorFromCard(post),
+                    text: txt.substring(0, 12000),
+                };
+                bestLen = len;
+            }
+        });
+        return bestPair;
+    }
+
     async function tryEngageLinkCapture() {
         let cap;
         try {
@@ -639,9 +751,33 @@
         }
         if (!cap || !cap.activityId) return;
         const href = window.location.href || '';
-        if (href.indexOf(cap.activityId) === -1) return;
-        const scraped = scrapePostForEngagePanel();
-        if (!scraped || !scraped.text || scraped.text.length < 4) return;
+
+        let urlMatches =
+            href.indexOf(cap.activityId) !== -1 ||
+            decodeURIComponent(href).indexOf('urn:li:activity:' + cap.activityId) !== -1;
+        try {
+            if (!urlMatches && href.includes('/feed/update/')) {
+                const pathId = extractActivityIdFromUrl(href);
+                urlMatches = pathId === cap.activityId || (!!pathId && pathId.endsWith(cap.activityId));
+            }
+        } catch (e) {}
+
+        if (!urlMatches) {
+            return;
+        }
+
+        let scraped = scrapePostForEngagePanel(cap.activityId);
+        const alnumLen = scraped && scraped.text
+            ? scraped.text.replace(/\s+/g, ' ').trim().replace(/[^\w\u00c0-\u024f\s]/gi, '').length
+            : 0;
+        const minLen = alnumLen >= 18 ? 14 : 32;
+        const textOk = scraped && scraped.text && scraped.text.trim().length >= minLen;
+
+        if (!scraped || !textOk) {
+            startEngageCapturePollingIfNeeded(cap);
+            return;
+        }
+
         let still;
         try {
             still = (await chrome.storage.session.get('engageCapture')).engageCapture;
@@ -650,6 +786,7 @@
         }
         if (!still || still.ts !== cap.ts || still.activityId !== cap.activityId) return;
         try {
+            stopEngageCapturePolling();
             await chrome.storage.session.remove('engageCapture');
             chrome.runtime.sendMessage({
                 type: 'ENGAGE_POST_CAPTURED',
@@ -665,25 +802,12 @@
         }
     }
 
-    function scrapePostForEngagePanel() {
-        const posts = document.querySelectorAll('.feed-shared-update-v2, [data-urn*="activity"], .occludable-update');
-        let best = null;
-        let bestLen = 0;
-        posts.forEach((post) => {
-            const textEl = post.querySelector('.feed-shared-text, .update-components-text, .break-words');
-            const postText = textEl ? textEl.textContent.trim() : '';
-            if (postText.length > bestLen) {
-                const authorEl = post.querySelector(
-                    '.update-components-actor__name .visually-hidden, ' +
-                    '.update-components-actor__title .visually-hidden, ' +
-                    '.feed-shared-actor__name'
-                );
-                const authorName = authorEl ? authorEl.textContent.trim() : '';
-                best = { author: authorName, text: postText };
-                bestLen = postText.length;
-            }
-        });
-        return best;
+    function extractActivityIdFromUrl(href) {
+        const u = decodeURIComponent(String(href || ''));
+        const m = u.match(/activity(?:%3A|:)(\d{10,})|urn%3Ali%3Aactivity%3A(\d{10,})|\bactivity%3a(\d{10,})/i);
+        if (m) return (m[1] || m[2] || m[3] || '').trim();
+        const m2 = u.match(/(?:%3A|:)activity(?:%3A|:)(\d{10,})/i);
+        return m2 ? m2[1] : '';
     }
 
     async function runScrape(retryCount) {
@@ -1997,17 +2121,253 @@
         }
     }
 
+    // ── Engage: paste draft into LinkedIn post comment composer and submit ──
+    function decodeUriSafe(u) {
+        try {
+            return decodeURIComponent(String(u || ''));
+        } catch (_e) {
+            return String(u || '');
+        }
+    }
+
+    function pageUrlShowsActivity(activityId) {
+        const id = String(activityId || '').trim();
+        if (!id) return false;
+        const h = window.location.href;
+        const dec = decodeUriSafe(h);
+        return (
+            h.indexOf(id) !== -1 ||
+            dec.indexOf(id) !== -1 ||
+            h.indexOf('activity%3A' + id) !== -1
+        );
+    }
+
+    function uiVisible(el) {
+        if (!el) return false;
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) return false;
+        const cs = window.getComputedStyle(el);
+        if (cs.visibility === 'hidden' || cs.display === 'none') return false;
+        return true;
+    }
+
+    function nearestUpdateShell(node) {
+        if (!node) return null;
+        return node.closest('.feed-shared-update-v2, [class*="feed-shared-update"], article, [data-view-name*="feed-detail"]');
+    }
+
+    function findComposerInScope(scope) {
+        if (!scope) return null;
+        const chains = [
+            '.comments-comment-texteditor [contenteditable="true"]',
+            '.comments-comment-box__form-container [contenteditable="true"]',
+            '.comments-comment-box-comment__texteditor [contenteditable="true"]',
+            '.comments-comment-box__comment-texteditor [contenteditable="true"]',
+            'form.comments-comment-box__form [contenteditable="true"]',
+            '[class*="comments-comment-box"] [contenteditable="true"]',
+            'div[role="textbox"][placeholder*="Comment" i]',
+        ];
+        for (let c = 0; c < chains.length; c++) {
+            const list = scope.querySelectorAll(chains[c]);
+            for (let i = 0; i < list.length; i++) {
+                const el = list[i];
+                if (uiVisible(el)) return el;
+            }
+        }
+        return null;
+    }
+
+    async function maybeRevealCommentComposer(card) {
+        if (!card) return;
+        if (findComposerInScope(card)) return;
+        const buttons = card.querySelectorAll('button');
+        for (let i = 0; i < buttons.length; i++) {
+            const b = buttons[i];
+            if (b.disabled || !uiVisible(b)) continue;
+            const a = String(b.getAttribute('aria-label') || '').toLowerCase();
+            const t = String(b.textContent || '').trim().toLowerCase();
+            const isReply = /\breply\b/.test(a);
+            const isComment = /\bcomment\b/.test(a) || t === 'comment' || /\bcomments?\s*\(?\d+/i.test(t);
+            if (!isComment || isReply) continue;
+            try {
+                b.click();
+                await new Promise((r) => setTimeout(r, 600));
+                return;
+            } catch (_e) {}
+        }
+    }
+
+    function activityAnchorNodes(activityId) {
+        const id = String(activityId || '').trim();
+        const out = [];
+        const seen = new Set();
+        const add = (n) => {
+            if (!n || seen.has(n)) return;
+            seen.add(n);
+            out.push(n);
+        };
+        if (!id) return out;
+        document.querySelectorAll('[data-urn]').forEach((el) => {
+            if ((el.getAttribute('data-urn') || '').indexOf(id) !== -1) add(el);
+        });
+        try {
+            document.querySelectorAll('a[href*="' + id + '"]').forEach(add);
+        } catch (_e) {}
+        return out;
+    }
+
+    async function resolveEngageCommentEditor(activityId) {
+        const anchors = activityAnchorNodes(activityId);
+        for (let i = 0; i < anchors.length; i++) {
+            const shell = nearestUpdateShell(anchors[i]) || anchors[i];
+            await maybeRevealCommentComposer(shell);
+            const ed = findComposerInScope(shell);
+            if (ed) return ed;
+        }
+        if (pageUrlShowsActivity(activityId)) {
+            let ed = await waitForSelector(
+                '.comments-comment-texteditor [contenteditable="true"], .comments-comment-box__form-container [contenteditable="true"]',
+                4000
+            );
+            if (ed) return ed;
+            const cards = document.querySelectorAll('.feed-shared-update-v2');
+            for (let j = 0; j < cards.length; j++) {
+                await maybeRevealCommentComposer(cards[j]);
+                ed = findComposerInScope(cards[j]);
+                if (ed) return ed;
+            }
+            const detail = document.querySelector('main [data-view-name*="feed-detail"], .scaffold-layout__detail main');
+            if (detail) {
+                await maybeRevealCommentComposer(detail);
+                ed = findComposerInScope(detail);
+                if (ed) return ed;
+            }
+        }
+        return null;
+    }
+
+    function fillCommentEditor(editor, text) {
+        const txt = String(text || '').trim();
+        if (!txt) throw new Error('Empty comment.');
+        editor.focus();
+        if (editor.tagName === 'TEXTAREA') {
+            editor.value = txt;
+            editor.dispatchEvent(new Event('input', { bubbles: true }));
+            editor.dispatchEvent(new Event('change', { bubbles: true }));
+            return;
+        }
+        editor.innerHTML = '';
+        const p = document.createElement('p');
+        p.textContent = txt;
+        editor.appendChild(p);
+        try {
+            editor.dispatchEvent(new InputEvent('input', { bubbles: true, cancelable: true }));
+        } catch (_e) {
+            editor.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+    }
+
+    function nearestSubmitAncestors(editor) {
+        const list = [];
+        let n = editor;
+        for (let d = 0; d < 12 && n; d++) {
+            list.push(n);
+            n = n.parentElement;
+        }
+        return list;
+    }
+
+    async function acquireCommentSubmitButton(editor) {
+        const start = Date.now();
+        const timeout = 8000;
+        while (Date.now() - start < timeout) {
+            const ancestors = nearestSubmitAncestors(editor);
+            for (let i = 0; i < ancestors.length; i++) {
+                const s = ancestors[i];
+                const cand = s.querySelector(
+                    'button.comments-comment-box__submit-button:not([disabled]), button.comments-comment-box__submit-ui-button:not([disabled])'
+                );
+                if (cand && uiVisible(cand)) return cand;
+            }
+            const eb = editor.getBoundingClientRect();
+            const pool = Array.from(
+                document.querySelectorAll(
+                    'button.comments-comment-box__submit-button:not([disabled]), button.comments-comment-box__submit-ui-button:not([disabled])'
+                )
+            ).filter(uiVisible);
+            let best = null;
+            let bestDy = Infinity;
+            for (const btn of pool) {
+                const br = btn.getBoundingClientRect();
+                const dy = Math.abs(eb.top - br.top) + Math.abs(eb.bottom - br.top);
+                if (dy < bestDy) {
+                    bestDy = dy;
+                    best = btn;
+                }
+            }
+            if (best) return best;
+            await new Promise((r) => setTimeout(r, 120));
+        }
+        return null;
+    }
+
+    async function sendEngagePostComment(activityId, text) {
+        try {
+            if (!/(^|\.)linkedin\.com$/i.test(location.hostname)) {
+                return { success: false, error: 'This tab is not on linkedin.com' };
+            }
+            const txt = String(text || '').trim();
+            if (!txt) return { success: false, error: 'Comment text is empty.' };
+            if (!pageUrlShowsActivity(activityId)) {
+                return { success: false, error: 'This LinkedIn tab is not viewing that activity. Switch to the post tab and try again.' };
+            }
+
+            const editor = await resolveEngageCommentEditor(activityId);
+            if (!editor) {
+                return {
+                    success: false,
+                    error:
+                        'Could not find the comment box. On LinkedIn, scroll to the post, click Comment once if needed, then try again from SuperLinkedIn.',
+                };
+            }
+            fillCommentEditor(editor, txt);
+            await new Promise((r) => setTimeout(r, 200));
+            const submit = await acquireCommentSubmitButton(editor);
+            if (!submit) {
+                return { success: false, error: 'Post button did not activate — LinkedIn may need you to tap in the composer first.' };
+            }
+            submit.click();
+            await new Promise((r) => setTimeout(r, 900));
+            return { success: true };
+        } catch (err) {
+            return { success: false, error: (err && err.message) || 'Comment failed' };
+        }
+    }
+
     // ── Message listener for popup commands ──
     chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         if (msg.type === 'TOGGLE_SIDEBAR') {
             toggleSidebar();
             return false;
         }
+        if (msg.type === 'ENGAGE_FORCE_SCRAPE') {
+            Promise.resolve()
+                .then(() => tryEngageLinkCapture())
+                .then(() => sendResponse({ ok: true }))
+                .catch(() => sendResponse({ ok: false }));
+            return true;
+        }
         if (msg.type === 'DM_SEND_REPLY') {
             sendDmReply(msg.recipientName, msg.text).then(sendResponse).catch(err => {
                 sendResponse({ success: false, error: (err && err.message) || 'Unhandled error' });
             });
             return true; // keep channel open for async response
+        }
+        if (msg.type === 'ENGAGE_POST_COMMENT') {
+            sendEngagePostComment(msg.activityId, msg.text)
+                .then(sendResponse)
+                .catch(err => sendResponse({ success: false, error: (err && err.message) || 'Unhandled error' }));
+            return true;
         }
     });
 
@@ -2027,6 +2387,8 @@
             if (currentUrl !== lastUrl) {
                 lastUrl = currentUrl;
                 setTimeout(runScrape, SCRAPE_DELAY);
+                setTimeout(tryEngageLinkCapture, 800);
+                setTimeout(tryEngageLinkCapture, 3000);
             }
         });
         _urlObserver.observe(document.body, { childList: true, subtree: true });

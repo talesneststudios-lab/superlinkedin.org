@@ -74,6 +74,29 @@
             return;
         }
 
+        if (msg.type === 'ENGAGE_POST_COMMENT') {
+            try {
+                chrome.runtime.sendMessage(
+                    {
+                        type: 'ENGAGE_POST_COMMENT',
+                        text: msg.text,
+                        activityId: msg.activityId,
+                        postUrl: msg.postUrl,
+                    },
+                    function (resp) {
+                        if (chrome.runtime.lastError) {
+                            reply(requestId, { success: false, error: chrome.runtime.lastError.message || 'Extension error' });
+                            return;
+                        }
+                        reply(requestId, resp || { success: false, error: 'No response from extension' });
+                    }
+                );
+            } catch (e) {
+                reply(requestId, { success: false, error: 'Extension error: ' + (e && e.message ? e.message : String(e)) });
+            }
+            return;
+        }
+
         if (msg.type === 'ENGAGE_REGISTER_URL') {
             try {
                 chrome.runtime.sendMessage({ type: 'ENGAGE_REGISTER_URL', url: msg.url }, function (resp) {
