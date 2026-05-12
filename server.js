@@ -2638,7 +2638,7 @@ app.post('/api/ai/generate-carousel', async (req, res) => {
         professional: 'Clean, corporate style with data-driven insights and clear headings.',
         bold: 'Eye-catching, bold statements with high contrast and punchy one-liners.',
         minimal: 'Minimalist design approach with short text, lots of whitespace, one idea per slide.',
-        colorful: 'Vibrant and energetic tone with metaphors, occasional tasteful emoji, and storytelling.',
+        colorful: 'Warm, playful, storytelling voice: vivid hooks, concrete imagery, metaphors, short punchy lines. Include 1–2 tasteful emoji on cover and/or ONE content slide where it fits LinkedIn norms (never every line). Avoid generic corporate filler; sound human and memorable.',
         image_forward: 'Visual-first: every slide should read like a storyboard beat—concrete scenes, objects, and metaphors a designer could illustrate with stock photos, icons, or diagrams. Titles and bullets name what you would *see* on screen.',
         cartoon_colors: 'Cartoon energy: playful, saturated “Saturday morning” vibe in the language—bouncy verbs, friendly micro-copy, expressive contrast, light humor where it fits. Still professional enough for LinkedIn.',
         story_arc: 'Strong narrative arc: hook on slide 2, rising insight, subtle tension, payoff before the CTA. Slide titles feel like chapter beats.',
@@ -2648,11 +2648,13 @@ app.post('/api/ai/generate-carousel', async (req, res) => {
     };
 
     const count = Math.min(Math.max(parseInt(slideCount, 10) || 8, 4), 15);
+    const creditsPerSlide = 2;
+    const slideCreditCost = count * creditsPerSlide;
 
     const credits = await getCreditsForSession(req.session);
-    if (credits.remaining < count) {
+    if (credits.remaining < slideCreditCost) {
         return res.json({
-            error: `Need at least ${count} AI credits for ${count} slides (${credits.remaining} remaining). Upgrade your plan or pick fewer slides.`,
+            error: `Need at least ${slideCreditCost} AI credits for ${count} slides (2 credits per slide; ${credits.remaining} remaining). Upgrade your plan or pick fewer slides.`,
         });
     }
 
@@ -2661,6 +2663,8 @@ app.post('/api/ai/generate-carousel', async (req, res) => {
     const onboardCarouselStyle = onboardingStyleInjectionForAi(user, 5);
 
     const systemPrompt = `You are a LinkedIn carousel content expert. Create a ${count}-slide carousel about the given topic.
+
+The slide copy must clearly reflect the Style below — do not revert to bland corporate wording when the style asks for bold, playful, editorial, or story-driven tones.
 
 Return ONLY a valid JSON array of exactly ${count} objects. Each object must have:
 - "title": string (short, max 8 words)
@@ -2712,8 +2716,8 @@ Return ONLY the JSON array, no markdown, no explanation.`;
             });
         }
 
-        await consumeCredit(req.session, count);
-        res.json({ slides, creditsUsed: count });
+        await consumeCredit(req.session, slideCreditCost);
+        res.json({ slides, creditsUsed: slideCreditCost });
     } catch (err) {
         console.error('Carousel generation error:', err);
         res.json({ error: 'Failed to generate carousel.' });
@@ -2906,12 +2910,43 @@ app.post('/api/publish-ai-studio-image', async (req, res) => {
     }
 });
 
-function renderCarouselPDF(slides, brandColor, title, userName) {
+/** Light page backgrounds keyed by Carousel Creator visual style (exports match preview mood). */
+function carouselPdfPalettes(themeKey) {
+    const t = (themeKey || 'professional').trim();
+    const body = ({
+        colorful: '#FFF8F0',
+        bold: '#EEF2F6',
+        minimal: '#FAFAFA',
+        professional: '#FFFFFF',
+        pastel_soft: '#FAF5FF',
+        cartoon_colors: '#FFF7ED',
+        image_forward: '#F0F9FF',
+        story_arc: '#FDF4FF',
+        data_dense: '#F8FAFC',
+        editorial: '#FAFAF9',
+    })[t];
+    const coverTint = ({
+        colorful: '#FFF4E6',
+        bold: '#E8EDF5',
+        minimal: '#FBFBFB',
+        professional: '#FFFFFF',
+        pastel_soft: '#F5EFFA',
+        cartoon_colors: '#FFEDD5',
+        image_forward: '#E8F4FC',
+        story_arc: '#FAF5FF',
+        data_dense: '#F1F5F9',
+        editorial: '#F5F5F4',
+    })[t];
+    return { bodyBg: body || '#FFFFFF', coverBg: coverTint || '#FFFFFF' };
+}
+
+function renderCarouselPDF(slides, brandColor, title, userName, slideTheme) {
     const WIDTH = 1080;
     const HEIGHT = 1080;
     const MARGIN = 100;
     const CW = WIDTH - MARGIN * 2;
     const color = brandColor || '#0A66C2';
+    const pdfPal = carouselPdfPalettes(slideTheme);
 
     const doc = new PDFDocument({ size: [WIDTH, HEIGHT], margin: 0, autoFirstPage: false });
 
@@ -2950,7 +2985,7 @@ function renderCarouselPDF(slides, brandColor, title, userName) {
         const isLast = i === slides.length - 1;
 
         if (isFirst) {
-            doc.rect(0, 0, WIDTH, HEIGHT).fill('#FFFFFF');
+            doc.rect(0, 0, WIDTH, HEIGHT).fill(pdfPal.coverBg);
             doc.rect(0, 0, WIDTH, 20).fill(color);
             doc.rect(0, HEIGHT - 240, WIDTH, 240).fill(color);
 
@@ -2997,7 +3032,7 @@ function renderCarouselPDF(slides, brandColor, title, userName) {
                    .text(userName, MARGIN, startY + titleH + titleToBodyGap + bodyH + bodyToNameGap, { width: CW, align: 'center' });
             }
         } else {
-            doc.rect(0, 0, WIDTH, HEIGHT).fill('#FFFFFF');
+            doc.rect(0, 0, WIDTH, HEIGHT).fill(pdfPal.bodyBg);
             doc.rect(0, 0, WIDTH, 20).fill(color);
 
             doc.fontSize(20).fillColor('#AAAAAA')
@@ -3048,7 +3083,7 @@ app.post('/api/carousel/generate-pdf', async (req, res) => {
         return res.status(403).json({ error: 'Carousel is available on Advanced and Ultra plans.' });
     }
 
-    const { slides, brandColor, title } = req.body;
+    const { slides, brandColor, title, slideTheme } = req.body;
     if (!slides || !Array.isArray(slides) || !slides.length) {
         return res.status(400).json({ error: 'Slides data is required' });
     }
@@ -3056,7 +3091,7 @@ app.post('/api/carousel/generate-pdf', async (req, res) => {
     const userName = req.session.user.name || '';
 
     try {
-        const doc = renderCarouselPDF(slides, brandColor, title, userName);
+        const doc = renderCarouselPDF(slides, brandColor, title, userName, slideTheme);
         const chunks = [];
         doc.on('data', c => chunks.push(c));
         doc.on('end', () => {
@@ -3087,7 +3122,7 @@ app.post('/api/carousel/publish', async (req, res) => {
         return res.json({ error: `AI credit limit reached.` });
     }
 
-    const { slides, brandColor, title, text, audience } = req.body;
+    const { slides, brandColor, title, text, audience, slideTheme } = req.body;
     if (!slides || !Array.isArray(slides) || !slides.length) {
         return res.status(400).json({ error: 'Slides data is required' });
     }
@@ -3107,7 +3142,7 @@ app.post('/api/carousel/publish', async (req, res) => {
 
     try {
         // Generate PDF
-        const doc = renderCarouselPDF(slides, brandColor, title, userName);
+        const doc = renderCarouselPDF(slides, brandColor, title, userName, slideTheme);
         const chunks = [];
         const pdfBuffer = await new Promise((resolve, reject) => {
             doc.on('data', c => chunks.push(c));

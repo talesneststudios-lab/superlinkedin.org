@@ -1089,6 +1089,77 @@
         .crs-slide.crs-cta .crs-slide-title { color: #fff; font-size: 1.1rem; }
         .crs-slide.crs-cta .crs-slide-text { color: rgba(255,255,255,0.85); }
 
+        /* Visual themes — preview (PDF uses matching tinted pages on server) */
+        .carousel-slide-strip .crs-slide:not(.crs-cta):not(.crs-cover) {
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .carousel-slide-strip.crs-theme-colorful .crs-slide.crs-cover {
+            background: linear-gradient(135deg, #fef08a 0%, #fbcfe8 40%, #93c5fd 100%);
+            border-color: rgba(251, 191, 36, 0.45);
+        }
+        .carousel-slide-strip.crs-theme-colorful .crs-slide.crs-cover .crs-slide-title { color: #1e1b4b; }
+        .carousel-slide-strip.crs-theme-colorful .crs-slide.crs-cover .crs-slide-text { color: #4338ca; opacity: 0.95; }
+        .carousel-slide-strip.crs-theme-colorful .crs-slide:not(.crs-cta):not(.crs-cover) {
+            background: linear-gradient(165deg, #fffbeb 0%, #fce7f3 50%, #dbeafe 100%);
+            border-color: rgba(251, 191, 36, 0.35);
+        }
+        .carousel-slide-strip.crs-theme-colorful .crs-slide-bullet::before { color: #ea580c; }
+
+        .carousel-slide-strip.crs-theme-bold .crs-slide.crs-cover {
+            background: linear-gradient(180deg, #020617 0%, #1e293b 100%);
+            border-color: #334155;
+        }
+        .carousel-slide-strip.crs-theme-bold .crs-slide.crs-cover .crs-slide-title { color: #f8fafc; }
+        .carousel-slide-strip.crs-theme-bold .crs-slide.crs-cover .crs-slide-text { color: #cbd5e1; }
+        .carousel-slide-strip.crs-theme-bold .crs-slide:not(.crs-cta):not(.crs-cover) {
+            background: linear-gradient(180deg, #0f172a 0%, #1e293b 100%);
+            border-color: #475569;
+        }
+        .carousel-slide-strip.crs-theme-bold .crs-slide:not(.crs-cta):not(.crs-cover) .crs-slide-title { color: #f1f5f9 !important; }
+        .carousel-slide-strip.crs-theme-bold .crs-slide:not(.crs-cta):not(.crs-cover) .crs-slide-text,
+        .carousel-slide-strip.crs-theme-bold .crs-slide:not(.crs-cta):not(.crs-cover) .crs-slide-bullet { color: #cbd5e1 !important; }
+        .carousel-slide-strip.crs-theme-bold .crs-slide:not(.crs-cta):not(.crs-cover) .crs-slide-num { color: #64748b; }
+
+        .carousel-slide-strip.crs-theme-minimal .crs-slide:not(.crs-cta) {
+            background: #fafafa;
+            border: 2px solid #eaeaea;
+        }
+
+        .carousel-slide-strip.crs-theme-cartoon-colors .crs-slide.crs-cover {
+            background: linear-gradient(120deg, #fef9c3 0%, #fde68a 100%);
+            border-color: #fbbf24;
+        }
+        .carousel-slide-strip.crs-theme-cartoon-colors .crs-slide:not(.crs-cta):not(.crs-cover):nth-child(odd) {
+            background: linear-gradient(180deg, #fff7ed 0%, #fed7aa 100%);
+        }
+        .carousel-slide-strip.crs-theme-cartoon-colors .crs-slide:not(.crs-cta):not(.crs-cover):nth-child(even) {
+            background: linear-gradient(180deg, #fdf2f8 0%, #fbcfe8 100%);
+        }
+
+        .carousel-slide-strip.crs-theme-image-forward .crs-slide:not(.crs-cta):not(.crs-cover) {
+            background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-color: rgba(14, 165, 233, 0.35);
+        }
+        .carousel-slide-strip.crs-theme-story-arc .crs-slide:not(.crs-cta):not(.crs-cover) {
+            background: linear-gradient(160deg, #faf5ff 0%, #fef3c7 100%);
+            border-color: rgba(147, 51, 234, 0.2);
+        }
+        .carousel-slide-strip.crs-theme-data-dense .crs-slide:not(.crs-cta):not(.crs-cover) {
+            background: #f8fafc;
+            border-left: 5px solid var(--accent, #0A66C2);
+        }
+        .carousel-slide-strip.crs-theme-editorial .crs-slide:not(.crs-cta):not(.crs-cover) .crs-slide-title {
+            font-family: Georgia, 'Times New Roman', serif;
+        }
+        .carousel-slide-strip.crs-theme-editorial .crs-slide:not(.crs-cta):not(.crs-cover) {
+            background: #fafaf9;
+            border-color: #d6d3d1;
+        }
+        .carousel-slide-strip.crs-theme-pastel-soft .crs-slide:not(.crs-cta):not(.crs-cover) {
+            background: linear-gradient(180deg, #fdf4ff 0%, #fae8ff 100%);
+            border-color: rgba(217, 70, 239, 0.2);
+        }
+
         #carouselSlideStrip {
             scrollbar-width: thin;
             scrollbar-color: var(--sl-scrollbar-thumb) var(--sl-scrollbar-track);
@@ -1286,27 +1357,38 @@
             box-sizing: border-box;
             margin-bottom: 10px;
         }
-        .engage-fetched-actions {
+        .engage-ai-toolbar {
             display: flex;
             flex-wrap: wrap;
             align-items: center;
+            gap: 10px;
+            padding-top: 6px;
+        }
+        .engage-ai-toolbar .engage-ai-pill.compose-tool-btn {
+            width: auto;
+            height: auto;
+            min-height: 38px;
+            padding: 8px 16px;
             gap: 8px;
-        }
-        .engage-fetched-actions button {
-            padding: 8px 14px;
             border-radius: 8px;
-            font-family: inherit;
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid var(--border);
-            background: var(--bg-card);
-            color: var(--text-primary);
+            display: inline-flex;
+            align-items: center;
+            font-weight: 700;
+            font-size: 0.78rem;
+            color: var(--text-muted);
         }
-        .engage-fetched-actions button.primary {
-            background: var(--accent);
-            color: #fff;
-            border-color: var(--accent);
+        .engage-ai-toolbar .engage-ai-pill.compose-tool-btn.ai-btn {
+            gap: 6px;
+            font-size: 0.78rem;
+        }
+        .engage-ai-toolbar .engage-ai-pill .compose-tool-icon-svg {
+            width: 1.15rem;
+            height: 1.15rem;
+            flex-shrink: 0;
+        }
+        .engage-ai-toolbar .engage-ai-pill.compose-tool-btn:hover {
+            background: var(--bg);
+            color: var(--text-primary);
         }
 
         /* Tabs row containing tabs on the left and filters on the right */
@@ -6382,7 +6464,7 @@
             <div class="page" id="page-carousel">
                 <div class="page-header">
                     <h2>Carousel Creator</h2>
-                    <p>Generate beautiful multi-slide PDF carousels with AI. Slide generation uses <strong>one AI credit per slide</strong> (matching the slide count you select).</p>
+                    <p>Generate beautiful multi-slide PDF carousels with AI. Slide generation uses <strong>2 AI credits per slide</strong>; the auto-drafted post caption uses <strong>1 credit</strong>.</p>
                 </div>
                 <div style="max-width:960px;margin:0 auto;">
                     <!-- Upgrade overlay for non-carousel plans -->
@@ -6402,7 +6484,7 @@
                                 <span style="font-size:1.5rem;">&#127912;</span>
                                 <div>
                                     <h2 style="font-size:1.1rem;font-weight:800;margin:0;">Carousel Creator</h2>
-                                    <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Multi-slide PDF carousels • <strong id="carouselCreditHint">8</strong> credits for selected slide count (one per slide)</p>
+                                    <p style="font-size:0.78rem;color:var(--text-muted);margin:0;">Carousel slide generation • <strong id="carouselCreditHint">16</strong> credits (2 per slide × slide count). Caption: 1 credit.</p>
                                 </div>
                             </div>
 
@@ -6431,7 +6513,7 @@
                                     </div>
                                     <div>
                                         <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Style</label>
-                                        <select id="carouselStyle" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
+                                        <select id="carouselStyle" onchange="onCarouselStyleOrColorChange()" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.88rem;background:var(--bg-card);color:var(--text-primary);outline:none;">
                                             <option value="professional">Professional</option>
                                             <option value="bold">Bold &amp; punchy</option>
                                             <option value="minimal">Minimal whitespace</option>
@@ -6447,10 +6529,12 @@
                                 </div>
                             </div>
 
+                            <p style="font-size:0.71rem;color:var(--text-muted);margin:0 0 14px;line-height:1.45;">Slide <strong>Style</strong> changes both the wording and the preview/PDF look. Click <strong>Generate Slides</strong> again after switching styles to refresh the text.</p>
+
                             <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
                                 <div>
                                     <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Brand Color</label>
-                                    <input type="color" id="carouselBrandColor" value="#0A66C2" style="width:44px;height:36px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px;">
+                                    <input type="color" id="carouselBrandColor" value="#0A66C2" onchange="onCarouselStyleOrColorChange()" style="width:44px;height:36px;border:1px solid var(--border);border-radius:6px;cursor:pointer;padding:2px;">
                                 </div>
                                 <div style="flex:1;"></div>
                                 <button onclick="generateCarouselSlides()" id="carouselGenerateBtn" style="padding:10px 28px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:inherit;font-weight:700;font-size:0.88rem;cursor:pointer;display:flex;align-items:center;gap:8px;">
@@ -6478,9 +6562,12 @@
                             <!-- Actions -->
                             <div class="card" style="padding:16px;margin-top:16px;">
                                 <div style="margin-bottom:12px;">
-                                    <label style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);display:block;margin-bottom:4px;">Post caption</label>
+                                    <div style="display:flex;flex-wrap:wrap;align-items:baseline;gap:10px;margin-bottom:6px;">
+                                        <label for="carouselCaption" style="font-size:0.78rem;font-weight:700;color:var(--text-secondary);">Post caption</label>
+                                        <span id="carouselCaptionStatus" style="font-size:0.72rem;color:var(--accent);font-weight:600;min-height:1em;" aria-live="polite"></span>
+                                    </div>
                                     <textarea id="carouselCaption" placeholder="Write a caption for your carousel post..." style="width:100%;height:76px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;font-family:inherit;font-size:0.85rem;background:var(--bg-card);color:var(--text-primary);outline:none;resize:vertical;"></textarea>
-                                    <p style="font-size:0.74rem;color:var(--text-muted);line-height:1.45;margin-top:8px;">AI can draft a caption from your slides. Uses AI credits.</p>
+                                    <p style="font-size:0.74rem;color:var(--text-muted);line-height:1.45;margin-top:8px;">After slides generate, we auto-draft a caption (1 credit each time). Regenerate costs 1 credit.</p>
                                     <div style="margin-top:8px;">
                                         <button type="button" onclick="regenerateCarouselCaption()" id="btnCarouselRegenCaption" class="ai-draft-regen-btn" style="padding:9px 14px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:8px;font-family:inherit;font-weight:700;font-size:0.78rem;cursor:pointer;color:var(--text-primary);"><svg class="nav-icon-svg ai-draft-regen-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg><span>Regenerate caption</span></button>
                                     </div>
@@ -6660,10 +6747,17 @@
                         </details>
                         <label class="engage-fetched-draft-label" for="engageReplyDraft">Draft your comment</label>
                         <textarea id="engageReplyDraft" class="engage-reply-draft" placeholder="Write your reply here (for your notes—we don’t auto-post comments to LinkedIn)…"></textarea>
-                        <div class="engage-fetched-actions">
-                            <button type="button" class="primary" onclick="aiReplyFromEngagePanel()">AI Reply</button>
-                            <span style="font-size:0.72rem;color:var(--text-muted);">Opens composer with AI-drafted reply for this post.</span>
+                        <div class="engage-ai-toolbar">
+                            <button type="button" class="compose-tool-btn engage-ai-pill" onclick="generateEngageReply()" title="Draft a reply from the post below">
+                                <svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3-1.912 5.813a2 2 0 01-1.275 1.275L3 12l5.813 1.912a2 2 0 011.275 1.275L12 21l1.912-5.813a2 2 0 011.275-1.275L21 12l-5.813-1.912a2 2 0 01-1.275-1.275L12 3Z"/></svg>
+                                <span>Generate reply</span>
+                            </button>
+                            <button type="button" class="compose-tool-btn ai-btn engage-ai-pill" onclick="improveEngageReplyDraft()" title="Improve the text in your draft">
+                                <svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                                <span>Improve with AI</span>
+                            </button>
                         </div>
+                        <p style="font-size:0.72rem;color:var(--text-muted);margin:10px 0 0;line-height:1.45;">Generate uses the original post; Improve edits what you&apos;ve typed in the draft.</p>
                     </div>
 
                     <div class="engage-tabs-row">
@@ -8243,17 +8337,43 @@
             if (wrap) wrap.style.display = 'block';
             if (authorEl) authorEl.textContent = 'Pasted post';
             if (postEl) postEl.textContent = t;
-            showNotify('Saved', 'You can draft a reply or use AI Reply.', 'success');
+            showNotify('Saved', 'You can draft a reply or use Generate reply below.', 'success');
         }
 
-        async function aiReplyFromEngagePanel() {
+        async function generateEngageReply() {
             const postEl = document.getElementById('engageFetchedPostText');
             const postText = postEl ? postEl.textContent.trim() : '';
             if (!postText) {
                 showNotify('No post text', 'Fetch the post or paste text under “didn\u2019t load automatically”.', 'warning');
                 return;
             }
-            await aiReplyTo(postText);
+            const draft = document.getElementById('engageReplyDraft');
+            showNotify('Generating reply…', 'AI is drafting a comment you can tweak.', 'info');
+            try {
+                const res = await fetch('/api/engage/ai-reply', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ postText, style: 'supportive' }),
+                });
+                const data = await res.json();
+                if (data.reply) {
+                    if (draft) draft.value = String(data.reply).trim();
+                    await updateCreditsPopup();
+                    showNotify('Reply ready', 'Inserted in your draft — edit, then paste on LinkedIn.', 'success');
+                } else {
+                    showNotify('Error', data.error || 'Could not generate reply.', 'error');
+                }
+            } catch {
+                showNotify('Error', 'Failed to generate reply.', 'error');
+            }
+        }
+
+        async function improveEngageReplyDraft() {
+            await aiImprove('engaging', 'engageReplyDraft');
+        }
+
+        async function aiReplyFromEngagePanel() {
+            await generateEngageReply();
         }
 
         async function fetchEngageUrl() {
@@ -11780,7 +11900,7 @@
             textarea.disabled = false;
             textarea.focus();
             if (textareaId === 'createTextarea') updateCharCount();
-            else updateComposeCharCount();
+            else if (textareaId === 'composeTextarea') updateComposeCharCount();
         }
 
         // Schedule Popup
@@ -13658,7 +13778,99 @@
             const el = document.getElementById('carouselCreditHint');
             if (!sel || !el) return;
             const n = parseInt(sel.value, 10);
-            el.textContent = Number.isFinite(n) && n > 0 ? n : 8;
+            const slides = Number.isFinite(n) && n > 0 ? n : 8;
+            el.textContent = String(slides * 2);
+        }
+
+        function carouselThemeClass() {
+            const sel = document.getElementById('carouselStyle');
+            const raw = sel && sel.value ? sel.value : 'professional';
+            const sanitized = String(raw).replace(/_/g, '-').replace(/[^a-z0-9-]/gi, '') || 'professional';
+            return 'crs-theme-' + sanitized;
+        }
+
+        function onCarouselStyleOrColorChange() {
+            if (carouselSlides && carouselSlides.length) renderCarouselPreview();
+        }
+
+        function buildCarouselCaptionPrompt() {
+            const topic = document.getElementById('carouselTopic').value.trim();
+            const styleSel = document.getElementById('carouselStyle');
+            const styleLabel = (styleSel && styleSel.options[styleSel.selectedIndex])
+                ? styleSel.options[styleSel.selectedIndex].text
+                : '';
+
+            const summary = carouselSlides.map((s, i) => {
+                const bullets = Array.isArray(s.bulletPoints) ? s.bulletPoints.filter(Boolean).join(' • ') : '';
+                return `${i + 1}. ${(s.title || 'Slide').trim()}${bullets ? ' — ' + bullets : ''}`;
+            }).join('\n');
+
+            let prompt = 'I am posting on LinkedIn as a PDF document carousel (multiple pages in one file).\n';
+            if (topic) prompt += `Overall topic: "${topic.replace(/"/g, '\'')}".\n`;
+            if (styleLabel) prompt += `Slide style: ${styleLabel}.\n`;
+            prompt += 'Slide outline:\n' + summary.slice(0, 3500);
+            prompt += '\n\nWrite ONE LinkedIn post caption (body only) that teases the carousel and invites viewers to open the PDF. Professional, concise, engaging. Avoid hashtag spam.';
+            return prompt;
+        }
+
+        /** @param {{ auto?: boolean, quietToast?: boolean }} opts */
+        async function requestCarouselCaption(opts) {
+            opts = opts || {};
+            const auto = !!opts.auto;
+            const quietToast = !!opts.quietToast;
+            if (!carouselSlides.length) return { ok: false, error: 'no_slides' };
+
+            const ta = document.getElementById('carouselCaption');
+            const statusEl = document.getElementById('carouselCaptionStatus');
+            const btn = document.getElementById('btnCarouselRegenCaption');
+
+            if (!auto) {
+                const features = creditsData.features || _userFeatures || [];
+                if (!features.includes('carousel')) {
+                    showUpgradeRequiredModal();
+                    return { ok: false, error: 'plan' };
+                }
+            }
+
+            if (!auto && btn) {
+                if (!btn.dataset.defaultInner) btn.dataset.defaultInner = btn.innerHTML;
+                btn.disabled = true;
+                btn.setAttribute('aria-busy', 'true');
+                btn.innerHTML = '<span class="ai-draft-regen-loading" style="display:inline-flex;align-items:center;gap:8px;"><span class="spinner" style="width:14px;height:14px;border-width:2px;flex-shrink:0;border-top-color:var(--accent);"></span><span>Writing&hellip;</span></span>';
+            }
+            if (auto && statusEl) {
+                statusEl.textContent = 'Drafting caption…';
+            }
+
+            try {
+                const res = await fetch('/api/ai/write', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tone: 'auto', prompt: buildCarouselCaptionPrompt() }),
+                });
+                const data = await res.json();
+                if (data.error || !data.post) {
+                    if (!quietToast) showNotify('Caption failed', data.error || 'Could not generate caption.', 'error');
+                    else if (auto) showNotify('Caption not drafted', data.error || 'Add a caption manually.', 'warning');
+                    return { ok: false, error: data.error };
+                }
+                if (ta) ta.value = data.post;
+                await updateCreditsPopup();
+                if (!(auto && quietToast)) {
+                    showNotify('Caption ready', '1 AI credit used. Edit before publishing.', 'success');
+                }
+                return { ok: true };
+            } catch {
+                if (!quietToast) showNotify('Error', 'Network error while writing caption.', 'error');
+                return { ok: false, error: 'network' };
+            } finally {
+                if (auto && statusEl) statusEl.textContent = '';
+                if (!auto && btn) {
+                    btn.disabled = false;
+                    btn.removeAttribute('aria-busy');
+                    btn.innerHTML = btn.dataset.defaultInner || btn.innerHTML;
+                }
+            }
         }
 
         async function generateCarouselSlides() {
@@ -13673,6 +13885,10 @@
             btn.innerHTML = '<div class="spinner" style="width:16px;height:16px;border-width:2px;"></div> Generating...';
             document.getElementById('carouselGenerating').style.display = '';
             document.getElementById('carouselSlidesContainer').style.display = 'none';
+            const capTa = document.getElementById('carouselCaption');
+            const capStat = document.getElementById('carouselCaptionStatus');
+            if (capTa) capTa.value = '';
+            if (capStat) capStat.textContent = '';
 
             try {
                 const res = await fetch('/api/ai/generate-carousel', {
@@ -13690,9 +13906,20 @@
                 carouselSlides = data.slides || [];
                 renderCarouselPreview();
                 document.getElementById('carouselSlidesContainer').style.display = '';
+
+                const captionRes = await requestCarouselCaption({ auto: true, quietToast: true });
+
                 await updateCreditsPopup();
-                const used = Number(data.creditsUsed) || parseInt(slideCount, 10) || carouselSlides.length;
-                showNotify('Slides ready', used + ' AI credit' + (used !== 1 ? 's' : '') + ' used (one per slide).', 'success');
+                const used = Number(data.creditsUsed);
+                const slideCost = Number.isFinite(used) && used > 0
+                    ? used
+                    : ((parseInt(slideCount, 10) || carouselSlides.length) * 2);
+                const nSlides = carouselSlides.length || parseInt(slideCount, 10);
+                if (captionRes && captionRes.ok) {
+                    showNotify('Ready', 'Slides used ' + slideCost + ' credits (' + nSlides + ' × 2). Caption: 1 credit — edit and publish when ready.', 'success');
+                } else {
+                    showNotify('Slides ready', slideCost + ' credits for slides (' + nSlides + ' × 2). Add or regenerate a caption below (1 credit each).', 'success');
+                }
             } catch (e) {
                 showNotify('Error', 'Failed to generate slides.', 'error');
             } finally {
@@ -13706,6 +13933,7 @@
             const strip = document.getElementById('carouselSlideStrip');
             const brandColor = document.getElementById('carouselBrandColor').value || '#0A66C2';
             strip.innerHTML = '';
+            strip.className = 'carousel-slide-strip ' + carouselThemeClass();
 
             carouselSlides.forEach((slide, i) => {
                 const isFirst = i === 0;
@@ -13777,52 +14005,7 @@
                 showUpgradeRequiredModal();
                 return;
             }
-            const btn = document.getElementById('btnCarouselRegenCaption');
-            const ta = document.getElementById('carouselCaption');
-            if (!btn) return;
-            const topic = document.getElementById('carouselTopic').value.trim();
-            const styleSel = document.getElementById('carouselStyle');
-            const styleLabel = (styleSel && styleSel.options[styleSel.selectedIndex])
-                ? styleSel.options[styleSel.selectedIndex].text
-                : '';
-
-            const summary = carouselSlides.map((s, i) => {
-                const bullets = Array.isArray(s.bulletPoints) ? s.bulletPoints.filter(Boolean).join(' • ') : '';
-                return `${i + 1}. ${(s.title || 'Slide').trim()}${bullets ? ' — ' + bullets : ''}`;
-            }).join('\n');
-
-            let prompt = 'I am posting on LinkedIn as a PDF document carousel (multiple pages in one file).\n';
-            if (topic) prompt += `Overall topic: "${topic.replace(/"/g, '\'')}".\n`;
-            if (styleLabel) prompt += `Slide style: ${styleLabel}.\n`;
-            prompt += 'Slide outline:\n' + summary.slice(0, 3500);
-            prompt += '\n\nWrite ONE LinkedIn post caption (body only) that teases the carousel and invites viewers to open the PDF. Professional, concise, engaging. Avoid hashtag spam.';
-
-            if (!btn.dataset.defaultInner) btn.dataset.defaultInner = btn.innerHTML;
-            btn.disabled = true;
-            btn.setAttribute('aria-busy', 'true');
-            btn.innerHTML = '<span class="ai-draft-regen-loading" style="display:inline-flex;align-items:center;gap:8px;"><span class="spinner" style="width:14px;height:14px;border-width:2px;flex-shrink:0;border-top-color:var(--accent);"></span><span>Writing&hellip;</span></span>';
-
-            try {
-                const res = await fetch('/api/ai/write', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ tone: 'auto', prompt }),
-                });
-                const data = await res.json();
-                if (data.error || !data.post) {
-                    showNotify('Caption failed', data.error || 'Could not generate caption.', 'error');
-                    return;
-                }
-                if (ta) ta.value = data.post;
-                await updateCreditsPopup();
-                showNotify('Caption ready', '1 AI credit used. Edit before publishing.', 'success');
-            } catch {
-                showNotify('Error', 'Network error while writing caption.', 'error');
-            } finally {
-                btn.disabled = false;
-                btn.removeAttribute('aria-busy');
-                btn.innerHTML = btn.dataset.defaultInner || btn.innerHTML;
-            }
+            await requestCarouselCaption({ auto: false });
         }
 
         async function downloadCarouselPDF() {
@@ -13830,12 +14013,13 @@
 
             const brandColor = document.getElementById('carouselBrandColor').value || '#0A66C2';
             const topic = document.getElementById('carouselTopic').value.trim();
+            const slideTheme = document.getElementById('carouselStyle')?.value || 'professional';
 
             try {
                 const res = await fetch('/api/carousel/generate-pdf', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ slides: carouselSlides, brandColor, title: topic }),
+                    body: JSON.stringify({ slides: carouselSlides, brandColor, title: topic, slideTheme }),
                 });
 
                 if (!res.ok) {
@@ -13877,6 +14061,7 @@
             const audienceEl = document.getElementById('carouselPostAudience');
             const audienceRaw = audienceEl ? audienceEl.value : 'everyone';
             const audience = audienceRaw === 'connections' ? 'connections' : 'public';
+            const slideTheme = document.getElementById('carouselStyle')?.value || 'professional';
 
             const pubBtn = document.getElementById('btnCarouselPublish');
             const pubDefaultHtml = pubBtn ? pubBtn.innerHTML : '';
@@ -13897,6 +14082,7 @@
                         title: topic,
                         text: caption,
                         audience,
+                        slideTheme,
                     }),
                 });
                 const data = await res.json();
