@@ -630,6 +630,62 @@
         }
     }
 
+    async function tryEngageLinkCapture() {
+        let cap;
+        try {
+            cap = (await chrome.storage.session.get('engageCapture')).engageCapture;
+        } catch (e) {
+            return;
+        }
+        if (!cap || !cap.activityId) return;
+        const href = window.location.href || '';
+        if (href.indexOf(cap.activityId) === -1) return;
+        const scraped = scrapePostForEngagePanel();
+        if (!scraped || !scraped.text || scraped.text.length < 4) return;
+        let still;
+        try {
+            still = (await chrome.storage.session.get('engageCapture')).engageCapture;
+        } catch (e) {
+            return;
+        }
+        if (!still || still.ts !== cap.ts || still.activityId !== cap.activityId) return;
+        try {
+            await chrome.storage.session.remove('engageCapture');
+            chrome.runtime.sendMessage({
+                type: 'ENGAGE_POST_CAPTURED',
+                payload: {
+                    author: scraped.author,
+                    text: scraped.text,
+                    url: href,
+                },
+            });
+            console.log('[SuperLinkedIn] Engage: captured post text for activity', cap.activityId);
+        } catch (e) {
+            console.warn('[SuperLinkedIn] Engage capture failed', e);
+        }
+    }
+
+    function scrapePostForEngagePanel() {
+        const posts = document.querySelectorAll('.feed-shared-update-v2, [data-urn*="activity"], .occludable-update');
+        let best = null;
+        let bestLen = 0;
+        posts.forEach((post) => {
+            const textEl = post.querySelector('.feed-shared-text, .update-components-text, .break-words');
+            const postText = textEl ? textEl.textContent.trim() : '';
+            if (postText.length > bestLen) {
+                const authorEl = post.querySelector(
+                    '.update-components-actor__name .visually-hidden, ' +
+                    '.update-components-actor__title .visually-hidden, ' +
+                    '.feed-shared-actor__name'
+                );
+                const authorName = authorEl ? authorEl.textContent.trim() : '';
+                best = { author: authorName, text: postText };
+                bestLen = postText.length;
+            }
+        });
+        return best;
+    }
+
     async function runScrape(retryCount) {
         if (!isExtensionValid()) {
             if (_scrapeInterval) { clearInterval(_scrapeInterval); _scrapeInterval = null; }
@@ -639,6 +695,7 @@
         }
         try {
         retryCount = retryCount || 0;
+        await tryEngageLinkCapture();
         await refreshConnectionsWatermarkFromStorage();
         const url = window.location.href;
         const data = { url, timestamp: new Date().toISOString() };

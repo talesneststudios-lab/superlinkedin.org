@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>SuperLinkedIn — Chrome Web Store listing images</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; max-width: 960px; margin: 24px auto; padding: 0 16px; background: #0f172a; color: #e2e8f0; }
+    h1 { font-size: 1.2rem; font-weight: 800; }
+    p, li { color: #94a3b8; line-height: 1.5; font-size: 0.92rem; }
+    .btns { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0; }
+    button {
+      padding: 10px 16px; border-radius: 8px; border: 1px solid #334155;
+      background: #1e293b; color: #f1f5f9; cursor: pointer; font-weight: 700; font-size: 0.85rem;
+    }
+    button:hover { background: #334155; }
+    #preview { display: block; margin-top: 16px; border: 1px solid #334155; border-radius: 8px; max-width: 100%; height: auto; background: #000; }
+    code { background: #1e293b; padding: 2px 6px; border-radius: 4px; color: #bae6fd; }
+  </style>
+</head>
+<body>
+  <h1>Chrome Web Store screenshots / promos</h1>
+  <p>Required specs: <strong>1280×800</strong> or <strong>640×400</strong>, <strong>JPEG</strong> or <strong>24-bit PNG</strong> (no transparency). At least one image is required for the listing.</p>
+  <p>Open this file in <strong>Chrome</strong> (double-click or <code>File → Open</code>), then download. Full canvas is opaque (no alpha).</p>
+  <div class="btns">
+    <button type="button" id="dl1280jpg">Download 1280×800 JPEG</button>
+    <button type="button" id="dl1280png">Download 1280×800 PNG</button>
+    <button type="button" id="dl640jpg">Download 640×400 JPEG</button>
+    <button type="button" id="dl640png">Download 640×400 PNG</button>
+  </div>
+  <p style="font-size:0.8rem;">Preview (scaled):</p>
+  <canvas id="preview" width="1280" height="800" aria-label="Preview"></canvas>
+
+  <script>
+    function addRoundRectPath(ctx, x, y, rw, rh, r) {
+      const rr = Math.min(r, rw / 2, rh / 2);
+      ctx.beginPath();
+      ctx.moveTo(x + rr, y);
+      ctx.lineTo(x + rw - rr, y);
+      ctx.quadraticCurveTo(x + rw, y, x + rw, y + rr);
+      ctx.lineTo(x + rw, y + rh - rr);
+      ctx.quadraticCurveTo(x + rw, y + rh, x + rw - rr, y + rh);
+      ctx.lineTo(x + rr, y + rh);
+      ctx.quadraticCurveTo(x, y + rh, x, y + rh - rr);
+      ctx.lineTo(x, y + rr);
+      ctx.quadraticCurveTo(x, y, x + rr, y);
+      ctx.closePath();
+    }
+
+    function drawStoreAsset(w, h) {
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+
+      const g = ctx.createLinearGradient(0, 0, w, h);
+      g.addColorStop(0, '#0b1220');
+      g.addColorStop(0.45, '#0f2847');
+      g.addColorStop(1, '#0A66C2');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 1;
+      const step = Math.max(20, Math.floor(w / 48));
+      for (let x = 0; x < w; x += step) {
+        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      }
+      for (let y = 0; y < h; y += step) {
+        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+      }
+
+      const pad = w * 0.042;
+      const bw = w - pad * 2;
+      const bh = h - pad * 2;
+      const r = Math.max(6, w * 0.01);
+
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+      addRoundRectPath(ctx, pad, pad, bw, bh, r);
+      ctx.fill();
+
+      const chromeH = h * 0.072;
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(pad, pad, bw, chromeH);
+
+      const dotR = w * 0.0065;
+      const dotY = pad + chromeH * 0.5;
+      const dotX0 = pad + w * 0.028;
+      [['#f87171', 0], ['#fbbf24', 1], ['#4ade80', 2]].forEach(([col, i]) => {
+        ctx.beginPath();
+        ctx.arc(dotX0 + i * dotR * 2.6, dotY, dotR, 0, Math.PI * 2);
+        ctx.fillStyle = col;
+        ctx.fill();
+      });
+
+      ctx.fillStyle = '#6b7280';
+      ctx.font = `${Math.round(w * 0.021)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('linkedin.com/feed', pad + bw / 2, dotY);
+
+      const sideW = w * 0.24;
+      const mainX = pad + sideW;
+      const mainY = pad + chromeH;
+      const mainH = bh - chromeH;
+
+      ctx.fillStyle = '#0b1224';
+      ctx.fillRect(pad, mainY, sideW, mainH);
+
+      const sq = w * 0.028;
+      const lx = pad + sideW * 0.12;
+      const ly = mainY + h * 0.045;
+      const brandG = ctx.createLinearGradient(lx, ly, lx + sq * 3, ly + sq);
+      brandG.addColorStop(0, '#0A66C2');
+      brandG.addColorStop(1, '#60a5fa');
+      ctx.fillStyle = brandG;
+      addRoundRectPath(ctx, lx, ly, sq * 2.1, sq * 2.1, sq * 0.25);
+      ctx.fill();
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${Math.round(sq * 1.05)}px system-ui, sans-serif`;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('SL', lx + sq * 0.48, ly + sq * 1.05);
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.font = `600 ${Math.round(w * 0.026)}px system-ui, sans-serif`;
+      ctx.fillText('SuperLinkedIn', lx + sq * 2.55, ly + sq * 1.05);
+
+      let ny = mainY + h * 0.14;
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+      for (let i = 0; i < 6; i++) {
+        ctx.beginPath();
+        ctx.moveTo(pad + sideW * 0.1, ny);
+        ctx.lineTo(pad + sideW * 0.92, ny);
+        ctx.stroke();
+        ny += h * 0.048;
+      }
+
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(mainX, mainY, bw - sideW, mainH);
+
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = `800 ${Math.round(w * 0.056)}px system-ui, sans-serif`;
+      ctx.fillText('Analytics & AI in your feed', mainX + w * 0.045, mainY + h * 0.2);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = `${Math.round(w * 0.028)}px system-ui, sans-serif`;
+      ctx.fillText('Track performance, write with AI, schedule posts, and engage — without leaving LinkedIn.', mainX + w * 0.045, mainY + h * 0.29);
+
+      const badgeW = w * 0.34;
+      const badgeH = h * 0.085;
+      const bx = mainX + w * 0.045;
+      const by = mainY + h * 0.38;
+      ctx.fillStyle = 'rgba(10, 102, 194, 0.22)';
+      ctx.strokeStyle = 'rgba(96, 165, 250, 0.75)';
+      ctx.lineWidth = Math.max(1, w * 0.002);
+      addRoundRectPath(ctx, bx, by, badgeW, badgeH, w * 0.01);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#bfdbfe';
+      ctx.font = `600 ${Math.round(w * 0.023)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('SuperLinkedIn · Chrome extension + app.superlinkedin.org', bx + badgeW / 2, by + badgeH / 2);
+
+      return canvas;
+    }
+
+    function downloadCanvas(canvas, filename, mime, quality) {
+      const a = document.createElement('a');
+      a.download = filename;
+      a.href = canvas.toDataURL(mime, quality);
+      a.click();
+    }
+
+    const c1280 = drawStoreAsset(1280, 800);
+    const c640 = drawStoreAsset(640, 400);
+
+    const prev = document.getElementById('preview');
+    prev.getContext('2d').drawImage(c1280, 0, 0);
+
+    document.getElementById('dl1280jpg').onclick = () =>
+      downloadCanvas(c1280, 'superlinkedin-chrome-store-1280x800.jpg', 'image/jpeg', 0.92);
+    document.getElementById('dl1280png').onclick = () =>
+      downloadCanvas(c1280, 'superlinkedin-chrome-store-1280x800.png', 'image/png');
+    document.getElementById('dl640jpg').onclick = () =>
+      downloadCanvas(c640, 'superlinkedin-chrome-store-640x400.jpg', 'image/jpeg', 0.92);
+    document.getElementById('dl640png').onclick = () =>
+      downloadCanvas(c640, 'superlinkedin-chrome-store-640x400.png', 'image/png');
+  </script>
+</body>
+</html>

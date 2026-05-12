@@ -1229,6 +1229,86 @@
         }
         .engage-url-fetch-btn:hover { background: var(--accent-hover); }
 
+        .engage-fetched-wrap {
+            margin: 0 0 16px 0;
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: var(--bg-secondary);
+        }
+        .engage-fetched-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .engage-fetched-author {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin: 0;
+            flex: 1;
+            min-width: 0;
+        }
+        .engage-fetched-post {
+            font-size: 0.86rem;
+            line-height: 1.55;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 12px;
+            border-radius: 8px;
+            background: var(--bg-card);
+            margin-bottom: 12px;
+            border: 1px solid var(--border);
+        }
+        .engage-fetched-draft-label {
+            display: block;
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+        .engage-reply-draft {
+            width: 100%;
+            min-height: 100px;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            font-family: inherit;
+            font-size: 0.88rem;
+            resize: vertical;
+            box-sizing: border-box;
+            margin-bottom: 10px;
+        }
+        .engage-fetched-actions {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+        }
+        .engage-fetched-actions button {
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+        }
+        .engage-fetched-actions button.primary {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+
         /* Tabs row containing tabs on the left and filters on the right */
         .engage-tabs-row {
             display: flex;
@@ -6564,6 +6644,28 @@
                         <button class="engage-url-fetch-btn" type="button" onclick="fetchEngageUrl()">Fetch</button>
                     </div>
 
+                    <div id="engageFetchedWrap" class="engage-fetched-wrap" style="display:none;" aria-live="polite">
+                        <div class="engage-fetched-head">
+                            <p id="engageFetchedAuthor" class="engage-fetched-author"></p>
+                            <div style="display:flex;gap:10px;align-items:center;">
+                                <a id="engageFetchedLink" href="#" target="_blank" rel="noopener noreferrer" style="font-size:0.78rem;color:var(--accent);white-space:nowrap;">Open post on LinkedIn</a>
+                                <button type="button" onclick="dismissEngageFetched()" style="padding:6px 10px;font-size:0.75rem;background:transparent;border:1px solid var(--border);border-radius:6px;color:var(--text-muted);cursor:pointer;">Dismiss</button>
+                            </div>
+                        </div>
+                        <div id="engageFetchedPostText" class="engage-fetched-post"></div>
+                        <details style="margin-bottom:12px;font-size:0.8rem;color:var(--text-muted);">
+                            <summary style="cursor:pointer;">Post didn’t load automatically? Paste text from LinkedIn</summary>
+                            <textarea id="engageManualPostPaste" class="engage-reply-draft" style="margin-top:8px;min-height:72px;" placeholder="Paste the main post text from LinkedIn here…"></textarea>
+                            <button type="button" class="engage-url-fetch-btn" style="margin:4px 0 0 0;display:inline-flex;" onclick="applyManualEngagePaste()">Load pasted text</button>
+                        </details>
+                        <label class="engage-fetched-draft-label" for="engageReplyDraft">Draft your comment</label>
+                        <textarea id="engageReplyDraft" class="engage-reply-draft" placeholder="Write your reply here (for your notes—we don’t auto-post comments to LinkedIn)…"></textarea>
+                        <div class="engage-fetched-actions">
+                            <button type="button" class="primary" onclick="aiReplyFromEngagePanel()">AI Reply</button>
+                            <span style="font-size:0.72rem;color:var(--text-muted);">Opens composer with AI-drafted reply for this post.</span>
+                        </div>
+                    </div>
+
                     <div class="engage-tabs-row">
                         <div class="engage-tabs" role="tablist">
                             <button type="button" class="engage-tab active" data-tab="discover" onclick="switchEngageTab('discover')">Discover</button>
@@ -8078,7 +8180,84 @@
             } catch { feed.innerHTML = ''; empty.style.display = 'block'; }
         }
 
-        function fetchEngageUrl() {
+        function setupEngagePostExtensionListener() {
+            if (window.__slEngageExtListen) return;
+            window.__slEngageExtListen = true;
+            window.addEventListener('message', function (ev) {
+                if (ev.source !== window) return;
+                const d = ev.data;
+                if (!d || d.source !== 'superlinkedin-ext' || d.type !== 'ENGAGE_POST_READY' || !d.payload) return;
+                showEngageFetchedPost(d.payload);
+            });
+        }
+
+        function showEngageFetchedShell(openUrl) {
+            const wrap = document.getElementById('engageFetchedWrap');
+            const authorEl = document.getElementById('engageFetchedAuthor');
+            const postEl = document.getElementById('engageFetchedPostText');
+            const linkEl = document.getElementById('engageFetchedLink');
+            if (!wrap || !postEl) return;
+            wrap.style.display = 'block';
+            if (authorEl) authorEl.textContent = 'Loading post…';
+            postEl.textContent = openUrl
+                ? 'Loading text from LinkedIn… If this stays blank, paste the post in “Post didn\u2019t load automatically?” below.'
+                : '';
+            if (linkEl && openUrl) {
+                linkEl.href = openUrl;
+                linkEl.style.display = '';
+            }
+        }
+
+        function showEngageFetchedPost(payload) {
+            const wrap = document.getElementById('engageFetchedWrap');
+            const authorEl = document.getElementById('engageFetchedAuthor');
+            const postEl = document.getElementById('engageFetchedPostText');
+            const linkEl = document.getElementById('engageFetchedLink');
+            if (!wrap || !postEl || !payload) return;
+            wrap.style.display = 'block';
+            if (authorEl) authorEl.textContent = payload.author || 'LinkedIn post';
+            postEl.textContent = payload.text || '';
+            if (linkEl && payload.url) {
+                linkEl.href = payload.url;
+                linkEl.style.display = '';
+            }
+            wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            showNotify('Post loaded', 'Post text imported. Draft your reply below or use AI Reply.', 'success');
+        }
+
+        function dismissEngageFetched() {
+            const wrap = document.getElementById('engageFetchedWrap');
+            if (wrap) wrap.style.display = 'none';
+        }
+
+        function applyManualEngagePaste() {
+            const manual = document.getElementById('engageManualPostPaste');
+            const t = (manual && manual.value ? manual.value : '').trim();
+            if (!t) {
+                showNotify('Paste first', 'Copy the post from LinkedIn into the box.', 'warning');
+                return;
+            }
+            const wrap = document.getElementById('engageFetchedWrap');
+            const authorEl = document.getElementById('engageFetchedAuthor');
+            const postEl = document.getElementById('engageFetchedPostText');
+            if (wrap) wrap.style.display = 'block';
+            if (authorEl) authorEl.textContent = 'Pasted post';
+            if (postEl) postEl.textContent = t;
+            showNotify('Saved', 'You can draft a reply or use AI Reply.', 'success');
+        }
+
+        async function aiReplyFromEngagePanel() {
+            const postEl = document.getElementById('engageFetchedPostText');
+            const postText = postEl ? postEl.textContent.trim() : '';
+            if (!postText) {
+                showNotify('No post text', 'Fetch the post or paste text under “didn\u2019t load automatically”.', 'warning');
+                return;
+            }
+            await aiReplyTo(postText);
+        }
+
+        async function fetchEngageUrl() {
+            setupEngagePostExtensionListener();
             const input = document.getElementById('engageUrlInput');
             const raw = (input?.value || '').trim();
             if (!raw) {
@@ -8095,9 +8274,24 @@
                 showNotify('LinkedIn URL Required', 'Please paste a LinkedIn post URL (linkedin.com).', 'warning');
                 return;
             }
-            window.open(url.toString(), '_blank', 'noopener');
-            showNotify('Opening Post', 'Open the post on LinkedIn with the SuperLinkedIn extension active to draft a reply here.', 'info');
-            if (input) input.value = '';
+            const urlStr = url.toString();
+            showEngageFetchedShell(urlStr);
+
+            if (isExtensionInstalled()) {
+                const reg = await sendToExtension({ type: 'ENGAGE_REGISTER_URL', url: urlStr }, 12000);
+                if (!reg || reg.success === false) {
+                    showNotify(
+                        'Import tip',
+                        (reg && reg.error) ? (reg.error + ' You can paste the post text manually below.') : 'Paste the post text manually below if automatic import misses.',
+                        'warning'
+                    );
+                }
+            } else {
+                showNotify('Extension recommended', 'Install SuperLinkedIn in this browser so we can read the open post automatically—or paste text below.', 'info');
+            }
+
+            window.open(urlStr, '_blank', 'noopener');
+            showNotify('Opening LinkedIn', 'When that tab finishes loading with the extension, the post appears here.', 'info');
         }
 
         async function aiReplyTo(postText) {
@@ -13739,6 +13933,7 @@
             checkMissions();
             updateCarouselNavLock();
             updateCarouselCreditHint();
+            setupEngagePostExtensionListener();
 
             const startRoute = getPageFromHash();
             if (startRoute.page === 'carousel') {

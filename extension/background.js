@@ -1,6 +1,19 @@
 const API_BASE = 'https://app.superlinkedin.org';
 const SYNC_ALARM = 'superlinkedin-sync';
 
+function extractLinkedinActivityId(url) {
+    const s = String(url || '');
+    let m = s.match(/activity[:\-](\d{10,})/i);
+    if (m) return m[1];
+    m = s.match(/ugcPost[:\-](\d{10,})/i);
+    if (m) return m[1];
+    if (/\/feed\/update\//i.test(s) || /\/posts\//i.test(s) || /\/embed\//i.test(s)) {
+        m = s.match(/(\d{15,20})/);
+        if (m) return m[1];
+    }
+    return '';
+}
+
 let pendingData = { followers: null, posts: [], profile: null, dashboardStats: null, dms: null, feedPosts: [] };
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -48,6 +61,31 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
     if (msg.type === 'GET_ANALYTICS') {
         getAnalyticsSummary().then(sendResponse);
+        return true;
+    }
+
+    if (msg.type === 'ENGAGE_REGISTER_URL') {
+        const url = String(msg.url || '');
+        const activityId = extractLinkedinActivityId(url);
+        chrome.storage.session.set(
+            { engageCapture: { url, activityId, ts: Date.now() } },
+            () => {
+                sendResponse({ success: !!activityId, activityId: activityId || null, error: activityId ? null : 'Could not read post id from URL' });
+            }
+        );
+        return true;
+    }
+
+    if (msg.type === 'ENGAGE_POST_CAPTURED') {
+        const payload = msg.payload || {};
+        chrome.tabs.query({}, (tabs) => {
+            tabs.forEach((tab) => {
+                const u = tab.url || '';
+                if (u.indexOf('superlinkedin.org') === -1 && u.indexOf('awsapprunner.com') === -1) return;
+                chrome.tabs.sendMessage(tab.id, { type: 'ENGAGE_POST_TO_PAGE', payload }).catch(() => {});
+            });
+        });
+        sendResponse({ ok: true });
         return true;
     }
 

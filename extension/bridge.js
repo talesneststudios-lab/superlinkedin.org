@@ -71,6 +71,33 @@
             } catch (e) {
                 reply(requestId, { success: false, error: 'Extension error: ' + (e && e.message ? e.message : String(e)) });
             }
+            return;
         }
+
+        if (msg.type === 'ENGAGE_REGISTER_URL') {
+            try {
+                chrome.runtime.sendMessage({ type: 'ENGAGE_REGISTER_URL', url: msg.url }, function (resp) {
+                    if (chrome.runtime.lastError) {
+                        reply(requestId, { success: false, error: chrome.runtime.lastError.message || 'Extension error' });
+                        return;
+                    }
+                    reply(requestId, resp || { success: false, error: 'No response' });
+                });
+            } catch (e) {
+                reply(requestId, { success: false, error: 'Extension error: ' + (e && e.message ? e.message : String(e)) });
+            }
+            return;
+        }
+    });
+
+    chrome.runtime.onMessage.addListener(function (msg) {
+        if (!msg || msg.type !== 'ENGAGE_POST_TO_PAGE') return;
+        try {
+            window.postMessage({
+                source: 'superlinkedin-ext',
+                type: 'ENGAGE_POST_READY',
+                payload: msg.payload || {},
+            }, '*');
+        } catch (e) {}
     });
 })();
