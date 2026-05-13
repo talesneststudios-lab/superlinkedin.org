@@ -6,7 +6,9 @@
     let lastUrl = '';
     let sidebarOpen = false;
     let sidebarData = { followers: 0, posts: [], topPosts: [], totalLikes: 0,
-        totalComments: 0, totalReposts: 0, totalImpressions: 0, dashboardSocialEngagements: null };
+        totalComments: 0, totalReposts: 0, totalImpressions: 0, dashboardSocialEngagements: null,
+        /** When set from feed identity card scrape — matches LinkedIn home "Post impressions" (do not replace with per-post sums). */
+        postImpressionsSource: null };
     /** Persisted last accepted connection total — stabilizes against bad scrapes across tabs */
     let connectionsWatermark = 0;
     /** Retry Engage fetch while LinkedIn single-post DOM is still loading */
@@ -877,8 +879,13 @@
         if (url.includes('/feed') && slOn('home')) {
             const feedStats = scrapeFeedSidebarStats();
             if (feedStats && (feedStats.postImpressions || feedStats.profileViews)) {
-                data.dashboardStats = Object.assign({}, data.dashboardStats || {}, feedStats);
-                if (feedStats.postImpressions) sidebarData.totalImpressions = feedStats.postImpressions;
+                data.dashboardStats = Object.assign({}, data.dashboardStats || {}, feedStats, {
+                    postImpressionsSource: 'feed_identity',
+                });
+                if (feedStats.postImpressions) {
+                    sidebarData.totalImpressions = feedStats.postImpressions;
+                    sidebarData.postImpressionsSource = 'feed_identity';
+                }
                 console.log('[SuperLinkedIn] Feed sidebar stats scraped:', feedStats);
             }
         }
@@ -886,7 +893,9 @@
         if (isAnalyticsPage && slOn('activities')) {
             const dashboardStats = scrapeAnalyticsDashboard();
             if (dashboardStats) {
-                data.dashboardStats = Object.assign({}, data.dashboardStats || {}, dashboardStats);
+                data.dashboardStats = Object.assign({}, data.dashboardStats || {}, dashboardStats, {
+                    postImpressionsSource: 'analytics_page',
+                });
                 if (dashboardStats.followers !== undefined &&
                     dashboardStats.followers !== null &&
                     shouldAcceptConnectionsScrape(Number(dashboardStats.followers))) {
@@ -894,7 +903,10 @@
                 }
                 if (Object.prototype.hasOwnProperty.call(dashboardStats, 'postImpressions')) {
                     const v = Number(dashboardStats.postImpressions) || 0;
-                    sidebarData.totalImpressions = Math.max(Number(sidebarData.totalImpressions) || 0, v);
+                    /** LinkedIn's home left-rail "Post impressions" must not be replaced by creator/analytics numbers or summed post cards. */
+                    if (sidebarData.postImpressionsSource !== 'feed_identity') {
+                        sidebarData.totalImpressions = Math.max(Number(sidebarData.totalImpressions) || 0, v);
+                    }
                 }
                 if (Object.prototype.hasOwnProperty.call(dashboardStats, 'socialEngagements')) {
                     sidebarData.dashboardSocialEngagements = Number(dashboardStats.socialEngagements) || 0;

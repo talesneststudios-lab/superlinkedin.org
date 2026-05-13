@@ -3610,7 +3610,13 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         const user = await dbGetUser(linkedinId);
         const existing = (user && user.analyticsDashboard) || {};
         const mergedDash = { ...existing, ...dashboardStats };
-        if (dashboardStats && Object.prototype.hasOwnProperty.call(dashboardStats, 'postImpressions')) {
+        if (dashboardStats && dashboardStats.postImpressionsSource === 'feed_identity' && dashboardStats.postImpressions !== undefined) {
+            mergedDash.postImpressions = Number(dashboardStats.postImpressions);
+            mergedDash.postImpressionsSource = 'feed_identity';
+        } else if (existing.postImpressionsSource === 'feed_identity' && dashboardStats.postImpressionsSource === 'analytics_page') {
+            mergedDash.postImpressions = Number(existing.postImpressions);
+            mergedDash.postImpressionsSource = 'feed_identity';
+        } else if (dashboardStats && Object.prototype.hasOwnProperty.call(dashboardStats, 'postImpressions')) {
             const a = Number(existing.postImpressions);
             const b = Number(dashboardStats.postImpressions);
             if (Number.isFinite(a) && a >= 0 && Number.isFinite(b) && b >= 0) {
@@ -3745,6 +3751,13 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         } else if (dashboardStats && dashboardStats.postImpressions !== undefined) {
             dashboardImpressions = Number(dashboardStats.postImpressions) || dashboardImpressions;
         }
+        const mergedDashAgg = {
+            ...((user2 && user2.analyticsDashboard) || {}),
+            ...((updates && updates.analyticsDashboard) || {}),
+        };
+        const feedCanonImp = mergedDashAgg.postImpressionsSource === 'feed_identity' &&
+            mergedDashAgg.postImpressions !== undefined &&
+            Number.isFinite(Number(mergedDashAgg.postImpressions));
         const dashboardMembersReached = (dashboardStats && dashboardStats.membersReached !== undefined)
             ? dashboardStats.membersReached
             : null;
@@ -3755,7 +3768,9 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
             likes: hasPosts ? totalLikes : (prevEng.likes || 0),
             comments: hasPosts ? (totalComments || prevEng.comments || 0) : (prevEng.comments || 0),
             reposts: hasPosts ? (totalReposts || prevEng.reposts || 0) : (prevEng.reposts || 0),
-            impressions: Math.max(dashboardImpressions, totalImpressions),
+            impressions: feedCanonImp
+                ? (Number(mergedDashAgg.postImpressions) || 0)
+                : Math.max(dashboardImpressions, totalImpressions),
             totalPosts: allPosts.length,
             membersReached: dashboardMembersReached !== null ? dashboardMembersReached : (prevEng.membersReached || 0),
         };
@@ -3924,8 +3939,9 @@ function summarizePostInteractions(postMetrics) {
 
 /**
  * AVG engagement uses dashboard social engagements ÷ reconciled impressions when both exist.
- * Total impressions use max(dashboard rollup, sum of tracked post cards, stored engagement snapshot)
- * so a bad analytics-page scrape (tiny number) does not override the feed sidebar’s “Post impressions”.
+ * Total impressions: when analyticsDashboard.postImpressionsSource === "feed_identity",
+ * use that rollup only — it matches LinkedIn's home / identity-card "Post impressions" and must
+ * not be replaced by sums of per-post cards (different basis/window). Otherwise use max of rollup, sum, eng snapshot.
  * Otherwise use summed post reactions ÷ summed post impressions (tracked cards only).
  */
 function computeAvgEngagementAndDisplayImpressions(postMetrics, analyticsEngagement, analyticsDashboard) {
@@ -3938,13 +3954,17 @@ function computeAvgEngagementAndDisplayImpressions(postMetrics, analyticsEngagem
 
     const hasDashPostImp = Object.prototype.hasOwnProperty.call(dash, 'postImpressions');
     const dashPostImp = hasDashPostImp ? Number(dash.postImpressions) : null;
+    const feedCanon = dash.postImpressionsSource === 'feed_identity' && hasDashPostImp &&
+        dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp >= 0;
 
-    /** Feed identity sidebar often has the real “Post impressions” rollup; `/analytics/` page scrape sometimes overwrites dashboard with another widget’s digits (too low). */
+    /** Feed identity sidebar = same number LinkedIn shows on home; per-post sums are not interchangeable. */
     const dashImpNonNeg =
         hasDashPostImp && dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp >= 0 ? dashPostImp : 0;
     const sumImp = fromPosts.impressionsSum || 0;
     const engImp = Number(eng.impressions) || 0;
-    const reconciledImp = Math.max(dashImpNonNeg, sumImp, engImp);
+    const reconciledImp = feedCanon
+        ? dashImpNonNeg
+        : Math.max(dashImpNonNeg, sumImp, engImp);
 
     let avgEngagement = 0;
     const postInteractions = fromPosts.likes + fromPosts.comments + fromPosts.reposts;

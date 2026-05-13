@@ -11860,6 +11860,18 @@
             return buckets;
         }
 
+        /** When daily buckets are all zero but the card headline has a total, show an even daily share so the sparkline matches the number (unknown day-by-day breakdown). */
+        function normalizeSparkBucketsToHeadline(buckets, headlineTotal) {
+            const arr = Array.isArray(buckets) ? buckets.slice() : [];
+            const sum = arr.reduce((a, b) => a + (Number(b) || 0), 0);
+            if (sum > 0 || headlineTotal == null || !Number.isFinite(Number(headlineTotal)) || Number(headlineTotal) <= 0) {
+                return arr;
+            }
+            const n = arr.length || 1;
+            const v = Number(headlineTotal) / n;
+            return arr.map(() => v);
+        }
+
         function smoothPath(points, w, h, padBottom) {
             if (!points.length) return '';
             // Catmull-Rom -> cubic bezier for a smooth area chart.
@@ -12356,7 +12368,10 @@
                     ? dashPostImpHdr
                     : 0;
             const engImpHdr = Number(engagement.impressions) || 0;
-            const totalImpressions = Math.max(dashHdrNonNeg, impressionsSumPosts, engImpHdr);
+            const feedHdrCanon = dashboard.postImpressionsSource === 'feed_identity' && hasDashPostImpHdr;
+            const totalImpressions = feedHdrCanon
+                ? dashHdrNonNeg
+                : Math.max(dashHdrNonNeg, impressionsSumPosts, engImpHdr);
 
             const membersReached = dashboard.membersReached || engagement.membersReached || 0;
             const cardLikes = trackedPosts ? (likesFromPostsSum || (engagement.likes || 0)) : 0;
@@ -12414,8 +12429,9 @@
                 applyStatDelta('aFollowersDelta', series);
             })();
 
-            /** Extension sync stores `scrapedAt` on post metrics — include it so daily buckets populate. */
-            const postDay = (p) => p.postedAt || p.publishedAt || p.date || p.scrapedAt;
+            /** Fallback when LinkedIn scrape has no publish date — use last extension sync day so metrics aren't dropped from the 30-day chart. */
+            const lastSyncDay = data.lastSync || null;
+            const postDay = (p) => p.postedAt || p.publishedAt || p.date || p.scrapedAt || lastSyncDay;
             const postsSeries = bucketSeries(postMetrics, SPARK_DAYS, postDay);
             // Augment with locally-tracked posted queue items so the chart still
             // reflects activity when the extension hasn't synced metrics yet.
@@ -12430,19 +12446,21 @@
             renderStatSparkline('sparkPosts', postsSeries, { color: sparkBlue, dates: sparkDates30 });
             applyStatDelta('aPostsDelta', postsSeries);
 
-            const impressionsSeries = bucketSeries(
+            let impressionsSeries = bucketSeries(
                 postMetrics, SPARK_DAYS,
                 postDay,
                 p => p.impressions || 0,
             );
+            impressionsSeries = normalizeSparkBucketsToHeadline(impressionsSeries, totalImpressions);
             renderStatSparkline('sparkImpressions', impressionsSeries, { color: sparkBlue, dates: sparkDates30 });
             applyStatDelta('aImpressionsDelta', impressionsSeries);
 
-            const engagementsSeries = bucketSeries(
+            let engagementsSeries = bucketSeries(
                 postMetrics, SPARK_DAYS,
                 postDay,
                 p => (p.likes || 0) + (p.comments || 0) + (p.reposts || 0),
             );
+            engagementsSeries = normalizeSparkBucketsToHeadline(engagementsSeries, totalEngagements);
             renderStatSparkline('sparkEngagements', engagementsSeries, { color: sparkBlue, dates: sparkDates30 });
             applyStatDelta('aEngagementsDelta', engagementsSeries);
 

@@ -390,13 +390,21 @@ function mergeData(payload) {
         const prev = pendingData.dashboardStats || {};
         const patch = payload.dashboardStats;
         const next = { ...prev, ...patch };
-        if (patch && Object.prototype.hasOwnProperty.call(patch, 'postImpressions')) {
+
+        if (patch.postImpressionsSource === 'feed_identity' && patch.postImpressions !== undefined) {
+            next.postImpressions = Number(patch.postImpressions);
+            next.postImpressionsSource = 'feed_identity';
+        } else if (prev.postImpressionsSource === 'feed_identity' && patch.postImpressionsSource === 'analytics_page') {
+            next.postImpressions = Number(prev.postImpressions);
+            next.postImpressionsSource = 'feed_identity';
+        } else if (patch && Object.prototype.hasOwnProperty.call(patch, 'postImpressions')) {
             const a = Number(prev.postImpressions);
             const b = Number(patch.postImpressions);
             if (Number.isFinite(a) && a >= 0 && Number.isFinite(b) && b >= 0) {
                 next.postImpressions = Math.max(a, b);
             }
         }
+
         pendingData.dashboardStats = next;
     }
     if (payload.dms) {
