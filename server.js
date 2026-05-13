@@ -1914,6 +1914,9 @@ const AI_STUDIO_MAX_FETCH_IMAGE_BYTES = 10 * 1024 * 1024;
 function isAllowedAiStudioImageUrl(dbUser, urlStr) {
     const s = String(urlStr || '').trim();
     if (!s) return false;
+    const list = Array.isArray(dbUser?.aiGeneratedImages) ? dbUser.aiGeneratedImages : [];
+    if (list.some((it) => it && typeof it.url === 'string' && it.url.trim() === s)) return true;
+
     let u;
     try {
         u = new URL(s);
@@ -1921,8 +1924,6 @@ function isAllowedAiStudioImageUrl(dbUser, urlStr) {
         return false;
     }
     if (u.protocol !== 'https:') return false;
-    const list = Array.isArray(dbUser?.aiGeneratedImages) ? dbUser.aiGeneratedImages : [];
-    if (list.some((it) => it && typeof it.url === 'string' && it.url.trim() === s)) return true;
     const h = u.hostname.toLowerCase();
     if (/(^|\.)openai\.com$/i.test(h)) return true;
     if (/(^|\.)blob\.core\.windows\.net$/i.test(h)) return true;
@@ -2724,8 +2725,10 @@ Return ONLY the JSON array, no markdown, no explanation.`;
     }
 });
 
-/** Credits per AI image (DALL·E-class generation). Ultra-only feature. */
+/** Credits per AI image (OpenAI image generation). Ultra-only feature. */
 const AI_IMAGE_CREDIT_COST = 10;
+/** DALL·E models were retired on the public API — use GPT Image models instead. Override via OPENAI_IMAGE_MODEL. */
+const AI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
 
 const AI_IMAGE_STYLE_FRAGMENTS = {
     comic: 'comic book art, bold ink outlines, halftone or cel shading, vibrant colors',
@@ -2783,18 +2786,25 @@ app.post('/api/ai/generate-image', async (req, res) => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
             body: JSON.stringify({
-                model: 'dall-e-3',
+                model: AI_IMAGE_MODEL,
                 prompt,
                 n: 1,
                 size: '1024x1024',
-                quality: 'standard',
-                response_format: 'url',
+                quality: 'medium',
+                output_format: 'jpeg',
+                output_compression: 85,
             }),
         });
         const data = await response.json();
         const errMsg = data.error?.message || (typeof data.error === 'string' ? data.error : null);
 
-        const imageUrl = data.data?.[0]?.url;
+        const first = data.data?.[0];
+        let imageUrl = first?.url ? String(first.url).trim() : '';
+        const b64 = first?.b64_json;
+        if (!imageUrl && b64 && typeof b64 === 'string') {
+            imageUrl = `data:image/jpeg;base64,${b64}`;
+        }
+
         if (!response.ok || !imageUrl) {
             console.error('OpenAI images error:', response.status, errMsg || data);
             return res.json({
@@ -2802,7 +2812,7 @@ app.post('/api/ai/generate-image', async (req, res) => {
             });
         }
 
-        const revisedPrompt = data.data?.[0]?.revised_prompt || null;
+        const revisedPrompt = first?.revised_prompt || null;
 
         await consumeCredit(req.session, AI_IMAGE_CREDIT_COST);
 
