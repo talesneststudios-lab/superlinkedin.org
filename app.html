@@ -6283,7 +6283,7 @@
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Chrome extension access</div>
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Email support</div>
                                 </div>
-                                <button onclick="startCheckout('pro')" id="planBtnPro" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--text-primary);transition:0.15s;">Start your 3-day Trial</button>
+                                <button onclick="startCheckout('pro')" id="planBtnPro" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--text-primary);transition:0.15s;">Change Plan</button>
                                 <div style="text-align:center;font-size:0.7rem;color:var(--text-muted);margin-top:8px;">cancel any time &middot; 100% content ownership</div>
                             </div>
 
@@ -6312,7 +6312,7 @@
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Carousel & document support</div>
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Priority support</div>
                                 </div>
-                                <button onclick="startCheckout('advanced')" id="planBtnAdv" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;transition:0.15s;">Start your 3-day Trial</button>
+                                <button onclick="startCheckout('advanced')" id="planBtnAdv" style="width:100%;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;transition:0.15s;">Change Plan</button>
                                 <div style="text-align:center;font-size:0.7rem;color:var(--text-muted);margin-top:8px;">cancel any time &middot; 100% content ownership</div>
                             </div>
 
@@ -6338,7 +6338,7 @@
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> Image posts (AI Image Studio)</div>
                                     <div style="display:flex;align-items:center;gap:8px;font-size:0.82rem;"><span style="color:#22c55e;">&#10003;</span> AI Image Studio (describe + generate images for LinkedIn)</div>
                                 </div>
-                                <button onclick="startCheckout('ultra')" id="planBtnUltra" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--text-primary);transition:0.15s;">Start your 3-day Trial</button>
+                                <button onclick="startCheckout('ultra')" id="planBtnUltra" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--bg-secondary);font-family:inherit;font-weight:700;font-size:0.85rem;cursor:pointer;color:var(--text-primary);transition:0.15s;">Change Plan</button>
                                 <div style="text-align:center;font-size:0.7rem;color:var(--text-muted);margin-top:8px;">cancel any time &middot; 100% content ownership</div>
                             </div>
                         </div>
@@ -8187,63 +8187,130 @@
 
         // ===== VIRAL LIBRARY =====
         let _vlPage = 1;
-        async function loadViralLibrary() {
+        let _vlLoading = false;
+
+        function loadMoreViralPosts() {
+            _vlPage += 1;
+            loadViralLibrary(true);
+        }
+
+        async function loadViralLibrary(append) {
+            const doAppend = append === true;
+            if (_vlLoading) return;
+            if (!doAppend) _vlPage = 1;
+
             const q = (document.getElementById('vlSearch')?.value || '').trim();
             const category = document.getElementById('vlCategory')?.value || '';
             const type = document.getElementById('vlType')?.value || '';
-            const params = new URLSearchParams({ page: _vlPage });
+            const params = new URLSearchParams({ page: String(_vlPage) });
             if (q) params.set('q', q);
             if (category) params.set('category', category);
             if (type) params.set('type', type);
+
+            const container = document.getElementById('vlResults');
+            const pagEl = document.getElementById('vlPagination');
+            if (!container || !pagEl) return;
+
+            const prevLoadBtn = pagEl.querySelector('[data-vl-load-more]');
+            if (prevLoadBtn) {
+                prevLoadBtn.disabled = true;
+                prevLoadBtn.textContent = 'Loading\u2026';
+            }
+
+            _vlLoading = true;
             try {
                 const res = await fetch('/api/viral-library?' + params);
                 if (!res.ok) return;
                 const data = await res.json();
-                const container = document.getElementById('vlResults');
-                if (!data.posts || data.posts.length === 0) {
-                    container.innerHTML = '<div class="empty-state"><p>No posts match your filters. Try adjusting your search.</p></div>';
-                    document.getElementById('vlPagination').innerHTML = '';
+                const posts = data.posts || [];
+
+                if (doAppend && posts.length === 0) {
+                    _vlPage = Math.max(1, _vlPage - 1);
+                    renderViralLoadMoreFooter(data.total ?? 0, data.page ?? _vlPage, data.pages ?? 1);
                     return;
                 }
-                container.innerHTML = data.posts.map(p => `
+
+                if (!doAppend && posts.length === 0) {
+                    container.innerHTML =
+                        '<div class="empty-state"><p>No posts match your filters. Try adjusting your search.</p></div>';
+                    pagEl.innerHTML = '';
+                    return;
+                }
+
+                const cardHtml = posts
+                    .map(
+                        (p) => `
                     <div class="feed-card">
                         <div class="feed-card-meta">
-                            <span class="vl-category-tag">${p.category}</span>
-                            <span class="vl-category-tag" style="background:rgba(245,158,11,0.1);color:#f59e0b;">${p.type}</span>
-                            <span style="margin-left:auto;">${p.author}</span>
+                            <span class="vl-category-tag">${escapeHtml(String(p.category))}</span>
+                            <span class="vl-category-tag" style="background:rgba(245,158,11,0.1);color:#f59e0b;">${escapeHtml(String(p.type))}</span>
+                            <span style="margin-left:auto;">${escapeHtml(String(p.author))}</span>
                         </div>
-                        <div class="feed-card-text">${p.text.replace(/\n/g, '<br>')}</div>
+                        <div class="feed-card-text">${escapeHtml(String(p.text)).replace(/\n/g, '<br>')}</div>
                         <div class="feed-card-stats">
-                            <span>&#10084; ${p.likes.toLocaleString()}</span>
-                            <span>&#128172; ${p.comments.toLocaleString()}</span>
-                            <span>&#128257; ${p.reposts.toLocaleString()}</span>
+                            <span>&#10084; ${Number(p.likes || 0).toLocaleString()}</span>
+                            <span>&#128172; ${Number(p.comments || 0).toLocaleString()}</span>
+                            <span>&#128257; ${Number(p.reposts || 0).toLocaleString()}</span>
                         </div>
                         <div class="feed-card-actions">
-                            <button class="feed-card-btn primary" onclick="useAsTemplate(${p.id})">Use as Template</button>
+                            <button type="button" class="feed-card-btn primary" onclick="useAsTemplate(${Number(p.id)})">Use as Template</button>
                         </div>
                     </div>
-                `).join('');
-                const pagEl = document.getElementById('vlPagination');
-                if (data.pages > 1) {
-                    let html = '';
-                    for (let i = 1; i <= data.pages; i++) {
-                        html += `<button onclick="_vlPage=${i};loadViralLibrary()" style="padding:6px 12px;border:1px solid ${i===data.page?'var(--accent)':'var(--border)'};border-radius:8px;background:${i===data.page?'var(--accent)':'transparent'};color:${i===data.page?'#fff':'var(--text-secondary)'};font-family:inherit;cursor:pointer;">${i}</button>`;
-                    }
-                    pagEl.innerHTML = html;
-                } else { pagEl.innerHTML = ''; }
-            } catch {}
+                `,
+                    )
+                    .join('');
+
+                if (doAppend) container.insertAdjacentHTML('beforeend', cardHtml);
+                else container.innerHTML = cardHtml;
+
+                const total = data.total ?? 0;
+                const pageNum = data.page ?? _vlPage;
+                const pages = data.pages ?? 1;
+                renderViralLoadMoreFooter(total, pageNum, pages);
+            } catch {
+            } finally {
+                _vlLoading = false;
+            }
+        }
+
+        function renderViralLoadMoreFooter(total, pageNum, pages) {
+            const pagEl = document.getElementById('vlPagination');
+            if (!pagEl) return;
+            const shown = document.querySelectorAll('#vlResults .feed-card').length;
+            const meta =
+                total > 0 && pages > 1
+                    ? `<div style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">Showing ${shown} of ${total} templates</div>`
+                    : '';
+            const hasMore = pageNum < pages;
+            if (hasMore) {
+                pagEl.innerHTML =
+                    meta +
+                    '<div style="display:flex;justify-content:center;"><button type="button" data-vl-load-more onclick="loadMoreViralPosts()" style="padding:12px 28px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-weight:700;font-size:0.88rem;cursor:pointer;">Load more</button></div>';
+            } else {
+                pagEl.innerHTML = meta;
+            }
         }
 
         function useAsTemplate(id) {
-            fetch('/api/viral-library').then(r => r.json()).then(data => {
-                const post = data.posts.find(p => p.id === id);
-                if (post) {
-                    const ta = document.getElementById('composeTextarea');
-                    if (ta) { ta.value = post.text; updateComposeCharCount(); }
-                    toggleCompose();
-                    showNotify('Template Loaded', 'Post text copied to composer. Edit it to make it your own!', 'success');
-                }
-            }).catch(() => {});
+            fetch('/api/viral-library?' + new URLSearchParams({ id: String(id) }))
+                .then((r) => r.json())
+                .then((data) => {
+                    const post = (data.posts && data.posts[0]) || null;
+                    if (post) {
+                        const ta = document.getElementById('composeTextarea');
+                        if (ta) {
+                            ta.value = post.text;
+                            updateComposeCharCount();
+                        }
+                        toggleCompose();
+                        showNotify(
+                            'Template Loaded',
+                            'Post text copied to composer. Edit it to make it your own!',
+                            'success',
+                        );
+                    }
+                })
+                .catch(() => {});
         }
 
         // ===== DISCOVER =====
@@ -10148,6 +10215,7 @@
             btn.style.borderBottomColor = 'var(--accent)';
             btn.style.color = 'var(--text-primary)';
             if (tab === 'team') loadSettingsTeam();
+            if (tab === 'plans') highlightCurrentPlan();
         }
 
         async function loadSettingsTeam() {
@@ -10351,18 +10419,29 @@
 
         function highlightCurrentPlan() {
             const tier = creditsData.planTier || '';
-            ['Pro', 'Adv', 'Ultra'].forEach(t => {
+            const tierMap = { Pro: 'pro', Adv: 'advanced', Ultra: 'ultra' };
+            ['Pro', 'Adv', 'Ultra'].forEach((t) => {
                 const btn = document.getElementById('planBtn' + t);
                 if (!btn) return;
-                const tierMap = { Pro: 'pro', Adv: 'advanced', Ultra: 'ultra' };
-                if (tierMap[t] === tier && currentUser && currentUser.paid) {
+                const isCurrent = tierMap[t] === tier && currentUser && currentUser.paid;
+                if (isCurrent) {
                     btn.textContent = 'Current Plan';
                     btn.style.background = 'var(--bg-secondary)';
                     btn.style.color = 'var(--text-muted)';
                     btn.style.border = '1px solid var(--border)';
                     btn.disabled = true;
+                    return;
+                }
+                btn.textContent = 'Change Plan';
+                btn.disabled = false;
+                if (t === 'Adv') {
+                    btn.style.border = 'none';
+                    btn.style.background = 'var(--accent)';
+                    btn.style.color = '#fff';
                 } else {
-                    btn.disabled = false;
+                    btn.style.border = '1px solid var(--border)';
+                    btn.style.background = 'var(--bg-secondary)';
+                    btn.style.color = 'var(--text-primary)';
                 }
             });
         }
@@ -11118,6 +11197,7 @@
             }
 
             if (typeof updateCarouselNavLock === 'function') updateCarouselNavLock();
+            highlightCurrentPlan();
         }
 
         function trackCredit(type) {

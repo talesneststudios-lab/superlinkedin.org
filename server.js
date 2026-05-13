@@ -4124,6 +4124,12 @@ app.get('/api/viral-library', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
     if (!(await hasFeature(req.session, 'viral_library'))) return res.status(403).json({ error: 'Upgrade to Advanced or Ultra to access the Viral Library.' });
 
+    const idRaw = req.query.id;
+    if (idRaw != null && String(idRaw).trim() !== '') {
+        const found = VIRAL_POSTS.find((p) => String(p.id) === String(idRaw).trim());
+        return res.json({ posts: found ? [found] : [], total: found ? 1 : 0, page: 1, pages: found ? 1 : 0 });
+    }
+
     const { q, category, type, minLikes, page } = req.query;
     let results = [...VIRAL_POSTS];
     if (q) { const lq = q.toLowerCase(); results = results.filter(p => p.text.toLowerCase().includes(lq) || p.author.toLowerCase().includes(lq)); }
