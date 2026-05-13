@@ -151,6 +151,12 @@
             box-shadow: 0 8px 32px var(--accent-glow);
         }
 
+        /* Nav links set a grey color on all <a>; bump specificity so CTA matches hero */
+        .nav-links .btn.btn-primary,
+        .nav-links .btn.btn-primary:hover {
+            color: #ffffff;
+        }
+
         .btn-secondary {
             background: rgba(255, 255, 255, 0.06);
             color: var(--text-primary);
