@@ -387,7 +387,17 @@ function mergeData(payload) {
         }
     }
     if (payload.dashboardStats) {
-        pendingData.dashboardStats = { ...(pendingData.dashboardStats || {}), ...payload.dashboardStats };
+        const prev = pendingData.dashboardStats || {};
+        const patch = payload.dashboardStats;
+        const next = { ...prev, ...patch };
+        if (patch && Object.prototype.hasOwnProperty.call(patch, 'postImpressions')) {
+            const a = Number(prev.postImpressions);
+            const b = Number(patch.postImpressions);
+            if (Number.isFinite(a) && a >= 0 && Number.isFinite(b) && b >= 0) {
+                next.postImpressions = Math.max(a, b);
+            }
+        }
+        pendingData.dashboardStats = next;
     }
     if (payload.dms) {
         pendingData.dms = payload.dms;

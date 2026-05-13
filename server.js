@@ -2729,6 +2729,8 @@ Return ONLY the JSON array, no markdown, no explanation.`;
 const AI_IMAGE_CREDIT_COST = 10;
 /** DALL·E models were retired on the public API — use GPT Image models instead. Override via OPENAI_IMAGE_MODEL. */
 const AI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
+/** e.g. 1024x1024, 1024x1536 (portrait, more vertical room for text), 1536x1024 (landscape). */
+const AI_IMAGE_SIZE = process.env.OPENAI_IMAGE_SIZE || '1024x1536';
 
 const AI_IMAGE_STYLE_FRAGMENTS = {
     comic: 'comic book art, bold ink outlines, halftone or cel shading, vibrant colors',
@@ -2779,7 +2781,8 @@ app.post('/api/ai/generate-image', async (req, res) => {
     const styleFragment = AI_IMAGE_STYLE_FRAGMENTS[styleKey];
 
     const prompt = `${topic}\n\nStyle: ${styleFragment}.\n` +
-        'Professional, suitable as LinkedIn visuals. Avoid clutter, watermark text, logos, or legible copyrighted characters unless the user explicitly asked.';
+        'Professional, suitable as LinkedIn visuals. Avoid clutter, watermark text, logos, or legible copyrighted characters unless the user explicitly asked.\n' +
+        'Layout: Leave a clear safety margin inside the frame — keep all visible text, faces, and key elements at least 8% away from every edge so nothing looks cropped at the borders.';
 
     try {
         const response = await fetch('https://api.openai.com/v1/images/generations', {
@@ -2789,7 +2792,7 @@ app.post('/api/ai/generate-image', async (req, res) => {
                 model: AI_IMAGE_MODEL,
                 prompt,
                 n: 1,
-                size: '1024x1024',
+                size: AI_IMAGE_SIZE,
                 quality: 'medium',
                 output_format: 'jpeg',
                 output_compression: 85,
@@ -3606,17 +3609,25 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
     if (dashboardStats) {
         const user = await dbGetUser(linkedinId);
         const existing = (user && user.analyticsDashboard) || {};
-        updates.analyticsDashboard = { ...existing, ...dashboardStats, updatedAt: now };
+        const mergedDash = { ...existing, ...dashboardStats };
+        if (dashboardStats && Object.prototype.hasOwnProperty.call(dashboardStats, 'postImpressions')) {
+            const a = Number(existing.postImpressions);
+            const b = Number(dashboardStats.postImpressions);
+            if (Number.isFinite(a) && a >= 0 && Number.isFinite(b) && b >= 0) {
+                mergedDash.postImpressions = Math.max(a, b);
+            }
+        }
+        mergedDash.updatedAt = now;
+        updates.analyticsDashboard = mergedDash;
 
         if (dashboardStats.profileViews !== undefined) updates.analyticsProfileViews = dashboardStats.profileViews;
         if (dashboardStats.searchAppearances !== undefined) updates.analyticsSearchAppearances = dashboardStats.searchAppearances;
-        if (dashboardStats.postImpressions !== undefined) {
-            if (!updates.analyticsEngagement) {
-                const eng = (user && user.analyticsEngagement) || {};
-                updates.analyticsEngagement = { ...eng, impressions: dashboardStats.postImpressions };
-            } else {
-                updates.analyticsEngagement.impressions = dashboardStats.postImpressions;
-            }
+        if (dashboardStats && Object.prototype.hasOwnProperty.call(dashboardStats, 'postImpressions')) {
+            const eng = updates.analyticsEngagement || (user && user.analyticsEngagement) || {};
+            updates.analyticsEngagement = {
+                ...eng,
+                impressions: Number(mergedDash.postImpressions) || eng.impressions || 0,
+            };
         }
 
         if (dashboardStats.followers !== undefined && dashboardStats.followers !== null &&
@@ -3728,9 +3739,12 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         });
 
         const prevEng = updates.analyticsEngagement || (user2 && user2.analyticsEngagement) || {};
-        const dashboardImpressions = (dashboardStats && dashboardStats.postImpressions !== undefined)
-            ? dashboardStats.postImpressions
-            : prevEng.impressions || 0;
+        let dashboardImpressions = prevEng.impressions || 0;
+        if (updates.analyticsDashboard && updates.analyticsDashboard.postImpressions !== undefined) {
+            dashboardImpressions = Number(updates.analyticsDashboard.postImpressions) || dashboardImpressions;
+        } else if (dashboardStats && dashboardStats.postImpressions !== undefined) {
+            dashboardImpressions = Number(dashboardStats.postImpressions) || dashboardImpressions;
+        }
         const dashboardMembersReached = (dashboardStats && dashboardStats.membersReached !== undefined)
             ? dashboardStats.membersReached
             : null;
@@ -3909,10 +3923,10 @@ function summarizePostInteractions(postMetrics) {
 }
 
 /**
- * AVG engagement uses dashboard numerator + denominator only when BOTH come from analyticsDashboard.
+ * AVG engagement uses dashboard social engagements ÷ reconciled impressions when both exist.
+ * Total impressions use max(dashboard rollup, sum of tracked post cards, stored engagement snapshot)
+ * so a bad analytics-page scrape (tiny number) does not override the feed sidebar’s “Post impressions”.
  * Otherwise use summed post reactions ÷ summed post impressions (tracked cards only).
- * This avoids bogus rates like 1172% when "social engagements" is dashboard-wide but
- * impressions fallback is profile views, stale rollups, or a tiny partial sum.
  */
 function computeAvgEngagementAndDisplayImpressions(postMetrics, analyticsEngagement, analyticsDashboard) {
     const dash = analyticsDashboard || {};
@@ -3924,26 +3938,23 @@ function computeAvgEngagementAndDisplayImpressions(postMetrics, analyticsEngagem
 
     const hasDashPostImp = Object.prototype.hasOwnProperty.call(dash, 'postImpressions');
     const dashPostImp = hasDashPostImp ? Number(dash.postImpressions) : null;
-    const dashPostImpOk = dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp > 0;
+
+    /** Feed identity sidebar often has the real “Post impressions” rollup; `/analytics/` page scrape sometimes overwrites dashboard with another widget’s digits (too low). */
+    const dashImpNonNeg =
+        hasDashPostImp && dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp >= 0 ? dashPostImp : 0;
+    const sumImp = fromPosts.impressionsSum || 0;
+    const engImp = Number(eng.impressions) || 0;
+    const reconciledImp = Math.max(dashImpNonNeg, sumImp, engImp);
 
     let avgEngagement = 0;
-    if (socialDash !== null && Number.isFinite(socialDash) && socialDash >= 0 && dashPostImpOk) {
-        avgEngagement = (socialDash / dashPostImp) * 100;
-    } else {
-        const postInteractions = fromPosts.likes + fromPosts.comments + fromPosts.reposts;
-        avgEngagement = fromPosts.impressionsSum > 0
-            ? (postInteractions / fromPosts.impressionsSum) * 100
-            : 0;
+    const postInteractions = fromPosts.likes + fromPosts.comments + fromPosts.reposts;
+    if (socialDash !== null && Number.isFinite(socialDash) && socialDash >= 0 && reconciledImp > 0) {
+        avgEngagement = (socialDash / reconciledImp) * 100;
+    } else if (sumImp > 0) {
+        avgEngagement = (postInteractions / sumImp) * 100;
     }
 
-    let totalImpressions = 0;
-    if (hasDashPostImp && dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp >= 0) {
-        totalImpressions = dashPostImp;
-    } else if (fromPosts.impressionsSum > 0) {
-        totalImpressions = fromPosts.impressionsSum;
-    } else {
-        totalImpressions = Number(eng.impressions) || 0;
-    }
+    const totalImpressions = reconciledImp;
 
     return { avgEngagement, totalImpressions, fromPosts };
 }

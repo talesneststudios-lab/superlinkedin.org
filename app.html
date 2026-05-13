@@ -3959,15 +3959,66 @@
         .stat-delta.down { color: #ef4444; background: rgba(239,68,68,0.12); }
         .stat-delta.flat { color: var(--text-muted); background: rgba(148,163,184,0.12); }
         .stat-mini-chart {
-            height: 56px;
+            height: 86px;
             margin-top: 12px;
             position: relative;
+        }
+        .stat-spark-wrap {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            user-select: none;
         }
         .stat-mini-chart svg {
             width: 100%;
             height: 100%;
             display: block;
             overflow: visible;
+        }
+        .stat-spark-xlabel {
+            font-size: 8px;
+            font-weight: 600;
+            fill: var(--text-muted);
+            font-family: Inter, system-ui, sans-serif;
+        }
+        .stat-spark-xline {
+            stroke: var(--border);
+            stroke-width: 1;
+            opacity: 0.65;
+            vector-effect: non-scaling-stroke;
+        }
+        .stat-spark-hover-dot {
+            pointer-events: none;
+            stroke: none;
+        }
+        .stat-spark-tooltip {
+            display: none;
+            position: absolute;
+            pointer-events: none;
+            z-index: 40;
+            min-width: 120px;
+            padding: 8px 11px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.72rem;
+            line-height: 1.35;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+            font-family: inherit;
+        }
+        .dark-mode .stat-spark-tooltip {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+        }
+        .stat-spark-tooltip .stat-spark-tip-val {
+            font-weight: 800;
+            font-size: 0.92rem;
+            color: var(--text-primary);
+        }
+        .stat-spark-tooltip .stat-spark-tip-date {
+            color: var(--text-muted);
+            font-size: 0.68rem;
+            margin-top: 2px;
         }
         .stat-mini-chart .spark-line {
             fill: none;
@@ -4170,6 +4221,44 @@
             left: 0; right: 0; top: 0; bottom: 0;
             width: 100%;
             height: 100%;
+            overflow: visible;
+        }
+
+        .follower-hover-dot {
+            pointer-events: none;
+            stroke: none;
+        }
+
+        .follower-chart-tooltip {
+            display: none;
+            position: absolute;
+            pointer-events: none;
+            z-index: 40;
+            min-width: 120px;
+            padding: 8px 11px;
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.72rem;
+            line-height: 1.35;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.14);
+            font-family: inherit;
+        }
+
+        .dark-mode .follower-chart-tooltip {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+        }
+
+        .follower-chart-tooltip .follower-tip-val {
+            font-weight: 800;
+            font-size: 0.92rem;
+        }
+
+        .follower-chart-tooltip .follower-tip-date {
+            color: var(--text-muted);
+            font-size: 0.68rem;
+            margin-top: 2px;
         }
 
         .chart-x-labels {
@@ -5881,9 +5970,11 @@
                                     <div class="chart-gridline" style="top:0;"></div>
                                     <div class="chart-gridline" style="top:50%;"></div>
                                 </div>
-                                <svg class="chart-line-svg" id="followerSvg" preserveAspectRatio="none">
+                                <svg class="chart-line-svg" id="followerSvg" preserveAspectRatio="none" style="touch-action:none;">
                                     <polyline id="followerLine" fill="none" stroke="#0A66C2" stroke-width="2" points=""/>
+                                    <circle id="followerHoverDot" class="follower-hover-dot" cx="0" cy="0" r="5" fill="#0A66C2" visibility="hidden"/>
                                 </svg>
+                                <div id="followerChartTooltip" class="follower-chart-tooltip" style="display:none;" role="tooltip" aria-live="polite"></div>
                             </div>
                             <div class="chart-x-labels" id="followerXLabels"></div>
                         </div>
@@ -11708,60 +11799,215 @@
             return cmd.join(' ');
         }
 
+        function buildSparkDateIsoList(n) {
+            const len = Math.max(1, Math.floor(Number(n)) || 1);
+            const out = [];
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            start.setDate(start.getDate() - (len - 1));
+            for (let i = 0; i < len; i++) {
+                const d = new Date(start);
+                d.setDate(start.getDate() + i);
+                out.push(d.toISOString().slice(0, 10));
+            }
+            return out;
+        }
+
+        function formatSparkDateLabel(iso) {
+            if (!iso) return '';
+            const d = new Date(iso + 'T12:00:00');
+            if (isNaN(d.getTime())) return iso;
+            return d.toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year:
+                    d.getFullYear() === new Date().getFullYear()
+                        ? undefined
+                        : 'numeric',
+            });
+        }
+
+        /** Wire mousemove/Mouseleave for stat card sparkline: snaps to nearest day, dot + tooltip. */
+        function bindStatSparkHover(hostEl, wrapEl, svgEl, tipEl, snapPoints, isoDates, values, colorHex) {
+            if (!hostEl || !wrapEl || !svgEl || !tipEl || !snapPoints || !snapPoints.length) return;
+            const dot = svgEl.querySelector('.stat-spark-hover-dot');
+            let lastIdx = -1;
+
+            function hide() {
+                lastIdx = -1;
+                tipEl.style.display = 'none';
+                if (dot) dot.setAttribute('visibility', 'hidden');
+                delete wrapEl.dataset.sparkOpen;
+            }
+
+            function showAt(idx) {
+                idx = Math.max(0, Math.min(idx, snapPoints.length - 1));
+                if (idx === lastIdx && tipEl.style.display === 'block') return;
+                lastIdx = idx;
+                const px = snapPoints[idx][0];
+                const py = snapPoints[idx][1];
+                const val = Number(values[idx]) || 0;
+                const iso = isoDates[idx] || '';
+                if (dot) {
+                    dot.setAttribute('cx', String(px));
+                    dot.setAttribute('cy', String(py));
+                    dot.setAttribute('fill', colorHex);
+                    dot.removeAttribute('stroke');
+                    dot.removeAttribute('stroke-width');
+                    dot.setAttribute('visibility', 'visible');
+                }
+                tipEl.innerHTML =
+                    `<div class="stat-spark-tip-val">${escapeHtml(val.toLocaleString())}</div>` +
+                    `<div class="stat-spark-tip-date">${escapeHtml(formatSparkDateLabel(iso))}</div>`;
+                tipEl.style.display = 'block';
+                wrapEl.dataset.sparkOpen = '1';
+
+                requestAnimationFrame(() => {
+                    const wrapR = wrapEl.getBoundingClientRect();
+                    const pt = svgEl.createSVGPoint();
+                    pt.x = px;
+                    pt.y = py;
+                    try {
+                        const scr = pt.matrixTransform(svgEl.getScreenCTM());
+                        tipEl.style.left = Math.round(scr.x - wrapR.left) + 'px';
+                        tipEl.style.top = Math.round(scr.y - wrapR.top) + 'px';
+                    } catch (_e) {
+                        tipEl.style.left = Math.round(((px / 280) * wrapR.width)) + 'px';
+                        tipEl.style.top = Math.round(((py / 70) * wrapR.height)) + 'px';
+                    }
+                    tipEl.style.transform = 'translate(-50%, calc(-100% - 10px))';
+                });
+            }
+
+            svgEl.addEventListener('mousemove', (ev) => {
+                let idx = 0;
+                try {
+                    const pt = svgEl.createSVGPoint();
+                    pt.x = ev.clientX;
+                    pt.y = ev.clientY;
+                    const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+                    const ns = snapPoints.length;
+                    if (ns >= 2) {
+                        const stepXp = (snapPoints[ns - 1][0] - snapPoints[0][0]) / (ns - 1);
+                        idx = Math.round((svgP.x - snapPoints[0][0]) / Math.max(stepXp, 0.001));
+                    }
+                } catch (_e2) {
+                    const r = svgEl.getBoundingClientRect();
+                    const fx = Math.max(0, Math.min(1, (ev.clientX - r.left) / Math.max(r.width, 1)));
+                    idx = Math.round(fx * Math.max(0, snapPoints.length - 1));
+                }
+                showAt(Math.max(0, Math.min(idx, snapPoints.length - 1)));
+            });
+            svgEl.addEventListener('mouseleave', hide);
+            hostEl.__sparkCleanup = hide;
+        }
+
         function renderStatSparkline(containerId, series, opts) {
             const host = document.getElementById(containerId);
             if (!host) return;
+            if (typeof host.__sparkCleanup === 'function') {
+                try {
+                    host.__sparkCleanup();
+                } catch (_sc) {}
+                host.__sparkCleanup = null;
+            }
             opts = opts || {};
             const color = opts.color || '#3B82F6';
-            const W = 280; // viewBox width
-            const H = 56;  // viewBox height
+            const W = 280;
+            const chartTop = 4;
+            const chartBot = 48;
+            const axisLineY = 50;
+            const labelY = 62;
+            const H = 70;
             const padX = 2;
-            const padTop = 4;
-            const padBottom = 2;
-            const data = (series && series.length ? series : []).slice();
-            const hasData = data.some(v => v > 0);
 
-            // Empty state -- a soft dashed baseline so the card never looks broken
-            if (!hasData) {
-                host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-                    <line class="spark-empty" x1="${padX}" y1="${H - padBottom - 6}" x2="${W - padX}" y2="${H - padBottom - 6}"></line>
-                </svg>`;
-                return;
+            let data = Array.isArray(series) && series.length ? series.slice() : [];
+            const fallbackDays = opts.days || 30;
+            if (!data.length) data = new Array(Math.max(1, fallbackDays)).fill(0);
+
+            const dates =
+                opts.dates && opts.dates.length === data.length ? opts.dates.slice() : buildSparkDateIsoList(data.length);
+
+            const hasPulse = data.some((v) => Number(v) > 0);
+
+            let min = Math.min.apply(null, data);
+            let max = Math.max.apply(null, data);
+            if (!Number.isFinite(min)) min = 0;
+            if (!Number.isFinite(max)) max = 0;
+            if (max === min) {
+                if (max <= 0) {
+                    max = 1;
+                    min = 0;
+                }
             }
-
-            const max = Math.max.apply(null, data);
-            const min = Math.min.apply(null, data);
-            const range = (max - min) || 1;
+            const range = max - min || 1;
             const n = data.length;
+            const innerH = chartBot - chartTop - 6;
             const stepX = n > 1 ? (W - padX * 2) / (n - 1) : 0;
-            const points = data.map((v, i) => {
-                const x = padX + i * stepX;
-                const y = padTop + (1 - (v - min) / range) * (H - padTop - padBottom);
-                return [x, y];
-            });
-            // Single-point fallback: extend across the chart at the midline
-            if (points.length === 1) {
-                const y = padTop + (H - padTop - padBottom) / 2;
-                points[0] = [padX, y];
-                points.push([W - padX, y]);
+
+            const pts = [];
+            for (let i = 0; i < n; i++) {
+                const x = n > 1 ? padX + i * stepX : padX + (W - padX * 2) / 2;
+                const vn = Number(data[i]) || 0;
+                const y = chartTop + (1 - (vn - min) / range) * innerH;
+                pts.push([x, y]);
             }
 
-            const linePath = smoothPath(points, W, H, padBottom);
-            const areaPath = linePath
-                + ` L ${points[points.length - 1][0]} ${H - padBottom}`
-                + ` L ${points[0][0]} ${H - padBottom} Z`;
-            const gradId = 'sparkGrad-' + containerId;
+            let linePts = pts.slice();
+            if (linePts.length === 1) {
+                const y = linePts[0][1];
+                linePts = [
+                    [padX, y],
+                    [W - padX, y],
+                ];
+            }
 
-            host.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-                <defs>
-                    <linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="${color}" stop-opacity="0.45"></stop>
-                        <stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>
-                    </linearGradient>
-                </defs>
-                <path d="${areaPath}" fill="url(#${gradId})"></path>
-                <path class="spark-line" d="${linePath}" stroke="${color}"></path>
-            </svg>`;
+            let curve =
+                linePts.length >= 2 ? smoothPath(linePts, W, chartBot, 0) : `M ${padX} ${chartBot - 10} L ${W - padX} ${chartBot - 10}`;
+            let areaFill =
+                linePts.length >= 2 && pts.length >= 2
+                    ? `${curve} L ${linePts[linePts.length - 1][0]} ${chartBot} L ${linePts[0][0]} ${chartBot} Z`
+                    : `M ${padX} ${chartBot - 10} L ${W - padX} ${chartBot - 10} L ${W - padX} ${chartBot} L ${padX} ${chartBot} Z`;
+
+            const gradId = `sparkGrad-${containerId}-${Math.random().toString(36).slice(2, 11)}`;
+
+            const tickIx = [...new Set([0, Math.floor((n - 1) / 4), Math.floor((n - 1) / 2), Math.floor(((n - 1) * 3) / 4), n - 1])]
+                .filter((i) => i >= 0 && i < n)
+                .sort((a, b) => a - b);
+            let tickSvg = '';
+            tickIx.forEach((ti) => {
+                const lx = n > 1 ? padX + ti * stepX : padX + (W - padX * 2) / 2;
+                const lbl = formatSparkDateLabel(dates[ti] || '').trim() || dates[ti] || '';
+                tickSvg += `<text class="stat-spark-xlabel" text-anchor="middle" x="${lx.toFixed(1)}" y="${labelY}">${escapeHtml(lbl)}</text>`;
+            });
+
+            const firstCx = pts[0] ? pts[0][0] : padX + (W - padX * 2) / 2;
+            const firstCy = pts[0] ? pts[0][1] : chartBot - 12;
+
+            host.innerHTML =
+                '<div class="stat-spark-wrap">' +
+                `<svg class="stat-spark-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="touch-action:none;">` +
+                '<defs>' +
+                `<linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">` +
+                `<stop offset="0%" stop-color="${color}" stop-opacity="${hasPulse ? 0.45 : 0.22}"></stop>` +
+                `<stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>` +
+                '</linearGradient>' +
+                '</defs>' +
+                `<line class="stat-spark-xline" x1="${padX}" y1="${axisLineY}" x2="${W - padX}" y2="${axisLineY}"></line>` +
+                `<path d="${areaFill}" fill="url(#${gradId})"></path>` +
+                `<path class="spark-line" d="${curve}" stroke="${color}" stroke-opacity="${hasPulse ? 1 : 0.85}"></path>` +
+                `<circle class="stat-spark-hover-dot" r="4.5" cx="${firstCx}" cy="${firstCy}" visibility="hidden" />` +
+                tickSvg +
+                '</svg>' +
+                '<div class="stat-spark-tooltip" role="tooltip" aria-live="polite"></div>' +
+                '</div>';
+
+            const wrap = host.querySelector('.stat-spark-wrap');
+            const svg = host.querySelector('.stat-spark-svg');
+            const tip = host.querySelector('.stat-spark-tooltip');
+            if (wrap && svg && tip) {
+                bindStatSparkHover(host, wrap, svg, tip, pts, dates, data, color);
+            }
         }
 
         function applyStatDelta(deltaElId, series) {
@@ -11820,66 +12066,177 @@
             document.getElementById('activityPanel').style.display = tab === 'activity' ? 'block' : 'none';
         }
 
+        function followerHistoryDateIso(entry) {
+            if (!entry || entry.date === undefined || entry.date === null) return '';
+            const s = String(entry.date);
+            if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0, 10);
+            const d = new Date(s);
+            return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+        }
+
+        function bindFollowerGainHover(svg, tooltipEl, areaEl, pts, isoDates, counts) {
+            if (!svg || !tooltipEl || !areaEl || !pts || !pts.length) return;
+
+            function hideFollowerHover() {
+                tooltipEl.style.display = 'none';
+                const dot = document.getElementById('followerHoverDot');
+                if (dot) dot.setAttribute('visibility', 'hidden');
+            }
+
+            function showFollowerHover(idx) {
+                idx = Math.max(0, Math.min(idx, pts.length - 1));
+                const [px, py] = pts[idx];
+                const cnt = Number(counts[idx]) || 0;
+                const iso = isoDates[idx] || '';
+
+                const dot = document.getElementById('followerHoverDot');
+                if (dot) {
+                    dot.setAttribute('cx', String(px));
+                    dot.setAttribute('cy', String(py));
+                    dot.setAttribute('visibility', 'visible');
+                }
+
+                tooltipEl.innerHTML =
+                    '<div class="follower-tip-val">' +
+                    escapeHtml(cnt.toLocaleString()) +
+                    '</div>' +
+                    '<div class="follower-tip-date">' +
+                    escapeHtml(formatSparkDateLabel(iso)) +
+                    '</div>';
+                tooltipEl.style.display = 'block';
+
+                requestAnimationFrame(() => {
+                    const ar = areaEl.getBoundingClientRect();
+                    try {
+                        const p = svg.createSVGPoint();
+                        p.x = px;
+                        p.y = py;
+                        const scr = p.matrixTransform(svg.getScreenCTM());
+                        tooltipEl.style.left = Math.round(scr.x - ar.left) + 'px';
+                        tooltipEl.style.top = Math.round(scr.y - ar.top) + 'px';
+                    } catch (_ex) {
+                        tooltipEl.style.left = Math.round(px) + 'px';
+                        tooltipEl.style.top = Math.round(py) + 'px';
+                    }
+                    tooltipEl.style.transform = 'translate(-50%, calc(-100% - 10px))';
+                });
+            }
+
+            function onMove(ev) {
+                let idx = 0;
+                try {
+                    const p = svg.createSVGPoint();
+                    p.x = ev.clientX;
+                    p.y = ev.clientY;
+                    const svgP = p.matrixTransform(svg.getScreenCTM().inverse());
+                    const n = pts.length;
+                    if (n >= 2) {
+                        const stepXp = (pts[n - 1][0] - pts[0][0]) / (n - 1);
+                        idx = Math.round((svgP.x - pts[0][0]) / Math.max(stepXp, 0.001));
+                    }
+                } catch (_e2) {
+                    const r = svg.getBoundingClientRect();
+                    const fx = Math.max(0, Math.min(1, (ev.clientX - r.left) / Math.max(r.width, 1)));
+                    idx = Math.round(fx * Math.max(0, pts.length - 1));
+                }
+                showFollowerHover(idx);
+            }
+
+            if (svg._followerMove) svg.removeEventListener('mousemove', svg._followerMove);
+            if (svg._followerLeave) svg.removeEventListener('mouseleave', svg._followerLeave);
+            svg._followerMove = onMove;
+            svg._followerLeave = hideFollowerHover;
+            svg.addEventListener('mousemove', onMove);
+            svg.addEventListener('mouseleave', hideFollowerHover);
+        }
+
         function buildFollowerChart(history) {
             const labels = document.getElementById('followerXLabels');
             const svg = document.getElementById('followerSvg');
             const line = document.getElementById('followerLine');
+            const tooltip = document.getElementById('followerChartTooltip');
+            const chartAreaEl = document.getElementById('followerChartArea');
+            if (!labels || !svg || !line) return;
+
+            const today = new Date();
+            /** @type {{ date: string, count: number }[]} */
+            let recent = [];
 
             if (!history || history.length === 0) {
-                const today = new Date();
-                const pts = [];
                 for (let i = 30; i >= 0; i -= 5) {
                     const d = new Date(today);
                     d.setDate(d.getDate() - i);
-                    pts.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+                    recent.push({
+                        date: d.toISOString().slice(0, 10),
+                        count: 0,
+                    });
                 }
-                labels.innerHTML = pts.map(p => `<span>${p}</span>`).join('');
-                const w = svg.clientWidth || 500;
-                const h = svg.clientHeight || 160;
-                const flatPts = [];
-                for (let i = 0; i < 7; i++) flatPts.push(`${(i / 6) * w},${h - 2}`);
-                line.setAttribute('points', flatPts.join(' '));
-                return;
+                labels.innerHTML = recent
+                    .map((h) => `<span>${formatSparkDateLabel(followerHistoryDateIso(h))}</span>`)
+                    .join('');
+            } else {
+                recent = history.slice(-30).map((item) =>
+                    typeof item === 'object' && item !== null
+                        ? { date: item.date, count: item.count }
+                        : { date: '', count: 0 },
+                );
+
+                if (recent.length === 1) {
+                    const entry = recent[0];
+                    const padded = [];
+                    for (let i = 6; i >= 1; i--) {
+                        const d = new Date(today);
+                        d.setHours(0, 0, 0, 0);
+                        d.setDate(d.getDate() - i);
+                        padded.push({ date: d.toISOString().split('T')[0], count: 0 });
+                    }
+                    padded.push(entry);
+                    recent = padded;
+                }
+
+                labels.innerHTML = recent
+                    .filter((_, i) => i % Math.max(1, Math.floor(recent.length / 6)) === 0)
+                    .map((h) => `<span>${formatSparkDateLabel(followerHistoryDateIso(h))}</span>`)
+                    .join('');
             }
 
-            const recent = history.slice(-30);
+            const w = svg.clientWidth || chartAreaEl?.clientWidth || 500;
+            const h = svg.clientHeight || chartAreaEl?.clientHeight || 160;
 
-            if (recent.length === 1) {
-                const today = new Date();
-                const entry = recent[0];
-                const padded = [];
-                for (let i = 6; i >= 1; i--) {
-                    const d = new Date(today);
-                    d.setDate(d.getDate() - i);
-                    padded.push({ date: d.toISOString().split('T')[0], count: 0 });
-                }
-                padded.push(entry);
-                recent.length = 0;
-                padded.forEach(p => recent.push(p));
-            }
-
-            labels.innerHTML = recent.filter((_, i) => i % Math.max(1, Math.floor(recent.length / 6)) === 0)
-                .map(h => `<span>${h.date.slice(5)}</span>`).join('');
-
-            const w = svg.clientWidth || 500;
-            const h = svg.clientHeight || 160;
-            const counts = recent.map(r => r.count);
+            const counts = recent.map((r) => Number(r.count) || 0);
+            const isoDates = recent.map((r) => followerHistoryDateIso(r));
             const maxC = Math.max(...counts, 1);
             const minC = Math.min(...counts);
             const range = maxC - minC > 0 ? maxC - minC : maxC || 1;
             const chartMinC = maxC === minC ? 0 : minC;
 
-            const chartPts = counts.map((c, i) => {
+            const xyPts = counts.map((c, i) => {
                 const x = (i / Math.max(counts.length - 1, 1)) * w;
                 const y = h - ((c - chartMinC) / range) * (h - 20) - 10;
-                return `${x},${y}`;
+                return [x, y];
             });
-            line.setAttribute('points', chartPts.join(' '));
+            line.setAttribute('points', xyPts.map((p) => `${p[0]},${p[1]}`).join(' '));
 
-            const yLabels = document.querySelector('.chart-y-labels');
+            const yLabels = document.querySelector('.follower-chart-card .chart-y-labels');
             if (yLabels) {
-                yLabels.innerHTML = `<span>${maxC}</span><span>${Math.round(maxC / 2)}</span><span>0</span>`;
+                const yTop = maxC;
+                const yBot = chartMinC;
+                const yMid = (yTop + yBot) / 2;
+                const followerYLbl = (v) => {
+                    if (!Number.isFinite(v)) return '0';
+                    if (Number.isInteger(v)) return String(v);
+                    const r = Math.round(v * 10) / 10;
+                    return Number.isInteger(r) ? String(r) : r.toFixed(1);
+                };
+                yLabels.innerHTML = `<span>${followerYLbl(yTop)}</span><span>${followerYLbl(yMid)}</span><span>${followerYLbl(yBot)}</span>`;
             }
+
+            if (tooltip && chartAreaEl && xyPts.length) {
+                bindFollowerGainHover(svg, tooltip, chartAreaEl, xyPts, isoDates, counts);
+            }
+            if (tooltip) tooltip.style.display = 'none';
+            const dotHide = document.getElementById('followerHoverDot');
+            if (dotHide) dotHide.setAttribute('visibility', 'hidden');
         }
 
         async function renderAnalytics() {
@@ -11914,24 +12271,21 @@
 
             const hasDashPostImpHdr = Object.prototype.hasOwnProperty.call(dashboard, 'postImpressions');
             const dashPostImpHdr = hasDashPostImpHdr ? Number(dashboard.postImpressions) : null;
-            let totalImpressions = 0;
-            if (hasDashPostImpHdr && dashPostImpHdr !== null && Number.isFinite(dashPostImpHdr) && dashPostImpHdr >= 0) {
-                totalImpressions = dashPostImpHdr;
-            } else if (impressionsSumPosts > 0) {
-                totalImpressions = impressionsSumPosts;
-            } else {
-                totalImpressions = Number(engagement.impressions) || 0;
-            }
+            const dashHdrNonNeg =
+                hasDashPostImpHdr && dashPostImpHdr !== null && Number.isFinite(dashPostImpHdr) && dashPostImpHdr >= 0
+                    ? dashPostImpHdr
+                    : 0;
+            const engImpHdr = Number(engagement.impressions) || 0;
+            const totalImpressions = Math.max(dashHdrNonNeg, impressionsSumPosts, engImpHdr);
 
             const membersReached = dashboard.membersReached || engagement.membersReached || 0;
             const cardLikes = trackedPosts ? (likesFromPostsSum || (engagement.likes || 0)) : 0;
             const cardComments = trackedPosts ? (commentsFromPostsSum || (engagement.comments || 0)) : 0;
             const cardReposts = trackedPosts ? (repostsFromPostsSum || (engagement.reposts || 0)) : 0;
 
-            const dashPostImpOkAvg = dashPostImpHdr !== null && Number.isFinite(dashPostImpHdr) && dashPostImpHdr > 0;
             let avgEngagementPctNum = 0;
-            if (socialDashboardVal != null && dashPostImpOkAvg) {
-                avgEngagementPctNum = (socialDashboardVal / dashPostImpHdr) * 100;
+            if (socialDashboardVal != null && totalImpressions > 0) {
+                avgEngagementPctNum = (socialDashboardVal / totalImpressions) * 100;
             } else if (impressionsSumPosts > 0) {
                 avgEngagementPctNum = (postInteractionsSum / impressionsSumPosts) * 100;
             }
@@ -11953,6 +12307,7 @@
 
             // ---- SuperX-style sparklines: build a 30-day series for each card ----
             const SPARK_DAYS = 30;
+            const sparkDates30 = buildSparkDateIsoList(SPARK_DAYS);
             const followersHistory = data.followersHistory || data.followerHistory || [];
             // Build the followers series by walking the history forward and
             // forward-filling gaps so the line stays visually continuous.
@@ -11975,11 +12330,13 @@
                 // If still all the same value but we have a real follower count,
                 // show that as a flat (informative) line instead of empty state.
                 if (followers > 0 && series.every(v => v === series[0])) series[series.length - 1] = followers;
-                renderStatSparkline('sparkFollowers', series, { color: '#3B82F6' });
+                renderStatSparkline('sparkFollowers', series, { color: '#3B82F6', dates: sparkDates30 });
                 applyStatDelta('aFollowersDelta', series);
             })();
 
-            const postsSeries = bucketSeries(postMetrics, SPARK_DAYS, p => p.postedAt || p.publishedAt || p.date);
+            /** Extension sync stores `scrapedAt` on post metrics — include it so daily buckets populate. */
+            const postDay = (p) => p.postedAt || p.publishedAt || p.date || p.scrapedAt;
+            const postsSeries = bucketSeries(postMetrics, SPARK_DAYS, postDay);
             // Augment with locally-tracked posted queue items so the chart still
             // reflects activity when the extension hasn't synced metrics yet.
             queue.filter(q => q.status === 'posted' && q.postedAt).forEach(q => {
@@ -11989,23 +12346,24 @@
                 const idx = Math.floor((d - start) / 86400000);
                 if (idx >= 0 && idx < SPARK_DAYS) postsSeries[idx] += 1;
             });
-            renderStatSparkline('sparkPosts', postsSeries, { color: '#10B981' });
+            const sparkBlue = '#3B82F6';
+            renderStatSparkline('sparkPosts', postsSeries, { color: sparkBlue, dates: sparkDates30 });
             applyStatDelta('aPostsDelta', postsSeries);
 
             const impressionsSeries = bucketSeries(
                 postMetrics, SPARK_DAYS,
-                p => p.postedAt || p.publishedAt || p.date,
+                postDay,
                 p => p.impressions || 0,
             );
-            renderStatSparkline('sparkImpressions', impressionsSeries, { color: '#F59E0B' });
+            renderStatSparkline('sparkImpressions', impressionsSeries, { color: sparkBlue, dates: sparkDates30 });
             applyStatDelta('aImpressionsDelta', impressionsSeries);
 
             const engagementsSeries = bucketSeries(
                 postMetrics, SPARK_DAYS,
-                p => p.postedAt || p.publishedAt || p.date,
+                postDay,
                 p => (p.likes || 0) + (p.comments || 0) + (p.reposts || 0),
             );
-            renderStatSparkline('sparkEngagements', engagementsSeries, { color: '#A855F7' });
+            renderStatSparkline('sparkEngagements', engagementsSeries, { color: sparkBlue, dates: sparkDates30 });
             applyStatDelta('aEngagementsDelta', engagementsSeries);
 
             document.getElementById('aLikes').textContent = cardLikes.toLocaleString();
@@ -13750,6 +14108,18 @@
 
         // ---------- AI IMAGE STUDIO (Ultra) ----------
 
+        function _aiStudioImgSrcOk(src) {
+            const s = String(src || '').trim();
+            return /^https:\/\//i.test(s) || /^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(s);
+        }
+
+        function _aiStudioStoredImageHref(raw) {
+            const u = String(raw || '').trim();
+            if (/^https:\/\//i.test(u)) return u;
+            if (/^data:image\/(png|jpeg|jpg|webp|gif);base64,/i.test(u)) return u;
+            return '';
+        }
+
         async function loadAiImageHistoryGrid() {
             const grid = document.getElementById('aiImageHistoryGrid');
             const feats = creditsData.features || _userFeatures || [];
@@ -13765,10 +14135,12 @@
                 }
                 grid.innerHTML = items.map((it) => {
                     const u = String(it.url || '');
-                    const safeHref = /^https:\/\//i.test(u) ? u : '#';
+                    const safeHref = _aiStudioStoredImageHref(u) || '#';
                     return `
-                    <a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="border:1px solid var(--border);border-radius:8px;padding:6px;display:block;text-decoration:none;max-width:160px;background:var(--bg-card);" title="${escapeHtml((it.topic || '').slice(0, 140))}">
-                        <img src="${safeHref}" alt="" style="width:144px;height:144px;object-fit:cover;border-radius:6px;display:block;background:var(--bg-secondary);">
+                    <a href="${safeHref}" target="_blank" rel="noopener noreferrer" style="border:1px solid var(--border);border-radius:8px;padding:6px;display:block;text-decoration:none;max-width:168px;background:var(--bg-card);" title="${escapeHtml((it.topic || '').slice(0, 140))}">
+                        <div style="width:144px;height:144px;display:flex;align-items:center;justify-content:center;background:var(--bg-secondary);border-radius:6px;overflow:hidden;">
+                            <img src="${safeHref}" alt="" style="max-width:144px;max-height:144px;width:auto;height:auto;object-fit:contain;display:block;">
+                        </div>
                         <div style="font-size:0.65rem;color:var(--text-muted);margin-top:4px;line-height:1.2;text-align:center;">${escapeHtml(it.style || 'styled')}</div>
                     </a>`;
                 }).join('');
@@ -13787,7 +14159,7 @@
             if (img) img.src = data.url;
             if (link) {
                 link.href = data.url;
-                link.setAttribute('download', 'superlinkedin-image-' + Date.now() + '.png');
+                link.setAttribute('download', 'superlinkedin-image-' + Date.now() + '.jpg');
             }
             if (rev) rev.textContent = data.revisedPrompt ? ('Model recap: ' + data.revisedPrompt) : '';
             const wrap = document.getElementById('aiImageResultWrap');
@@ -13797,7 +14169,7 @@
         function syncAiImageDraftPreviewFromMain() {
             const main = document.getElementById('aiImageResultImg');
             const pv = document.getElementById('aiImageDraftPreview');
-            if (main && pv && main.src && /^https:/i.test(main.src)) pv.src = main.src;
+            if (main && pv && main.src && _aiStudioImgSrcOk(main.src)) pv.src = main.src;
         }
 
         async function requestAiStudioGenerateImage() {
@@ -13860,7 +14232,8 @@
             const toggleBtn = document.getElementById('btnAiImageBuildDraft');
             const mainImg = document.getElementById('aiImageResultImg');
             if (!panel) return;
-            const srcOk = mainImg && mainImg.getAttribute('src') && /^https:/i.test(String(mainImg.getAttribute('src') || '').trim());
+            const rawSrc = mainImg && mainImg.getAttribute('src') ? String(mainImg.getAttribute('src')).trim() : '';
+            const srcOk = !!rawSrc && _aiStudioImgSrcOk(rawSrc);
             if (!srcOk) {
                 showNotify('Generate an image first', 'Create an image above, then build your LinkedIn draft.', 'error');
                 return;
@@ -13973,7 +14346,7 @@
             }
             const mainImg = document.getElementById('aiImageResultImg');
             const imageUrl = mainImg ? mainImg.src : '';
-            if (!/^https:/i.test(imageUrl)) {
+            if (!_aiStudioImgSrcOk(imageUrl)) {
                 showNotify('Missing image', 'Generate an image first.', 'error');
                 return;
             }

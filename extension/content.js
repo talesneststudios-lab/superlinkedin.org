@@ -892,7 +892,10 @@
                     shouldAcceptConnectionsScrape(Number(dashboardStats.followers))) {
                     persistAcceptedConnections(Number(dashboardStats.followers));
                 }
-                if (dashboardStats.postImpressions) sidebarData.totalImpressions = dashboardStats.postImpressions;
+                if (Object.prototype.hasOwnProperty.call(dashboardStats, 'postImpressions')) {
+                    const v = Number(dashboardStats.postImpressions) || 0;
+                    sidebarData.totalImpressions = Math.max(Number(sidebarData.totalImpressions) || 0, v);
+                }
                 if (Object.prototype.hasOwnProperty.call(dashboardStats, 'socialEngagements')) {
                     sidebarData.dashboardSocialEngagements = Number(dashboardStats.socialEngagements) || 0;
                 }
