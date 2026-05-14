@@ -3941,6 +3941,10 @@
             margin-bottom: 24px;
         }
 
+        .stats-grid .stat-card {
+            overflow: visible;
+        }
+
         .stat-card {
             background: var(--bg-white);
             border: 1px solid var(--border);
@@ -3962,12 +3966,15 @@
             height: 86px;
             margin-top: 12px;
             position: relative;
+            overflow: visible;
+            z-index: 1;
         }
         .stat-spark-wrap {
             position: relative;
             width: 100%;
             height: 100%;
             user-select: none;
+            overflow: visible;
         }
         .stat-mini-chart svg {
             width: 100%;
@@ -3995,8 +4002,9 @@
             display: none;
             position: absolute;
             pointer-events: none;
-            z-index: 40;
+            z-index: 60;
             min-width: 120px;
+            max-width: min(320px, calc(100vw - 24px));
             padding: 8px 11px;
             background: var(--bg-card);
             color: var(--text-primary);
@@ -4173,6 +4181,7 @@
             border-radius: var(--radius);
             padding: 20px;
             margin-bottom: 24px;
+            overflow: visible;
         }
 
         .follower-chart-header {
@@ -4204,6 +4213,7 @@
             height: 160px;
             border-bottom: 1px solid var(--border);
             border-left: 1px solid var(--border);
+            overflow: visible;
         }
 
         .chart-y-labels {
@@ -4248,8 +4258,9 @@
             display: none;
             position: absolute;
             pointer-events: none;
-            z-index: 40;
+            z-index: 60;
             min-width: 120px;
+            max-width: min(320px, calc(100vw - 24px));
             padding: 8px 11px;
             background: var(--bg-card);
             color: var(--text-primary);
@@ -12085,18 +12096,31 @@
 
                 requestAnimationFrame(() => {
                     const wrapR = wrapEl.getBoundingClientRect();
-                    const pt = svgEl.createSVGPoint();
-                    pt.x = px;
-                    pt.y = py;
+                    const svgP = svgEl.createSVGPoint();
+                    svgP.x = px;
+                    svgP.y = py;
+                    let cx = 0;
+                    let cy = 0;
                     try {
-                        const scr = pt.matrixTransform(svgEl.getScreenCTM());
-                        tipEl.style.left = Math.round(scr.x - wrapR.left) + 'px';
-                        tipEl.style.top = Math.round(scr.y - wrapR.top) + 'px';
+                        const scr = svgP.matrixTransform(svgEl.getScreenCTM());
+                        cx = scr.x - wrapR.left;
+                        cy = scr.y - wrapR.top;
                     } catch (_e) {
-                        tipEl.style.left = Math.round(((px / 280) * wrapR.width)) + 'px';
-                        tipEl.style.top = Math.round(((py / 70) * wrapR.height)) + 'px';
+                        cx = (px / 280) * wrapR.width;
+                        cy = (py / 70) * wrapR.height;
                     }
-                    tipEl.style.transform = 'translate(-50%, calc(-100% - 10px))';
+                    tipEl.style.top = Math.round(cy) + 'px';
+                    tipEl.style.transform = 'translate(0, 10px)';
+                    tipEl.style.left = '0px';
+                    requestAnimationFrame(() => {
+                        const w = wrapEl.clientWidth;
+                        const tw = tipEl.offsetWidth || 1;
+                        const pad = 6;
+                        const maxL = Math.max(pad, w - pad - tw);
+                        let left = cx - tw / 2;
+                        left = Math.max(pad, Math.min(left, maxL));
+                        tipEl.style.left = Math.round(left) + 'px';
+                    });
                 });
             }
 
@@ -12353,18 +12377,31 @@
 
                 requestAnimationFrame(() => {
                     const ar = areaEl.getBoundingClientRect();
+                    let cx = 0;
+                    let cy = 0;
                     try {
                         const p = svg.createSVGPoint();
                         p.x = px;
                         p.y = py;
                         const scr = p.matrixTransform(svg.getScreenCTM());
-                        tooltipEl.style.left = Math.round(scr.x - ar.left) + 'px';
-                        tooltipEl.style.top = Math.round(scr.y - ar.top) + 'px';
+                        cx = scr.x - ar.left;
+                        cy = scr.y - ar.top;
                     } catch (_ex) {
-                        tooltipEl.style.left = Math.round(px) + 'px';
-                        tooltipEl.style.top = Math.round(py) + 'px';
+                        cx = px;
+                        cy = py;
                     }
-                    tooltipEl.style.transform = 'translate(-50%, calc(-100% - 10px))';
+                    tooltipEl.style.top = Math.round(cy) + 'px';
+                    tooltipEl.style.transform = 'translate(0, 10px)';
+                    tooltipEl.style.left = '0px';
+                    requestAnimationFrame(() => {
+                        const w = areaEl.clientWidth;
+                        const tw = tooltipEl.offsetWidth || 1;
+                        const pad = 6;
+                        const maxL = Math.max(pad, w - pad - tw);
+                        let left = cx - tw / 2;
+                        left = Math.max(pad, Math.min(left, maxL));
+                        tooltipEl.style.left = Math.round(left) + 'px';
+                    });
                 });
             }
 
