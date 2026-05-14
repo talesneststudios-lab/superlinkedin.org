@@ -122,8 +122,11 @@
         .nav-links {
             display: flex;
             align-items: center;
-            gap: 32px;
+            gap: 24px;
             list-style: none;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            row-gap: 10px;
         }
 
         .nav-links a {
@@ -163,6 +166,38 @@
             background: #0977d4;
             transform: translateY(-2px);
             box-shadow: 0 8px 32px var(--accent-glow);
+        }
+
+        .btn-primary.btn-cta-prominent {
+            white-space: nowrap;
+            border-radius: 9999px;
+            padding: 14px 32px;
+            font-weight: 700;
+            font-size: 0.92rem;
+            letter-spacing: 0.015em;
+            line-height: 1.15;
+            box-shadow:
+                0 4px 20px rgba(10, 102, 194, 0.45),
+                0 10px 36px rgba(10, 102, 194, 0.32),
+                0 2px 8px rgba(0, 0, 0, 0.35);
+        }
+
+        .btn-primary.btn-cta-prominent:hover {
+            background: #0977d4;
+            transform: translateY(-2px);
+            box-shadow:
+                0 6px 26px rgba(10, 102, 194, 0.55),
+                0 14px 42px rgba(10, 102, 194, 0.38),
+                0 3px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Nav CTA stays same line when the bar wraps */
+        .nav-links .btn.btn-primary.btn-cta-prominent {
+            flex-shrink: 0;
+        }
+
+        .nav-links > li:not(:last-child) > a:not(.btn) {
+            white-space: nowrap;
         }
 
         /* Nav links set a grey color on all <a>; bump specificity so CTA matches hero */
@@ -889,16 +924,10 @@
             margin-bottom: 20px;
         }
 
-        .cta-section p {
-            font-size: 1.1rem;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
-            max-width: 500px;
-            margin-left: auto;
-            margin-right: auto;
+        .cta-section .btn.btn-primary.btn-cta-prominent {
+            margin-top: 8px;
         }
 
-        /* ===== FOOTER ===== */
         footer {
             border-top: 1px solid var(--border);
             padding: 64px 0 40px;
@@ -946,9 +975,32 @@
             color: var(--text-primary);
         }
 
+        .footer-quick {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 8px 20px;
+            padding: 28px 0 20px;
+            margin-top: 8px;
+            border-top: 1px solid var(--border);
+            font-size: 0.88rem;
+            font-weight: 600;
+        }
+
+        .footer-quick a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-quick a:hover {
+            color: var(--accent-light);
+        }
+
         .footer-bottom {
             border-top: 1px solid var(--border);
-            padding-top: 32px;
+            padding-top: 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -1142,8 +1194,8 @@
           "description": "SuperLinkedIn is an AI copilot for LinkedIn creators. The web app and Chrome extension help you draft posts, queue content, read analytics, and run outreach in one workflow.",
           "email": "info@superlinkedin.org",
           "sameAs": [
-            "https://github.com/talesneststudios-lab/superlinkedin.org",
-            "https://www.linkedin.com/company/120934318/"
+            "https://www.linkedin.com/company/120934318",
+            "https://github.com/talesneststudios-lab/superlinkedin.org"
           ]
         },
         {
@@ -1263,17 +1315,14 @@
                 SuperLinkedIn
             </a>
             <ul class="nav-links">
-                <li><a href="#about">About</a></li>
-                <li><a href="#demo">Demo</a></li>
                 <li><a href="#features">Features</a></li>
                 <li><a href="#how-it-works">How it works</a></li>
                 <li><a href="#discover">Discover</a></li>
                 <li><a href="#engage">Engage</a></li>
                 <li><a href="#testimonials">Stories</a></li>
                 <li><a href="#pricing">Pricing</a></li>
-                <li><a href="#faq">FAQ</a></li>
                 <li><a href="chrome-extension.html">Chrome Extension</a></li>
-                <li><a href="login.html" class="btn btn-primary">Get Started for Free</a></li>
+                <li><a href="login.html" class="btn btn-primary btn-cta-prominent">Get Started for Free</a></li>
             </ul>
         </div>
     </nav>
@@ -1307,7 +1356,7 @@
                 </div>
             </div>
             <div class="hero-buttons">
-                <a href="login.html" class="btn btn-primary">Get Started for Free</a>
+                <a href="login.html" class="btn btn-primary btn-cta-prominent">Get Started for Free</a>
                 <a href="#demo" class="btn btn-secondary">Watch the demo</a>
             </div>
             <div class="hero-stats">
@@ -2043,7 +2092,7 @@
         <div class="container fade-in">
             <h2>Ready to grow on <span class="gradient-text">LinkedIn</span>?</h2>
             <p><strong>SuperLinkedIn is an AI copilot for LinkedIn creators.</strong> Join thousands of professionals posting smarter, engaging better, and compounding reach with one stack.</p>
-            <a href="login.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 16px 40px;">Get Started for Free</a>
+            <a href="login.html" class="btn btn-primary btn-cta-prominent" style="font-size: 1rem; padding: 16px 40px;">Get Started for Free</a>
         </div>
     </section>
 
@@ -2061,7 +2110,6 @@
                 <div class="footer-col">
                     <h4>Product</h4>
                     <ul>
-                        <li><a href="#demo">Demo</a></li>
                         <li><a href="#features">Features</a></li>
                         <li><a href="#how-it-works">How it works</a></li>
                         <li><a href="#pricing">Pricing</a></li>
@@ -2072,8 +2120,12 @@
                 <div class="footer-col">
                     <h4>Resources</h4>
                     <ul>
-                        <li><a href="#about">About</a></li>
-                        <li><a href="#faq">FAQ</a></li>
+                        <li><a href="/linkedin-hook-generator">LinkedIn hooks</a></li>
+                        <li><a href="/linkedin-post-templates">Post templates</a></li>
+                        <li><a href="/linkedin-headline-generator">Headlines</a></li>
+                        <li><a href="/linkedin-carousel-ideas">Carousel ideas</a></li>
+                        <li><a href="/linkedin-cta-examples">CTA examples</a></li>
+                        <li><a href="/blog/how-to-grow-on-linkedin">How to grow on LinkedIn</a></li>
                         <li><a href="mailto:info@superlinkedin.org">Contact</a></li>
                         <li><a href="https://github.com/talesneststudios-lab/superlinkedin.org" target="_blank" rel="noopener noreferrer">GitHub</a></li>
                         <li><a href="playbook.html">Playbook</a></li>
@@ -2089,6 +2141,15 @@
                     </ul>
                 </div>
             </div>
+
+            <div class="footer-quick" aria-label="Page sections">
+                <a href="#about">About</a>
+                <span style="opacity: 0.4; pointer-events: none;">&middot;</span>
+                <a href="#demo">Demo</a>
+                <span style="opacity: 0.4; pointer-events: none;">&middot;</span>
+                <a href="#faq">FAQ</a>
+            </div>
+
             <div class="footer-bottom">
                 <p>&copy; 2026 SuperLinkedIn. All rights reserved.</p>
                 <p>Not affiliated with LinkedIn Corporation.</p>

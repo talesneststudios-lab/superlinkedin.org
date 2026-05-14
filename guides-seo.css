@@ -1,0 +1,224 @@
+/* Shared styles for programmatic SEO landing / guide pages */
+:root {
+    --linkedin-blue: #0a66c2;
+    --linkedin-light: #70b5f9;
+    --bg: #0a0a0f;
+    --bg-card: #16161f;
+    --text-primary: #f0f0f5;
+    --text-secondary: #b0b0c0;
+    --text-muted: #666677;
+    --accent: #0a66c2;
+    --accent-light: #70b5f9;
+    --border: rgba(255, 255, 255, 0.08);
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+html {
+    scroll-behavior: smooth;
+}
+body {
+    font-family:
+        Inter,
+        -apple-system,
+        BlinkMacSystemFont,
+        sans-serif;
+    background: var(--bg);
+    color: var(--text-primary);
+    line-height: 1.72;
+    -webkit-font-smoothing: antialiased;
+}
+a {
+    color: var(--accent-light);
+}
+
+.top-nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding: 14px 24px;
+    backdrop-filter: blur(24px);
+    background: rgba(10, 10, 15, 0.9);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+.top-nav-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.top-nav-links {
+    display: flex;
+    gap: 10px 18px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 0.82rem;
+}
+.top-nav-links a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 600;
+}
+.top-nav-links a:hover {
+    color: var(--text-primary);
+}
+.top-nav-logo {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--linkedin-blue), var(--linkedin-light));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 0.72rem;
+    color: #fff;
+    letter-spacing: -0.5px;
+    text-decoration: none;
+}
+.top-nav-title {
+    font-weight: 800;
+    font-size: 0.92rem;
+    color: var(--text-primary);
+}
+.nav-cta {
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    background: var(--linkedin-blue);
+    color: #fff !important;
+    text-decoration: none;
+}
+.nav-cta:hover {
+    filter: brightness(1.06);
+}
+
+.breadcrumbs {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 16px 24px 0;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+.breadcrumbs a {
+    color: var(--text-secondary);
+    text-decoration: none;
+}
+.breadcrumbs a:hover {
+    text-decoration: underline;
+}
+
+.wrap {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 28px 24px 64px;
+}
+.hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 16px;
+    border-radius: 99px;
+    background: rgba(10, 102, 194, 0.15);
+    border: 1px solid rgba(10, 102, 194, 0.25);
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--accent-light);
+    margin-bottom: 16px;
+}
+h1 {
+    font-size: clamp(1.75rem, 4.5vw, 2.35rem);
+    font-weight: 900;
+    line-height: 1.2;
+    margin-bottom: 16px;
+    letter-spacing: -0.02em;
+}
+.lead {
+    font-size: 1.05rem;
+    color: var(--text-secondary);
+    margin-bottom: 28px;
+    line-height: 1.65;
+}
+.prose h2 {
+    font-size: 1.28rem;
+    font-weight: 800;
+    margin: 36px 0 12px;
+    color: #fff;
+}
+.prose h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    margin: 24px 0 8px;
+    color: #eee;
+}
+.prose p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+}
+.prose ul,
+.prose ol {
+    margin: 12px 0 18px 22px;
+    font-size: 0.93rem;
+    color: var(--text-secondary);
+}
+.prose li {
+    margin-bottom: 8px;
+}
+.prose strong {
+    color: var(--text-primary);
+}
+.callout {
+    background: rgba(10, 102, 194, 0.1);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 10px 10px 0;
+    padding: 16px 18px;
+    margin: 24px 0;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+.cta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 28px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+}
+.btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+    border: 1px solid var(--border);
+}
+.btn-primary {
+    background: var(--linkedin-blue);
+    color: #fff;
+    border-color: transparent;
+}
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-primary);
+}
+.seo-footer {
+    text-align: center;
+    padding: 40px 24px;
+    border-top: 1px solid var(--border);
+    font-size: 0.78rem;
+    color: var(--text-muted);
+}
+.seo-footer a {
+    color: var(--text-secondary);
+}
