@@ -4020,6 +4020,13 @@
             font-size: 0.68rem;
             margin-top: 2px;
         }
+        .stat-spark-tooltip .stat-spark-tip-rollup {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            font-weight: 600;
+            line-height: 1.3;
+        }
         .stat-mini-chart .spark-line {
             fill: none;
             stroke-width: 2;
@@ -11860,16 +11867,26 @@
             return buckets;
         }
 
-        /** When daily buckets are all zero but the card headline has a total, show an even daily share so the sparkline matches the number (unknown day-by-day breakdown). */
-        function normalizeSparkBucketsToHeadline(buckets, headlineTotal) {
+        /**
+         * Make per-day spark buckets match the card headline total.
+         * - No bucket data + positive headline → even split across days (estimated daily share).
+         * - Bucket sum differs from headline (different sources/metrics) → scale shape to match rollup.
+         */
+        function alignSparkBucketsToHeadline(buckets, headlineTotal) {
             const arr = Array.isArray(buckets) ? buckets.slice() : [];
+            const head = Number(headlineTotal);
+            if (!Number.isFinite(head) || head < 0) return arr;
+            if (head === 0) return arr;
             const sum = arr.reduce((a, b) => a + (Number(b) || 0), 0);
-            if (sum > 0 || headlineTotal == null || !Number.isFinite(Number(headlineTotal)) || Number(headlineTotal) <= 0) {
-                return arr;
-            }
             const n = arr.length || 1;
-            const v = Number(headlineTotal) / n;
-            return arr.map(() => v);
+            if (sum <= 0) {
+                const v = head / n;
+                return arr.map(() => v);
+            }
+            const relDiff = Math.abs(sum - head) / Math.max(sum, head, 1);
+            if (relDiff < 1e-4) return arr;
+            const factor = head / sum;
+            return arr.map((v) => (Number(v) || 0) * factor);
         }
 
         function smoothPath(points, w, h, padBottom) {
@@ -11920,8 +11937,9 @@
         }
 
         /** Wire mousemove/Mouseleave for stat card sparkline: snaps to nearest day, dot + tooltip. */
-        function bindStatSparkHover(hostEl, wrapEl, svgEl, tipEl, snapPoints, isoDates, values, colorHex) {
+        function bindStatSparkHover(hostEl, wrapEl, svgEl, tipEl, snapPoints, isoDates, values, colorHex, tipOpts) {
             if (!hostEl || !wrapEl || !svgEl || !tipEl || !snapPoints || !snapPoints.length) return;
+            tipOpts = tipOpts || {};
             const dot = svgEl.querySelector('.stat-spark-hover-dot');
             let lastIdx = -1;
 
@@ -12098,7 +12116,9 @@
             const svg = host.querySelector('.stat-spark-svg');
             const tip = host.querySelector('.stat-spark-tooltip');
             if (wrap && svg && tip) {
-                bindStatSparkHover(host, wrap, svg, tip, pts, dates, data, color);
+                const tipBind = {};
+                if (opts.rollupTotal != null) tipBind.rollupTotal = opts.rollupTotal;
+                bindStatSparkHover(host, wrap, svg, tip, pts, dates, data, color, tipBind);
             }
         }
 
@@ -12369,7 +12389,9 @@
                     : 0;
             const engImpHdr = Number(engagement.impressions) || 0;
             const feedHdrCanon = dashboard.postImpressionsSource === 'feed_identity' && hasDashPostImpHdr;
-            const totalImpressions = feedHdrCanon
+            const analyticsHdrCanon = dashboard.postImpressionsSource === 'analytics_page' && hasDashPostImpHdr;
+            const dashboardRollupHdrCanon = feedHdrCanon || analyticsHdrCanon;
+            const totalImpressions = dashboardRollupHdrCanon
                 ? dashHdrNonNeg
                 : Math.max(dashHdrNonNeg, impressionsSumPosts, engImpHdr);
 
@@ -12380,8 +12402,12 @@
 
             let avgEngagementPctNum = 0;
             if (socialDashboardVal != null && totalImpressions > 0) {
-                avgEngagementPctNum = (socialDashboardVal / totalImpressions) * 100;
-            } else if (impressionsSumPosts > 0) {
+                const raw = (socialDashboardVal / totalImpressions) * 100;
+                if (Number.isFinite(raw) && raw >= 0 && raw <= 300) {
+                    avgEngagementPctNum = raw;
+                }
+            }
+            if ((avgEngagementPctNum === 0 || !Number.isFinite(avgEngagementPctNum)) && impressionsSumPosts > 0) {
                 avgEngagementPctNum = (postInteractionsSum / impressionsSumPosts) * 100;
             }
 
@@ -12451,8 +12477,12 @@
                 postDay,
                 p => p.impressions || 0,
             );
-            impressionsSeries = normalizeSparkBucketsToHeadline(impressionsSeries, totalImpressions);
-            renderStatSparkline('sparkImpressions', impressionsSeries, { color: sparkBlue, dates: sparkDates30 });
+            impressionsSeries = alignSparkBucketsToHeadline(impressionsSeries, totalImpressions);
+            renderStatSparkline('sparkImpressions', impressionsSeries, {
+                color: sparkBlue,
+                dates: sparkDates30,
+                rollupTotal: totalImpressions,
+            });
             applyStatDelta('aImpressionsDelta', impressionsSeries);
 
             let engagementsSeries = bucketSeries(
@@ -12460,8 +12490,12 @@
                 postDay,
                 p => (p.likes || 0) + (p.comments || 0) + (p.reposts || 0),
             );
-            engagementsSeries = normalizeSparkBucketsToHeadline(engagementsSeries, totalEngagements);
-            renderStatSparkline('sparkEngagements', engagementsSeries, { color: sparkBlue, dates: sparkDates30 });
+            engagementsSeries = alignSparkBucketsToHeadline(engagementsSeries, totalEngagements);
+            renderStatSparkline('sparkEngagements', engagementsSeries, {
+                color: sparkBlue,
+                dates: sparkDates30,
+                rollupTotal: totalEngagements,
+            });
             applyStatDelta('aEngagementsDelta', engagementsSeries);
 
             document.getElementById('aLikes').textContent = cardLikes.toLocaleString();

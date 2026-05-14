@@ -3616,6 +3616,10 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         } else if (existing.postImpressionsSource === 'feed_identity' && dashboardStats.postImpressionsSource === 'analytics_page') {
             mergedDash.postImpressions = Number(existing.postImpressions);
             mergedDash.postImpressionsSource = 'feed_identity';
+        } else if (dashboardStats && dashboardStats.postImpressionsSource === 'analytics_page' && dashboardStats.postImpressions !== undefined) {
+            // Windowed rollup from creator analytics — must replace (not Math.max); totals can shrink when the LinkedIn UI window changes.
+            mergedDash.postImpressions = Number(dashboardStats.postImpressions);
+            mergedDash.postImpressionsSource = 'analytics_page';
         } else if (dashboardStats && Object.prototype.hasOwnProperty.call(dashboardStats, 'postImpressions')) {
             const a = Number(existing.postImpressions);
             const b = Number(dashboardStats.postImpressions);
@@ -3758,6 +3762,10 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
         const feedCanonImp = mergedDashAgg.postImpressionsSource === 'feed_identity' &&
             mergedDashAgg.postImpressions !== undefined &&
             Number.isFinite(Number(mergedDashAgg.postImpressions));
+        const analyticsCanonImp = mergedDashAgg.postImpressionsSource === 'analytics_page' &&
+            mergedDashAgg.postImpressions !== undefined &&
+            Number.isFinite(Number(mergedDashAgg.postImpressions));
+        const rollupCanonImpSync = feedCanonImp || analyticsCanonImp;
         const dashboardMembersReached = (dashboardStats && dashboardStats.membersReached !== undefined)
             ? dashboardStats.membersReached
             : null;
@@ -3768,7 +3776,7 @@ app.post('/api/analytics/sync', authExtension, async (req, res) => {
             likes: hasPosts ? totalLikes : (prevEng.likes || 0),
             comments: hasPosts ? (totalComments || prevEng.comments || 0) : (prevEng.comments || 0),
             reposts: hasPosts ? (totalReposts || prevEng.reposts || 0) : (prevEng.reposts || 0),
-            impressions: feedCanonImp
+            impressions: rollupCanonImpSync
                 ? (Number(mergedDashAgg.postImpressions) || 0)
                 : Math.max(dashboardImpressions, totalImpressions),
             totalPosts: allPosts.length,
@@ -3939,10 +3947,8 @@ function summarizePostInteractions(postMetrics) {
 
 /**
  * AVG engagement uses dashboard social engagements ÷ reconciled impressions when both exist.
- * Total impressions: when analyticsDashboard.postImpressionsSource === "feed_identity",
- * use that rollup only — it matches LinkedIn's home / identity-card "Post impressions" and must
- * not be replaced by sums of per-post cards (different basis/window). Otherwise use max of rollup, sum, eng snapshot.
- * Otherwise use summed post reactions ÷ summed post impressions (tracked cards only).
+ * Total impressions: when analyticsDashboard.postImpressionsSource === "feed_identity" or "analytics_page",
+ * use that rollup only — matches LinkedIn's visible window/card totals — not sums of per-post cards (lifetime / different basis).
  */
 function computeAvgEngagementAndDisplayImpressions(postMetrics, analyticsEngagement, analyticsDashboard) {
     const dash = analyticsDashboard || {};
@@ -3954,23 +3960,34 @@ function computeAvgEngagementAndDisplayImpressions(postMetrics, analyticsEngagem
 
     const hasDashPostImp = Object.prototype.hasOwnProperty.call(dash, 'postImpressions');
     const dashPostImp = hasDashPostImp ? Number(dash.postImpressions) : null;
-    const feedCanon = dash.postImpressionsSource === 'feed_identity' && hasDashPostImp &&
+    const feedCanon =
+        dash.postImpressionsSource === 'feed_identity' && hasDashPostImp &&
         dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp >= 0;
+    /** Same rollup semantics as identity card scrape; do not inflate with summed per-post card impressions (lifetime / different windows). */
+    const analyticsRollupCanon =
+        dash.postImpressionsSource === 'analytics_page' && hasDashPostImp &&
+        dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp >= 0;
+    const rollupCanonImp = feedCanon || analyticsRollupCanon;
 
     /** Feed identity sidebar = same number LinkedIn shows on home; per-post sums are not interchangeable. */
     const dashImpNonNeg =
         hasDashPostImp && dashPostImp !== null && Number.isFinite(dashPostImp) && dashPostImp >= 0 ? dashPostImp : 0;
     const sumImp = fromPosts.impressionsSum || 0;
     const engImp = Number(eng.impressions) || 0;
-    const reconciledImp = feedCanon
+    const reconciledImp = rollupCanonImp
         ? dashImpNonNeg
         : Math.max(dashImpNonNeg, sumImp, engImp);
 
     let avgEngagement = 0;
     const postInteractions = fromPosts.likes + fromPosts.comments + fromPosts.reposts;
     if (socialDash !== null && Number.isFinite(socialDash) && socialDash >= 0 && reconciledImp > 0) {
-        avgEngagement = (socialDash / reconciledImp) * 100;
-    } else if (sumImp > 0) {
+        const raw = (socialDash / reconciledImp) * 100;
+        /** Dashboard social engagements and impressions sometimes come from mismatched surfaces/windows; skip absurd ratios and fall back to post-card math. */
+        if (Number.isFinite(raw) && raw >= 0 && raw <= 300) {
+            avgEngagement = raw;
+        }
+    }
+    if ((avgEngagement === 0 || !Number.isFinite(avgEngagement)) && sumImp > 0) {
         avgEngagement = (postInteractions / sumImp) * 100;
     }
 

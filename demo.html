@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en" class="dark-mode">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperLinkedIn &mdash; Demo</title>
+    <meta name="description" content="Interactive SuperLinkedIn product demo UI: dashboard-style shell for previews (static, no backend).">
+    <link rel="canonical" href="https://www.superlinkedin.org/demo.html">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="SuperLinkedIn Interactive Demo">
+    <meta property="og:description" content="Explore the SuperLinkedIn dark-mode dashboard shell in your browser.">
+    <meta property="og:url" content="https://www.superlinkedin.org/demo.html">
+    <meta property="og:image" content="https://www.superlinkedin.org/favicon.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!--
+      Standalone UI shell that mirrors superlinkedin.org / app (dark dashboard).
+      Uses the same class names and spacing as app.html for screenshots & walkthroughs.
+    -->
+    <style>
+        :root {
+            --bg: #f5f5f7;
+            --bg-white: #ffffff;
+            --bg-card: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --sidebar-bg: #0a0a0a;
+            --sidebar-text: #a0a0a0;
+            --sidebar-active: #ffffff;
+            --sidebar-hover: rgba(255,255,255,0.05);
+            --sidebar-nav-hover-bg: #242424;
+            --sidebar-section: #6b6b6b;
+            --text-primary: #1a1a2e;
+            --text-secondary: #555566;
+            --text-muted: #888899;
+            --accent: #0A66C2;
+            --accent-hover: #0977d4;
+            --accent-light: rgba(10,102,194,0.08);
+            --border: #e5e5ea;
+            --green: #22c55e;
+            --red: #ef4444;
+            --orange: #f59e0b;
+            --radius: 12px;
+            --sidebar-account-bg: #1e1c1a;
+            --sidebar-account-card: #2a2724;
+            --sidebar-width: 220px;
+            --sidebar-popup-border: rgba(255, 255, 255, 0.1);
+            --main-content-max-width: 1040px;
+            --page-title-font-size: 1.95rem;
+            --queue-slot-bg: #1c1c1c;
+            --queue-slot-border: #262626;
+        }
+        :root.dark-mode, :root.dark-mode body {
+            --bg: #0a0a0a;
+            --bg-white: #181818;
+            --bg-card: #181818;
+            --bg-secondary: #111111;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #6b6b6b;
+            --border: #262626;
+            --accent-light: rgba(10,102,194,0.15);
+            --queue-slot-bg: #1c1c1c;
+            --queue-slot-border: #262626;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Inter, system-ui, sans-serif;
+            background: var(--bg);
+            color: var(--text-primary);
+            display: flex;
+            min-height: 100vh;
+            line-height: 1.45;
+        }
+        .dark-mode .home-steps-card,
+        .dark-mode .home-post-card { box-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+        .dark-mode .home-mission { border: 1px solid var(--border); }
+        .dark-mode .home-mission:hover { background: rgba(255,255,255,0.03); }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0; left: 0; bottom: 0;
+            z-index: 100;
+            border-right: 1px solid var(--sidebar-popup-border);
+        }
+        .sidebar-logo {
+            padding: 20px 20px 16px;
+            display: flex; align-items: center; gap: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            text-decoration: none;
+            cursor: default;
+        }
+        .sidebar-logo .logo-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 0.75rem; color: #fff;
+        }
+        .sidebar-logo span { font-weight: 800; font-size: 1rem; color: #fff; }
+        .sidebar-create-btn {
+            margin: 16px 16px 8px;
+            padding: 10px 20px;
+            background: var(--accent);
+            color: #fff; border: none; border-radius: 8px;
+            font-family: inherit; font-weight: 700; font-size: 0.85rem;
+            cursor: default;
+        }
+        .sidebar-nav { padding: 8px 0; flex: 1; overflow-y: auto; }
+        .nav-item {
+            display: flex; align-items: center; gap: 10px;
+            padding: 9px 20px;
+            color: var(--sidebar-active);
+            font-size: 0.85rem; font-weight: 500;
+            cursor: pointer; text-decoration: none;
+            transition: all 0.15s;
+        }
+        .nav-item:hover {
+            background: var(--sidebar-nav-hover-bg);
+            color: var(--sidebar-active);
+        }
+        .sidebar-nav > .nav-item {
+            border-radius: 8px;
+            margin: 3px 8px;
+            width: auto;
+        }
+        .sidebar-nav > .nav-item.active {
+            color: var(--accent);
+            background: rgba(10, 102, 194, 0.14);
+            font-weight: 700;
+        }
+        .nav-icon-svg {
+            width: 1.05rem; height: 1.05rem;
+            flex-shrink: 0;
+            display: block;
+            color: inherit;
+        }
+        .nav-item .nav-icon {
+            width: 20px; min-width: 20px;
+            display: inline-flex; align-items: center;
+            justify-content: center;
+            color: inherit; line-height: 0;
+        }
+        .nav-divider {
+            height: 1px;
+            background: rgba(255,255,255,0.06);
+            margin: 10px 16px;
+        }
+        .nav-sub-item { padding-left: 36px; font-size: 0.82rem; }
+        .nav-group { --section-color: #3b82f6; margin: 2px 0; }
+        .nav-group[data-color="green"] { --section-color: #10b981; }
+        .nav-section-header {
+            display: flex; align-items: center; gap: 10px;
+            width: calc(100% - 16px);
+            margin: 8px 8px 4px;
+            padding: 8px 12px;
+            background: none; border: none; border-radius: 8px;
+            color: var(--section-color);
+            font-family: inherit; font-size: 0.88rem; font-weight: 700;
+            cursor: pointer; text-align: left;
+        }
+        .nav-section-header:hover { background: var(--sidebar-nav-hover-bg); }
+        .nav-section-header .nav-section-chevron svg { transition: transform 0.2s; width: 0.85rem; height: 0.85rem; }
+        .nav-group.collapsed .nav-section-chevron svg { transform: rotate(-90deg); }
+        .nav-section-label { flex: 1; }
+        .nav-section-items {
+            margin: 2px 8px 6px 24px;
+            padding-left: 12px;
+            border-left: 1px solid rgba(255,255,255,0.08);
+            display: flex; flex-direction: column;
+            max-height: 600px;
+            overflow: hidden;
+            transition: max-height 0.2s ease, opacity 0.15s;
+        }
+        .nav-group.collapsed .nav-section-items {
+            max-height: 0; opacity: 0; pointer-events: none;
+        }
+
+        .sidebar-bottom {
+            border-top: 1px solid rgba(255,255,255,0.07);
+            padding: 14px 16px 16px;
+            background: var(--sidebar-account-bg);
+            flex-shrink: 0;
+        }
+        .sidebar-credits {
+            display: flex; align-items: center; gap: 8px;
+            padding: 8px 12px;
+            background: var(--sidebar-account-card);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+        .sidebar-credits .credits-icon { font-size: 1rem; }
+        .sidebar-credits span { font-size: 0.78rem; color: var(--sidebar-text); }
+        .sidebar-user {
+            display: flex; align-items: center;
+            gap: 10px; padding: 8px;
+            border-radius: 10px;
+        }
+        .sidebar-user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: 0.65rem; font-weight: 800;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .sidebar-user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .sidebar-user-info { flex: 1; min-width: 0; }
+        .sidebar-user-name { font-size: 0.78rem; font-weight: 600; color: #fff; }
+        .sidebar-user-handle { font-size: 0.68rem; color: var(--sidebar-text); }
+
+        .main {
+            margin-left: var(--sidebar-width);
+            flex: 1;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        .main-content {
+            padding: 28px 32px;
+            max-width: var(--main-content-max-width);
+            width: 100%;
+            margin: 0 auto;
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        .page-header { margin: 0 0 18px; }
+        .page-header h2 {
+            font-size: var(--page-title-font-size);
+            font-weight: 800;
+            line-height: 1.2;
+            margin: 0 0 6px;
+        }
+        .page-header p { color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin: 0; }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        @media (min-width: 900px) { .stats-grid { grid-template-columns: repeat(4, 1fr); } }
+        .stat-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 900;
+            line-height: 1.1;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .stat-delta {
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+        .stat-delta.up { color: #22c55e; background: rgba(34,197,94,0.12); }
+        .stat-delta.down { color: #ef4444; background: rgba(239,68,68,0.12); }
+        .stat-mini-chart {
+            height: 86px;
+            margin-top: 12px;
+            position: relative;
+        }
+        .stat-spark-wrap { position: relative; width: 100%; height: 100%; user-select: none; }
+        .stat-mini-chart svg {
+            width: 100%; height: 100%;
+            display: block;
+            overflow: visible;
+        }
+        .stat-spark-xlabel {
+            font-size: 8px;
+            font-weight: 600;
+            fill: var(--text-muted);
+            font-family: Inter, system-ui, sans-serif;
+        }
+        .stat-spark-xline {
+            stroke: var(--border);
+            stroke-width: 1;
+            opacity: 0.65;
+        }
+        .stat-spark-hover-dot {
+            pointer-events: none;
+            stroke: none;
+        }
+        .stat-spark-tooltip {
+            display: none;
+            position: absolute;
+            pointer-events: none;
+            z-index: 40;
+            min-width: 120px;
+            padding: 8px 11px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.72rem;
+            line-height: 1.35;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            color: var(--text-primary);
+        }
+        .stat-spark-tooltip .stat-spark-tip-val {
+            font-weight: 800;
+            font-size: 0.92rem;
+            color: var(--text-primary);
+        }
+        .stat-spark-tooltip .stat-spark-tip-date {
+            color: var(--text-muted);
+            font-size: 0.68rem;
+            margin-top: 2px;
+        }
+        .stat-mini-chart .spark-line {
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .streak-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        .streak-title {
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.92rem; font-weight: 700;
+            margin-bottom: 16px;
+        }
+        .heatmap-container { overflow-x: auto; }
+        .heatmap-grid {
+            display: grid;
+            grid-template-rows: repeat(7, 1fr);
+            grid-auto-flow: column;
+            gap: 3px;
+        }
+        .heatmap-cell {
+            width: 14px; height: 14px;
+            border-radius: 3px;
+            background: var(--bg);
+        }
+        .heatmap-cell.l1 { background: #374151; }
+        .heatmap-cell.l2 { background: #6baed6; }
+        .heatmap-cell.l3 { background: #2171b5; }
+        .heatmap-cell.l4 { background: #08519c; }
+        .heatmap-day-labels {
+            display: grid;
+            grid-template-rows: repeat(7, 1fr);
+            gap: 3px;
+            margin-right: 6px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        .heatmap-day-labels span { height: 14px; display: flex; align-items: center; }
+        .heatmap-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+        .heatmap-legend {
+            display: flex; align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: 8px;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+        }
+        .heatmap-legend .legend-cell { width: 12px; height: 12px; border-radius: 2px; }
+
+        .engagement-tabs {
+            display: flex;
+            gap: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+        .engagement-tab {
+            padding: 10px 0;
+            border: none;
+            background: none;
+            font-family: inherit;
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            position: relative;
+        }
+        .engagement-tab.active {
+            color: var(--accent);
+            font-weight: 700;
+        }
+        .engagement-tab.active::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: -1px;
+            height: 2px;
+            background: var(--accent);
+            border-radius: 2px 2px 0 0;
+        }
+
+        .engagement-stats {
+            display: grid;
+            gap: 12px;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        }
+        .engagement-stat-card {
+            border: 1px solid var(--border);
+            background: var(--bg-white);
+            border-radius: 10px;
+            padding: 16px;
+        }
+        .engagement-stat-label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .engagement-stat-value {
+            font-size: 1.6rem;
+            font-weight: 900;
+            margin-bottom: 2px;
+        }
+        .engagement-stat-pct { font-size: 0.82rem; color: var(--accent); font-weight: 600; }
+
+        .home-steps-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 20px 24px;
+            margin-bottom: 24px;
+        }
+        .home-steps-title {
+            font-size: 1.05rem;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+        .home-steps-sub {
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+        .home-mission {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 14px 16px;
+            background: var(--bg);
+            border-radius: 12px;
+            margin-bottom: 12px;
+        }
+        .home-mission-check {
+            font-size: 1.15rem;
+            flex-shrink: 0;
+            width: 28px;
+            text-align: center;
+            color: var(--green);
+        }
+        .home-mission-text { flex: 1; }
+        .home-mission-text strong { font-size: 0.88rem; display: block; margin-bottom: 2px; }
+        .home-mission-text span { font-size: 0.78rem; color: var(--text-muted); }
+        .home-mission-reward {
+            font-size: 0.72rem; font-weight: 700;
+            color: var(--accent);
+            background: rgba(10,102,194,0.08);
+            padding: 4px 10px; border-radius: 20px;
+            white-space: nowrap;
+        }
+        .home-ready-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px;
+        }
+        .home-ready-title { font-size: 1.15rem; font-weight: 800; }
+        .home-ready-sub { font-size: 0.82rem; color: var(--text-muted); margin-bottom: 16px; }
+        .home-posts-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+        .home-post-card {
+            background: var(--bg-white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px;
+            display: flex;
+            flex-direction: column;
+        }
+        .home-post-author {
+            display: flex; align-items: center; gap: 8px;
+            margin-bottom: 10px;
+        }
+        .home-post-avatar {
+            width: 28px; height: 28px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #70B5F9);
+            display: flex; align-items: center;
+            justify-content: center;
+            font-size: 0.52rem; font-weight: 800;
+            color: #fff;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        .home-post-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .home-post-author-name { font-size: 0.78rem; font-weight: 700; }
+        .home-post-body {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            flex: 1;
+            margin-bottom: 12px;
+            white-space: pre-line;
+        }
+        .home-post-edit-btn {
+            padding: 8px 16px;
+            background: var(--accent);
+            border: none; border-radius: 8px;
+            color: #fff; font-weight: 700;
+            font-family: inherit;
+            font-size: 0.8rem;
+            cursor: default;
+            width: fit-content;
+        }
+
+        .queue-banner {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 20px;
+            background: var(--bg-white);
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            margin-bottom: 20px;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .queue-banner-text { font-size: 0.88rem; font-weight: 600; }
+        .queue-banner-sub { font-size: 0.78rem; color: var(--text-muted); margin-top: 4px; }
+        .queue-header-row { margin-bottom: 16px; }
+        .queue-title {
+            font-size: var(--page-title-font-size);
+            font-weight: 900;
+        }
+        .queue-tabs-row {
+            display: flex; justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+        }
+        .queue-tabs { display: flex; }
+        .queue-tab {
+            padding: 10px 18px;
+            border: none; background: none;
+            font-family: inherit; font-size: 0.88rem;
+            font-weight: 600; color: var(--text-muted); cursor: pointer;
+            position: relative;
+        }
+        .queue-tab.active {
+            color: var(--text-primary);
+        }
+        .queue-tab.active::after {
+            content: ''; position: absolute;
+            bottom: -1px; left: 0; right: 0; height: 2px;
+            background: var(--text-primary); border-radius: 2px 2px 0 0;
+        }
+        .queue-slot {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--queue-slot-bg);
+            border: 1px solid var(--queue-slot-border);
+            border-radius: 10px;
+            margin-bottom: 6px;
+        }
+        .queue-slot.has-post {
+            background: var(--bg-white);
+            border-color: var(--border);
+        }
+        .queue-slot-time {
+            font-size: 0.82rem; font-weight: 700;
+            min-width: 72px;
+        }
+        .queue-slot-content {
+            flex: 1;
+            font-size: 0.82rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .queue-slot.has-post .queue-slot-content { color: var(--text-primary); }
+        .queue-slot-expand {
+            padding: 4px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-muted);
+            cursor: default;
+            line-height: 1;
+        }
+        .compose-textarea-shell {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--bg-secondary);
+            padding: 16px;
+        }
+        .compose-textarea-shell textarea {
+            width: 100%;
+            min-height: 220px;
+            border: none;
+            background: transparent;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 0.9rem;
+            line-height: 1.55;
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        /* analytics banner — reuse live gradient cue */
+        #analyticsDemoBanner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            color: #fff;
+            background: linear-gradient(135deg, #0A66C2, #004182);
+            font-size: 0.88rem;
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <a class="sidebar-logo" href="#">
+            <div class="logo-icon">SL</div>
+            <span>SuperLinkedIn</span>
+        </a>
+        <button type="button" class="sidebar-create-btn">+ Create a post</button>
+        <nav class="sidebar-nav">
+            <a class="nav-item active" href="#" data-page="home">
+                <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><path d="M9 22V12h6v10"/></svg></span>
+                <span>Home</span>
+            </a>
+            <a class="nav-item" href="#" data-page="queue">
+                <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></span>
+                <span>Queue</span>
+            </a>
+            <a class="nav-item" href="#" data-page="analytics">
+                <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 20V10M12 20V4M6 20v-6"/></svg></span>
+                <span>Analytics</span>
+            </a>
+            <a class="nav-item" href="#" data-page="writer">
+                <span class="nav-icon" aria-hidden="true"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a7 7 0 019 9.5 3.5 3.5 0 01-1.5 2.5L18 21l-4.5-2.5a7 7 0 11-1.5-15.5z"/></svg></span>
+                <span>AI Writer</span>
+            </a>
+
+            <div class="nav-divider"></div>
+
+            <div class="nav-group" data-group="demo_create" data-color="blue">
+                <button type="button" class="nav-section-header" data-toggle-group="demo_create">
+                    <span class="nav-section-icon"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+                    <span class="nav-section-label">Create</span>
+                    <span class="nav-section-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+                </button>
+                <div class="nav-section-items">
+                    <span class="nav-item nav-sub-item" style="cursor:default;opacity:0.7;">Viral Library</span>
+                    <span class="nav-item nav-sub-item" style="cursor:default;opacity:0.7;">Carousel</span>
+                </div>
+            </div>
+
+            <div class="nav-group collapsed" data-group="demo_engage" data-color="green">
+                <button type="button" class="nav-section-header" data-toggle-group="demo_engage">
+                    <span class="nav-section-icon"><svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg></span>
+                    <span class="nav-section-label">Engage</span>
+                    <span class="nav-section-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></span>
+                </button>
+                <div class="nav-section-items">
+                    <span class="nav-item nav-sub-item" style="cursor:default;opacity:0.65;">Discover</span>
+                    <span class="nav-item nav-sub-item" style="cursor:default;opacity:0.65;">Replies</span>
+                </div>
+            </div>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <div class="sidebar-credits">
+                <span class="credits-icon">&#9889;</span>
+                <span><strong>2,500</strong> credits</span>
+            </div>
+            <div class="sidebar-user">
+                <div class="sidebar-user-avatar">
+                    <img src="demo-assets/jackie-profile.jpg" alt="Jackie" width="32" height="32" referrerpolicy="no-referrer"
+                        onerror="if(this.dataset.fb)return;this.dataset.fb=1;this.removeAttribute('onerror');this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&amp;fit=crop&amp;w=128&amp;h=128&amp;q=80';">
+                </div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name">Jackie</div>
+                    <div class="sidebar-user-handle">@JackieN &middot; Advanced</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="main">
+        <div class="main-content">
+
+            <div class="page active" id="page-home">
+                <div class="home-steps-card">
+                    <div class="home-steps-title">Your snapshot</div>
+                    <div class="home-steps-sub">This card matches the onboarding missions layout on Home.</div>
+                    <div class="home-mission">
+                        <div class="home-mission-check">&#10003;</div>
+                        <div class="home-mission-text"><strong>Set up your profile</strong><span>AI personalization</span></div>
+                        <span class="home-mission-reward">Done</span>
+                    </div>
+                    <div class="home-mission">
+                        <div class="home-mission-check">&#9675;</div>
+                        <div class="home-mission-text"><strong>Connect Chrome Extension</strong><span>Sync LinkedIn analytics</span></div>
+                        <span class="home-mission-reward">Skipped in demo</span>
+                    </div>
+                </div>
+                <div class="home-ready-header">
+                    <span class="home-ready-title">Ready to post</span>
+                </div>
+                <p class="home-ready-sub">Two sample cards mimic the personalised queue strip.</p>
+                <div class="home-posts-grid">
+                    <div class="home-post-card">
+                        <div class="home-post-author">
+                            <div class="home-post-avatar">
+                                <img src="demo-assets/jackie-profile.jpg" alt="Jackie" width="28" height="28" referrerpolicy="no-referrer"
+                                    onerror="if(this.dataset.fb)return;this.dataset.fb=1;this.removeAttribute('onerror');this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&amp;fit=crop&amp;w=112&amp;h=112&amp;q=80';">
+                            </div>
+                            <div>
+                                <div class="home-post-author-name">Jackie</div>
+                            </div>
+                        </div>
+                        <div class="home-post-body">The best LinkedIn posts don't summarize the news — they interpret it for one specific persona.
+
+Question for [role]: what changed for you this quarter?</div>
+                        <button type="button" class="home-post-edit-btn">Customize &amp; schedule</button>
+                    </div>
+                    <div class="home-post-card">
+                        <div class="home-post-author">
+                            <div class="home-post-avatar">
+                                <img src="demo-assets/jackie-profile.jpg" alt="Jackie" width="28" height="28" referrerpolicy="no-referrer"
+                                    onerror="if(this.dataset.fb)return;this.dataset.fb=1;this.removeAttribute('onerror');this.src='https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&amp;fit=crop&amp;w=112&amp;h=112&amp;q=80';">
+                            </div>
+                            <div>
+                                <div class="home-post-author-name">Jackie</div>
+                            </div>
+                        </div>
+                        <div class="home-post-body">3 signals I watch before I say yes to a pilot:
+
+Clear owner, bounded scope, measurable leading metric.
+
+What's yours?</div>
+                        <button type="button" class="home-post-edit-btn">Customize &amp; schedule</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="page-queue">
+                <div class="queue-banner">
+                    <div>
+                        <div class="queue-banner-text">Queue banner (same chrome as production)</div>
+                        <div class="queue-banner-sub">Copy is static — use it to narrate Browse &rarr; Add &rarr; Schedule.</div>
+                    </div>
+                </div>
+                <div class="queue-header-row">
+                    <div class="queue-title">Queue</div>
+                </div>
+                <div class="queue-tabs-row">
+                    <div class="queue-tabs">
+                        <button type="button" class="queue-tab active">Scheduled</button>
+                        <button type="button" class="queue-tab">Drafts</button>
+                        <button type="button" class="queue-tab">Posted <span style="opacity:0.7">12</span></button>
+                        <button type="button" class="queue-tab">Failed</button>
+                    </div>
+                    <button type="button" style="padding:8px 16px;border:1px solid var(--accent);background:transparent;border-radius:8px;color:var(--accent);font-weight:700;font-size:0.82rem;font-family:inherit;cursor:default;">&#9998; Edit Queue</button>
+                </div>
+                <div class="queue-slot has-post"><span class="queue-slot-time">Mon 09:00</span><span class="queue-slot-content">Signal-based prospecting beats generic outreach (&hellip;)</span><button type="button" class="queue-slot-expand">&#8943;</button></div>
+                <div class="queue-slot has-post"><span class="queue-slot-time">Wed 14:30</span><span class="queue-slot-content">What I learned shipping v1 in 21 days (&hellip;)</span><button type="button" class="queue-slot-expand">&#8943;</button></div>
+                <div class="queue-slot has-post"><span class="queue-slot-time">Fri 08:15</span><span class="queue-slot-content">Carousel draft: Hiring funnel teardown (&hellip;)</span><button type="button" class="queue-slot-expand">&#8943;</button></div>
+            </div>
+
+            <div class="page" id="page-analytics">
+                <div class="page-header">
+                    <h2>Analytics</h2>
+                    <p>Track your follower growth, post impressions, and engagement trends over the last 30 days.</p>
+                </div>
+                <div id="analyticsDemoBanner">
+                    <div style="font-size:1.75rem;">&#9733;</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:800;margin-bottom:4px;">Fictitious metrics for layout</div>
+                        <div style="font-size:0.78rem;opacity:0.9;line-height:1.45;">Charts below use the same sparkline treatment as the live dashboard (filled area curve, hover dot + tooltip).</div>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Connections</div>
+                        <div class="stat-value"><span id="aFollowers">12,402</span><span class="stat-delta down" id="aFollowersDelta" style="display:none;"></span></div>
+                        <div class="stat-mini-chart" id="sparkFollowers"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Posts</div>
+                        <div class="stat-value"><span id="aPosts">36</span><span class="stat-delta flat" id="aPostsDelta" style="display:none;"></span></div>
+                        <div class="stat-mini-chart" id="sparkPosts"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Impressions</div>
+                        <div class="stat-value"><span id="aImpressions">284K</span><span class="stat-delta up" id="aImpressionsDelta" style="display:none;"></span></div>
+                        <div class="stat-mini-chart" id="sparkImpressions"></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Engagements</div>
+                        <div class="stat-value"><span id="aEngagements">10.8K</span><span class="stat-delta flat" id="aEngagementsDelta" style="display:none;"></span></div>
+                        <div class="stat-mini-chart" id="sparkEngagements"></div>
+                    </div>
+                </div>
+
+                <div class="streak-card">
+                    <div class="streak-title">
+                        <span style="font-size:1.1rem;">&#128293;</span>
+                        <span>12-week posting streak — demo heatmap density</span>
+                    </div>
+                    <div style="display:flex;">
+                        <div class="heatmap-day-labels">
+                            <span>Sun</span><span></span><span>Tue</span><span></span><span>Thu</span><span></span><span>Sat</span>
+                        </div>
+                        <div class="heatmap-container" style="flex:1;">
+                            <div class="heatmap-grid" id="heatmapGrid"></div>
+                            <div class="heatmap-labels" id="heatmapLabels"></div>
+                        </div>
+                    </div>
+                    <div class="heatmap-legend">
+                        <div class="legend-cell" style="background:var(--bg);"></div>
+                        <div class="legend-cell l4"></div> more
+                    </div>
+                </div>
+
+                <div class="engagement-tabs">
+                    <button type="button" class="engagement-tab active">Engagements</button>
+                    <button type="button" class="engagement-tab">Activity time / impression</button>
+                </div>
+                <div class="engagement-stats">
+                    <div class="engagement-stat-card">
+                        <div class="engagement-stat-label">Social engagements</div>
+                        <div class="engagement-stat-value" style="font-size:1.4rem;">4,892</div>
+                        <div class="engagement-stat-pct">Demo rollup</div>
+                    </div>
+                    <div class="engagement-stat-card">
+                        <div class="engagement-stat-label">Likes</div>
+                        <div class="engagement-stat-value">3,015</div>
+                        <div class="engagement-stat-pct">1.9%</div>
+                    </div>
+                    <div class="engagement-stat-card">
+                        <div class="engagement-stat-label">Reposts</div>
+                        <div class="engagement-stat-value">612</div>
+                        <div class="engagement-stat-pct">0.65%</div>
+                    </div>
+                    <div class="engagement-stat-card">
+                        <div class="engagement-stat-label">Replies</div>
+                        <div class="engagement-stat-value">841</div>
+                        <div class="engagement-stat-pct">0.9%</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="page" id="page-writer">
+                <div class="page-header">
+                    <h2>AI Writer</h2>
+                    <p>Composer shell mirrors the right-hand drafting experience (static).</p>
+                </div>
+                <div class="compose-textarea-shell">
+                    <textarea readonly>Hook: Most “thought leadership” is just repurposed press releases.
+
+Story: Last quarter we audited 40 top voices in [industry].
+
+Takeaway: The ones winning share one habit — they publish a sharply opinionated takeaway every week.
+
+CTA: What habit are you doubling down on this month?</textarea>
+                </div>
+                <p style="margin-top:14px;font-size:0.8rem;color:var(--text-muted);">Improve with AI, tone controls, and schedule-to-queue appear in production.</p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = String(str == null ? '' : str);
+            return div.innerHTML;
+        }
+
+        function buildSparkDateIsoList(n) {
+            const len = Math.max(1, Math.floor(Number(n)) || 1);
+            const out = [];
+            const start = new Date();
+            start.setHours(0, 0, 0, 0);
+            start.setDate(start.getDate() - (len - 1));
+            for (let i = 0; i < len; i++) {
+                const d = new Date(start);
+                d.setDate(start.getDate() + i);
+                out.push(d.toISOString().slice(0, 10));
+            }
+            return out;
+        }
+
+        function formatSparkDateLabel(iso) {
+            if (!iso) return '';
+            const d = new Date(iso + 'T12:00:00');
+            if (isNaN(d.getTime())) return iso;
+            return d.toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric',
+            });
+        }
+
+        function smoothPath(points, w, h, padBottom) {
+            if (!points.length) return '';
+            const n = points.length;
+            const cmd = ['M ' + points[0][0] + ' ' + points[0][1]];
+            for (let i = 0; i < n - 1; i++) {
+                const p0 = points[i - 1] || points[i];
+                const p1 = points[i];
+                const p2 = points[i + 1];
+                const p3 = points[i + 2] || points[i + 1];
+                const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
+                const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
+                const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
+                const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+                cmd.push(`C ${cp1x.toFixed(2)} ${cp1y.toFixed(2)} ${cp2x.toFixed(2)} ${cp2y.toFixed(2)} ${p2[0]} ${p2[1]}`);
+            }
+            return cmd.join(' ');
+        }
+
+        function bindStatSparkHover(hostEl, wrapEl, svgEl, tipEl, snapPoints, isoDates, values, colorHex) {
+            const dot = svgEl.querySelector('.stat-spark-hover-dot');
+            let lastIdx = -1;
+
+            function hide() {
+                lastIdx = -1;
+                tipEl.style.display = 'none';
+                if (dot) dot.setAttribute('visibility', 'hidden');
+                delete wrapEl.dataset.sparkOpen;
+            }
+
+            function showAt(idx) {
+                idx = Math.max(0, Math.min(idx, snapPoints.length - 1));
+                if (idx === lastIdx && tipEl.style.display === 'block') return;
+                lastIdx = idx;
+                const px = snapPoints[idx][0];
+                const py = snapPoints[idx][1];
+                const val = Number(values[idx]) || 0;
+                const iso = isoDates[idx] || '';
+                if (dot) {
+                    dot.setAttribute('cx', String(px));
+                    dot.setAttribute('cy', String(py));
+                    dot.setAttribute('fill', colorHex);
+                    dot.setAttribute('visibility', 'visible');
+                }
+                tipEl.innerHTML =
+                    '<div class="stat-spark-tip-val">' + escapeHtml(val.toLocaleString()) + '</div>' +
+                    '<div class="stat-spark-tip-date">' + escapeHtml(formatSparkDateLabel(iso)) + '</div>';
+                tipEl.style.display = 'block';
+                wrapEl.dataset.sparkOpen = '1';
+                requestAnimationFrame(() => {
+                    const wrapR = wrapEl.getBoundingClientRect();
+                    const pt = svgEl.createSVGPoint();
+                    pt.x = px;
+                    pt.y = py;
+                    try {
+                        const scr = pt.matrixTransform(svgEl.getScreenCTM());
+                        tipEl.style.left = Math.round(scr.x - wrapR.left) + 'px';
+                        tipEl.style.top = Math.round(scr.y - wrapR.top) + 'px';
+                    } catch {
+                        tipEl.style.left = Math.round(((px / 280) * wrapR.width)) + 'px';
+                        tipEl.style.top = Math.round(((py / 70) * wrapR.height)) + 'px';
+                    }
+                    tipEl.style.transform = 'translate(-50%, calc(-100% - 10px))';
+                });
+            }
+
+            svgEl.addEventListener('mousemove', (ev) => {
+                let idx = 0;
+                try {
+                    const pt = svgEl.createSVGPoint();
+                    pt.x = ev.clientX;
+                    pt.y = ev.clientY;
+                    const svgP = pt.matrixTransform(svgEl.getScreenCTM().inverse());
+                    const ns = snapPoints.length;
+                    if (ns >= 2) {
+                        const stepXp = (snapPoints[ns - 1][0] - snapPoints[0][0]) / (ns - 1);
+                        idx = Math.round((svgP.x - snapPoints[0][0]) / Math.max(stepXp, 0.001));
+                    }
+                } catch {
+                    const r = svgEl.getBoundingClientRect();
+                    const fx = Math.max(0, Math.min(1, (ev.clientX - r.left) / Math.max(r.width, 1)));
+                    idx = Math.round(fx * Math.max(0, snapPoints.length - 1));
+                }
+                showAt(Math.max(0, Math.min(idx, snapPoints.length - 1)));
+            });
+            svgEl.addEventListener('mouseleave', hide);
+            hostEl.__sparkCleanup = hide;
+        }
+
+        function renderStatSparkline(containerId, series, opts) {
+            const host = document.getElementById(containerId);
+            if (!host) return;
+            if (typeof host.__sparkCleanup === 'function') {
+                try { host.__sparkCleanup(); } catch {}
+                host.__sparkCleanup = null;
+            }
+            opts = opts || {};
+            const color = opts.color || '#3B82F6';
+            const W = 280;
+            const chartTop = 4;
+            const chartBot = 48;
+            const axisLineY = 50;
+            const labelY = 62;
+            const H = 70;
+            const padX = 2;
+            let data = Array.isArray(series) && series.length ? series.slice() : [];
+            const fallbackDays = opts.days || 30;
+            if (!data.length) data = new Array(Math.max(1, fallbackDays)).fill(0);
+            const dates = opts.dates && opts.dates.length === data.length ? opts.dates.slice() : buildSparkDateIsoList(data.length);
+            const hasPulse = data.some((v) => Number(v) > 0);
+            let min = Math.min.apply(null, data);
+            let max = Math.max.apply(null, data);
+            if (!Number.isFinite(min)) min = 0;
+            if (!Number.isFinite(max)) max = 0;
+            if (max === min && max <= 0) { max = 1; min = 0; }
+            const range = max - min || 1;
+            const n = data.length;
+            const innerH = chartBot - chartTop - 6;
+            const stepX = n > 1 ? (W - padX * 2) / (n - 1) : 0;
+            const pts = [];
+            for (let i = 0; i < n; i++) {
+                const x = n > 1 ? padX + i * stepX : padX + (W - padX * 2) / 2;
+                const vn = Number(data[i]) || 0;
+                const y = chartTop + (1 - (vn - min) / range) * innerH;
+                pts.push([x, y]);
+            }
+            let linePts = pts.slice();
+            if (linePts.length === 1) {
+                const y = linePts[0][1];
+                linePts = [[padX, y], [W - padX, y]];
+            }
+            const curve = linePts.length >= 2 ? smoothPath(linePts, W, chartBot, 0) :
+                `M ${padX} ${chartBot - 10} L ${W - padX} ${chartBot - 10}`;
+            const areaFill =
+                linePts.length >= 2 && pts.length >= 2
+                    ? `${curve} L ${linePts[linePts.length - 1][0]} ${chartBot} L ${linePts[0][0]} ${chartBot} Z`
+                    : `M ${padX} ${chartBot - 10} L ${W - padX} ${chartBot - 10} L ${W - padX} ${chartBot} L ${padX} ${chartBot} Z`;
+
+            const gradId = `spark-${containerId}-${Math.random().toString(36).slice(2, 9)}`;
+            const tickIx = [...new Set([0, Math.floor((n - 1) / 4), Math.floor((n - 1) / 2), Math.floor(((n - 1) * 3) / 4), n - 1])].filter(i => i >= 0 && i < n).sort((a,b) => a - b);
+            let tickSvg = '';
+            tickIx.forEach(ti => {
+                const lx = n > 1 ? padX + ti * stepX : padX + (W - padX * 2) / 2;
+                const lbl = formatSparkDateLabel(dates[ti] || '').trim() || '';
+                tickSvg += `<text class="stat-spark-xlabel" text-anchor="middle" x="${lx.toFixed(1)}" y="${labelY}">${escapeHtml(lbl)}</text>`;
+            });
+            const firstCx = pts[0] ? pts[0][0] : padX + (W - padX * 2) / 2;
+            const firstCy = pts[0] ? pts[0][1] : chartBot - 12;
+
+            host.innerHTML =
+                '<div class="stat-spark-wrap">' +
+                `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="touch-action:none;">` +
+                '<defs>' +
+                `<linearGradient id="${gradId}" x1="0" y1="0" x2="0" y2="1">` +
+                `<stop offset="0%" stop-color="' + color + '" stop-opacity="' + (hasPulse ? 0.45 : 0.22) + '"></stop>` +
+                `<stop offset="100%" stop-color="${color}" stop-opacity="0"></stop>` +
+                '</linearGradient></defs>' +
+                `<line class="stat-spark-xline" x1="${padX}" y1="${axisLineY}" x2="${W - padX}" y2="${axisLineY}"></line>` +
+                `<path d="${areaFill}" fill="url(#${gradId})"></path>` +
+                `<path class="spark-line" d="${curve}" stroke="${color}" stroke-opacity="${hasPulse ? 1 : 0.85}"></path>` +
+                `<circle class="stat-spark-hover-dot" r="4.5" cx="${firstCx}" cy="${firstCy}" visibility="hidden" />` +
+                tickSvg +
+                '</svg>' +
+                '<div class="stat-spark-tooltip" role="tooltip"></div></div>';
+
+            const wrap = host.querySelector('.stat-spark-wrap');
+            const svg = host.querySelector('svg');
+            const tip = host.querySelector('.stat-spark-tooltip');
+            if (wrap && svg && tip) bindStatSparkHover(host, wrap, svg, tip, pts, dates, data, color);
+        }
+
+        function applyStatDelta(deltaElId, series) {
+            const el = document.getElementById(deltaElId);
+            if (!el) return;
+            const data = series || [];
+            if (data.length < 2) { el.style.display = 'none'; return; }
+            const half = Math.max(1, Math.floor(data.length / 2));
+            const recent = data.slice(-half).reduce((a, b) => a + b, 0);
+            const prior = data.slice(0, data.length - half).reduce((a, b) => a + b, 0);
+            const diff = recent - prior;
+            if (diff === 0 && prior === 0 && recent === 0) { el.style.display = 'none'; return; }
+            const pct = prior === 0 ? (recent > 0 ? 100 : 0) : Math.round((diff / prior) * 100);
+            const arrow = diff > 0 ? '\u2191' : (diff < 0 ? '\u2193' : '\u2192');
+            const cls = diff > 0 ? 'up' : (diff < 0 ? 'down' : 'flat');
+            el.className = 'stat-delta ' + cls;
+            el.textContent = `${arrow} ${Math.abs(pct)}%`;
+            el.style.display = '';
+        }
+
+        function buildDemoHeatmap() {
+            const grid = document.getElementById('heatmapGrid');
+            const labels = document.getElementById('heatmapLabels');
+            if (!grid) return;
+            const weeks = 12;
+            const cells = weeks * 7;
+            let html = '';
+            const seeded = (i) => {
+                const x = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
+                return x - Math.floor(x);
+            };
+            for (let i = 0; i < cells; i++) {
+                const r = seeded(i + 42);
+                let cls = '';
+                if (r > 0.72) cls = 'l4';
+                else if (r > 0.55) cls = 'l3';
+                else if (r > 0.38) cls = 'l2';
+                else if (r > 0.2) cls = 'l1';
+                html += `<div class="heatmap-cell ${cls}"></div>`;
+            }
+            grid.innerHTML = html;
+            if (labels) {
+                const months = [];
+                const today = new Date();
+                for (let w = 0; w < weeks; w++) {
+                    const d = new Date(today);
+                    d.setDate(d.getDate() - (cells - 1 - w * 7));
+                    months.push(d.toLocaleDateString(undefined, { month: 'short' }));
+                }
+                const pick = [...new Set([0, Math.floor(months.length / 2), months.length - 1])];
+                labels.innerHTML = pick.map(ix => `<span>${months[ix] || ''}</span>`).join('') ||
+                    `<span>${months[0]}</span><span>${months[months.length - 1]}</span>`;
+            }
+        }
+
+        function toggleNavSection(groupKey) {
+            const g = document.querySelector('.nav-group[data-group="' + groupKey + '"]');
+            if (g) g.classList.toggle('collapsed');
+        }
+
+        function showPage(page) {
+            document.querySelectorAll('.nav-item[data-page]').forEach((item) => {
+                item.classList.toggle('active', item.getAttribute('data-page') === page);
+            });
+            document.querySelectorAll('.main .page').forEach((panel) => {
+                panel.classList.toggle('active', panel.id === 'page-' + page);
+            });
+        }
+
+        document.querySelectorAll('.nav-item[data-page]').forEach((el) => {
+            el.addEventListener('click', (ev) => {
+                ev.preventDefault();
+                showPage(el.getAttribute('data-page'));
+            });
+        });
+
+        document.querySelectorAll('[data-toggle-group]').forEach((btn) => {
+            btn.addEventListener('click', () => toggleNavSection(btn.getAttribute('data-toggle-group')));
+        });
+
+        /* Mock 30-point series scaled to plausible magnitudes */
+        const sparkDates30 = buildSparkDateIsoList(30);
+        const SPARK_BLUE = '#3B82F6';
+        const sFollowers = sparkDates30.map((_, i) => 11800 + i * 18 + Math.sin(i / 5) * 120);
+        const sPosts = sparkDates30.map((_, i) => 26 + Math.floor(Math.sin(i / 4 + 2) * 4 + 8));
+        const sImpRaw = sparkDates30.map((_, i) => 6800 + i * 220 + Math.sin(i / 3) * 900);
+        const sEngRaw = sparkDates30.map((_, i) => 285 + i * 9 + Math.sin(i / 5) * 40);
+
+        renderStatSparkline('sparkFollowers', sFollowers, { color: SPARK_BLUE, dates: sparkDates30 });
+        renderStatSparkline('sparkPosts', sPosts, { color: SPARK_BLUE, dates: sparkDates30 });
+        renderStatSparkline('sparkImpressions', sImpRaw, { color: SPARK_BLUE, dates: sparkDates30 });
+        renderStatSparkline('sparkEngagements', sEngRaw, { color: SPARK_BLUE, dates: sparkDates30 });
+        applyStatDelta('aFollowersDelta', sFollowers);
+        applyStatDelta('aPostsDelta', sPosts);
+        applyStatDelta('aImpressionsDelta', sImpRaw);
+        applyStatDelta('aEngagementsDelta', sEngRaw);
+
+        buildDemoHeatmap();
+
+        /** Card headline figures; series above drive the visuals. */
+    </script>
+</body>
+</html>

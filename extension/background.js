@@ -397,6 +397,9 @@ function mergeData(payload) {
         } else if (prev.postImpressionsSource === 'feed_identity' && patch.postImpressionsSource === 'analytics_page') {
             next.postImpressions = Number(prev.postImpressions);
             next.postImpressionsSource = 'feed_identity';
+        } else if (patch.postImpressionsSource === 'analytics_page' && patch.postImpressions !== undefined) {
+            next.postImpressions = Number(patch.postImpressions);
+            next.postImpressionsSource = 'analytics_page';
         } else if (patch && Object.prototype.hasOwnProperty.call(patch, 'postImpressions')) {
             const a = Number(prev.postImpressions);
             const b = Number(patch.postImpressions);

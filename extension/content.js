@@ -530,9 +530,33 @@
         } catch (e) { /* extension context invalidated */ }
     }
 
+    /**
+     * Rollup impressions shown in Analytics → Posts ("Total impressions") or the Content performance
+     * headline. Prefer this over the generic "Post impressions" regex — that often matches unrelated
+     * modules or a different rolling window before the filtered chart reads.
+     */
+    function scrapeCreatorPostsImpressionsRollupFromBody(bodyText) {
+        const t = (bodyText || '').replace(/\u00a0/g, ' ');
+        const mTotal =
+            /\b[Tt]otal\s+[Ii]mpressions?\b[\s:•·|–\-—\u2013\u2014]{0,32}(\d[\d,.]*[KMB]?)\b/.exec(t) ||
+            /\b[Tt]otal\s+[Ii]mpressions?\b[^\d]{0,40}(\d[\d,.]*[KMB]?)\b/.exec(t);
+        if (mTotal) {
+            const v = parseNumber(mTotal[1]);
+            if (Number.isFinite(v) && v >= 0) return v;
+        }
+        const mCp =
+            /\b[Cc]ontent\s+[Pp]erformance\b[\s\S]{0,420}?(\d[\d,.]*[KMB]?)(?:[\s]|$|%)/.exec(t);
+        if (mCp) {
+            const v = parseNumber(mCp[1]);
+            if (Number.isFinite(v) && v >= 0) return v;
+        }
+        return null;
+    }
+
     function scrapeAnalyticsDashboard() {
         const stats = {};
         const bodyText = document.body.innerText || '';
+        const rollupImpressions = scrapeCreatorPostsImpressionsRollupFromBody(bodyText);
 
         // === STRATEGY A: Walk DOM leaf nodes to find standalone numbers near labels ===
         const labelMap = {
@@ -588,6 +612,8 @@
             { key: 'socialEngagements', re: new RegExp('(\\d[\\d,.]*[KMB]?)' + flexWS + '[Ss]ocial engagements?', 'i') },
         ];
         fwdPatterns.forEach(({ key, re }) => {
+            // Generic "Post impressions" often hits the wrong number; rollup wins when present.
+            if (rollupImpressions !== null && key === 'postImpressions') return;
             if (!stats[key]) {
                 const m = bodyText.match(re);
                 if (m) {
@@ -617,11 +643,9 @@
             }
         });
 
-        // === STRATEGY D: Content performance header value ===
-        const cpMatch = bodyText.match(/Content performance[\s\S]{0,200}?(\d[\d,.]*[KMB]?)\s/);
-        if (cpMatch && !stats.postImpressions) {
-            const v = parseNumber(cpMatch[1]);
-            if (v > 0) stats.postImpressions = v;
+        // === STRATEGY D: Chart rollup (overrides regex fallbacks) ===
+        if (rollupImpressions !== null) {
+            stats.postImpressions = rollupImpressions;
         }
 
         // === STRATEGY E: Top performing posts ===

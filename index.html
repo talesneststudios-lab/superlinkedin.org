@@ -13,7 +13,21 @@
         gtag('js', new Date());
         gtag('config', 'G-QNGS22DM1Z');
     </script>
-    <title>SuperLinkedIn | LinkedIn Growth Tool for Scheduling, Analytics & AI Content</title>
+    <title>SuperLinkedIn | AI-Powered LinkedIn Growth &mdash; Scheduling, Analytics &amp; Outreach</title>
+    <meta name="description" content="SuperLinkedIn is an AI-powered LinkedIn growth platform for professionals: create scroll-stopping posts, optimize your profile presence, automate scheduling &amp; queueing, analytics with the Chrome extension, and CRM-style outreach. Start free &mdash; plans for teams &amp; power users. Not affiliated with LinkedIn.">
+    <link rel="canonical" href="https://www.superlinkedin.org/">
+    <meta name="robots" content="index,follow">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="SuperLinkedIn">
+    <meta property="og:title" content="SuperLinkedIn | AI-Powered LinkedIn Growth Platform">
+    <meta property="og:description" content="Create posts with AI, schedule to the best times, track impressions &amp; engagement, and streamline outreach &mdash; all in one place. Built for creators, founders, marketers, and sales teams.">
+    <meta property="og:url" content="https://www.superlinkedin.org/">
+    <meta property="og:image" content="https://www.superlinkedin.org/favicon.png">
+    <meta property="og:locale" content="en_US">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SuperLinkedIn | AI-Powered LinkedIn Growth Platform">
+    <meta name="twitter:description" content="AI post writer, scheduler, analytics, Chrome extension insights, and outreach tools for LinkedIn professionals.">
+    <meta name="twitter:image" content="https://www.superlinkedin.org/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -223,19 +237,20 @@
             letter-spacing: -0.03em;
         }
 
-        .hero h1 .gradient-text {
-            background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .hero-lead {
+            font-size: 1.08rem;
+            color: var(--text-primary);
+            max-width: 720px;
+            margin: 0 auto 14px;
+            line-height: 1.7;
+            font-weight: 500;
         }
-
-        .hero p {
-            font-size: 1.2rem;
+        .hero-support {
+            font-size: 1.05rem;
             color: var(--text-secondary);
             max-width: 600px;
-            margin: 0 auto 40px;
-            line-height: 1.7;
+            margin: 0 auto 36px;
+            line-height: 1.65;
         }
 
         .hero-buttons {
@@ -992,25 +1007,132 @@
             vertical-align: middle;
         }
 
+        .faq-list {
+            max-width: 760px;
+            margin: 0 auto;
+            text-align: left;
+        }
+        details.faq-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            margin-bottom: 12px;
+            padding: 16px 20px;
+            transition: border-color 0.2s;
+        }
+        details.faq-item[open] {
+            border-color: rgba(10, 102, 194, 0.35);
+        }
+        details.faq-item summary {
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-primary);
+            list-style: none;
+            position: relative;
+            padding-right: 28px;
+        }
+        details.faq-item summary::-webkit-details-marker {
+            display: none;
+        }
+        details.faq-item summary::after {
+            content: '+';
+            position: absolute;
+            right: 0;
+            font-weight: 800;
+            color: var(--accent-light);
+            font-size: 1.25rem;
+            line-height: 1;
+        }
+        details.faq-item[open] summary::after {
+            content: '\2013';
+        }
+        details.faq-item p {
+            margin-top: 12px;
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            line-height: 1.68;
+            margin-bottom: 0;
+        }
+        details.faq-item a {
+            color: var(--accent-light);
+            text-decoration: underline;
+        }
+        details.faq-item a:hover {
+            color: #93c5fd;
+        }
+
         .divider {
             width: 100%;
             height: 1px;
             background: var(--border);
         }
     </style>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://www.superlinkedin.org/#organization",
+          "name": "SuperLinkedIn",
+          "url": "https://www.superlinkedin.org/",
+          "logo": "https://www.superlinkedin.org/favicon.png",
+          "description": "AI-powered LinkedIn growth platform: post creation, scheduling, analytics via web app & Chrome extension, and outreach tooling for professionals.",
+          "email": "info@superlinkedin.org",
+          "sameAs": [
+            "https://github.com/talesneststudios-lab/superlinkedin.org",
+            "https://www.linkedin.com/company/120934318/"
+          ]
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://www.superlinkedin.org/#product",
+          "name": "SuperLinkedIn",
+          "applicationCategory": "BusinessApplication",
+          "applicationSubCategory": "Social Networking",
+          "operatingSystem": "Web, Chrome Browser (extension)",
+          "description": "SuperLinkedIn is an AI-powered LinkedIn growth platform that helps professionals create posts, optimize profiles, understand analytics, and automate scheduling and outreach.",
+          "url": "https://www.superlinkedin.org/",
+          "author": { "@id": "https://www.superlinkedin.org/#organization" },
+          "publisher": { "@id": "https://www.superlinkedin.org/#organization" },
+          "downloadUrl": "https://www.superlinkedin.org/chrome-extension.html",
+          "offers": [
+            {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD",
+              "name": "Free tier",
+              "url": "https://www.superlinkedin.org/login.html"
+            }
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://www.superlinkedin.org/#website",
+          "url": "https://www.superlinkedin.org/",
+          "name": "SuperLinkedIn",
+          "publisher": { "@id": "https://www.superlinkedin.org/#organization" },
+          "inLanguage": "en-US"
+        }
+      ]
+    }
+    </script>
 </head>
 <body>
     <!-- NAV -->
     <nav>
         <div class="container">
-            <a href="#" class="logo">
+            <a href="/" class="logo">
                 <div class="logo-icon">SL</div>
                 SuperLinkedIn
             </a>
             <ul class="nav-links">
+                <li><a href="#about">About</a></li>
                 <li><a href="#features">Features</a></li>
                 <li><a href="#discover">Discover</a></li>
                 <li><a href="#engage">Engage</a></li>
+                <li><a href="#faq">FAQ</a></li>
                 <li><a href="#pricing">Pricing</a></li>
                 <li><a href="chrome-extension.html">Chrome Extension</a></li>
                 <li><a href="login.html" class="btn btn-primary">Get Started for Free</a></li>
@@ -1026,7 +1148,8 @@
                 LinkedIn Growth Platform
             </div>
             <h1>Grow and monetize your<br><span class="gradient-text">LinkedIn audience</span>, faster</h1>
-            <p>Create, schedule posts, and engage strategically. Everything you need to grow on LinkedIn, in one platform.</p>
+            <p class="hero-lead"><strong>SuperLinkedIn</strong> is an AI-powered LinkedIn growth platform that helps professionals <strong>create posts</strong>, <strong>optimize profiles</strong>, and <strong>automate scheduling &amp; outreach</strong> without living in the LinkedIn tab bar.</p>
+            <p class="hero-support">Queue content, analyze what performs, plug in analytics from the Chrome extension, and engage faster &mdash; so you solve the consistency problem instead of reinventing drafts every Monday.</p>
             <div class="hero-buttons">
                 <a href="login.html" class="btn btn-primary">Get Started for Free</a>
                 <a href="#features" class="btn btn-secondary">See How It Works</a>
@@ -1067,6 +1190,39 @@
             <span class="marquee-item"><span class="star">&#9733;&#9733;&#9733;&#9733;&#9733;</span> "Scheduling is flawless"</span>
         </div>
     </div>
+
+    <section class="section" id="about" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; What &mdash; Who &mdash; Why</span>
+                <h2 class="section-title">Made for operators who rely on LinkedIn for pipeline &amp; distribution</h2>
+                <p class="section-subtitle">Consultants, sellers, recruiters, indie founders, and content-led brands use LinkedIn daily. SuperLinkedIn is the toolkit that turns that grind into repeatable workflows tied to measurable reach.</p>
+            </div>
+            <div class="features-grid fade-in">
+                <div class="feature-card fade-in visible">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2M12 11a4 4 0 100-8 4 4 0 000 8z"/></svg>
+                    </div>
+                    <h3>Who it is for</h3>
+                    <p>Professionals who publish or sell on LinkedIn: B2B teams, founders, coaches, creatives, agencies, and anyone building authority in the feed.</p>
+                </div>
+                <div class="feature-card fade-in visible">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+                    </div>
+                    <h3>Problem we solve</h3>
+                    <p>Inconsistent posting, guesswork on timing, scattered analytics in the LinkedIn UI, and manual engagement that does not scale with your pipeline goals.</p>
+                </div>
+                <div class="feature-card fade-in visible">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M22 11.08V12a10 10 0 11-5.93-9.14M22 4L12 14.01l-3-3"/></svg>
+                    </div>
+                    <h3>What you get</h3>
+                    <p>AI drafting in your tone, scheduling &amp; queue, analytics dashboards, Chrome extension sync for live stats, DM &amp; engagement helpers, plus higher limits on Advanced &amp; Ultra.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- FEATURES OVERVIEW -->
     <section class="section" id="features">
@@ -1607,6 +1763,42 @@
         </div>
     </section>
 
+    <section class="section" id="faq">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; FAQ</span>
+                <h2 class="section-title">Common questions about SuperLinkedIn &amp; LinkedIn growth</h2>
+                <p class="section-subtitle">Clear answers for operators comparing AI schedulers and LinkedIn-specific growth tools.</p>
+            </div>
+            <div class="faq-list fade-in">
+                <details class="faq-item fade-in">
+                    <summary>Is SuperLinkedIn affiliated with LinkedIn?</summary>
+                    <p>No. SuperLinkedIn is an independent third-party platform. LinkedIn is a trademark of LinkedIn Corporation. We are not endorsed by or partnered with LinkedIn for this product beyond what any member can do with their own account and browser tools.</p>
+                </details>
+                <details class="faq-item fade-in">
+                    <summary>What does the Chrome extension do?</summary>
+                    <p>It surfaces analytics and controls while you browse LinkedIn (for example follower context, dashboards, sidebar actions, and syncing metrics to your SuperLinkedIn account when you permit it per feature). Installation is optional but unlocks tighter insights than the naked feed.</p>
+                </details>
+                <details class="faq-item fade-in">
+                    <summary>Who should use AI post generation?</summary>
+                    <p>Anyone who publishes regularly but hates blank-page time. Draft in your lane (hooks, frameworks, carousel outlines), edit for voice, then schedule in the queue. It is fastest when paired with analytics so you repeat formats that convert.</p>
+                </details>
+                <details class="faq-item fade-in">
+                    <summary>Where is pricing documented?</summary>
+                    <p>Plans and limits are summarized in the Pricing section on this page and on the Upgrade flow after signup. Trials and paid tiers unlock higher daily AI credits, more connected profiles (Ultra), queue depth, priority support, and team-oriented features.</p>
+                </details>
+                <details class="faq-item fade-in">
+                    <summary>How do Privacy &amp; Terms apply?</summary>
+                    <p>Our Privacy Policy describes data handling including extension and app usage signals. Terms cover acceptable use &mdash; notably that you comply with LinkedIn&apos;s rules and anti-spam expectations when automating drafts or engagements.</p>
+                </details>
+                <details class="faq-item fade-in">
+                    <summary>How do I contact the team?</summary>
+                    <p>Email <a href="mailto:info@superlinkedin.org">info@superlinkedin.org</a> for product, billing, or partnership questions. We read every message; response time is usually within a few business days.</p>
+                </details>
+            </div>
+        </div>
+    </section>
+
     <!-- CTA -->
     <section class="cta-section">
         <div class="container fade-in">
@@ -1621,7 +1813,7 @@
         <div class="container">
             <div class="footer-grid">
                 <div class="footer-brand">
-                    <a href="#" class="logo">
+                    <a href="/" class="logo">
                         <div class="logo-icon">SL</div>
                         SuperLinkedIn
                     </a>
@@ -1639,10 +1831,12 @@
                 <div class="footer-col">
                     <h4>Resources</h4>
                     <ul>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Testimonials</a></li>
-                        <li><a href="#">LinkedIn Analytics</a></li>
-                        <li><a href="#">Affiliate Program</a></li>
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#faq">FAQ</a></li>
+                        <li><a href="mailto:info@superlinkedin.org">Contact</a></li>
+                        <li><a href="https://github.com/talesneststudios-lab/superlinkedin.org" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+                        <li><a href="playbook.html">Playbook</a></li>
+                        <li><a href="https://www.linkedin.com/company/120934318/" target="_blank" rel="noopener noreferrer">Company on LinkedIn</a></li>
                     </ul>
                 </div>
                 <div class="footer-col">

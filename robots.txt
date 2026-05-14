@@ -1,0 +1,9 @@
+# Robots rules for www.superlinkedin.org marketing site.
+User-agent: *
+Allow: /
+
+# Optional: thin or account-only flows (uncomment if you prefer not to index them)
+# Disallow: /auth/
+# Disallow: /checkout/
+
+Sitemap: https://www.superlinkedin.org/sitemap.xml
