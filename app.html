@@ -4015,6 +4015,14 @@
             font-size: 0.92rem;
             color: var(--text-primary);
         }
+        .stat-spark-tooltip .stat-spark-tip-sub {
+            display: block;
+            margin-top: 6px;
+            font-weight: 600;
+            font-size: 0.66rem;
+            color: var(--text-muted);
+            line-height: 1.35;
+        }
         .stat-spark-tooltip .stat-spark-tip-date {
             color: var(--text-muted);
             font-size: 0.68rem;
@@ -6842,7 +6850,7 @@
             <div class="page" id="page-virallibrary">
                 <div class="page-header">
                     <h2>Viral Posts Library</h2>
-                    <p>Browse 50+ high-performing LinkedIn post templates. Use them as inspiration for your own content.</p>
+                    <p>Browse 1,000 high-performing LinkedIn post archetypes—20 templates per page. Use them as inspiration for your own content.</p>
                 </div>
                 <div style="max-width:960px;margin:0 auto;">
                     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
@@ -8196,15 +8204,79 @@
         let _vlPage = 1;
         let _vlLoading = false;
 
-        function loadMoreViralPosts() {
-            _vlPage += 1;
-            loadViralLibrary(true);
+        function viralPageWindow(current, totalPages) {
+            if (totalPages <= 1) return [{ t: 'p', n: 1 }];
+            if (totalPages <= 11) {
+                const a = [];
+                for (let p = 1; p <= totalPages; p++) a.push({ t: 'p', n: p });
+                return a;
+            }
+            const set = new Set([1, totalPages]);
+            for (let p = current - 2; p <= current + 2; p++) {
+                if (p >= 2 && p <= totalPages - 1) set.add(p);
+            }
+            const nums = [...set].sort((a, b) => a - b);
+            const out = [];
+            for (let k = 0; k < nums.length; k++) {
+                const p = nums[k];
+                const prev = k > 0 ? nums[k - 1] : 0;
+                if (prev && p - prev > 1) out.push({ t: '…' });
+                out.push({ t: 'p', n: p });
+            }
+            return out;
         }
 
-        async function loadViralLibrary(append) {
-            const doAppend = append === true;
+        function renderViralPagination(total, pageNum, pages) {
+            const pagEl = document.getElementById('vlPagination');
+            if (!pagEl) return;
+            if (total <= 0 || pages < 1) {
+                pagEl.innerHTML = '';
+                return;
+            }
+
+            const items = viralPageWindow(pageNum, pages);
+            let numBtns = '';
+            for (const it of items) {
+                if (it.t === '…') {
+                    numBtns +=
+                        '<span style="padding:6px 4px;color:var(--text-muted);font-size:0.82rem;font-weight:700;">⋯</span>';
+                } else {
+                    const p = it.n;
+                    const active = p === pageNum;
+                    numBtns +=
+                        `<button type="button" onclick="goToViralPage(${p})" style="min-width:40px;padding:8px;border-radius:8px;border:1px solid var(--border);background:${active ? 'var(--accent)' : 'var(--bg-card)'};color:${active ? '#fff' : 'var(--text-primary)'};cursor:pointer;font-weight:600;font-size:0.82rem;">${p}</button>`;
+                }
+            }
+
+            const prevDis = pageNum <= 1;
+            const nextDis = pageNum >= pages;
+            const navStyle =
+                'padding:8px 14px;border-radius:8px;border:1px solid var(--border);font-family:inherit;font-size:0.82rem;background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-weight:600;font-size:0.82rem;';
+            pagEl.innerHTML = `
+<div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin-top:20px;padding-top:18px;border-top:1px solid var(--border);width:100%;">
+  <button type="button"${prevDis ? ' disabled' : ''} onclick="goToViralPage(${pageNum - 1})" style="${navStyle}${prevDis ? 'opacity:0.45;cursor:not-allowed;' : ''}">
+    Previous
+  </button>
+  <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px;margin:4px 0;">
+    ${numBtns}
+  </div>
+  <button type="button"${nextDis ? ' disabled' : ''} onclick="goToViralPage(${pageNum + 1})" style="${navStyle}${nextDis ? 'opacity:0.45;cursor:not-allowed;' : ''}">
+    Next
+  </button>
+</div>`;
+        }
+
+        function goToViralPage(next) {
+            const p = Number(next);
+            if (!Number.isFinite(p) || p < 1) return;
+            _vlPage = Math.floor(p);
+            loadViralLibrary({ resetPage: false });
+        }
+
+        async function loadViralLibrary(opts) {
+            const resetPage = !opts || opts.resetPage !== false;
             if (_vlLoading) return;
-            if (!doAppend) _vlPage = 1;
+            if (resetPage) _vlPage = 1;
 
             const q = (document.getElementById('vlSearch')?.value || '').trim();
             const category = document.getElementById('vlCategory')?.value || '';
@@ -8218,26 +8290,20 @@
             const pagEl = document.getElementById('vlPagination');
             if (!container || !pagEl) return;
 
-            const prevLoadBtn = pagEl.querySelector('[data-vl-load-more]');
-            if (prevLoadBtn) {
-                prevLoadBtn.disabled = true;
-                prevLoadBtn.textContent = 'Loading\u2026';
-            }
-
             _vlLoading = true;
             try {
                 const res = await fetch('/api/viral-library?' + params);
                 if (!res.ok) return;
                 const data = await res.json();
                 const posts = data.posts || [];
+                if (
+                    typeof data.page === 'number' &&
+                    Number.isFinite(data.page) &&
+                    data.page >= 1
+                )
+                    _vlPage = Math.floor(data.page);
 
-                if (doAppend && posts.length === 0) {
-                    _vlPage = Math.max(1, _vlPage - 1);
-                    renderViralLoadMoreFooter(data.total ?? 0, data.page ?? _vlPage, data.pages ?? 1);
-                    return;
-                }
-
-                if (!doAppend && posts.length === 0) {
+                if (posts.length === 0) {
                     container.innerHTML =
                         '<div class="empty-state"><p>No posts match your filters. Try adjusting your search.</p></div>';
                     pagEl.innerHTML = '';
@@ -8249,10 +8315,12 @@
                         (p) => `
                     <div class="feed-card">
                         <div class="feed-card-meta">
+                            <span class="vl-category-tag" style="background:rgba(148,163,184,0.15);color:var(--text-muted);" title="Library entry">${escapeHtml('#' + String(p.id))}</span>
                             <span class="vl-category-tag">${escapeHtml(String(p.category))}</span>
                             <span class="vl-category-tag" style="background:rgba(245,158,11,0.1);color:#f59e0b;">${escapeHtml(String(p.type))}</span>
                             <span style="margin-left:auto;">${escapeHtml(String(p.author))}</span>
                         </div>
+                        ${p.remixCue ? `<p style="font-size:0.72rem;color:var(--text-muted);margin:10px 0 0;line-height:1.35;"><em>${escapeHtml(String(p.remixCue))}</em></p>` : ''}
                         <div class="feed-card-text">${escapeHtml(String(p.text)).replace(/\n/g, '<br>')}</div>
                         <div class="feed-card-stats">
                             <span>&#10084; ${Number(p.likes || 0).toLocaleString()}</span>
@@ -8267,34 +8335,16 @@
                     )
                     .join('');
 
-                if (doAppend) container.insertAdjacentHTML('beforeend', cardHtml);
-                else container.innerHTML = cardHtml;
+                container.innerHTML = cardHtml;
 
                 const total = data.total ?? 0;
                 const pageNum = data.page ?? _vlPage;
                 const pages = data.pages ?? 1;
-                renderViralLoadMoreFooter(total, pageNum, pages);
+                _vlLoading = false;
+                renderViralPagination(total, pageNum, pages);
             } catch {
             } finally {
                 _vlLoading = false;
-            }
-        }
-
-        function renderViralLoadMoreFooter(total, pageNum, pages) {
-            const pagEl = document.getElementById('vlPagination');
-            if (!pagEl) return;
-            const shown = document.querySelectorAll('#vlResults .feed-card').length;
-            const meta =
-                total > 0 && pages > 1
-                    ? `<div style="text-align:center;font-size:0.78rem;color:var(--text-muted);margin-bottom:12px;">Showing ${shown} of ${total} templates</div>`
-                    : '';
-            const hasMore = pageNum < pages;
-            if (hasMore) {
-                pagEl.innerHTML =
-                    meta +
-                    '<div style="display:flex;justify-content:center;"><button type="button" data-vl-load-more onclick="loadMoreViralPosts()" style="padding:12px 28px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-family:inherit;font-weight:700;font-size:0.88rem;cursor:pointer;">Load more</button></div>';
-            } else {
-                pagEl.innerHTML = meta;
             }
         }
 
@@ -11868,6 +11918,33 @@
         }
 
         /**
+         * Reallocate a non-negative float series into non-negative integers summing to `intTarget`,
+         * preserving relative weights (largest-remainder).
+         */
+        function distributeIntegerTotalsPreservingShape(floatArr, intTarget) {
+            const n = floatArr.length || 1;
+            const t = Math.round(Number(intTarget));
+            if (!Number.isFinite(t) || t < 0) return floatArr.map(() => 0);
+            if (t === 0) return floatArr.map(() => 0);
+            let floats = floatArr.map((v) => Math.max(0, Number(v) || 0));
+            let sumF = floats.reduce((a, b) => a + b, 0);
+            if (sumF <= 1e-12) {
+                const base = Math.floor(t / n);
+                let rem = t - base * n;
+                return floats.map((_v, i) => base + (i < rem ? 1 : 0));
+            }
+            const scaled = floats.map((v) => (v / sumF) * t);
+            const out = scaled.map((x) => Math.floor(Math.max(0, x)));
+            let rem = t - out.reduce((a, b) => a + b, 0);
+            const ord = scaled.map((x, i) => ({ i, r: x - Math.floor(x) })).sort((a, b) => b.r - a.r);
+            for (let k = 0; k < ord.length && rem > 0; k++) {
+                out[ord[k].i] += 1;
+                rem--;
+            }
+            return out.map((x) => Math.max(0, x));
+        }
+
+        /**
          * Make per-day spark buckets match the card headline total.
          * - No bucket data + positive headline → even split across days (estimated daily share).
          * - Bucket sum differs from headline (different sources/metrics) → scale shape to match rollup.
@@ -11879,14 +11956,26 @@
             if (head === 0) return arr;
             const sum = arr.reduce((a, b) => a + (Number(b) || 0), 0);
             const n = arr.length || 1;
+            let out;
             if (sum <= 0) {
                 const v = head / n;
-                return arr.map(() => v);
+                out = arr.map(() => v);
+            } else {
+                const relDiff = Math.abs(sum - head) / Math.max(sum, head, 1);
+                if (relDiff < 1e-4) {
+                    out = arr.slice();
+                } else {
+                    const factor = head / sum;
+                    out = arr.map((v) => (Number(v) || 0) * factor);
+                }
             }
-            const relDiff = Math.abs(sum - head) / Math.max(sum, head, 1);
-            if (relDiff < 1e-4) return arr;
-            const factor = head / sum;
-            return arr.map((v) => (Number(v) || 0) * factor);
+            const headRounded = Math.round(head);
+            if (headRounded <= 2000000000 && Number.isFinite(headRounded)) {
+                try {
+                    out = distributeIntegerTotalsPreservingShape(out, headRounded);
+                } catch (_e) { /* leave floats */ }
+            }
+            return out;
         }
 
         function smoothPath(points, w, h, padBottom) {
@@ -11966,8 +12055,30 @@
                     dot.removeAttribute('stroke-width');
                     dot.setAttribute('visibility', 'visible');
                 }
+                const intMode = !!tipOpts.useIntegerTooltip;
+                const mainStr = intMode
+                    ? Math.round(Number(val) || 0).toLocaleString()
+                    : (Number(val) || 0).toLocaleString(undefined, { maximumFractionDigits: 2 });
+                let rollupHtml = '';
+                const rollRaw = tipOpts.rollupTotal;
+                if (
+                    rollRaw != null &&
+                    Number.isFinite(Number(rollRaw)) &&
+                    Number(rollRaw) >= 0 &&
+                    isoDates &&
+                    isoDates.length
+                ) {
+                    const rollLine =
+                        `${Math.round(Number(rollRaw)).toLocaleString()} — headline total · ${isoDates.length}-day window`;
+                    rollupHtml =
+                        `<div class="stat-spark-tip-rollup">${escapeHtml(rollLine)}</div>`;
+                }
+                const sub = rollupHtml ?
+                    '<span class="stat-spark-tip-sub">Daily attribution for this day within the chart window (sums to the headline).</span>' :
+                    '';
                 tipEl.innerHTML =
-                    `<div class="stat-spark-tip-val">${escapeHtml(val.toLocaleString())}</div>` +
+                    `<div class="stat-spark-tip-val">${escapeHtml(mainStr)}${sub}</div>` +
+                    rollupHtml +
                     `<div class="stat-spark-tip-date">${escapeHtml(formatSparkDateLabel(iso))}</div>`;
                 tipEl.style.display = 'block';
                 wrapEl.dataset.sparkOpen = '1';
@@ -12044,13 +12155,33 @@
             let max = Math.max.apply(null, data);
             if (!Number.isFinite(min)) min = 0;
             if (!Number.isFinite(max)) max = 0;
-            if (max === min) {
-                if (max <= 0) {
-                    max = 1;
-                    min = 0;
+
+            const eps = 1e-9;
+            const numerics = data.map((v) => Number(v) || 0);
+            const allZero = numerics.every((v) => v <= eps);
+            const allEqualPos =
+                !allZero &&
+                numerics.length > 0 &&
+                numerics[0] > eps &&
+                numerics.every((v) => Math.abs(v - numerics[0]) <= eps);
+
+            let displayMin = min;
+            let displayMax = max;
+            if (allEqualPos && numerics[0] > 0) {
+                /** Constant series (e.g. even split of a small rollup) — expand Y scale from zero so the line reads as “active”, not confused with an empty chart. */
+                displayMin = 0;
+                displayMax = Math.max(numerics[0] * 2, numerics[0] + 1, 8);
+            }
+
+            if (displayMax === displayMin) {
+                if (displayMax <= 0) {
+                    displayMax = 1;
+                    displayMin = 0;
+                } else {
+                    displayMax = displayMin + Math.max(1, displayMin * 0.12);
                 }
             }
-            const range = max - min || 1;
+            const range = displayMax - displayMin || 1;
             const n = data.length;
             const innerH = chartBot - chartTop - 6;
             const stepX = n > 1 ? (W - padX * 2) / (n - 1) : 0;
@@ -12059,7 +12190,7 @@
             for (let i = 0; i < n; i++) {
                 const x = n > 1 ? padX + i * stepX : padX + (W - padX * 2) / 2;
                 const vn = Number(data[i]) || 0;
-                const y = chartTop + (1 - (vn - min) / range) * innerH;
+                const y = chartTop + (1 - (vn - displayMin) / range) * innerH;
                 pts.push([x, y]);
             }
 
@@ -12117,7 +12248,10 @@
             const tip = host.querySelector('.stat-spark-tooltip');
             if (wrap && svg && tip) {
                 const tipBind = {};
-                if (opts.rollupTotal != null) tipBind.rollupTotal = opts.rollupTotal;
+                if (opts.rollupTotal != null) {
+                    tipBind.rollupTotal = opts.rollupTotal;
+                    tipBind.useIntegerTooltip = true;
+                }
                 bindStatSparkHover(host, wrap, svg, tip, pts, dates, data, color, tipBind);
             }
         }

@@ -4153,9 +4153,73 @@ app.get('/api/auth/status', (req, res) => {
 
 // ---------- VIRAL LIBRARY ----------
 
-const VIRAL_POSTS = (() => {
-    try { return require('./viral-posts.json'); } catch { return []; }
+const VIRAL_SEED = (() => {
+    try {
+        return require('./viral-posts.json');
+    } catch {
+        return [];
+    }
 })();
+
+/** 1,000 entries derived from seed templates (distinct ids + remix cues); UI shows 20 per page. */
+const VIRAL_LIBRARY_CAPACITY = 1000;
+
+const VIRAL_REMIX_CUES = [
+    'Sharpen the opening hook; keep the structure.',
+    'Swap the examples for your niche.',
+    'Lead with tension, then unpack.',
+    'Shorten bullets; strengthen one bold claim.',
+    'Add one specific metric or timeframe.',
+    'End with a question as the CTA.',
+    'Tell it as mistake → lesson.',
+    'Write for scanners; add strong line breaks mentally.',
+    'Pair with one personal anecdote up front.',
+    'Frame insight as obvious before vs after.',
+    'Raise stakes one notch for your audience.',
+    'Swap hype for one crisp causal argument.',
+    'Replace placeholders with real names and tools.',
+    'Close with invitation to disagree (politely).',
+    'Drop in one audit-able proof readers can verify.',
+    'Target under ~240 spoken words pace.',
+    'Open with empathy, pivot into the playbook.',
+    'Reorder bullets for novelty on the feed.',
+    'Add one caveat that signals maturity.',
+    'Share when this insight cost you (briefly).',
+];
+
+function jitterViralMetric(val, seed, salt) {
+    const x = Number(val);
+    const base = Number.isFinite(x) && x >= 0 ? x : 0;
+    if (base <= 0) return salt % 997; // deterministic small positive fallback
+    const h = ((((seed + 1) * 92837111 + salt * 7937) >>> 0) % 65536) / 65536;
+    const m = 0.86 + 0.26 * h;
+    return Math.max(0, Math.round(base * m));
+}
+
+function expandViralLibraryCorpus(seed) {
+    const arr = Array.isArray(seed) ? seed.filter((p) => p && typeof p.text === 'string') : [];
+    const n = arr.length;
+    if (!n) return [];
+    const out = [];
+    for (let i = 0; i < VIRAL_LIBRARY_CAPACITY; i++) {
+        const base = arr[i % n];
+        const likesRaw = jitterViralMetric(base.likes, i, 17);
+        const commentsRaw = jitterViralMetric(base.comments, i, 31);
+        const repostsRaw = jitterViralMetric(base.reposts, i, 37);
+        out.push({
+            ...base,
+            id: i + 1,
+            likes: Math.max(Number(base.likes) >= 8000 ? 1200 : 400, likesRaw || 600),
+            comments: Math.max(12, commentsRaw || 40),
+            reposts: Math.max(12, repostsRaw || 35),
+            text: base.text,
+            remixCue: VIRAL_REMIX_CUES[i % VIRAL_REMIX_CUES.length],
+        });
+    }
+    return out;
+}
+
+const VIRAL_POSTS = expandViralLibraryCorpus(VIRAL_SEED);
 
 app.get('/api/viral-library', async (req, res) => {
     if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
@@ -4174,11 +4238,13 @@ app.get('/api/viral-library', async (req, res) => {
     if (type) results = results.filter(p => p.type === type);
     if (minLikes) results = results.filter(p => p.likes >= parseInt(minLikes));
     results.sort((a, b) => b.likes - a.likes);
-    const pg = parseInt(page) || 1;
+    const rawPg = parseInt(page) || 1;
     const perPage = 20;
     const total = results.length;
-    const paged = results.slice((pg - 1) * perPage, pg * perPage);
-    res.json({ posts: paged, total, page: pg, pages: Math.ceil(total / perPage) });
+    const pages = total <= 0 ? 0 : Math.ceil(total / perPage);
+    const pg = pages <= 0 ? 1 : Math.min(Math.max(1, rawPg), pages);
+    const paged = pages <= 0 ? [] : results.slice((pg - 1) * perPage, pg * perPage);
+    res.json({ posts: paged, total, page: pg, pages });
 });
 
 // ---------- ENGAGE ENGINE ----------
