@@ -13,20 +13,20 @@
         gtag('js', new Date());
         gtag('config', 'G-QNGS22DM1Z');
     </script>
-    <title>SuperLinkedIn | AI-Powered LinkedIn Growth &mdash; Scheduling, Analytics &amp; Outreach</title>
-    <meta name="description" content="SuperLinkedIn is an AI-powered LinkedIn growth platform for professionals: create scroll-stopping posts, optimize your profile presence, automate scheduling &amp; queueing, analytics with the Chrome extension, and CRM-style outreach. Start free &mdash; plans for teams &amp; power users. Not affiliated with LinkedIn.">
+    <title>SuperLinkedIn &mdash; AI Copilot for LinkedIn Creators</title>
+    <meta name="description" content="SuperLinkedIn is an AI copilot for LinkedIn creators. Draft posts in your voice, queue and schedule, see analytics via the Chrome extension, and streamline outreach—one workspace built for consistency on LinkedIn. Not affiliated with LinkedIn Corporation.">
     <link rel="canonical" href="https://www.superlinkedin.org/">
     <meta name="robots" content="index,follow">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="SuperLinkedIn">
-    <meta property="og:title" content="SuperLinkedIn | AI-Powered LinkedIn Growth Platform">
-    <meta property="og:description" content="Create posts with AI, schedule to the best times, track impressions &amp; engagement, and streamline outreach &mdash; all in one place. Built for creators, founders, marketers, and sales teams.">
+    <meta property="og:title" content="SuperLinkedIn — AI Copilot for LinkedIn Creators">
+    <meta property="og:description" content="SuperLinkedIn is an AI copilot for LinkedIn creators. AI drafting, viral templates, scheduling, analytics, extension insights, and engagement workflows—in one growth stack.">
     <meta property="og:url" content="https://www.superlinkedin.org/">
     <meta property="og:image" content="https://www.superlinkedin.org/favicon.png">
     <meta property="og:locale" content="en_US">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="SuperLinkedIn | AI-Powered LinkedIn Growth Platform">
-    <meta name="twitter:description" content="AI post writer, scheduler, analytics, Chrome extension insights, and outreach tools for LinkedIn professionals.">
+    <meta name="twitter:title" content="SuperLinkedIn — AI Copilot for LinkedIn Creators">
+    <meta name="twitter:description" content="SuperLinkedIn is an AI copilot for LinkedIn creators. Post with AI, stay consistent with the queue, and grow with analytics + outreach tools.">
     <meta name="twitter:image" content="https://www.superlinkedin.org/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -286,6 +286,66 @@
             color: var(--text-muted);
             font-weight: 500;
             margin-top: 4px;
+        }
+
+        .hero-glance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+            max-width: 920px;
+            margin: 28px auto 0;
+            text-align: left;
+        }
+
+        .hero-glance-item {
+            background: rgba(22, 22, 31, 0.85);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 16px 18px;
+            backdrop-filter: blur(8px);
+        }
+
+        .hero-glance-item h4 {
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--accent-light);
+            margin: 0 0 8px;
+        }
+
+        .hero-glance-item p {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin: 0;
+            line-height: 1.5;
+        }
+
+        .demo-wrap {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .demo-frame {
+            aspect-ratio: 16 / 9;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background: linear-gradient(160deg, var(--bg-card) 0%, #0d1020 55%, var(--bg-secondary) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            padding: 24px;
+        }
+
+        .step-card-num {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: var(--accent-light);
+            margin-bottom: 8px;
+            text-transform: uppercase;
         }
 
         /* ===== SECTION STYLES ===== */
@@ -1078,7 +1138,8 @@
           "name": "SuperLinkedIn",
           "url": "https://www.superlinkedin.org/",
           "logo": "https://www.superlinkedin.org/favicon.png",
-          "description": "AI-powered LinkedIn growth platform: post creation, scheduling, analytics via web app & Chrome extension, and outreach tooling for professionals.",
+          "slogan": "SuperLinkedIn is an AI copilot for LinkedIn creators.",
+          "description": "SuperLinkedIn is an AI copilot for LinkedIn creators. The web app and Chrome extension help you draft posts, queue content, read analytics, and run outreach in one workflow.",
           "email": "info@superlinkedin.org",
           "sameAs": [
             "https://github.com/talesneststudios-lab/superlinkedin.org",
@@ -1092,11 +1153,18 @@
           "applicationCategory": "BusinessApplication",
           "applicationSubCategory": "Social Networking",
           "operatingSystem": "Web, Chrome Browser (extension)",
-          "description": "SuperLinkedIn is an AI-powered LinkedIn growth platform that helps professionals create posts, optimize profiles, understand analytics, and automate scheduling and outreach.",
+          "description": "SuperLinkedIn is an AI copilot for LinkedIn creators. Unlike generic social schedulers, it combines AI drafting tuned for LinkedIn, a viral template library, queue and scheduling, feed analytics through a Chrome extension, and engagement workflows.",
           "url": "https://www.superlinkedin.org/",
           "author": { "@id": "https://www.superlinkedin.org/#organization" },
           "publisher": { "@id": "https://www.superlinkedin.org/#organization" },
           "downloadUrl": "https://www.superlinkedin.org/chrome-extension.html",
+          "featureList": [
+            "AI post and carousel drafting aligned to your voice",
+            "Content queue, scheduling, and ready-to-post pipeline",
+            "Analytics dashboards and Chrome extension metrics",
+            "Engage tools, lists, replies, and DM workflows",
+            "Viral LinkedIn post template library"
+          ],
           "offers": [
             {
               "@type": "Offer",
@@ -1112,8 +1180,75 @@
           "@id": "https://www.superlinkedin.org/#website",
           "url": "https://www.superlinkedin.org/",
           "name": "SuperLinkedIn",
+          "description": "SuperLinkedIn is an AI copilot for LinkedIn creators.",
           "publisher": { "@id": "https://www.superlinkedin.org/#organization" },
           "inLanguage": "en-US"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://www.superlinkedin.org/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Is SuperLinkedIn affiliated with LinkedIn?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. SuperLinkedIn is an independent third-party platform. LinkedIn is a trademark of LinkedIn Corporation. We are not endorsed by or partnered with LinkedIn for this product beyond what any member can do with their own account and browser tools."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What does the Chrome extension do?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "It surfaces analytics and controls while you browse LinkedIn (for example follower context, dashboards, sidebar actions, and syncing metrics to your SuperLinkedIn account when you permit it per feature). Installation is optional but unlocks tighter insights than the naked feed."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Who should use AI post generation?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Anyone who publishes regularly but hates blank-page time. Draft in your lane (hooks, frameworks, carousel outlines), edit for voice, then schedule in the queue. It is fastest when paired with analytics so you repeat formats that convert."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Where is pricing documented?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Plans and limits are summarized in the Pricing section on this page and on the Upgrade flow after signup. Trials and paid tiers unlock higher daily AI credits, more connected profiles (Ultra), queue depth, priority support, and team-oriented features."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do Privacy & Terms apply?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Our Privacy Policy describes data handling including extension and app usage signals. Terms cover acceptable use — notably that you comply with LinkedIn's rules and anti-spam expectations when automating drafts or engagements."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How do I contact the team?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Email info@superlinkedin.org for product, billing, or partnership questions. We read every message; response time is usually within a few business days."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "BreadcrumbList",
+          "@id": "https://www.superlinkedin.org/#breadcrumb",
+          "itemListElement": [
+            {
+              "@type": "ListItem",
+              "position": 1,
+              "name": "Home",
+              "item": "https://www.superlinkedin.org/"
+            }
+          ]
         }
       ]
     }
@@ -1129,11 +1264,14 @@
             </a>
             <ul class="nav-links">
                 <li><a href="#about">About</a></li>
+                <li><a href="#demo">Demo</a></li>
                 <li><a href="#features">Features</a></li>
+                <li><a href="#how-it-works">How it works</a></li>
                 <li><a href="#discover">Discover</a></li>
                 <li><a href="#engage">Engage</a></li>
-                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#testimonials">Stories</a></li>
                 <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#faq">FAQ</a></li>
                 <li><a href="chrome-extension.html">Chrome Extension</a></li>
                 <li><a href="login.html" class="btn btn-primary">Get Started for Free</a></li>
             </ul>
@@ -1141,18 +1279,36 @@
     </nav>
 
     <!-- HERO -->
-    <section class="hero">
+    <section class="hero" id="top">
         <div class="container">
             <div class="hero-badge">
                 <span class="dot"></span>
-                LinkedIn Growth Platform
+                AI copilot for LinkedIn creators
             </div>
-            <h1>Grow and monetize your<br><span class="gradient-text">LinkedIn audience</span>, faster</h1>
-            <p class="hero-lead"><strong>SuperLinkedIn</strong> is an AI-powered LinkedIn growth platform that helps professionals <strong>create posts</strong>, <strong>optimize profiles</strong>, and <strong>automate scheduling &amp; outreach</strong> without living in the LinkedIn tab bar.</p>
-            <p class="hero-support">Queue content, analyze what performs, plug in analytics from the Chrome extension, and engage faster &mdash; so you solve the consistency problem instead of reinventing drafts every Monday.</p>
+            <h1>Your <span class="gradient-text">AI copilot</span> for LinkedIn growth</h1>
+            <p class="hero-lead"><strong>SuperLinkedIn is an AI copilot for LinkedIn creators.</strong> Draft posts in your voice, keep a full queue, read what is working in analytics (including the Chrome extension), and move faster on outreach &mdash; without juggling a dozen single-purpose tools.</p>
+            <p class="hero-support">Most teams do not need another generic scheduler. You need a copilot that understands LinkedIn formats, timing, and engagement loops so every week ships distribution, not just drafts.</p>
+            <div class="hero-glance-grid">
+                <div class="hero-glance-item">
+                    <h4>What is it?</h4>
+                    <p>A web app plus optional Chrome extension that pairs AI writing with scheduling, analytics, and engagement workflows for LinkedIn.</p>
+                </div>
+                <div class="hero-glance-item">
+                    <h4>Who is it for?</h4>
+                    <p>Founders, marketers, sellers, recruiters, coaches, and operators who treat LinkedIn as a serious growth channel.</p>
+                </div>
+                <div class="hero-glance-item">
+                    <h4>What does it do?</h4>
+                    <p>Generates and refines posts, surfaces viral inspiration, queues publishing, tracks performance, and helps you engage in higher-leverage conversations.</p>
+                </div>
+                <div class="hero-glance-item">
+                    <h4>Why is it different?</h4>
+                    <p>It is built around LinkedIn-native loops &mdash; not a generic social calendar &mdash; so AI, analytics, and outreach stay in one stack.</p>
+                </div>
+            </div>
             <div class="hero-buttons">
                 <a href="login.html" class="btn btn-primary">Get Started for Free</a>
-                <a href="#features" class="btn btn-secondary">See How It Works</a>
+                <a href="#demo" class="btn btn-secondary">Watch the demo</a>
             </div>
             <div class="hero-stats">
                 <div class="hero-stat">
@@ -1166,6 +1322,25 @@
                 <div class="hero-stat">
                     <div class="number">8B+</div>
                     <div class="label">impressions generated</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="demo">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Demo</span>
+                <h2 class="section-title">See SuperLinkedIn in action</h2>
+                <p class="section-subtitle">SuperLinkedIn is an AI copilot for LinkedIn creators—drop a product video here when ready, or open the interactive dashboard preview today.</p>
+            </div>
+            <div class="demo-wrap fade-in">
+                <div class="demo-frame">
+                    <p style="font-size: 0.9rem; color: var(--text-secondary); text-align: center; max-width: 420px; line-height: 1.55;">Paste a Loom, YouTube, or Vimeo embed above the fold once you have a walkthrough recording.</p>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;">
+                        <a href="demo.html" class="btn btn-primary">Open interactive demo</a>
+                        <a href="#how-it-works" class="btn btn-secondary">How it works</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1196,7 +1371,7 @@
             <div class="section-header fade-in">
                 <span class="section-label">&#9670; What &mdash; Who &mdash; Why</span>
                 <h2 class="section-title">Made for operators who rely on LinkedIn for pipeline &amp; distribution</h2>
-                <p class="section-subtitle">Consultants, sellers, recruiters, indie founders, and content-led brands use LinkedIn daily. SuperLinkedIn is the toolkit that turns that grind into repeatable workflows tied to measurable reach.</p>
+                <p class="section-subtitle"><strong>SuperLinkedIn is an AI copilot for LinkedIn creators.</strong> Below is the fast mental model: who we serve, the grind we remove, and the outcomes the stack is designed to compound.</p>
             </div>
             <div class="features-grid fade-in">
                 <div class="feature-card fade-in visible">
@@ -1230,7 +1405,7 @@
             <div class="section-header fade-in">
                 <span class="section-label">&#9670; Your Growth Dashboard</span>
                 <h2 class="section-title">Everything you need to<br>dominate LinkedIn</h2>
-                <p class="section-subtitle">Access live performance insights, audience intelligence, and engagement signals on any profile or post &mdash; all from one dashboard.</p>
+                <p class="section-subtitle">SuperLinkedIn is an AI copilot for LinkedIn creators—live performance, audience signals, and engagement context in one control room.</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card fade-in">
@@ -1268,6 +1443,50 @@
                         <li><span class="check">&#10003;</span> Time zone optimization</li>
                         <li><span class="check">&#10003;</span> Queue management</li>
                     </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="how-it-works" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; How it works</span>
+                <h2 class="section-title">Four steps. One LinkedIn growth loop.</h2>
+                <p class="section-subtitle">SuperLinkedIn is an AI copilot for LinkedIn creators—connect your account, optionally add the extension, then ship and measure in the same place.</p>
+            </div>
+            <div class="features-grid fade-in">
+                <div class="feature-card fade-in visible">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M15 3h4a2 2 0 012 2v4M9 21H5a2 2 0 01-2-2v-4M21 9l-9 9M3 9l9 9"/></svg>
+                    </div>
+                    <div class="step-card-num">01</div>
+                    <h3>Sign in with LinkedIn</h3>
+                    <p>Open SuperLinkedIn securely; your workspace stores drafts, queues, and analytics in one profile-centric hub.</p>
+                </div>
+                <div class="feature-card fade-in visible">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+                    </div>
+                    <div class="step-card-num">02</div>
+                    <h3>Add the Chrome extension (optional)</h3>
+                    <p>See feed-level stats, sync metrics, and sidebar actions while you browse LinkedIn—then roll insights back into your dashboard.</p>
+                </div>
+                <div class="feature-card fade-in visible">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M12 20V10M18 20V4M6 20v-4"/></svg>
+                    </div>
+                    <div class="step-card-num">03</div>
+                    <h3>Create, remix, and queue</h3>
+                    <p>Use AI and viral templates to beat blank-page paralysis, schedule for high-signal windows, and keep a backlog of ready-to-publish posts.</p>
+                </div>
+                <div class="feature-card fade-in visible">
+                    <div class="feature-icon">
+                        <svg width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--accent-light)"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    </div>
+                    <div class="step-card-num">04</div>
+                    <h3>Measure and engage</h3>
+                    <p>Read what is working, double down on formats that convert, and show up in conversations that actually move pipeline or audience.</p>
                 </div>
             </div>
         </div>
@@ -1569,12 +1788,12 @@
     </section>
 
     <!-- TESTIMONIALS -->
-    <section class="section">
+    <section class="section" id="testimonials">
         <div class="container">
             <div class="section-header fade-in">
                 <span class="section-label">&#9670; Testimonials</span>
                 <h2 class="section-title">Loved by LinkedIn creators</h2>
-                <p class="section-subtitle">Hear from professionals who transformed their LinkedIn presence with SuperLinkedIn.</p>
+                <p class="section-subtitle">SuperLinkedIn is an AI copilot for LinkedIn creators—here is how teams describe sharper consistency after switching.</p>
             </div>
             <div class="testimonials-grid">
                 <div class="testimonial-card fade-in">
@@ -1730,7 +1949,7 @@
                         <li><span class="check">&#10003;</span> AI Post & Carousel Writer</li>
                         <li><span class="check">&#10003;</span> SuperLinkedIn Engage engine</li>
                         <li><span class="check">&#10003;</span> Auto-repost & auto-comment</li>
-                        <li><span class="check">&#10003;</span> 10M+ viral posts library</li>
+                        <li><span class="check">&#10003;</span> 1,000+ curated viral post templates</li>
                         <li><span class="check">&#10003;</span> 2,000 AI credits/day</li>
                         <li><span class="check">&#10003;</span> Advanced analytics & insights</li>
                         <li><span class="check">&#10003;</span> Carousel & document support</li>
@@ -1758,6 +1977,26 @@
                         <li><span class="check">&#10003;</span> Image posts (AI Image Studio)</li>
                     </ul>
                     <a href="login.html" class="btn btn-secondary">Start your 3-day Trial</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section" id="founder" style="background: var(--bg-secondary);">
+        <div class="container">
+            <div class="section-header fade-in">
+                <span class="section-label">&#9670; Company</span>
+                <h2 class="section-title">Built for operators who ship on LinkedIn weekly</h2>
+                <p class="section-subtitle">SuperLinkedIn is an AI copilot for LinkedIn creators—an independent product team focused on LinkedIn-native workflows, not another generic social-media calendar.</p>
+            </div>
+            <div style="max-width: 580px; margin: 0 auto; text-align: center;">
+                <p style="font-size: 0.95rem; color: var(--text-secondary); line-height: 1.65;">
+                    Product, billing, and partnerships: <a href="mailto:info@superlinkedin.org" style="color: var(--accent-light);">info@superlinkedin.org</a>.
+                    We read every message—most replies land within a few business days.
+                </p>
+                <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 22px;">
+                    <a href="https://www.linkedin.com/company/120934318/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">Company on LinkedIn</a>
+                    <a href="https://github.com/talesneststudios-lab/superlinkedin.org" target="_blank" rel="noopener noreferrer" class="btn btn-secondary">GitHub</a>
                 </div>
             </div>
         </div>
@@ -1803,7 +2042,7 @@
     <section class="cta-section">
         <div class="container fade-in">
             <h2>Ready to grow on <span class="gradient-text">LinkedIn</span>?</h2>
-            <p>Join 12,000+ professionals who are posting smarter, engaging better, and growing faster with SuperLinkedIn.</p>
+            <p><strong>SuperLinkedIn is an AI copilot for LinkedIn creators.</strong> Join thousands of professionals posting smarter, engaging better, and compounding reach with one stack.</p>
             <a href="login.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 16px 40px;">Get Started for Free</a>
         </div>
     </section>
@@ -1817,12 +2056,14 @@
                         <div class="logo-icon">SL</div>
                         SuperLinkedIn
                     </a>
-                    <p>The all-in-one LinkedIn growth platform for creators, founders, and professionals who are serious about building their audience.</p>
+                    <p><strong>SuperLinkedIn is an AI copilot for LinkedIn creators.</strong> Posts, queues, analytics, extension insights, and outreach—structured for repeatable growth.</p>
                 </div>
                 <div class="footer-col">
                     <h4>Product</h4>
                     <ul>
+                        <li><a href="#demo">Demo</a></li>
                         <li><a href="#features">Features</a></li>
+                        <li><a href="#how-it-works">How it works</a></li>
                         <li><a href="#pricing">Pricing</a></li>
                         <li><a href="chrome-extension.html">Chrome Extension</a></li>
                         <li><a href="#">API</a></li>

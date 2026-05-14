@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "SuperLinkedIn",
-  "description": "LinkedIn analytics, AI post writer, engagement tracking, post scheduler and growth tools in your feed.",
+  "description": "SuperLinkedIn is an AI copilot for LinkedIn creators. Analytics, AI writer, scheduler, and growth tools in your feed.",
   "version": "2.0.4",
   "permissions": ["storage", "activeTab", "alarms", "tabs", "scripting"],
   "host_permissions": [

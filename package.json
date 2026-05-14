@@ -1,7 +1,7 @@
 {
   "name": "superlinkedin",
   "version": "1.0.0",
-  "description": "SuperLinkedIn - LinkedIn Growth Platform",
+  "description": "SuperLinkedIn is an AI copilot for LinkedIn creators (web app + Chrome extension).",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
