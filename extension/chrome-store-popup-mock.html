@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" data-popup-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SuperLinkedIn extension — Analytics mock (640×400)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 640px;
+            height: 400px;
+            overflow: hidden;
+            margin: 0;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .frame {
+            width: 640px;
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+            padding: 8px 10px 6px;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-bottom: 6px;
+            margin-bottom: 6px;
+            border-bottom: 1px solid #334155;
+            flex-shrink: 0;
+        }
+        .header-left { display: flex; align-items: center; gap: 7px; }
+        .logo {
+            width: 26px; height: 26px;
+            background: linear-gradient(135deg, #0A66C2, #70B5F9);
+            border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900; font-size: 0.58rem; color: #fff;
+        }
+        .brand { font-weight: 800; font-size: 0.82rem; color: #f1f5f9; }
+        .header-right { display: flex; gap: 4px; }
+        .icon-btn {
+            border: 1px solid #475569; border-radius: 5px;
+            width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; color: #94a3b8;
+        }
+
+        .tabs {
+            display: flex; gap: 2px; background: #1e293b; border-radius: 6px; padding: 2px;
+            margin-bottom: 6px;
+            flex-shrink: 0;
+        }
+        .tab {
+            flex: 1; padding: 5px 2px; background: none; border: none; border-radius: 4px;
+            font-size: 0.62rem; font-weight: 700; color: #94a3b8; text-align: center;
+        }
+        .tab.active { background: #0f172a; color: #70B5F9; }
+
+        .panel-scroll {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .section-title {
+            font-size: 0.55rem; font-weight: 800; color: #94a3b8; text-transform: uppercase;
+            letter-spacing: 0.06em;
+            flex-shrink: 0;
+        }
+
+        .top-post {
+            padding: 6px 8px;
+            border: 1px solid #334155;
+            border-radius: 7px;
+            background: #1e293b;
+            flex-shrink: 0;
+        }
+        .top-post-text {
+            font-size: 0.62rem;
+            color: #e2e8f0;
+            line-height: 1.35;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .top-post-meta {
+            display: flex;
+            gap: 10px;
+            margin-top: 5px;
+            font-size: 0.55rem;
+            color: #94a3b8;
+            font-weight: 600;
+        }
+        .top-post-meta span { color: #60a5fa; }
+
+        .engagement-grid { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; }
+        .eng-row {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.58rem;
+        }
+        .eng-label-col {
+            width: 108px; flex-shrink: 0;
+            line-height: 1.15;
+        }
+        .eng-label-main { display: block; color: #cbd5e1; font-weight: 600; }
+        .eng-label-sub { display: block; color: #64748b; font-size: 0.5rem; font-weight: 500; margin-top: 1px; }
+        .eng-bar-wrap {
+            flex: 1; height: 6px; background: #334155; border-radius: 3px;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .eng-bar { height: 100%; border-radius: 3px; }
+        .eng-bar.dash { background: #6366f1; }
+        .eng-bar.likes { background: #0A66C2; }
+        .eng-bar.comments { background: #22c55e; }
+        .eng-bar.reposts { background: #f59e0b; }
+        .eng-bar.views { background: #8b5cf6; }
+        .eng-value {
+            width: 36px; text-align: right; font-weight: 700; color: #cbd5e1;
+            font-size: 0.58rem; flex-shrink: 0;
+        }
+
+        .follower-wrap {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 6px 8px 8px;
+            flex-shrink: 0;
+        }
+        .follower-bars {
+            display: flex;
+            align-items: stretch;
+            justify-content: space-between;
+            gap: 3px;
+            height: 52px;
+            margin-top: 4px;
+        }
+        .fcol {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .fbar {
+            width: 100%;
+            border-radius: 3px 3px 0 0;
+            background: linear-gradient(180deg, #60a5fa, #0A66C2);
+        }
+        .fbar.full { height: 100%; }
+        .fbar.low { height: 14%; opacity: 0.8; }
+        .follower-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 4px;
+            gap: 3px;
+        }
+        .follower-labels span {
+            flex: 1;
+            text-align: center;
+            font-size: 0.48rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .sync-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 5px 8px; background: #1e293b; border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .sync-label { font-size: 0.55rem; color: #94a3b8; }
+        .sync-label span { font-weight: 600; color: #cbd5e1; }
+        .sync-status { font-size: 0.55rem; color: #22c55e; font-weight: 700; }
+
+        .popup-footer {
+            display: flex; justify-content: space-between;
+            padding-top: 5px;
+            flex-shrink: 0;
+        }
+        .popup-footer a { font-size: 0.55rem; color: #70B5F9; font-weight: 600; text-decoration: none; }
+        .btn-link { font-size: 0.55rem; color: #94a3b8; font-weight: 600; background: none; border: none; }
+    </style>
+</head>
+<body>
+    <div class="frame">
+        <div class="header">
+            <div class="header-left">
+                <div class="logo">SL</div>
+                <span class="brand">SuperLinkedIn</span>
+            </div>
+            <div class="header-right">
+                <span class="icon-btn">&#9776;</span>
+                <span class="icon-btn">&#9881;</span>
+            </div>
+        </div>
+
+        <div class="tabs">
+            <button type="button" class="tab">Overview</button>
+            <button type="button" class="tab active">Analytics</button>
+            <button type="button" class="tab">AI Tools</button>
+        </div>
+
+        <div class="panel-scroll">
+            <div class="section-title">Top Posts</div>
+            <div class="top-post">
+                <div class="top-post-text">
+                    We shipped our Q2 recap: retention first, distribution second. Here are the three decisions that moved signups without increasing ad spend — thread-style breakdown below.
+                </div>
+                <div class="top-post-meta">
+                    <span>&#10084; 142</span>
+                    <span>&#128172; 28</span>
+                    <span>&#128257; 12</span>
+                    <span style="color:#64748b;font-weight:500">14 May 2026</span>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:4px;">Engagement Breakdown</div>
+            <!-- Bar widths vs max metric 211 -->
+            <div class="engagement-grid">
+                <div class="eng-row">
+                    <span class="eng-label-col">
+                        <span class="eng-label-main">Social engagements</span>
+                        <span class="eng-label-sub">LinkedIn analytics (all interactions)</span>
+                    </span>
+                    <div class="eng-bar-wrap"><div class="eng-bar dash" style="width:100%"></div></div>
+                    <span class="eng-value">211</span>
+                </div>
+                <div class="eng-row">
+                    <span class="eng-label-col">
+                        <span class="eng-label-main">Likes</span>
+                        <span class="eng-label-sub">On posts we scraped</span>
+                    </span>
+                    <div class="eng-bar-wrap"><div class="eng-bar likes" style="width:54%"></div></div>
+                    <span class="eng-value">114</span>
+                </div>
+                <div class="eng-row">
+                    <span class="eng-label-col">
+                        <span class="eng-label-main">Comments</span>
+                        <span class="eng-label-sub">On posts we scraped</span>
+                    </span>
+                    <div class="eng-bar-wrap"><div class="eng-bar comments" style="width:31%"></div></div>
+                    <span class="eng-value">66</span>
+                </div>
+                <div class="eng-row">
+                    <span class="eng-label-col">
+                        <span class="eng-label-main">Reposts</span>
+                        <span class="eng-label-sub">On posts we scraped</span>
+                    </span>
+                    <div class="eng-bar-wrap"><div class="eng-bar reposts" style="width:18%"></div></div>
+                    <span class="eng-value">38</span>
+                </div>
+                <div class="eng-row">
+                    <span class="eng-label-col">
+                        <span class="eng-label-main">Post impressions</span>
+                        <span class="eng-label-sub">Dashboard / feed card</span>
+                    </span>
+                    <div class="eng-bar-wrap"><div class="eng-bar views" style="width:24%"></div></div>
+                    <span class="eng-value">50</span>
+                </div>
+            </div>
+
+            <div class="section-title" style="margin-top:3px;">Follower Growth</div>
+            <div class="follower-wrap">
+                <div class="follower-bars">
+                    <div class="fcol"><div class="fbar full"></div></div>
+                    <div class="fcol"><div class="fbar full"></div></div>
+                    <div class="fcol"><div class="fbar full"></div></div>
+                    <div class="fcol"><div class="fbar low"></div></div>
+                    <div class="fcol"><div class="fbar full"></div></div>
+                    <div class="fcol"><div class="fbar full"></div></div>
+                    <div class="fcol"><div class="fbar full"></div></div>
+                    <div class="fcol"><div class="fbar full"></div></div>
+                </div>
+                <div class="follower-labels">
+                    <span>3</span><span>4</span><span>5</span><span>8</span><span>10</span><span>11</span><span>13</span><span>14</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sync-bar">
+            <span class="sync-label">Last sync: <span>14/05/2026, 16:36:23</span></span>
+            <span class="sync-status">&#9679; Active</span>
+        </div>
+
+        <div class="popup-footer">
+            <a href="#">Open Dashboard</a>
+            <button type="button" class="btn-link">Disconnect</button>
+        </div>
+    </div>
+</body>
+</html>

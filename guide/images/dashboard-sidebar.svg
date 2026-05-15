@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="420" viewBox="0 0 720 420">
+  <defs>
+    <linearGradient id="lg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0A66C2"/><stop offset="100%" style="stop-color:#70B5F9"/>
+    </linearGradient>
+  </defs>
+  <rect width="720" height="420" fill="#111118"/>
+  <rect x="0" y="0" width="200" height="420" fill="#0a0a0a" stroke="#2a2a32"/>
+  <rect x="14" y="16" width="36" height="36" rx="8" fill="url(#lg)"/>
+  <text x="58" y="40" fill="#f0f0f5" font-family="Segoe UI,Arial,sans-serif" font-size="15" font-weight="700">SuperLinkedIn</text>
+  <text x="14" y="78" fill="#6b6b6b" font-family="Segoe UI,Arial,sans-serif" font-size="10" font-weight="700">WORKSPACE</text>
+  <rect x="12" y="86" width="176" height="28" rx="6" fill="#242424"/>
+  <text x="22" y="104" fill="#fff" font-family="Segoe UI,Arial,sans-serif" font-size="12">Home</text>
+  <rect x="12" y="118" width="176" height="28" rx="6" fill="transparent"/>
+  <text x="22" y="136" fill="#a0a0a0" font-family="Segoe UI,Arial,sans-serif" font-size="12">Queue</text>
+  <rect x="12" y="150" width="176" height="28" rx="6" fill="transparent"/>
+  <text x="22" y="168" fill="#a0a0a0" font-family="Segoe UI,Arial,sans-serif" font-size="12">Analytics</text>
+  <rect x="12" y="182" width="176" height="28" rx="6" fill="transparent"/>
+  <text x="22" y="200" fill="#a0a0a0" font-family="Segoe UI,Arial,sans-serif" font-size="12">Context</text>
+  <text x="14" y="232" fill="#6b6b6b" font-family="Segoe UI,Arial,sans-serif" font-size="10" font-weight="700">CREATE</text>
+  <rect x="12" y="240" width="176" height="24" rx="4" fill="#1a1a22"/>
+  <text x="22" y="256" fill="#94a3b8" font-family="Segoe UI,Arial,sans-serif" font-size="11">Ready to Post / AI Writer / ...</text>
+  <rect x="208" y="0" width="512" height="420" fill="#16161f"/>
+  <text x="232" y="52" fill="#f0f0f5" font-family="Segoe UI,Arial,sans-serif" font-size="22" font-weight="800">Dashboard</text>
+  <text x="232" y="78" fill="#888899" font-family="Segoe UI,Arial,sans-serif" font-size="12">Main column updates based on the sidebar page you open.</text>
+  <rect x="232" y="98" width="460" height="120" rx="12" fill="#1c1c28" stroke="#2a2a36"/>
+  <text x="252" y="130" fill="#c0c0d0" font-family="Segoe UI,Arial,sans-serif" font-size="13">Queue preview / drafts / schedule</text>
+  <rect x="232" y="232" width="220" height="140" rx="12" fill="#1c1c28" stroke="#2a2a36"/>
+  <rect x="472" y="232" width="220" height="140" rx="12" fill="#1c1c28" stroke="#2a2a36"/>
+  <text x="252" y="268" fill="#888899" font-family="Segoe UI,Arial,sans-serif" font-size="11">Analytics snapshot</text>
+  <text x="492" y="268" fill="#888899" font-family="Segoe UI,Arial,sans-serif" font-size="11">Credits &amp; plan</text>
+  <text x="14" y="402" fill="#555566" font-family="Segoe UI,Arial,sans-serif" font-size="10">Illustrative wireframe (not live data).</text>
+</svg>

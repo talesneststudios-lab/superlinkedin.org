@@ -7566,7 +7566,7 @@
                     </div>
                 </div>
                 <button class="compose-tool-btn ai-btn" onclick="generateInCompose()" title="Generate with AI" type="button"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span>AI</span></button>
-                <button class="compose-tool-btn" title="Quote" type="button" aria-label="Quote"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21c3 0 4-2 4-5V9H3v12z"/><path d="M15 21c3 0 4-2 4-5V9h-4v12z"/></svg></button>
+                <button class="compose-tool-btn" onclick="insertPullQuote('composeTextarea')" title="Pull quote (&#9475; vertical bar)" type="button" aria-label="Format as pull quote"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 21c3 0 4-2 4-5V9H3v12z"/><path d="M15 21c3 0 4-2 4-5V9h-4v12z"/></svg></button>
                 <div style="flex:1;"></div>
                 <button class="compose-tool-btn" onclick="openSchedPopup('compose')" title="Schedule Post" type="button" aria-label="Schedule post"><svg class="compose-tool-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button>
             </div>
@@ -13674,6 +13674,70 @@
             ta.value = ta.value.substring(0, start) + converted + ta.value.substring(end);
             ta.selectionStart = start;
             ta.selectionEnd = start + converted.length;
+            ta.focus();
+            updateComposeCharCount();
+        }
+
+        /** Pull-quote style: vertical bar prefix (┃) each line — plain-text callout readable on LinkedIn. Apply again with the same selection to remove. */
+        function insertPullQuote(textareaId) {
+            const ta = document.getElementById(textareaId);
+            if (!ta) return;
+            const start = ta.selectionStart;
+            const end = ta.selectionEnd;
+            if (start === end) {
+                showNotify('Select text', 'Highlight the lines you want as a pull quote.', 'info');
+                return;
+            }
+            const BAR = '\u2503';
+
+            function stripBarFromLine(line) {
+                const m = /^(\s*)([\s\S]*)$/.exec(line);
+                const lead = m[1];
+                let rest = m[2];
+                if (!rest.startsWith(BAR)) return line;
+                if (rest.startsWith(BAR + ' ')) rest = rest.slice(BAR.length + 1);
+                else rest = rest.slice(BAR.length);
+                return lead + rest;
+            }
+
+            const selected = ta.value.substring(start, end);
+            const lines = selected.split(/\r?\n/);
+            const nonempty = lines.filter((l) => l.trim().length > 0);
+            const allBar =
+                nonempty.length > 0 && nonempty.every((l) => l.trimStart().startsWith(BAR));
+
+            let block;
+            if (allBar) {
+                block = lines
+                    .map((line) => (line.trim().length === 0 ? line : stripBarFromLine(line)))
+                    .join('\n');
+            } else {
+                block = lines
+                    .map((line) => (line.trim().length === 0 ? line : BAR + ' ' + line))
+                    .join('\n');
+            }
+
+            let prefix = '';
+            let suffix = '';
+            if (!allBar) {
+                if (start > 0) {
+                    const before = ta.value[start - 1];
+                    if (before !== '\n') prefix = '\n\n';
+                    else if (start >= 2 && ta.value[start - 2] !== '\n') prefix = '\n';
+                }
+                if (end < ta.value.length) {
+                    const after = ta.value[end];
+                    if (after !== '\n') suffix = '\n\n';
+                    else if (end + 1 < ta.value.length && ta.value[end + 1] !== '\n') suffix = '\n';
+                }
+            }
+
+            const rebuilt = ta.value.substring(0, start) + prefix + block + suffix + ta.value.substring(end);
+            ta.value = rebuilt;
+            const newStart = start + prefix.length;
+            const newEnd = newStart + block.length;
+            ta.selectionStart = newStart;
+            ta.selectionEnd = newEnd;
             ta.focus();
             updateComposeCharCount();
         }

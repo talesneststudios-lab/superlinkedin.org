@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SuperLinkedIn — User Guide</title>
+    <style>
+        @page { margin: 14mm 12mm; }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+            font-size: 11pt;
+            line-height: 1.55;
+            color: #1a1a2e;
+            max-width: 720px;
+            margin: 0 auto;
+            padding: 24px 16px 48px;
+            background: #fff;
+        }
+        h1 {
+            font-size: 22pt;
+            font-weight: 800;
+            margin: 0 0 8px;
+            color: #0f172a;
+        }
+        .subtitle { color: #555566; margin-bottom: 28px; font-size: 11pt; }
+        h2 {
+            font-size: 14pt;
+            font-weight: 800;
+            margin: 28px 0 10px;
+            color: #0A66C2;
+            border-bottom: 2px solid #e5e5ea;
+            padding-bottom: 6px;
+        }
+        h3 { font-size: 11.5pt; font-weight: 700; margin: 18px 0 8px; color: #1a1a2e; }
+        p { margin: 0 0 10px; }
+        ul { margin: 0 0 12px; padding-left: 1.25em; }
+        li { margin-bottom: 6px; }
+        strong { font-weight: 700; }
+        .figure {
+            margin: 16px 0 20px;
+            page-break-inside: avoid;
+        }
+        .figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 1px solid #e5e5ea;
+            border-radius: 10px;
+            background: #fafafa;
+        }
+        .caption {
+            font-size: 9pt;
+            color: #666677;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .note {
+            background: #f0f7ff;
+            border-left: 4px solid #0A66C2;
+            padding: 12px 14px;
+            margin: 16px 0;
+            font-size: 10pt;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0 16px;
+            font-size: 10pt;
+            page-break-inside: avoid;
+        }
+        th, td {
+            border: 1px solid #e5e5ea;
+            padding: 8px 10px;
+            text-align: left;
+            vertical-align: top;
+        }
+        th { background: #f6f8fa; font-weight: 700; }
+        .footer-brand {
+            margin-top: 36px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e5ea;
+            font-size: 9pt;
+            color: #888899;
+        }
+        @media print {
+            body { padding: 0; max-width: none; }
+            h2 { page-break-after: avoid; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Welcome to SuperLinkedIn</h1>
+    <p class="subtitle">A short guide for new users · Figures are illustrative wireframes.</p>
+
+    <p>SuperLinkedIn is an <strong>AI copilot built for LinkedIn</strong>. It helps you <strong>draft posts in a voice that sounds like you</strong>, <strong>stay consistent</strong> with queues and scheduling, and <strong>see how your content performs</strong>, especially alongside our Chrome extension.</p>
+    <p>SuperLinkedIn is independent and <strong>not affiliated with LinkedIn</strong>.</p>
+
+    <div class="figure">
+        <img src="images/dashboard-sidebar.svg" alt="Dashboard with left sidebar navigation and main workspace">
+        <div class="caption">Figure 1 — Web dashboard: sidebar sections (Home, Queue, Analytics, Context, Create, …) and main workspace.</div>
+    </div>
+
+    <h2>Why connect your LinkedIn account?</h2>
+    <p>You sign in with <strong>LinkedIn</strong> using LinkedIn’s own login screen. That lets SuperLinkedIn:</p>
+    <ul>
+        <li>Recognise <strong>your account</strong> so drafts and queues stay private to you.</li>
+        <li><strong>Publish or prepare posts</strong> when you explicitly choose to, within the permissions LinkedIn shows.</li>
+        <li>Pair cleanly with the <strong>Chrome extension</strong> while you use LinkedIn.</li>
+    </ul>
+    <div class="note">You do not type your LinkedIn password into SuperLinkedIn. You authenticate on LinkedIn; LinkedIn issues a secure token for the actions you approve.</div>
+
+    <h2>What onboarding does for your voice</h2>
+    <p>Onboarding teaches SuperLinkedIn <strong>how you like to sound</strong> and <strong>what you’re building toward</strong>, so AI drafts feel closer to something you’d actually post.</p>
+
+    <h3>1. Writing DNA — posts you wish you wrote</h3>
+    <p>You’ll see sample posts and tap <strong>Like</strong> or <strong>Pass</strong>. SuperLinkedIn learns <strong>tone and structure you respond to</strong> (hooks, pacing, style), not someone else’s identity.</p>
+
+    <div class="figure">
+        <img src="images/onboarding-writing-dna.svg" alt="Writing DNA step with Like and Pass actions">
+        <div class="caption">Figure 2 — Writing DNA: quick choices that shape how the AI matches your taste.</div>
+    </div>
+
+    <h3>2. About you</h3>
+    <p>A short bio: who you are, what you post about, and who you want to reach. That keeps suggestions out of “generic LinkedIn speak.”</p>
+
+    <h3>3. Favorite creators (optional)</h3>
+    <p>Pick up to three accounts whose <strong>writing style</strong> you admire. Your topics stay yours; this nudges the model toward patterns you already like.</p>
+
+    <h3>4. Chrome extension (recommended)</h3>
+    <p>The extension adds tools <strong>inside LinkedIn</strong> and helps keep analytics fresh. You can skip and install later; the web app still works.</p>
+
+    <div class="figure">
+        <img src="images/extension-popup.svg" alt="Extension popup with Overview Analytics and AI Tools">
+        <div class="caption">Figure 3 — Toolbar popup (example): Overview, Analytics, and AI Tools tabs.</div>
+    </div>
+
+    <div class="figure">
+        <img src="images/linkedin-sidebar.svg" alt="LinkedIn feed with SuperLinkedIn sidebar">
+        <div class="caption">Figure 4 — On LinkedIn, the sidebar sits beside your feed for shortcuts and sync.</div>
+    </div>
+
+    <h3>5. Products you promote (optional)</h3>
+    <p>Add up to five links you promote. SuperLinkedIn can learn what those pages are about so CTAs and post ideas fit <strong>what you actually offer</strong>.</p>
+
+    <p>When you finish, you land on the <strong>dashboard</strong> to queue posts, open the AI writer, and explore analytics.</p>
+
+    <h2>After onboarding — areas you’ll use</h2>
+    <table>
+        <thead>
+            <tr><th>Area</th><th>Purpose</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><strong>Home</strong></td><td>Overview and gentle setup nudges.</td></tr>
+            <tr><td><strong>Queue</strong></td><td>Line up posts and manage timing.</td></tr>
+            <tr><td><strong>Analytics</strong></td><td>Performance trends; extension helps data stay current.</td></tr>
+            <tr><td><strong>Context</strong></td><td>Update rules and interests that steer the AI.</td></tr>
+            <tr><td><strong>Create</strong></td><td>Ready to post, templates, AI Writer, carousels, images (by plan).</td></tr>
+            <tr><td><strong>Engage</strong></td><td>Discover, mentions, replies, automation on higher plans.</td></tr>
+            <tr><td><strong>CRM</strong></td><td>DMs and Bulk DMs for outreach.</td></tr>
+            <tr><td><strong>Settings</strong></td><td>Account, billing, team, theme, API keys.</td></tr>
+        </tbody>
+    </table>
+    <p><strong>Credits:</strong> AI-powered actions use your credit balance. Check <strong>Settings</strong> for limits and resets.</p>
+
+    <h2>Tips for sounding like you</h2>
+    <ol style="margin:0 0 12px;padding-left:1.25em;">
+        <li style="margin-bottom:8px;">Invest time in <strong>Writing DNA</strong> — clearer signals mean better drafts.</li>
+        <li style="margin-bottom:8px;">Refresh <strong>Context</strong> when your role or niche changes.</li>
+        <li style="margin-bottom:8px;">Use the <strong>extension on LinkedIn</strong> for smoother workflows and analytics.</li>
+    </ol>
+
+    <h2>Need help?</h2>
+    <p>Use <strong>Settings</strong> for billing and account controls. For product questions, use the support channel listed on superlinkedin.org.</p>
+
+    <p class="footer-brand">SuperLinkedIn User Guide · Not affiliated with LinkedIn Corporation.</p>
+
+</body>
+</html>

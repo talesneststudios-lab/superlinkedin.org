@@ -5,7 +5,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "dev": "node --watch server.js",
+    "guide:pdf": "node scripts/build-guide-pdf.js"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.700.0",
@@ -19,5 +20,8 @@
     "openai": "^4.73.0",
     "pdfkit": "^0.18.0",
     "stripe": "^22.1.0"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.49.1"
   }
 }
